@@ -17,22 +17,13 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) setDismissedNames(JSON.parse(stored))
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        if (Array.isArray(parsed)) setDismissedNames(parsed)
+      }
     } catch {}
     setHydrated(true)
   }, [])
-
-  // 실제로 DB에서 사라진 이름은 dismissed 목록에서도 정리
-  useEffect(() => {
-    if (!hydrated) return
-    setDismissedNames(prev => {
-      const filtered = prev.filter(name => duplicateNames.includes(name))
-      if (filtered.length !== prev.length) {
-        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered)) } catch {}
-      }
-      return filtered
-    })
-  }, [hydrated, duplicateNames.join(',')])
 
   const visibleNames = duplicateNames.filter(name => !dismissedNames.includes(name))
 
