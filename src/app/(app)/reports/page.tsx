@@ -54,7 +54,32 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   }
 
   if (q) {
-    query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+    // 취재원 이름으로도 검색: sources.full_name → report_sources → report id 추출
+    const { data: matchingSources } = await supabaseAny
+      .from('sources')
+      .select('id')
+      .ilike('full_name', `%${q}%`)
+      .eq('is_deleted', false)
+      .limit(100)
+
+    const matchingSourceIds = (matchingSources ?? []).map((s: any) => s.id as string)
+    let matchingReportIds: string[] = []
+
+    if (matchingSourceIds.length > 0) {
+      const { data: links } = await supabaseAny
+        .from('report_sources')
+        .select('report_id')
+        .in('source_id', matchingSourceIds)
+      matchingReportIds = [...new Set((links ?? []).map((l: any) => l.report_id as string))]
+    }
+
+    if (matchingReportIds.length > 0) {
+      query = query.or(
+        `title.ilike.%${q}%,content.ilike.%${q}%,id.in.(${matchingReportIds.join(',')})`
+      )
+    } else {
+      query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+    }
   }
 
   const { data: reports, count } = await query
