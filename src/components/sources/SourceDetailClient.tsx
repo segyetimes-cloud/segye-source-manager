@@ -1,0 +1,941 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
+
+interface SourceNote {
+  id: string
+  content: string
+  is_sensitive: boolean
+  created_at: string
+  profiles: { id: string; full_name: string; department: string | null } | null
+}
+
+interface Props {
+  source: Source & {
+    profiles?: { full_name: string; email: string; department: string | null }
+    source_positions?: SourcePosition[]
+    source_edit_history?: SourceEditHistory[]
+  }
+  positions: SourcePosition[]
+  editHistory: SourceEditHistory[]
+  avgRating: number | null
+  myRating: number | null
+  hasPrivateAccess: boolean
+  isOwner: boolean
+  isAdmin: boolean
+  isDeputyOrAbove?: boolean
+  userRole?: string
+  canSeePersonalNotes?: boolean
+  userId: string
+  initialNotes: SourceNote[]
+  lockedNotesCount: number
+}
+
+const FIELD_LABELS: Record<string, string> = {
+  full_name: '이름', current_organization: '소속', current_position: '직책',
+  current_department: '부서', phone_primary: '전화(주)', phone_secondary: '전화(보조)',
+  email_primary: '이메일(주)', email_secondary: '이메일(보조)', birthday: '생년월일',
+  university: '대학', high_school: '고교', exam_batch: '고시기수',
+  hometown_province: '출신지역', visibility: '공개범위', sensitivity: '민감도',
+  personal_notes: '정보',
+}
+
+function ScoreBadge({ score }: { score: number }) {
+  const color = score >= 90 ? '#00CC66' : score >= 60 ? '#FF9900' : '#FF4444'
+  return (
+    <div className="flex items-center gap-2">
+      <div className="w-24 h-2 rounded-full" style={{ background: '#1A3050' }}>
+        <div className="h-full rounded-full" style={{ width: `${score}%`, background: color }} />
+      </div>
+      <span className="text-sm font-bold" style={{ color }}>{score}점</span>
+    </div>
+  )
+}
+
+function StarRating({ rating, onRate }: { rating: number | null; onRate: (r: number) => void }) {
+  const [hover, setHover] = useState(0)
+  return (
+    <div className="flex gap-1">
+      {[1, 2, 3, 4, 5].map(star => (
+        <button key={star} type="button" onClick={() => onRate(star)}
+          onMouseEnter={() => setHover(star)} onMouseLeave={() => setHover(0)}
+          style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer',
+            color: star <= (hover || rating || 0) ? '#FFD700' : '#1A3050' }}>
+          ★
+        </button>
+      ))}
+    </div>
+  )
+}
+
+// ── 정보 카드 (작성자 헤더 포함) ─────────────────────────────────────────────
+function NoteItem({ note, canDelete, onDelete }: {
+  note: SourceNote
+  canDelete: boolean
+  onDelete: (id: string) => void
+}) {
+  const authorName = note.profiles?.full_name ?? '알 수 없음'
+  const initial = authorName.slice(-2, -1) || authorName[0] || '?'
+  const dateStr = new Date(note.created_at).toLocaleString('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
+
+  return (
+    <div className="rounded-xl overflow-hidden group"
+      style={{
+        border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.25)' : 'rgba(30,144,255,0.15)'}`,
+        background: note.is_sensitive ? 'rgba(255,153,0,0.04)' : 'rgba(15,32,64,0.6)',
+      }}>
+      {/* 카드 헤더: 작성자 정보 */}
+      <div className="flex items-center justify-between px-4 py-2.5"
+        style={{
+          background: note.is_sensitive ? 'rgba(255,153,0,0.08)' : 'rgba(30,144,255,0.06)',
+          borderBottom: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.15)' : 'rgba(30,144,255,0.1)'}`,
+        }}>
+        <div className="flex items-center gap-2">
+          {/* 아바타 */}
+          <div style={{
+            width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+            background: note.is_sensitive ? 'rgba(255,153,0,0.2)' : 'rgba(30,144,255,0.2)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '11px', fontWeight: 700,
+            color: note.is_sensitive ? '#FF9900' : '#1E90FF',
+            border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.4)' : 'rgba(30,144,255,0.35)'}`,
+          }}>
+            {initial}
+          </div>
+          <div>
+            <span className="text-xs font-semibold" style={{ color: note.is_sensitive ? '#FF9900' : '#B0C8F0' }}>
+              {authorName}
+            </span>
+            {note.profiles?.department && (
+              <span className="text-xs ml-1.5" style={{ color: '#4A6080' }}>
+                {note.profiles.department}
+              </span>
+            )}
+          </div>
+          {note.is_sensitive && (
+            <span className="text-xs px-1.5 py-0.5 rounded font-semibold"
+              style={{ background: 'rgba(255,153,0,0.15)', color: '#FF9900', border: '1px solid rgba(255,153,0,0.3)' }}>
+              ⚠️ 민감
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <span className="text-xs" style={{ color: '#4A6080' }}>{dateStr}</span>
+          {canDelete && (
+            <button type="button" onClick={() => onDelete(note.id)}
+              className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+              style={{ color: '#FF4444', background: 'none', border: 'none', cursor: 'pointer' }}>
+              삭제
+            </button>
+          )}
+        </div>
+      </div>
+      {/* 카드 본문 */}
+      <div className="px-4 py-3">
+        <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#D0DFF5' }}>
+          {note.content}
+        </p>
+      </div>
+    </div>
+  )
+}
+
+// ── 통합 정보 (중복 제거) ─────────────────────────────────────────────────────
+// 모든 노트의 문장을 수집 → 정규화 → 중복 제거 → 통합 텍스트 생성
+function buildUnifiedNotes(notes: SourceNote[]): string {
+  if (notes.length === 0) return ''
+
+  // 문장 분리: '. ', '.\n', '\n', '！', '。' 등
+  const sentenceSet = new Set<string>()
+  const ordered: string[] = []   // 순서 유지
+
+  for (const note of notes) {
+    // 줄바꿈·마침표·느낌표 기준으로 분리
+    const raw = note.content
+      .split(/(?<=[.。!！?？\n])\s*/)
+      .flatMap(s => s.split('\n'))
+      .map(s => s.trim())
+      .filter(s => s.length > 0)
+
+    for (const sentence of raw) {
+      // 정규화: 끝 마침표 제거, 공백 통일, 소문자화 (한국어는 소문자 무의미하지만)
+      const normalized = sentence.replace(/[.。!！?？]+$/, '').replace(/\s+/g, ' ').trim()
+      if (!normalized) continue
+      if (!sentenceSet.has(normalized)) {
+        sentenceSet.add(normalized)
+        ordered.push(sentence.trim())
+      }
+    }
+  }
+
+  return ordered.join(' · ')
+}
+
+const EMPTY_POS = { organization: '', department: '', position: '', rank: '', started_at: '', ended_at: '', is_current: false, change_note: '' }
+
+export default function SourceDetailClient({
+  source, positions: initialPositions, editHistory,
+  avgRating, myRating, hasPrivateAccess,
+  isOwner, isAdmin, isDeputyOrAbove = false, userRole = 'reporter',
+  canSeePersonalNotes = false,
+  userId, initialNotes, lockedNotesCount,
+}: Props) {
+  const router = useRouter()
+  const [showHistory, setShowHistory] = useState(false)
+  const [rating, setRating] = useState(myRating)
+  const [approvalReason, setApprovalReason] = useState('')
+  const [showApprovalForm, setShowApprovalForm] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+  const [positions, setPositions] = useState(initialPositions)
+  const [showPosForm, setShowPosForm] = useState(false)
+  const [posForm, setPosForm] = useState(EMPTY_POS)
+  const [posSubmitting, setPosSubmitting] = useState(false)
+  const [notes, setNotes] = useState<SourceNote[]>(initialNotes)
+  const [noteContent, setNoteContent] = useState('')
+  const [noteSensitive, setNoteSensitive] = useState(false)
+  const [noteSubmitting, setNoteSubmitting] = useState(false)
+  const [currentVisibility, setCurrentVisibility] = useState<'personal' | 'shared'>(source.visibility as 'personal' | 'shared')
+  const [currentSensitivity, setCurrentSensitivity] = useState<'public' | 'private'>(source.sensitivity as 'public' | 'private')
+  const [visibilityChanging, setVisibilityChanging] = useState(false)
+
+  const canEdit = isOwner || isAdmin
+  const showPrivate = hasPrivateAccess || isOwner
+
+  async function handleAddPosition(e: React.FormEvent) {
+    e.preventDefault()
+    if (!posForm.organization || !posForm.position || !posForm.started_at) return
+    setPosSubmitting(true)
+    const res = await fetch(`/api/sources/${source.id}/positions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(posForm),
+    })
+    if (res.ok) {
+      const newPos = await res.json()
+      if (posForm.is_current) {
+        setPositions(prev => [newPos, ...prev.map(p => ({ ...p, is_current: false }))])
+      } else {
+        setPositions(prev => [...prev, newPos])
+      }
+      setPosForm(EMPTY_POS)
+      setShowPosForm(false)
+      router.refresh()
+    }
+    setPosSubmitting(false)
+  }
+
+  async function handleRate(r: number) {
+    setRating(r)
+    await fetch(`/api/sources/${source.id}/rate`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ rating: r }),
+    })
+    router.refresh()
+  }
+
+  async function handleApprovalRequest() {
+    if (!approvalReason.trim()) return
+    const res = await fetch('/api/approvals', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_id: source.id, reason: approvalReason }),
+    })
+    if (res.ok) {
+      setShowApprovalForm(false)
+      alert('열람 신청이 완료되었습니다. 데스크 승인 후 조회 가능합니다.')
+    }
+  }
+
+  async function handleDelete() {
+    if (!confirm(`"${source.full_name}" 취재원을 삭제하시겠습니까?`)) return
+    setDeleting(true)
+    await fetch(`/api/sources/${source.id}`, { method: 'DELETE' })
+    router.push('/sources')
+  }
+
+  async function handleVisibilityChange(newVisibility: 'personal' | 'shared') {
+    if (newVisibility === currentVisibility) return
+    const confirmMsg = newVisibility === 'shared'
+      ? `"${source.full_name}"을 편집국 공유 목록으로 이동하시겠습니까?\n다른 기자들도 이 취재원을 볼 수 있게 됩니다.`
+      : `"${source.full_name}"을 내 목록(비공개)으로 이동하시겠습니까?\n다른 기자들이 더 이상 볼 수 없게 됩니다.`
+    if (!confirm(confirmMsg)) return
+    setVisibilityChanging(true)
+    const payload: Record<string, string> = { visibility: newVisibility }
+    if (newVisibility === 'personal') payload.sensitivity = 'public'
+    const res = await fetch(`/api/sources/${source.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    if (res.ok) {
+      setCurrentVisibility(newVisibility)
+      if (newVisibility === 'personal') setCurrentSensitivity('public')
+      router.refresh()
+    }
+    setVisibilityChanging(false)
+  }
+
+  async function handleSensitivityChange(newSensitivity: 'public' | 'private') {
+    if (newSensitivity === currentSensitivity) return
+    setVisibilityChanging(true)
+    const res = await fetch(`/api/sources/${source.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sensitivity: newSensitivity }),
+    })
+    if (res.ok) {
+      setCurrentSensitivity(newSensitivity)
+      router.refresh()
+    }
+    setVisibilityChanging(false)
+  }
+
+  async function handleAddNote(e: React.FormEvent) {
+    e.preventDefault()
+    if (!noteContent.trim()) return
+    setNoteSubmitting(true)
+    const res = await fetch(`/api/sources/${source.id}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ content: noteContent.trim(), is_sensitive: noteSensitive }),
+    })
+    if (res.ok) {
+      const newNote = await res.json()
+      setNotes(prev => [...prev, newNote])
+      setNoteContent('')
+      setNoteSensitive(false)
+    }
+    setNoteSubmitting(false)
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    if (!confirm('이 정보를 삭제하시겠습니까?')) return
+    const res = await fetch(`/api/sources/${source.id}/notes?note_id=${noteId}`, { method: 'DELETE' })
+    if (res.ok) {
+      setNotes(prev => prev.filter(n => n.id !== noteId))
+    }
+  }
+
+  const infoCard = (label: string, value: string | null | undefined, icon?: string) =>
+    value ? (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs" style={{ color: '#4A6080' }}>{icon} {label}</span>
+        <span className="text-sm font-medium" style={{ color: '#E8F0FE' }}>{value}</span>
+      </div>
+    ) : null
+
+  return (
+    <div className="max-w-4xl mx-auto space-y-6">
+
+      {/* 헤더 */}
+      <div className="flex items-start justify-between">
+        <div className="flex items-center gap-4">
+          <div className="w-16 h-16 rounded-xl flex items-center justify-center text-2xl font-bold"
+            style={{ background: 'linear-gradient(135deg, rgba(30,144,255,0.2), rgba(0,212,255,0.1))',
+              border: '1px solid rgba(30,144,255,0.3)', color: '#1E90FF' }}>
+            {source.full_name[0]}
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>
+              {source.full_name}
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: '#8899BB' }}>
+              {source.current_organization}
+              {source.current_position && ` · ${source.current_position}`}
+              {source.current_department && ` · ${source.current_department}`}
+            </p>
+            <div className="flex items-center gap-3 mt-2 flex-wrap">
+              {/* 공개범위 토글 (소유자/관리자만) */}
+              {canEdit ? (
+                <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #1A3050' }}
+                  title={visibilityChanging ? '변경 중...' : '클릭하여 공개 설정 변경'}>
+                  <button
+                    type="button"
+                    disabled={visibilityChanging}
+                    onClick={() => handleVisibilityChange('personal')}
+                    className="px-2.5 py-1 text-xs font-medium transition-all"
+                    style={{
+                      background: currentVisibility === 'personal' ? 'rgba(30,144,255,0.2)' : 'transparent',
+                      color: currentVisibility === 'personal' ? '#1E90FF' : '#4A6080',
+                      cursor: visibilityChanging ? 'wait' : 'pointer',
+                      border: 'none',
+                    }}>
+                    🔒 내 목록
+                  </button>
+                  <div style={{ width: '1px', background: '#1A3050' }} />
+                  <button
+                    type="button"
+                    disabled={visibilityChanging}
+                    onClick={() => handleVisibilityChange('shared')}
+                    className="px-2.5 py-1 text-xs font-medium transition-all"
+                    style={{
+                      background: currentVisibility === 'shared' ? 'rgba(0,204,102,0.15)' : 'transparent',
+                      color: currentVisibility === 'shared' ? '#00CC66' : '#4A6080',
+                      cursor: visibilityChanging ? 'wait' : 'pointer',
+                      border: 'none',
+                    }}>
+                    🌐 편집국 공유
+                  </button>
+                </div>
+              ) : (
+                <span className="text-xs px-2 py-0.5 rounded-full"
+                  style={{
+                    background: currentVisibility === 'shared' ? 'rgba(0,204,102,0.1)' : 'rgba(30,144,255,0.1)',
+                    color: currentVisibility === 'shared' ? '#00CC66' : '#8899BB',
+                  }}>
+                  {currentVisibility === 'shared' ? '🌐 공유' : '🔒 개인'}
+                </span>
+              )}
+
+              {/* 민감도 토글 (공유 목록이고 소유자/관리자일 때) */}
+              {currentVisibility === 'shared' && canEdit && (
+                <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #1A3050' }}>
+                  <button
+                    type="button"
+                    disabled={visibilityChanging}
+                    onClick={() => handleSensitivityChange('public')}
+                    className="px-2.5 py-1 text-xs font-medium transition-all"
+                    style={{
+                      background: currentSensitivity === 'public' ? 'rgba(0,204,102,0.15)' : 'transparent',
+                      color: currentSensitivity === 'public' ? '#00CC66' : '#4A6080',
+                      cursor: visibilityChanging ? 'wait' : 'pointer',
+                      border: 'none',
+                    }}>
+                    ✅ 공개
+                  </button>
+                  <div style={{ width: '1px', background: '#1A3050' }} />
+                  <button
+                    type="button"
+                    disabled={visibilityChanging}
+                    onClick={() => handleSensitivityChange('private')}
+                    className="px-2.5 py-1 text-xs font-medium transition-all"
+                    style={{
+                      background: currentSensitivity === 'private' ? 'rgba(255,153,0,0.15)' : 'transparent',
+                      color: currentSensitivity === 'private' ? '#FF9900' : '#4A6080',
+                      cursor: visibilityChanging ? 'wait' : 'pointer',
+                      border: 'none',
+                    }}>
+                    ⚠️ 민감
+                  </button>
+                </div>
+              )}
+
+              {/* 열람 전용 뷰 (비소유자) */}
+              {currentVisibility === 'shared' && !canEdit && (
+                <span className={`text-xs px-2 py-0.5 rounded-full sensitivity-${currentSensitivity}`}>
+                  {currentSensitivity === 'private' ? '⚠️ 민감정보' : '✅ 공개정보'}
+                </span>
+              )}
+
+              <ScoreBadge score={source.completeness_score} />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {canEdit && (
+            <Link href={`/sources/${source.id}/edit`}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', textDecoration: 'none' }}>
+              ✏️ 수정
+            </Link>
+          )}
+          <button onClick={() => setShowHistory(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>
+            📋 수정이력
+          </button>
+          {canEdit && (
+            <button onClick={handleDelete} disabled={deleting}
+              className="px-4 py-2 rounded-lg text-sm font-medium"
+              style={{ background: 'rgba(255,68,68,0.1)', color: '#FF4444',
+                border: '1px solid rgba(255,68,68,0.2)', cursor: 'pointer' }}>
+              삭제
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* 민감정보 접근 안내 (공유 목록이고 민감정보이고 권한 없을 때) */}
+      {source.visibility === 'shared' && source.sensitivity === 'private' && !showPrivate && (
+        <div className="glass-card p-4" style={{ border: '1px solid rgba(255,153,0,0.3)', background: 'rgba(255,153,0,0.05)' }}>
+          <p className="text-sm font-medium" style={{ color: '#FF9900' }}>⚠️ 이 취재원은 민감 정보로 분류되어 있습니다</p>
+          <p className="text-xs mt-1" style={{ color: '#8899BB' }}>데스크 승인 후 세부 정보를 확인할 수 있습니다.</p>
+          {!showApprovalForm ? (
+            <button onClick={() => setShowApprovalForm(true)}
+              className="mt-3 px-4 py-2 rounded-lg text-xs font-medium"
+              style={{ background: 'rgba(255,153,0,0.15)', color: '#FF9900',
+                border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+              열람 신청하기
+            </button>
+          ) : (
+            <div className="mt-3 space-y-2">
+              <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
+                placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
+                rows={2}
+                style={{ width: '100%', background: '#132850', border: '1px solid #1A3050',
+                  color: '#E8F0FE', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
+              <div className="flex gap-2">
+                <button onClick={handleApprovalRequest}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ background: '#FF9900', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
+                <button onClick={() => setShowApprovalForm(false)}
+                  className="px-3 py-1.5 rounded-lg text-xs"
+                  style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>취소</button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 기본 정보 */}
+      <div className="glass-card p-5">
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#E8F0FE' }}>👤 기본 정보 · 연락처</h2>
+        <div className="grid grid-cols-3 gap-5">
+          {infoCard('전화번호', source.phone_primary, '📞')}
+          {infoCard('이메일', source.email_primary, '📧')}
+          {infoCard('보조전화', source.phone_secondary, '📞')}
+          {infoCard('보조이메일', source.email_secondary, '📧')}
+          {infoCard('생년월일', source.birthday, '🎂')}
+          {infoCard('출신지역', [source.hometown_province, source.hometown_city].filter(Boolean).join(' '), '📍')}
+        </div>
+        {(source as any).tags?.length > 0 && (
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #1A3050' }}>
+            <p className="text-xs mb-2" style={{ color: '#4A6080' }}>🏷️ 태그</p>
+            <div className="flex flex-wrap gap-2">
+              {(source as any).tags.map((tag: string) => (
+                <span key={tag} className="text-xs px-2.5 py-1 rounded-full"
+                  style={{ background: 'rgba(30,144,255,0.1)', color: '#1E90FF', border: '1px solid rgba(30,144,255,0.2)' }}>
+                  {tag}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* 학력 */}
+      <div className="glass-card p-5">
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#E8F0FE' }}>🎓 학력 / 이력</h2>
+        <div className="grid grid-cols-3 gap-5">
+          {infoCard('고교', source.high_school, '🏫')}
+          {infoCard('대학', source.university, '🎓')}
+          {infoCard('전공', source.university_major, '📚')}
+          {infoCard('대학원', source.graduate_school, '🔬')}
+          {infoCard('고시/기수', source.exam_batch, '📋')}
+        </div>
+      </div>
+
+      {/* 직책 이력 */}
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>💼 직책 이력</h2>
+            <p className="text-xs mt-0.5" style={{ color: '#4A6080' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
+          </div>
+          {canEdit && (
+            <button onClick={() => setShowPosForm(v => !v)}
+              className="text-xs px-3 py-1.5 rounded-lg"
+              style={{ background: 'rgba(30,144,255,0.1)', color: '#1E90FF',
+                border: '1px solid rgba(30,144,255,0.2)', cursor: 'pointer' }}>
+              {showPosForm ? '✕ 닫기' : '+ 직책 추가'}
+            </button>
+          )}
+        </div>
+
+        {positions.length > 0 ? (
+          <div className="relative">
+            {/* 타임라인 선 */}
+            <div className="absolute left-[18px] top-4 bottom-4 w-px" style={{ background: '#1A3050' }} />
+            <div className="space-y-3">
+              {[...positions]
+                .sort((a, b) => {
+                  if (a.is_current) return -1
+                  if (b.is_current) return 1
+                  return new Date(b.started_at || '').getTime() - new Date(a.started_at || '').getTime()
+                })
+                .map(pos => (
+                  <div key={pos.id} className="flex items-start gap-4">
+                    <div className="mt-1.5 flex-shrink-0 z-10">
+                      <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
+                        style={{
+                          background: pos.is_current ? '#1E90FF' : '#0A1628',
+                          borderColor: pos.is_current ? '#1E90FF' : '#4A6080',
+                        }}>
+                        {pos.is_current && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 p-3 rounded-lg"
+                      style={{
+                        background: pos.is_current ? 'rgba(30,144,255,0.05)' : '#0A1628',
+                        border: `1px solid ${pos.is_current ? 'rgba(30,144,255,0.2)' : '#1A3050'}`,
+                      }}>
+                      <div className="flex items-center gap-2">
+                        <span className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>{pos.organization}</span>
+                        {pos.is_current && (
+                          <span className="text-xs px-1.5 py-0.5 rounded"
+                            style={{ background: 'rgba(0,204,102,0.15)', color: '#00CC66' }}>현직</span>
+                        )}
+                      </div>
+                      <p className="text-sm" style={{ color: '#8899BB' }}>
+                        {pos.department && `${pos.department} · `}{pos.position}
+                        {pos.rank && ` (${pos.rank})`}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: '#4A6080' }}>
+                        {pos.started_at} ~ {pos.ended_at ?? '현재'}
+                        {pos.change_source && ` · ${pos.change_source === 'crawl' ? '🤖 자동감지' : '✏️ 수동입력'}`}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: '#4A6080' }}>직책 이력이 없습니다. 직책을 추가하거나 취재원 수정에서 소속/직책을 변경하면 자동으로 기록됩니다.</p>
+        )}
+
+        {/* 직책 추가 폼 */}
+        {showPosForm && canEdit && (
+          <form onSubmit={handleAddPosition} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A3050' }}>
+            <p className="text-xs font-semibold" style={{ color: '#1E90FF' }}>새 직책 추가</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { key: 'organization', label: '조직명 *', placeholder: '국토교통부', required: true },
+                { key: 'position', label: '직책 *', placeholder: '장관', required: true },
+                { key: 'department', label: '부서', placeholder: '기획조정실' },
+                { key: 'rank', label: '직급', placeholder: '1급' },
+              ].map(f => (
+                <div key={f.key}>
+                  <label className="block text-xs mb-1" style={{ color: '#8899BB' }}>{f.label}</label>
+                  <input type="text" value={(posForm as unknown as Record<string, string>)[f.key]}
+                    onChange={e => setPosForm(p => ({ ...p, [f.key]: e.target.value }))}
+                    placeholder={f.placeholder} required={f.required}
+                    style={{ width: '100%', background: '#132850', border: '1px solid #1A3050',
+                      color: '#E8F0FE', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+                </div>
+              ))}
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#8899BB' }}>시작일 *</label>
+                <input type="date" value={posForm.started_at} required
+                  onChange={e => setPosForm(p => ({ ...p, started_at: e.target.value }))}
+                  style={{ width: '100%', background: '#132850', border: '1px solid #1A3050',
+                    color: '#E8F0FE', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+              </div>
+              <div>
+                <label className="block text-xs mb-1" style={{ color: '#8899BB' }}>종료일</label>
+                <input type="date" value={posForm.ended_at}
+                  onChange={e => setPosForm(p => ({ ...p, ended_at: e.target.value }))}
+                  style={{ width: '100%', background: '#132850', border: '1px solid #1A3050',
+                    color: '#E8F0FE', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <input type="checkbox" id="is_current" checked={posForm.is_current}
+                onChange={e => setPosForm(p => ({ ...p, is_current: e.target.checked }))}
+                style={{ accentColor: '#1E90FF' }} />
+              <label htmlFor="is_current" className="text-xs" style={{ color: '#8899BB', cursor: 'pointer' }}>
+                현직 (기존 현직을 이전 직책으로 자동 이동)
+              </label>
+            </div>
+            <div className="flex gap-2">
+              <button type="submit" disabled={posSubmitting}
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold"
+                style={{ background: posSubmitting ? '#1A3050' : 'rgba(30,144,255,0.15)',
+                  color: '#1E90FF', border: '1px solid rgba(30,144,255,0.3)',
+                  cursor: posSubmitting ? 'not-allowed' : 'pointer' }}>
+                {posSubmitting ? '저장 중...' : '저장'}
+              </button>
+              <button type="button" onClick={() => { setShowPosForm(false); setPosForm(EMPTY_POS) }}
+                className="px-4 py-1.5 rounded-lg text-xs"
+                style={{ background: '#132850', color: '#4A6080', border: '1px solid #1A3050', cursor: 'pointer' }}>
+                취소
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* 정보 섹션 (민감 정보 포함 — 공유 취재원) */}
+      <div className="glass-card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>
+              📝 정보
+              {source.visibility === 'shared' && (
+                <span className="text-xs ml-2 font-normal" style={{ color: '#4A6080' }}>
+                  여러 기자가 추가한 정보 · 작성자 확인 가능
+                </span>
+              )}
+            </h2>
+          </div>
+        </div>
+
+        {/* personal_notes — 소유자/차장이상: 항상 표시, 기자: 승인 필요 */}
+        {canSeePersonalNotes && source.personal_notes && (
+          <div className="mb-4 p-4 rounded-lg"
+            style={{
+              background: isOwner ? 'rgba(255,215,0,0.05)' : 'rgba(0,212,255,0.04)',
+              border: `1px solid ${isOwner ? 'rgba(255,215,0,0.15)' : 'rgba(0,212,255,0.15)'}`,
+            }}>
+            <p className="text-xs font-semibold mb-2" style={{ color: isOwner ? '#FFD700' : '#00D4FF' }}>
+              {isOwner ? '📌 내 정보 (등록자 본인)' : '📌 정보'}
+            </p>
+            <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#E8F0FE' }}>
+              {source.personal_notes}
+            </p>
+          </div>
+        )}
+
+        {/* 기자가 정보란 열람 권한 없을 때 — 신청 유도 */}
+        {!isOwner && !canSeePersonalNotes && userRole === 'reporter' && (
+          <div className="mb-4 p-4 rounded-lg flex items-start gap-3"
+            style={{ background: 'rgba(30,144,255,0.04)', border: '1px solid rgba(30,144,255,0.15)' }}>
+            <span style={{ fontSize: '18px' }}>🔒</span>
+            <div className="flex-1">
+              <p className="text-xs font-semibold" style={{ color: '#1E90FF' }}>정보란은 차장/데스크 이상만 열람 가능합니다</p>
+              <p className="text-xs mt-1" style={{ color: '#8899BB' }}>
+                데스크 또는 슈퍼관리자의 승인을 받으면 열람할 수 있습니다.
+              </p>
+              {!showApprovalForm ? (
+                <button
+                  onClick={() => setShowApprovalForm(true)}
+                  className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ background: 'rgba(30,144,255,0.12)', color: '#1E90FF', border: '1px solid rgba(30,144,255,0.3)', cursor: 'pointer' }}>
+                  정보란 열람 신청
+                </button>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
+                    placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
+                    rows={2}
+                    style={{ width: '100%', background: '#132850', border: '1px solid #1A3050', color: '#E8F0FE', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
+                  <div className="flex gap-2">
+                    <button onClick={handleApprovalRequest}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#1E90FF', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
+                    <button onClick={() => setShowApprovalForm(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs"
+                      style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>취소</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* 잠긴 민감 정보 알림 */}
+        {lockedNotesCount > 0 && !showPrivate && (
+          <div className="mb-3 p-3 rounded-lg flex items-center gap-3"
+            style={{ background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.2)' }}>
+            <span style={{ color: '#FF9900' }}>🔒</span>
+            <div>
+              <p className="text-xs font-semibold" style={{ color: '#FF9900' }}>
+                민감 정보 {lockedNotesCount}건이 잠겨 있습니다
+              </p>
+              <p className="text-xs" style={{ color: '#8899BB' }}>
+                관리자 승인 후 열람 가능합니다
+              </p>
+            </div>
+            {!showApprovalForm && (
+              <button onClick={() => setShowApprovalForm(true)}
+                className="ml-auto text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: 'rgba(255,153,0,0.15)', color: '#FF9900',
+                  border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                열람 신청
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* ── 통합 정보 (중복 제거) — 최상단 표시 ─────────────────────────── */}
+        {notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove).length > 1 && (() => {
+          const visibleNotes = notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove)
+          const unified = buildUnifiedNotes(visibleNotes)
+          if (!unified) return null
+          const authorMap = new Map<string, { name: string; dept: string | null; count: number }>()
+          for (const n of visibleNotes) {
+            const aid = n.profiles?.id ?? 'unknown'
+            if (!authorMap.has(aid)) {
+              authorMap.set(aid, { name: n.profiles?.full_name ?? '알 수 없음', dept: n.profiles?.department ?? null, count: 0 })
+            }
+            authorMap.get(aid)!.count++
+          }
+          return (
+            <div className="mb-4 rounded-xl overflow-hidden"
+              style={{ border: '1px solid rgba(0,212,255,0.2)', background: 'rgba(0,212,255,0.03)' }}>
+              <div className="px-4 py-3 flex items-center gap-2 flex-wrap"
+                style={{ background: 'rgba(0,212,255,0.07)', borderBottom: '1px solid rgba(0,212,255,0.15)' }}>
+                <span style={{ fontSize: '14px' }}>🔗</span>
+                <span className="text-xs font-bold" style={{ color: '#00D4FF' }}>통합 정보</span>
+                <span className="text-xs" style={{ color: '#4A6080' }}>
+                  — {visibleNotes.length}건 중복 제거 통합
+                </span>
+                <div className="ml-auto flex items-center gap-1.5 flex-wrap">
+                  {[...authorMap.values()].map((a, i) => (
+                    <span key={i} className="text-xs px-2 py-0.5 rounded-full"
+                      style={{ background: 'rgba(0,212,255,0.12)', color: '#00D4FF', border: '1px solid rgba(0,212,255,0.2)' }}>
+                      {a.name}{a.count > 1 ? ` ×${a.count}` : ''}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="px-4 py-3">
+                <p className="text-sm leading-relaxed" style={{ color: '#C0D8F0' }}>
+                  {unified}
+                </p>
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* ── 개별 정보 카드 (작성자별) ─────────────────────────────────── */}
+        {notes.length > 0 ? (
+          <div className="space-y-3">
+            {notes.map(note => (
+              <NoteItem
+                key={note.id}
+                note={note}
+                canDelete={note.profiles?.id === userId || isAdmin}
+                onDelete={handleDeleteNote}
+              />
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm" style={{ color: '#4A6080' }}>
+            아직 입력된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.
+          </p>
+        )}
+
+        {/* ── 정보 추가 폼 ───────────────────────────────────────────────── */}
+        {source.visibility === 'shared' && (
+          <form onSubmit={handleAddNote} className="mt-4 pt-4 space-y-2" style={{ borderTop: '1px solid #1A3050' }}>
+            <p className="text-xs font-semibold" style={{ color: '#1E90FF' }}>
+              + 정보 추가 <span style={{ color: '#FFD700' }}>+10pt</span>
+            </p>
+            <textarea
+              value={noteContent}
+              onChange={e => setNoteContent(e.target.value)}
+              placeholder="친분 관계, 성격, 인터뷰 팁, 가족 관계, 학연 등..."
+              rows={3}
+              style={{ width: '100%', background: '#132850', border: '1px solid #1A3050',
+                color: '#E8F0FE', borderRadius: '8px', padding: '10px 12px',
+                fontSize: '14px', resize: 'vertical', outline: 'none' }}
+            />
+            <div className="flex items-center justify-between">
+              <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: '#8899BB' }}>
+                <input type="checkbox" checked={noteSensitive} onChange={e => setNoteSensitive(e.target.checked)}
+                  style={{ accentColor: '#FF9900' }} />
+                <span>⚠️ 민감 정보로 표시</span>
+              </label>
+              <button type="submit" disabled={noteSubmitting || !noteContent.trim()}
+                className="px-4 py-1.5 rounded-lg text-xs font-semibold"
+                style={{
+                  background: (noteSubmitting || !noteContent.trim()) ? '#1A3050' : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+                  color: 'white', border: 'none',
+                  cursor: (noteSubmitting || !noteContent.trim()) ? 'not-allowed' : 'pointer',
+                }}>
+                {noteSubmitting ? '저장 중...' : '등록 (+10pt)'}
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
+
+      {/* 개인 목록의 정보 (소유자 또는 차장 이상만) */}
+      {source.visibility === 'personal' && canSeePersonalNotes && (
+        <div className="glass-card p-5"
+          style={{ border: `1px solid ${isOwner ? 'rgba(255,215,0,0.15)' : 'rgba(0,212,255,0.15)'}` }}>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: '#E8F0FE' }}>
+            📝 정보
+            <span className="text-xs ml-2 font-normal" style={{ color: '#4A6080' }}>
+              {isOwner ? '나에게만 보임' : '차장 이상 열람 가능'}
+            </span>
+          </h2>
+          <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#8899BB' }}>
+            {source.personal_notes || <span style={{ color: '#4A6080' }}>{isOwner ? '정보 없음 — 수정 버튼을 눌러 추가하세요' : '등록된 정보가 없습니다'}</span>}
+          </p>
+        </div>
+      )}
+      {/* 기자가 개인 목록 취재원의 정보를 보려고 할 때 */}
+      {source.visibility === 'personal' && !canSeePersonalNotes && userRole === 'reporter' && (
+        <div className="glass-card p-5" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
+          <h2 className="text-sm font-semibold mb-2" style={{ color: '#E8F0FE' }}>📝 정보</h2>
+          <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: 'rgba(30,144,255,0.05)' }}>
+            <span>🔒</span>
+            <p className="text-xs" style={{ color: '#8899BB' }}>
+              정보란은 차장 이상만 열람 가능합니다. 데스크 승인 후 열람할 수 있습니다.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* 유용성 평가 */}
+      {!isOwner && (
+        <div className="glass-card p-5">
+          <h2 className="text-sm font-semibold mb-3" style={{ color: '#E8F0FE' }}>⭐ 유용성 평가</h2>
+          <div className="flex items-center gap-4">
+            <StarRating rating={rating} onRate={handleRate} />
+            {avgRating != null && (
+              <span className="text-sm" style={{ color: '#8899BB' }}>평균 {avgRating.toFixed(1)}점</span>
+            )}
+            {rating && (
+              <span className="text-sm" style={{ color: '#00CC66' }}>내 평가: {rating}점 (+1pt)</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 수정 이력 모달 */}
+      {showHistory && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ background: 'rgba(0,0,0,0.7)' }} onClick={() => setShowHistory(false)}>
+          <div className="glass-card p-6 w-full max-w-lg max-h-96 overflow-y-auto"
+            onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-semibold" style={{ color: '#E8F0FE' }}>📋 수정 이력</h3>
+              <button onClick={() => setShowHistory(false)}
+                style={{ color: '#4A6080', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>×</button>
+            </div>
+            {editHistory.length > 0 ? (
+              <div className="space-y-3">
+                {editHistory.slice(0, 50).map(h => (
+                  <div key={h.id} className="p-3 rounded-lg" style={{ background: '#132850' }}>
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-xs font-semibold" style={{ color: '#1E90FF' }}>{h.editor_name}</span>
+                      <span className="text-xs" style={{ color: '#4A6080' }}>
+                        {new Date(h.edited_at).toLocaleString('ko-KR')}
+                      </span>
+                    </div>
+                    <p className="text-xs" style={{ color: '#8899BB' }}>
+                      <span style={{ color: '#E8F0FE' }}>{FIELD_LABELS[h.field_name] ?? h.field_name}</span>
+                      {' '}
+                      <span style={{ color: '#FF4444', textDecoration: 'line-through' }}>{h.old_value ?? '(없음)'}</span>
+                      {' → '}
+                      <span style={{ color: '#00CC66' }}>{h.new_value ?? '(없음)'}</span>
+                    </p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-center py-4" style={{ color: '#4A6080' }}>수정 이력이 없습니다.</p>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 등록자 정보 */}
+      <div className="flex items-center gap-2 text-xs" style={{ color: '#4A6080' }}>
+        <span>등록: {(source as any).profiles?.full_name ?? '—'}</span>
+        <span>·</span>
+        <span>최종수정: {new Date(source.updated_at).toLocaleString('ko-KR')}</span>
+      </div>
+    </div>
+  )
+}

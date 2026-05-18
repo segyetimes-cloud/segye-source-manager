@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>이메일 인증</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0A1628;font-family:'Apple SD Gothic Neo','Malgun Gothic',sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A1628;padding:40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="520" cellpadding="0" cellspacing="0"
+          style="background:linear-gradient(160deg,#0D1F3C 0%,#0A1628 100%);border:1px solid #1A3050;border-radius:16px;overflow:hidden;">
+
+          <!-- 헤더 -->
+          <tr>
+            <td align="center" style="padding:36px 40px 28px;border-bottom:1px solid #1A3050;">
+              <div style="width:64px;height:64px;border-radius:16px;background:linear-gradient(145deg,rgba(30,144,255,0.2),rgba(0,212,255,0.08));border:1px solid rgba(30,144,255,0.3);display:inline-flex;align-items:center;justify-content:center;margin-bottom:16px;">
+                <!-- 이메일 아이콘 -->
+                <svg width="30" height="30" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="4" width="20" height="16" rx="2" stroke="#1E90FF" stroke-width="1.8"/>
+                  <path d="M2 8l10 6 10-6" stroke="#1E90FF" stroke-width="1.8" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <div>
+                <p style="margin:0;font-size:13px;color:#5A7099;letter-spacing:0.05em;">세계일보</p>
+                <h1 style="margin:6px 0 0;font-size:22px;font-weight:700;color:#E8F0FE;letter-spacing:-0.02em;">AI기반 취재원 관리시스템</h1>
+              </div>
+            </td>
+          </tr>
+
+          <!-- 본문 -->
+          <tr>
+            <td style="padding:36px 40px 32px;">
+              <h2 style="margin:0 0 12px;font-size:19px;font-weight:700;color:#E8F0FE;">이메일 주소를 인증해 주세요</h2>
+              <p style="margin:0 0 8px;font-size:14px;line-height:1.7;color:#8899BB;">
+                세계일보 취재원 관리시스템 가입 신청을 해주셨습니다.<br>
+                아래 버튼을 클릭하여 이메일 주소를 인증하세요.
+              </p>
+              <p style="margin:0 0 32px;font-size:13px;color:#4A6080;">
+                인증 완료 후 관리자 승인을 거쳐 로그인하실 수 있습니다.
+              </p>
+
+              <!-- 인증 버튼 -->
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td align="center">
+                    <a href="{{ .ConfirmationURL }}"
+                      style="display:inline-block;padding:16px 48px;background:linear-gradient(135deg,#1E90FF 0%,#0055CC 100%);color:#ffffff;font-size:16px;font-weight:700;text-decoration:none;border-radius:10px;letter-spacing:0.02em;box-shadow:0 4px 20px rgba(30,144,255,0.4);">
+                      ✉&nbsp;&nbsp;이메일 인증하기
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- 경고 문구 -->
+              <div style="margin-top:28px;padding:14px 18px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.15);border-radius:8px;">
+                <p style="margin:0;font-size:12px;color:#5A7099;line-height:1.6;">
+                  ⏱ 이 링크는 <strong style="color:#8899BB;">24시간</strong> 동안 유효합니다.<br>
+                  본인이 가입 신청하지 않으셨다면 이 메일을 무시하셔도 됩니다.
+                </p>
+              </div>
+
+              <!-- 링크가 안 보일 때 -->
+              <p style="margin:24px 0 0;font-size:11px;color:#3A5070;line-height:1.6;">
+                버튼이 작동하지 않으면 아래 URL을 복사하여 브라우저에 붙여넣으세요:<br>
+                <span style="color:#1E90FF;word-break:break-all;">{{ .ConfirmationURL }}</span>
+              </p>
+            </td>
+          </tr>
+
+          <!-- 푸터 -->
+          <tr>
+            <td style="padding:16px 40px 24px;border-top:1px solid #1A3050;">
+              <p style="margin:0;font-size:11px;color:#2A3A50;text-align:center;line-height:1.6;">
+                세계일보 AI기반 취재원 관리시스템 · 본 메일은 발신 전용입니다
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

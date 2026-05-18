@@ -1,0 +1,165 @@
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+@import "tailwindcss";
+
+:root {
+  /* 세계일보 취재원 관리시스템 다크블루 테마 */
+  --bg-base: #0A1628;
+  --bg-card: #0F2040;
+  --bg-elevated: #132850;
+  --bg-hover: #1A3560;
+
+  --accent-blue: #1E90FF;
+  --accent-cyan: #00D4FF;
+  --accent-gold: #FFD700;
+
+  --text-primary: #E8F0FE;
+  --text-secondary: #8899BB;
+  --text-muted: #4A6080;
+
+  --border-default: #1A3050;
+  --border-bright: #2A4570;
+
+  --danger: #FF4444;
+  --success: #00CC66;
+  --warning: #FF9900;
+
+  --background: var(--bg-base);
+  --foreground: var(--text-primary);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.15;
+}
+
+/* ── 전역 줄간격 압축 ── */
+p, span, div, li, td, th, label, a, button {
+  line-height: 1.15;
+}
+
+/* Tailwind space-y 오버라이드: 전반적인 섹션 간격 축소 */
+.space-y-6 > * + * { margin-top: 0.75rem !important; }
+.space-y-5 > * + * { margin-top: 0.625rem !important; }
+.space-y-4 > * + * { margin-top: 0.5rem !important; }
+.space-y-3 > * + * { margin-top: 0.375rem !important; }
+.space-y-2 > * + * { margin-top: 0.25rem !important; }
+.space-y-1 > * + * { margin-top: 0.125rem !important; }
+
+/* 스크롤바 스타일 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-base);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent-blue);
+}
+
+/* 글래스모피즘 카드 */
+.glass-card {
+  background: rgba(15, 32, 64, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid var(--border-default);
+  border-radius: 10px;
+}
+
+/* 카드 기본 패딩 압축 */
+.glass-card.p-6 { padding: 1rem !important; }
+.glass-card.p-5 { padding: 0.875rem !important; }
+.glass-card.p-4 { padding: 0.75rem !important; }
+
+/* 완성도 점수 색상 */
+.score-low { color: var(--danger); }
+.score-mid { color: var(--warning); }
+.score-high { color: var(--success); }
+
+/* 포인트 증가 애니메이션 */
+@keyframes pointPop {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); color: var(--accent-gold); }
+  100% { transform: scale(1); }
+}
+.point-pop {
+  animation: pointPop 0.4s ease-out;
+}
+
+/* 대시보드 취재원 링크 hover */
+.dashboard-source-link:hover {
+  background: #1A3560 !important;
+}
+
+/* 워터마크 (보안용 — DOM에서 제거/변조 불가) */
+.watermark-overlay {
+  position: fixed !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  pointer-events: none !important;
+  user-select: none !important;
+  z-index: 9999 !important;
+  overflow: hidden !important;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* 네트워크 그래프 컨테이너 */
+.graph-container {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+/* 역할 배지 색상 */
+.role-superadmin { background: rgba(255, 68, 68, 0.15); color: #FF4444; border: 1px solid rgba(255, 68, 68, 0.3); }
+.role-admin { background: rgba(255, 215, 0, 0.15); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3); }
+.role-deputy { background: rgba(0, 212, 255, 0.15); color: #00D4FF; border: 1px solid rgba(0, 212, 255, 0.3); }
+.role-reporter { background: rgba(30, 144, 255, 0.15); color: #1E90FF; border: 1px solid rgba(30, 144, 255, 0.3); }
+
+/* 민감도 배지 */
+.sensitivity-public { background: rgba(0, 204, 102, 0.15); color: #00CC66; }
+.sensitivity-private { background: rgba(255, 153, 0, 0.15); color: #FF9900; }
+
+/* 입력 필드 */
+input, textarea, select {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-default);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 8px 12px;
+  transition: border-color 0.2s;
+}
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--accent-blue);
+  box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.2);
+}
+input::placeholder, textarea::placeholder {
+  color: var(--text-muted);
+}
