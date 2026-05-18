@@ -94,14 +94,13 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
 
   return (
     <aside
-      className={`flex flex-col h-screen w-60 fixed left-0 top-0 z-40 transition-transform duration-300 ease-in-out
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
+      className={`app-sidebar flex flex-col h-screen w-60 fixed left-0 top-0 z-40${mobileOpen ? ' sidebar-open' : ''}`}
       style={{ background: '#0A1628', borderRight: '1px solid #1A3050' }}>
 
       {/* 모바일 닫기 버튼 */}
       {onMobileClose && (
         <button
-          className="md:hidden absolute top-3 right-3 z-10"
+          className="sidebar-close-btn"
           onClick={onMobileClose}
           style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A6080', fontSize: 22, lineHeight: 1, padding: 4 }}
           aria-label="메뉴 닫기">

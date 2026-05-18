@@ -67,7 +67,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* 통계 카드 4개 — 모바일 2열 / 데스크톱 4열 */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      <div className="dashboard-stats-grid">
         {[
           { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#1E90FF', icon: '👤' },
           { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#00D4FF', icon: '🌐' },
@@ -89,11 +89,11 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {/* 메인 콘텐츠 — 모바일 1열 / 데스크톱 3열 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      {/* 메인 콘텐츠 — 모바일 1열 / 데스크톱 2:1 */}
+      <div className="dashboard-main-grid">
 
         {/* 최근 등록 취재원 */}
-        <div className="md:col-span-2 glass-card p-4 md:p-5">
+        <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold" style={{ color: '#E8F0FE' }}>최근 등록한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#1E90FF' }}>
@@ -203,7 +203,7 @@ export default async function DashboardPage() {
               전체 보기 →
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div className="dashboard-help-grid">
             {openHelp.map((req: any) => (
               <Link
                 key={req.id}
