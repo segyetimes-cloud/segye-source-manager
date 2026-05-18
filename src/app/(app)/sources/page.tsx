@@ -65,32 +65,33 @@ export default async function SourcesPage({
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>취재원 목록</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>취재원 목록</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#8899BB' }}>
             {tab === 'personal' ? '내 취재원 목록' : '편집국 공유 목록'}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="source-header-actions">
           <Link
             href="/sources/new"
-            className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold"
             style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white' }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="2" strokeLinecap="round"/>
             </svg>
-            새 취재원
+            <span className="hidden sm:inline">새 취재원</span>
+            <span className="sm:hidden">등록</span>
           </Link>
           <Link
             href="/sources/import"
-            className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors"
             style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            엑셀 가져오기
+            <span className="hidden sm:inline">엑셀 가져오기</span>
           </Link>
         </div>
       </div>

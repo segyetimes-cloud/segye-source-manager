@@ -66,63 +66,62 @@ export default function SourceListClient({
   return (
     <div className="space-y-4">
       {/* 탭 + 검색 */}
-      <div className="flex items-center gap-4">
-        {/* 탭 */}
-        <div className="flex rounded-lg p-1" style={{ background: '#0F2040', border: '1px solid #1A3050' }}>
-          {[
-            { value: 'personal', label: '내 목록' },
-            { value: 'shared', label: '공유 목록' },
-          ].map(t => (
-            <button
-              key={t.value}
-              onClick={() => navigate({ tab: t.value, q: currentQuery, page: '1' })}
-              className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-              style={{
-                background: currentTab === t.value ? '#1E90FF' : 'transparent',
-                color: currentTab === t.value ? 'white' : '#8899BB',
-              }}>
-              {t.label}
-            </button>
-          ))}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        {/* 탭 + 총 건수 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div className="flex rounded-lg p-1" style={{ background: '#0F2040', border: '1px solid #1A3050' }}>
+            {[
+              { value: 'personal', label: '내 목록' },
+              { value: 'shared', label: '공유 목록' },
+            ].map(t => (
+              <button
+                key={t.value}
+                onClick={() => navigate({ tab: t.value, q: currentQuery, page: '1' })}
+                className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                style={{
+                  background: currentTab === t.value ? '#1E90FF' : 'transparent',
+                  color: currentTab === t.value ? 'white' : '#8899BB',
+                }}>
+                {t.label}
+              </button>
+            ))}
+          </div>
+          <span className="text-sm flex-shrink-0" style={{ color: '#4A6080' }}>
+            총 {totalCount.toLocaleString()}명
+          </span>
         </div>
 
         {/* 검색 */}
-        <form onSubmit={handleSearch} className="flex-1 flex gap-2">
+        <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
           <input
             type="text"
             value={searchInput}
             onChange={e => setSearchInput(e.target.value)}
-            placeholder="이름, 소속, 직책, 고시기수, 대학 등으로 검색..."
+            placeholder="이름, 소속, 직책 등으로 검색..."
             style={{
               flex: 1,
               background: '#0F2040',
               border: '1px solid #1A3050',
               color: '#E8F0FE',
               borderRadius: '8px',
-              padding: '8px 14px',
+              padding: '8px 12px',
               fontSize: '14px',
             }}
           />
           <button
             type="submit"
-            className="px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: '#1E90FF', color: 'white', border: 'none' }}>
+            style={{ background: '#1E90FF', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 14, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
             검색
           </button>
           {currentQuery && (
             <button
               type="button"
               onClick={() => { setSearchInput(''); navigate({ tab: currentTab, page: '1' }) }}
-              className="px-3 py-2 rounded-lg text-sm"
-              style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050' }}>
+              style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', borderRadius: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
               초기화
             </button>
           )}
         </form>
-
-        <span className="text-sm flex-shrink-0" style={{ color: '#4A6080' }}>
-          총 {totalCount.toLocaleString()}명
-        </span>
       </div>
 
       {/* 목록 */}
@@ -133,107 +132,151 @@ export default function SourceListClient({
         </div>
       ) : initialSources.length > 0 ? (
         <div className="glass-card overflow-hidden">
-          {/* 테이블 헤더 */}
-          <div className="grid grid-cols-12 gap-4 px-5 py-3 text-xs font-semibold"
+          {/* 데스크톱: 테이블 헤더 */}
+          <div className="source-table-header"
             style={{ background: '#132850', color: '#4A6080', borderBottom: '1px solid #1A3050' }}>
-            <div className="col-span-3">이름 / 소속</div>
-            <div className="col-span-2">직책</div>
-            <div className="col-span-2">연락처</div>
-            <div className="col-span-2">태그</div>
-            <div className="col-span-1 text-center">완성도</div>
-            <div className="col-span-1 text-center">민감도</div>
-            <div className="col-span-1 text-center">구분</div>
+            <div style={{ flex: '3 1 0' }}>이름 / 소속</div>
+            <div style={{ flex: '2 1 0' }}>직책</div>
+            <div style={{ flex: '2 1 0' }}>연락처</div>
+            <div style={{ flex: '2 1 0' }}>태그</div>
+            <div style={{ flex: '1 1 0', textAlign: 'center' }}>완성도</div>
+            <div style={{ flex: '1 1 0', textAlign: 'center' }}>민감도</div>
+            <div style={{ flex: '1 1 0', textAlign: 'center' }}>구분</div>
           </div>
 
-          {/* 행 */}
+          {/* 행 — 데스크톱: 가로 테이블 / 모바일: 카드 */}
           {initialSources.map(source => (
             <Link
               key={source.id}
               href={`/sources/${source.id}`}
-              className="grid grid-cols-12 gap-4 px-5 py-2.5 transition-colors items-center"
-              style={{ borderBottom: '1px solid #1A3050', color: 'inherit', textDecoration: 'none' }}
+              className="source-list-row"
+              style={{ borderBottom: '1px solid #1A3050', color: 'inherit', textDecoration: 'none', display: 'block' }}
               onMouseEnter={e => (e.currentTarget.style.background = '#132850')}
               onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
 
-              {/* 이름/소속 */}
-              <div className="col-span-3 flex items-center gap-3">
-                <div className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                  style={{ background: 'rgba(30,144,255,0.15)', color: '#1E90FF' }}>
-                  {source.full_name[0]}
+              {/* 모바일 카드 뷰 */}
+              <div className="source-card-mobile">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <div style={{
+                    width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(30,144,255,0.15)', color: '#1E90FF',
+                    fontSize: 14, fontWeight: 700,
+                  }}>
+                    {source.full_name[0]}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ color: '#E8F0FE', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {source.full_name}
+                    </p>
+                    <p style={{ color: '#8899BB', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {source.current_organization ?? '—'} {source.current_position ? `· ${source.current_position}` : ''}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
+                      {source.completeness_score}점
+                    </span>
+                    <span className={`sensitivity-${source.sensitivity}`}
+                      style={{ fontSize: 11, padding: '1px 6px', borderRadius: 99 }}>
+                      {source.sensitivity === 'private' ? '🔒 비공개' : '공개'}
+                    </span>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold truncate" style={{ color: '#E8F0FE' }}>
-                    {source.full_name}
-                  </p>
-                  <p className="text-xs truncate" style={{ color: '#8899BB' }}>
-                    {source.current_organization ?? '—'}
-                  </p>
-                </div>
-              </div>
-
-              {/* 직책 */}
-              <div className="col-span-2">
-                <p className="text-sm truncate" style={{ color: '#8899BB' }}>
-                  {source.current_position ?? '—'}
-                </p>
-              </div>
-
-              {/* 연락처 */}
-              <div className="col-span-2">
-                <p className="text-xs truncate" style={{ color: '#8899BB' }}>
-                  {source.phone_primary ?? source.email_primary ?? '—'}
-                </p>
-              </div>
-
-              {/* 태그 */}
-              <div className="col-span-2 flex flex-wrap gap-1">
-                {source.exam_batch && (
-                  <span className="text-xs px-1.5 py-0.5 rounded"
-                    style={{ background: 'rgba(0,212,255,0.1)', color: '#00D4FF' }}>
-                    {source.exam_batch}
-                  </span>
+                {(source.phone_primary || source.email_primary || source.exam_batch || source.tags.length > 0) && (
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                    {source.phone_primary && (
+                      <span style={{ fontSize: 11, color: '#8899BB' }}>{source.phone_primary}</span>
+                    )}
+                    {source.exam_batch && (
+                      <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#00D4FF' }}>
+                        {source.exam_batch}
+                      </span>
+                    )}
+                    {source.tags.slice(0, 3).map(tag => (
+                      <span key={tag} style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#8899BB' }}>
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
                 )}
-                {source.tags.slice(0, 2).map(tag => (
-                  <span key={tag} className="text-xs px-1.5 py-0.5 rounded"
-                    style={{ background: 'rgba(30,144,255,0.1)', color: '#8899BB' }}>
-                    {tag}
-                  </span>
-                ))}
               </div>
 
-              {/* 완성도 */}
-              <div className="col-span-1 flex flex-col items-center gap-1">
-                <span className="text-xs font-bold" style={{ color: scoreColor(source.completeness_score) }}>
-                  {source.completeness_score}
-                </span>
-                <div className="w-10 h-1 rounded-full" style={{ background: '#1A3050' }}>
-                  <div
-                    className="h-full rounded-full"
-                    style={{
-                      width: `${source.completeness_score}%`,
-                      background: scoreColor(source.completeness_score),
-                    }}
-                  />
+              {/* 데스크톱 테이블 뷰 */}
+              <div className="source-row-desktop">
+                {/* 이름/소속 */}
+                <div style={{ flex: '3 1 0', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                  <div style={{
+                    width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(30,144,255,0.15)', color: '#1E90FF',
+                    fontSize: 12, fontWeight: 700,
+                  }}>
+                    {source.full_name[0]}
+                  </div>
+                  <div style={{ minWidth: 0 }}>
+                    <p style={{ color: '#E8F0FE', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {source.full_name}
+                    </p>
+                    <p style={{ color: '#8899BB', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {source.current_organization ?? '—'}
+                    </p>
+                  </div>
                 </div>
-              </div>
-
-              {/* 민감도 */}
-              <div className="col-span-1 flex justify-center">
-                <span className={`text-xs px-2 py-0.5 rounded-full sensitivity-${source.sensitivity}`}>
-                  {source.sensitivity === 'private' ? '🔒 비공개' : '공개'}
-                </span>
-              </div>
-
-              {/* 구분 */}
-              <div className="col-span-1 flex justify-center">
-                <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{
-                    background: source.visibility === 'shared'
-                      ? 'rgba(0,204,102,0.1)' : 'rgba(30,144,255,0.1)',
+                {/* 직책 */}
+                <div style={{ flex: '2 1 0', minWidth: 0 }}>
+                  <p style={{ color: '#8899BB', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {source.current_position ?? '—'}
+                  </p>
+                </div>
+                {/* 연락처 */}
+                <div style={{ flex: '2 1 0', minWidth: 0 }}>
+                  <p style={{ color: '#8899BB', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {source.phone_primary ?? source.email_primary ?? '—'}
+                  </p>
+                </div>
+                {/* 태그 */}
+                <div style={{ flex: '2 1 0', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {source.exam_batch && (
+                    <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#00D4FF' }}>
+                      {source.exam_batch}
+                    </span>
+                  )}
+                  {source.tags.slice(0, 2).map(tag => (
+                    <span key={tag} style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#8899BB' }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+                {/* 완성도 */}
+                <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                  <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
+                    {source.completeness_score}
+                  </span>
+                  <div style={{ width: 40, height: 4, borderRadius: 99, background: '#1A3050' }}>
+                    <div style={{
+                      width: `${source.completeness_score}%`, height: '100%',
+                      borderRadius: 99, background: scoreColor(source.completeness_score),
+                    }} />
+                  </div>
+                </div>
+                {/* 민감도 */}
+                <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'center' }}>
+                  <span className={`sensitivity-${source.sensitivity}`}
+                    style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99 }}>
+                    {source.sensitivity === 'private' ? '🔒 비공개' : '공개'}
+                  </span>
+                </div>
+                {/* 구분 */}
+                <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'center' }}>
+                  <span style={{
+                    fontSize: 11, padding: '2px 8px', borderRadius: 99,
+                    background: source.visibility === 'shared' ? 'rgba(0,204,102,0.1)' : 'rgba(30,144,255,0.1)',
                     color: source.visibility === 'shared' ? '#00CC66' : '#8899BB',
                   }}>
-                  {source.visibility === 'shared' ? '공유' : '개인'}
-                </span>
+                    {source.visibility === 'shared' ? '공유' : '개인'}
+                  </span>
+                </div>
               </div>
             </Link>
           ))}
