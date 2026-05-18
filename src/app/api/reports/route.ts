@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         .from('report_sources')
         .select('report_id')
         .in('source_id', matchingSourceIds)
-      matchingReportIds = [...new Set((links ?? []).map((l: any) => l.report_id as string))]
+      matchingReportIds = [...new Set<string>((links ?? []).map((l: any) => l.report_id as string))]
     }
 
     if (matchingReportIds.length > 0) {

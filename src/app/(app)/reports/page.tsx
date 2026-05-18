@@ -70,7 +70,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
         .from('report_sources')
         .select('report_id')
         .in('source_id', matchingSourceIds)
-      matchingReportIds = [...new Set((links ?? []).map((l: any) => l.report_id as string))]
+      matchingReportIds = [...new Set<string>((links ?? []).map((l: any) => l.report_id as string))]
     }
 
     if (matchingReportIds.length > 0) {
