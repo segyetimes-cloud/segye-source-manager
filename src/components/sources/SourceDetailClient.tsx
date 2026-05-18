@@ -13,6 +13,13 @@ interface SourceNote {
   profiles: { id: string; full_name: string; department: string | null } | null
 }
 
+interface RelatedReport {
+  id: string
+  title: string
+  created_at: string
+  profiles: { full_name: string } | null
+}
+
 interface Props {
   source: Source & {
     profiles?: { full_name: string; email: string; department: string | null }
@@ -32,6 +39,7 @@ interface Props {
   userId: string
   initialNotes: SourceNote[]
   lockedNotesCount: number
+  relatedReports?: RelatedReport[]
 }
 
 const FIELD_LABELS: Record<string, string> = {
@@ -185,6 +193,7 @@ export default function SourceDetailClient({
   isOwner, isAdmin, isDeputyOrAbove = false, userRole = 'reporter',
   canSeePersonalNotes = false,
   userId, initialNotes, lockedNotesCount,
+  relatedReports = [],
 }: Props) {
   const router = useRouter()
   const [showHistory, setShowHistory] = useState(false)
@@ -926,6 +935,37 @@ export default function SourceDetailClient({
             ) : (
               <p className="text-sm text-center py-4" style={{ color: '#4A6080' }}>수정 이력이 없습니다.</p>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* 관련 정보보고 */}
+      {relatedReports.length > 0 && (
+        <div className="glass-card p-5">
+          <h2 className="text-sm font-semibold mb-3" style={{ color: '#E8F0FE' }}>
+            📋 관련 정보보고 ({relatedReports.length}건)
+          </h2>
+          <div className="space-y-2">
+            {relatedReports.map(report => (
+              <a key={report.id} href={`/reports/${report.id}`} style={{ textDecoration: 'none', display: 'block' }}>
+                <div className="flex items-center justify-between rounded-lg px-3 py-2"
+                  style={{ background: '#132850', border: '1px solid #1A3050', cursor: 'pointer' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#1E90FF')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#1A3050')}>
+                  <span className="text-sm font-medium truncate" style={{ color: '#D0DFF5', flex: 1 }}>
+                    {report.title}
+                  </span>
+                  <div className="flex items-center gap-3 ml-3 shrink-0">
+                    {report.profiles?.full_name && (
+                      <span className="text-xs" style={{ color: '#5A7099' }}>{report.profiles.full_name}</span>
+                    )}
+                    <span className="text-xs" style={{ color: '#4A6080' }}>
+                      {new Date(report.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
+                    </span>
+                  </div>
+                </div>
+              </a>
+            ))}
           </div>
         </div>
       )}

@@ -115,6 +115,17 @@ export default async function SourceDetailPage({ params }: Params) {
     ...sensitiveNotes,
   ].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) as any[]
 
+  // 관련 정보보고 조회
+  const { data: relatedReportsRaw } = await supabaseAny
+    .from('report_sources')
+    .select('report_id, information_reports!report_id(id, title, created_at, is_deleted, profiles!author_id(full_name))')
+    .eq('source_id', id)
+
+  const relatedReports = ((relatedReportsRaw ?? []) as any[])
+    .map((rs: any) => rs.information_reports)
+    .filter((r: any) => r && !r.is_deleted)
+    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+
   return (
     <SourceDetailClient
       source={source as any}
@@ -131,6 +142,7 @@ export default async function SourceDetailPage({ params }: Params) {
       initialNotes={initialNotes}
       lockedNotesCount={lockedNotesCount}
       canSeePersonalNotes={canSeePersonalNotes}
+      relatedReports={relatedReports}
     />
   )
 }

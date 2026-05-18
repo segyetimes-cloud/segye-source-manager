@@ -1,6 +1,7 @@
 export type UserRole = 'superadmin' | 'admin' | 'deputy' | 'reporter'
 export type SourceVisibility = 'personal' | 'shared'
 export type SensitivityLevel = 'public' | 'private'
+export type ReportVisibility = 'author_only' | 'desk_above' | 'all'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
 export type AuditAction = 'view' | 'create' | 'update' | 'delete' | 'export' | 'import' | 'view_private' | 'approve' | 'reject'
 export type PointType = 'source_created' | 'source_completed' | 'contribution_used' | 'usefulness_rating' | 'help_provided' | 'help_accepted' | 'daily_login' | 'penalty_deduct'
@@ -280,6 +281,31 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['export_logs']['Row'], 'id' | 'exported_at'>
         Update: never
       }
+      information_reports: {
+        Row: {
+          id: string
+          author_id: string
+          title: string
+          content: string
+          tags: string[]
+          visibility: ReportVisibility
+          is_deleted: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['information_reports']['Row'], 'id' | 'created_at' | 'updated_at'>
+        Update: Partial<Database['public']['Tables']['information_reports']['Insert']>
+      }
+      report_sources: {
+        Row: {
+          id: string
+          report_id: string
+          source_id: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['report_sources']['Row'], 'id' | 'created_at'>
+        Update: never
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -314,3 +340,7 @@ export type UserPointsSummary = Database['public']['Tables']['user_points_summar
 export type HelpRequest = Database['public']['Tables']['help_requests']['Row']
 export type HelpResponse = Database['public']['Tables']['help_responses']['Row']
 export type ImportJob = Database['public']['Tables']['import_jobs']['Row']
+
+// ── 정보보고 편의 타입 ────────────────────────────────────────────────────────
+export type InformationReport = Database['public']['Tables']['information_reports']['Row']
+export type ReportSource = Database['public']['Tables']['report_sources']['Row']

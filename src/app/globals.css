@@ -324,6 +324,19 @@ p, span, div, li, td, th, label, a, button {
 .sensitivity-public { background: rgba(0, 204, 102, 0.15); color: #00CC66; }
 .sensitivity-private { background: rgba(255, 153, 0, 0.15); color: #FF9900; }
 
+/* ── 정보보고 카드 그리드 ── */
+.report-card-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+@media (min-width: 640px) {
+  .report-card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}
+
 /* 입력 필드 */
 input, textarea, select {
   background: var(--bg-elevated);
