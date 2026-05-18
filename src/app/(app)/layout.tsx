@@ -1,6 +1,6 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Sidebar from '@/components/layout/Sidebar'
+import SidebarLayout from '@/components/layout/SidebarLayout'
 import Watermark from '@/components/layout/Watermark'
 
 export default async function AppLayout({
@@ -28,16 +28,10 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="flex min-h-screen" style={{ background: '#0A1628' }}>
-      {/* 사이드바 */}
-      <Sidebar profile={profile} />
-
-      {/* 메인 콘텐츠 */}
-      <main className="flex-1 ml-60 min-h-screen" style={{ background: '#0A1628' }}>
-        <div className="p-4">
-          {children}
-        </div>
-      </main>
+    <div className="min-h-screen" style={{ background: '#0A1628' }}>
+      <SidebarLayout profile={profile}>
+        {children}
+      </SidebarLayout>
 
       {/* 워터마크 오버레이 (보안) */}
       <Watermark

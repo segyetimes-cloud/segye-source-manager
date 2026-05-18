@@ -1,17 +1,42 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+
+const STORAGE_KEY = 'segye_dismissed_duplicates'
 
 interface Props {
   duplicateNames: string[]
 }
 
 export default function DuplicateWarning({ duplicateNames }: Props) {
-  const [dismissed, setDismissed] = useState(false)
+  const [dismissedNames, setDismissedNames] = useState<string[]>([])
+  const [hydrated, setHydrated] = useState(false)
   const router = useRouter()
 
-  if (dismissed || duplicateNames.length === 0) return null
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY)
+      if (stored) setDismissedNames(JSON.parse(stored))
+    } catch {}
+    setHydrated(true)
+  }, [])
+
+  // 실제로 DB에서 사라진 이름은 dismissed 목록에서도 정리
+  useEffect(() => {
+    if (!hydrated) return
+    setDismissedNames(prev => {
+      const filtered = prev.filter(name => duplicateNames.includes(name))
+      if (filtered.length !== prev.length) {
+        try { localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered)) } catch {}
+      }
+      return filtered
+    })
+  }, [hydrated, duplicateNames.join(',')])
+
+  const visibleNames = duplicateNames.filter(name => !dismissedNames.includes(name))
+
+  if (!hydrated || visibleNames.length === 0) return null
 
   return (
     <div className="rounded-lg px-4 py-3 flex items-start justify-between gap-3"
@@ -20,7 +45,7 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
         <span className="flex-shrink-0 mt-0.5">⚠️</span>
         <span>
           <strong>중복 이름 감지:</strong>{' '}
-          {duplicateNames.map((name, i) => (
+          {visibleNames.map((name, i) => (
             <span key={name}>
               {i > 0 && ', '}
               <button
@@ -44,7 +69,11 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
         </span>
       </div>
       <button
-        onClick={() => setDismissed(true)}
+        onClick={() => {
+          const next = [...dismissedNames, ...visibleNames]
+          setDismissedNames(next)
+          try { localStorage.setItem(STORAGE_KEY, JSON.stringify(next)) } catch {}
+        }}
         title="닫기"
         style={{
           flexShrink: 0,

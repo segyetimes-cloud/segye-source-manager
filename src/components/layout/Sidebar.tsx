@@ -66,9 +66,11 @@ const adminNavItems = [
 
 interface SidebarProps {
   profile: Profile
+  mobileOpen?: boolean
+  onMobileClose?: () => void
 }
 
-export default function Sidebar({ profile }: SidebarProps) {
+export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: SidebarProps) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -91,8 +93,21 @@ export default function Sidebar({ profile }: SidebarProps) {
   const roleClass = `role-${profile.role}`
 
   return (
-    <aside className="flex flex-col h-screen w-60 fixed left-0 top-0 z-40"
+    <aside
+      className={`flex flex-col h-screen w-60 fixed left-0 top-0 z-40 transition-transform duration-300 ease-in-out
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full'} md:translate-x-0`}
       style={{ background: '#0A1628', borderRight: '1px solid #1A3050' }}>
+
+      {/* 모바일 닫기 버튼 */}
+      {onMobileClose && (
+        <button
+          className="md:hidden absolute top-3 right-3 z-10"
+          onClick={onMobileClose}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A6080', fontSize: 22, lineHeight: 1, padding: 4 }}
+          aria-label="메뉴 닫기">
+          ×
+        </button>
+      )}
 
       {/* 로고 */}
       <div className="px-5 py-2.5" style={{ borderBottom: '1px solid #1A3050' }}>

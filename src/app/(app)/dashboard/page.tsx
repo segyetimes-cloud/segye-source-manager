@@ -47,52 +47,53 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>대시보드</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>대시보드</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#8899BB' }}>
             {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
           </p>
         </div>
         <Link
           href="/sources/new"
-          className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80"
+          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80 flex-shrink-0"
           style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white' }}>
-          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-          새 취재원 등록
+          <span className="hidden sm:inline">새 취재원 등록</span>
+          <span className="sm:hidden">등록</span>
         </Link>
       </div>
 
-      {/* 통계 카드 4개 */}
-      <div className="grid grid-cols-4 gap-4">
+      {/* 통계 카드 4개 — 모바일 2열 / 데스크톱 4열 */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {[
           { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#1E90FF', icon: '👤' },
           { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#00D4FF', icon: '🌐' },
           { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#FFD700', icon: '⭐' },
           { label: '공개 도움요청', value: openHelp?.length ?? 0, unit: '건', color: '#00CC66', icon: '🙋' },
         ].map(stat => (
-          <div key={stat.label} className="glass-card p-5">
+          <div key={stat.label} className="glass-card p-4">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium mb-1" style={{ color: '#8899BB' }}>{stat.label}</p>
-                <p className="text-3xl font-bold" style={{ color: stat.color }}>
+                <p className="text-2xl font-bold" style={{ color: stat.color }}>
                   {stat.value.toLocaleString()}
                 </p>
-                <p className="text-xs mt-1" style={{ color: '#4A6080' }}>{stat.unit}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#4A6080' }}>{stat.unit}</p>
               </div>
-              <span className="text-2xl">{stat.icon}</span>
+              <span className="text-xl">{stat.icon}</span>
             </div>
           </div>
         ))}
       </div>
 
-      {/* 메인 콘텐츠 2열 */}
-      <div className="grid grid-cols-3 gap-6">
+      {/* 메인 콘텐츠 — 모바일 1열 / 데스크톱 3열 */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
 
         {/* 최근 등록 취재원 */}
-        <div className="col-span-2 glass-card p-5">
+        <div className="md:col-span-2 glass-card p-4 md:p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold" style={{ color: '#E8F0FE' }}>최근 등록한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#1E90FF' }}>
@@ -202,7 +203,7 @@ export default async function DashboardPage() {
               전체 보기 →
             </Link>
           </div>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {openHelp.map((req: any) => (
               <Link
                 key={req.id}
