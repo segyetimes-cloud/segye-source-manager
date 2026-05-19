@@ -22,18 +22,65 @@ interface Props {
 }
 
 // ── 공유 텍스트 파싱 ──────────────────────────────────────────────────────────
+// 지원 형식:
+//  A) 레이블+값 같은 줄  "이름: 홍길동"
+//  B) 레이블 단독 줄     "이름\n홍길동"   ← 삼성/갤럭시 연락처 공유
+//  C) 레이블 없는 줄 나열 "홍길동\n기획재정부\n예산실장\n010-..."
 function parseContactText(raw: string): FillData {
-  // 줄·구분자로 분리
-  const lines = raw.split(/[\n\r,|·•]/).map(l => l.trim()).filter(Boolean)
+  const lines = raw.split(/[\n\r]/).map(l => l.trim()).filter(Boolean)
 
-  // 레이블 제거  "이름: 홍길동" → "홍길동"
-  const LABEL_RE = /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|부서|department|주소|address|fax|팩스)\s*[:：]\s*/i
-  const strip = (s: string) => s.replace(LABEL_RE, '').trim()
+  // ── 레이블 사전 ─────────────────────────────────────────────────────────────
+  const LBLS = {
+    name:  ['이름','성명','name'],
+    phone: ['전화','전화번호','연락처','모바일','휴대폰','핸드폰','휴대전화','직통','cell','mobile','tel','phone'],
+    email: ['이메일','email','e-mail'],
+    org:   ['소속','회사','직장','기관','부처','근무지','organization','company','work'],
+    pos:   ['직책','직함','직위','직급','보직','title'],
+    dept:  ['부서','department'],
+    etc:   ['주소','address','팩스','fax','홈','home','집'],
+  }
+  const ALL_LBLS = Object.values(LBLS).flat().map(s => s.toLowerCase())
 
-  // 이메일
+  // 레이블 전용 줄인지 확인 → 해당 카테고리 키 반환, 아니면 null
+  function labelOf(line: string): string | null {
+    // "이름:" 또는 "이름" 형태 모두 처리
+    const clean = line.replace(/[:：\s]+$/, '').toLowerCase()
+    for (const [cat, arr] of Object.entries(LBLS)) {
+      if (arr.some(l => l.toLowerCase() === clean)) return cat
+    }
+    return null
+  }
+
+  // ── 키-값 맵 구성 ───────────────────────────────────────────────────────────
+  const kv: Record<string, string> = {}   // cat → value
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+
+    // 형식 A: "레이블: 값" 또는 "레이블값" (콜론 있음)
+    const colonMatch = line.match(
+      /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|부서|department)\s*[:：]\s*(.+)/i
+    )
+    if (colonMatch) {
+      const cat = labelOf(colonMatch[1]) ?? colonMatch[1].toLowerCase()
+      if (!kv[cat]) kv[cat] = colonMatch[2].trim()
+      continue
+    }
+
+    // 형식 B: 레이블 단독 줄 → 다음 줄이 값
+    const cat = labelOf(line)
+    if (cat && i + 1 < lines.length) {
+      const next = lines[i + 1]
+      if (!labelOf(next)) {           // 다음 줄이 또 레이블이면 건너뜀
+        if (!kv[cat]) kv[cat] = next.trim()
+        i++                           // 값 줄 소비
+      }
+    }
+  }
+
+  // ── 전화·이메일: raw 전체에서 정규식 추출 (가장 신뢰도 높음) ──────────────
   const email = raw.match(/[\w.+\-]+@[\w\-]+\.[\w.]{2,}/i)?.[0]?.toLowerCase()
 
-  // 전화: 010 최우선
   const allNums = raw.match(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g) ?? []
   let phone: string | undefined
   for (const p of allNums) {
@@ -44,63 +91,45 @@ function parseContactText(raw: string): FillData {
   }
   if (!phone && allNums.length > 0) phone = allNums[0]
 
-  // ── 이름 ──────────────────────────────────────────────────────────────────
-  // 1순위: "이름: 홍길동" 레이블
-  let full_name: string | undefined
-  for (const line of lines) {
-    if (/^(이름|성명|name)\s*[:：]/i.test(line)) {
-      const v = strip(line)
-      if (v) { full_name = v; break }
-    }
-  }
-  // 2순위: 한글 2~5자 단독 라인
+  // ── 이름 ───────────────────────────────────────────────────────────────────
+  // 1순위: kv 맵에서
+  let full_name: string | undefined = kv['name']
+
+  // 2순위: 레이블이 아닌 한글 2~5자 단독 줄
   if (!full_name) {
     for (const line of lines) {
-      const v = strip(line)
-      if (/^[가-힣]{2,5}$/.test(v)) { full_name = v; break }
-    }
-  }
-  // 3순위: 짧은 한글 포함 라인 (숫자·@·영문 과반 제외)
-  if (!full_name) {
-    for (const line of lines) {
-      const v = strip(line)
-      if (/[가-힣]{2,}/.test(v) && v.length <= 10 && !/\d/.test(v) && !v.includes('@')) {
-        const m = v.match(/[가-힣]{2,5}/)
-        if (m) { full_name = m[0]; break }
+      if (labelOf(line)) continue                       // 레이블 줄 제외
+      if (ALL_LBLS.includes(line.toLowerCase())) continue  // 레이블 단어 제외
+      if (/^[가-힣]{2,5}$/.test(line) && !/\d/.test(line)) {
+        full_name = line; break
       }
     }
   }
 
-  // ── 소속 ──────────────────────────────────────────────────────────────────
-  const ORG_LABEL_RE = /^(소속|회사|직장|기관|부처|organization|company)\s*[:：]/i
-  const ORG_KEYWORD_RE = /주식회사|㈜|\(주\)|법무법인|법인|기업|그룹|병원|대학교|대학|연구소|협회|재단|공사|공단|방송|신문|일보|뉴스|미디어|컨설팅|부|처|청|원|위원회|국회|정부/
+  // ── 소속 ───────────────────────────────────────────────────────────────────
+  const ORG_KW = /주식회사|㈜|\(주\)|법무법인|법인|기업|그룹|병원|대학교|대학|연구소|협회|재단|공사|공단|방송|신문|일보|뉴스|미디어|컨설팅|위원회|국회|청와대/
 
-  let current_organization: string | undefined
-  for (const line of lines) {
-    if (ORG_LABEL_RE.test(line)) { const v = strip(line); if (v) { current_organization = v; break } }
-  }
+  let current_organization: string | undefined = kv['org']
   if (!current_organization) {
     for (const line of lines) {
-      const v = strip(line)
-      if (ORG_KEYWORD_RE.test(v) && v.length <= 50 && !v.includes('@')) { current_organization = v; break }
+      if (labelOf(line)) continue
+      if (ORG_KW.test(line) && line.length <= 50 && !line.includes('@')) {
+        current_organization = line; break
+      }
     }
   }
 
-  // ── 직책 ──────────────────────────────────────────────────────────────────
-  const POS_LABEL_RE = /^(직책|직함|직위|직급|보직|title)\s*[:：]/i
+  // ── 직책 ───────────────────────────────────────────────────────────────────
   const POS_KWS = ['대표이사','전무이사','상무이사','대표','사장','부장','차장','팀장',
     '과장','대리','이사','본부장','실장','국장','원장','교수','연구원','위원',
     '기자','편집장','변호사','회계사','세무사','사무총장','부회장','회장']
 
-  let current_position: string | undefined
-  for (const line of lines) {
-    if (POS_LABEL_RE.test(line)) { const v = strip(line); if (v) { current_position = v; break } }
-  }
+  let current_position: string | undefined = kv['pos']
   if (!current_position) {
     for (const line of lines) {
-      const v = strip(line)
+      if (labelOf(line)) continue
       for (const kw of POS_KWS) {
-        if (v.includes(kw)) { current_position = v.length <= 20 ? v : kw; break }
+        if (line.includes(kw)) { current_position = line.length <= 20 ? line : kw; break }
       }
       if (current_position) break
     }
