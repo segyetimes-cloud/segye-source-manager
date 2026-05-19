@@ -345,13 +345,26 @@ export default function SourceDetailClient({
     }
   }
 
-  const infoCard = (label: string, value: string | null | undefined, icon?: string) =>
-    value ? (
+  const infoCard = (label: string, value: string | null | undefined, icon?: string) => {
+    if (!value) return null
+    const isPhone = icon === '📞'
+    const isEmail = icon === '📧'
+    const href = isPhone ? `tel:${value.replace(/\s/g, '')}` : isEmail ? `mailto:${value}` : null
+    return (
       <div className="flex flex-col gap-1">
         <span className="text-xs" style={{ color: '#485870' }}>{icon} {label}</span>
-        <span className="text-sm font-medium" style={{ color: '#CDD5E0' }}>{value}</span>
+        {href ? (
+          <a href={href} style={{ color: '#4A7CC0', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}
+            onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
+            onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}>
+            {value}
+          </a>
+        ) : (
+          <span className="text-sm font-medium" style={{ color: '#CDD5E0' }}>{value}</span>
+        )}
       </div>
-    ) : null
+    )
+  }
 
   return (
     <div className="max-w-4xl mx-auto space-y-6">
