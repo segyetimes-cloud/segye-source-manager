@@ -334,10 +334,35 @@ function buildAutoLinks(sources: SourceRow[]): {
     }
   }
 
+  // ── 성능 최적화: 필드별 정규화 맵 사전 빌드 (반복 filter() 제거) ────────────
+  const univFieldMap = new Map<string, SourceRow[]>()
+  const examFieldMap = new Map<string, SourceRow[]>()
+  const orgFieldMap  = new Map<string, SourceRow[]>()
+  const orgRawMap    = new Map<string, SourceRow[]>()   // 위원회 포함 검색용
+  for (const s of sources) {
+    if (s.university) {
+      const n = normalizeUniversity(s.university).normalized
+      if (!univFieldMap.has(n)) univFieldMap.set(n, [])
+      univFieldMap.get(n)!.push(s)
+    }
+    if (s.exam_batch) {
+      const n = normalizeExamBatch(s.exam_batch).normalized
+      if (!examFieldMap.has(n)) examFieldMap.set(n, [])
+      examFieldMap.get(n)!.push(s)
+    }
+    if (s.current_organization) {
+      const n = normalizeOrganization(s.current_organization).normalized
+      if (!orgFieldMap.has(n)) orgFieldMap.set(n, [])
+      orgFieldMap.get(n)!.push(s)
+      // raw map for committee substring search
+      const raw = s.current_organization.trim()
+      if (!orgRawMap.has(raw)) orgRawMap.set(raw, [])
+      orgRawMap.get(raw)!.push(s)
+    }
+  }
+
   for (const [univ, tagMembers] of tagUnivSources) {
-    const fieldMembers = sources.filter(s =>
-      s.university && normalizeUniversity(s.university).normalized === univ
-    )
+    const fieldMembers = univFieldMap.get(univ) ?? []
     for (const tm of tagMembers)
       for (const fm of fieldMembers)
         if (tm.id !== fm.id) addConn(tm.id, fm.id, 'same_university', `동문 (${univ})`, 2)
@@ -345,9 +370,7 @@ function buildAutoLinks(sources: SourceRow[]): {
   }
 
   for (const [exam, tagMembers] of tagExamSources) {
-    const fieldMembers = sources.filter(s =>
-      s.exam_batch && normalizeExamBatch(s.exam_batch).normalized === exam
-    )
+    const fieldMembers = examFieldMap.get(exam) ?? []
     for (const tm of tagMembers)
       for (const fm of fieldMembers)
         if (tm.id !== fm.id) addConn(tm.id, fm.id, 'same_exam', `동기 (${exam})`, 3)
@@ -355,9 +378,7 @@ function buildAutoLinks(sources: SourceRow[]): {
   }
 
   for (const [org, tagMembers] of tagOrgSources) {
-    const fieldMembers = sources.filter(s =>
-      s.current_organization && normalizeOrganization(s.current_organization).normalized === org
-    )
+    const fieldMembers = orgFieldMap.get(org) ?? []
     for (const tm of tagMembers)
       for (const fm of fieldMembers)
         if (tm.id !== fm.id) addConn(tm.id, fm.id, 'same_org', `동료 (${org})`, 2)
@@ -368,9 +389,7 @@ function buildAutoLinks(sources: SourceRow[]): {
     pairAll(members, 60, 'same_exam', k => `동기 (${k})`, 4, cohort)
   // 기수 태그 ↔ exam_batch 필드 교차 매칭
   for (const [cohort, tagMembers] of tagCohortSources) {
-    const fieldMembers = sources.filter(s =>
-      s.exam_batch && normalizeExamBatch(s.exam_batch).normalized === cohort
-    )
+    const fieldMembers = examFieldMap.get(cohort) ?? []
     for (const tm of tagMembers)
       for (const fm of fieldMembers)
         if (tm.id !== fm.id) addConn(tm.id, fm.id, 'same_exam', `동기 (${cohort})`, 4)
@@ -381,10 +400,10 @@ function buildAutoLinks(sources: SourceRow[]): {
     pairAll(members, 60, 'same_position', k => `위원 (${k})`, 3, committee)
   // 위원회 태그 ↔ current_organization 필드 교차 매칭
   for (const [committee, tagMembers] of tagCommitteeSources) {
-    const fieldMembers = sources.filter(s =>
-      s.current_organization?.includes(committee) ||
-      s.current_organization === committee
-    )
+    const fieldMembers: SourceRow[] = []
+    for (const [raw, rows] of orgRawMap) {
+      if (raw.includes(committee) || raw === committee) fieldMembers.push(...rows)
+    }
     for (const tm of tagMembers)
       for (const fm of fieldMembers)
         if (tm.id !== fm.id) addConn(tm.id, fm.id, 'same_position', `위원 (${committee})`, 3)
@@ -468,15 +487,17 @@ export default async function NetworkPage() {
 
   // ── 연결 감지용: 전체 소스 (삭제 안 된 것) — personal_notes 포함
   // 개인 소스도 포함해야 "김용출"처럼 personal로 등록된 취재원의 이름 언급이 감지됨
-  const { data: allSourcesRaw } = await svc
+  const SOURCE_LIMIT = 400
+  const { data: allSourcesRaw, count: totalSourceCount } = await svc
     .from('sources')
     .select(`
       id, full_name, current_organization, current_position,
       university, high_school, exam_batch, hometown_province,
       tags, personal_notes, visibility, owner_id
-    `)
+    `, { count: 'exact' })
     .eq('is_deleted', false)
-    .limit(600)
+    .order('updated_at', { ascending: false })
+    .limit(SOURCE_LIMIT)
 
   const allSources = (allSourcesRaw ?? []) as SourceRow[]
 
@@ -560,6 +581,17 @@ export default async function NetworkPage() {
 
       {/* 중복 이름 경고 */}
       <DuplicateWarning duplicateNames={duplicateNames} />
+
+      {/* 취재원 수 초과 경고 */}
+      {(totalSourceCount ?? 0) > SOURCE_LIMIT && (
+        <div style={{
+          padding: '8px 14px', borderRadius: '8px', fontSize: '12px',
+          background: 'rgba(168,114,40,0.1)', border: '1px solid rgba(168,114,40,0.3)',
+          color: '#A87228',
+        }}>
+          ⚠ 전체 {totalSourceCount}명 중 최근 수정 순 {SOURCE_LIMIT}명만 그래프에 표시됩니다.
+        </div>
+      )}
 
       <div className="graph-container" style={{ height: 'calc(100vh - 140px)', minHeight: '420px' }}>
         <NetworkGraph nodes={nodes} links={allLinks} />

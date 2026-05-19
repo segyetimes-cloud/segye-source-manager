@@ -38,6 +38,7 @@ export default function NewReportPage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [category, setCategory] = useState('일반')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [visibility, setVisibility] = useState<ReportVisibility>('author_only')
@@ -95,7 +96,7 @@ export default function NewReportPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        title, content, tags,
+        title, content, category, tags,
         visibility,
         source_ids: selectedSources.map(s => s.id),
         allowed_user_ids: allowedUsers.map(u => u.id),
@@ -136,17 +137,27 @@ export default function NewReportPage() {
 
       <form onSubmit={handleSubmit} className="space-y-4">
 
-        {/* 제목 */}
-        <div>
-          <label style={labelStyle}>제목 *</label>
-          <input
-            type="text"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            placeholder="보고서 제목을 입력하세요"
-            style={inputStyle}
-            required
-          />
+        {/* 분류 + 제목 */}
+        <div className="grid grid-cols-3 gap-3">
+          <div>
+            <label style={labelStyle}>분류</label>
+            <select value={category} onChange={e => setCategory(e.target.value)} style={inputStyle}>
+              {['일반','단독','공동취재','인터뷰','배경설명','분석','기타'].map(c => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div style={{ gridColumn: 'span 2' }}>
+            <label style={labelStyle}>제목 *</label>
+            <input
+              type="text"
+              value={title}
+              onChange={e => setTitle(e.target.value)}
+              placeholder="보고서 제목을 입력하세요"
+              style={inputStyle}
+              required
+            />
+          </div>
         </div>
 
         {/* 본문 */}

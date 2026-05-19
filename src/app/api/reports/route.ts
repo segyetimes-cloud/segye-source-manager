@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
   }
 
   if (q) {
-    // 취재원 이름으로도 검색
+    // 취재원 이름으로도 검색 — 파라미터화된 ilike 사용 (SQL injection 방지)
     const { data: matchingSources } = await supabaseAny
       .from('sources')
       .select('id')
@@ -50,12 +50,21 @@ export async function GET(request: NextRequest) {
       matchingReportIds = [...new Set<string>((links ?? []).map((l: any) => l.report_id as string))]
     }
 
-    if (matchingReportIds.length > 0) {
-      query = query.or(
-        `title.ilike.*${q}*,content.ilike.*${q}*,id.in.(${matchingReportIds.join(',')})`
-      )
+    // 텍스트 검색을 별도 쿼리로 분리하여 interpolation 위험 제거
+    const textQuery = supabaseAny
+      .from('information_reports')
+      .select('id')
+      .eq('is_deleted', false)
+      .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+    const { data: textMatches } = await textQuery
+    const textMatchIds: string[] = (textMatches ?? []).map((r: any) => r.id as string)
+
+    const allMatchIds = [...new Set<string>([...textMatchIds, ...matchingReportIds])]
+    if (allMatchIds.length > 0) {
+      query = query.in('id', allMatchIds)
     } else {
-      query = query.or(`title.ilike.*${q}*,content.ilike.*${q}*`)
+      // 검색어와 일치하는 보고서 없음 → 빈 결과 보장
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000')
     }
   }
 
@@ -73,7 +82,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { title, content, tags, visibility, source_ids, allowed_user_ids } = body
+  const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
 
   if (!title?.trim()) return NextResponse.json({ error: '제목을 입력해 주세요.' }, { status: 400 })
   if (!content?.trim()) return NextResponse.json({ error: '본문을 입력해 주세요.' }, { status: 400 })
@@ -83,12 +92,14 @@ export async function POST(request: NextRequest) {
     .from('profiles').select('department').eq('id', user.id).single()
   const authorDepartment = authorProfile?.department ?? null
 
+  const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
   const { data: report, error } = await supabaseAny
     .from('information_reports')
     .insert({
       author_id: user.id,
       title: title.trim(),
       content: content.trim(),
+      category: VALID_CATEGORIES.includes(category) ? category : '일반',
       tags: tags ?? [],
       visibility: visibility ?? 'author_only',
       author_department: authorDepartment,

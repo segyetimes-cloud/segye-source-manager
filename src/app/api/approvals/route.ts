@@ -169,13 +169,26 @@ export async function PATCH(request: NextRequest) {
     metadata: { action, reject_reason },
   })
 
-  // 승인된 경우 요청자에게 포인트 지급
+  // 신청자에게 알림 발송 (service role 사용)
+  const serviceClient = createServiceClient() as any
+  const sourceName = (updated as any).sources?.full_name ?? '취재원'
+  await serviceClient.from('notifications').insert({
+    user_id: updated.requester_id,
+    type: 'approval_result',
+    title: action === 'approve'
+      ? `🔓 "${sourceName}" 열람이 승인되었습니다`
+      : `❌ "${sourceName}" 열람 신청이 거절되었습니다`,
+    body: action === 'reject' && reject_reason ? `사유: ${reject_reason}` : null,
+    link_path: action === 'approve' ? `/sources/${updated.source_id}` : null,
+    related_id: approval_id,
+  })
+
+  // 승인된 경우 포인트 지급
   if (action === 'approve') {
-    const serviceClient = createServiceClient()
     await serviceClient.from('point_transactions').insert({
       user_id: updated.requester_id,
       point_type: 'contribution_used',
-      points: 0, // 정책상 0pt (열람은 무료, 평가 시 소유자가 받음)
+      points: 0,
       related_source_id: updated.source_id,
       description: '민감정보 열람 승인',
     })

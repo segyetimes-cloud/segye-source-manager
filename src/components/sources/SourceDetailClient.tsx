@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
 import SecureContentViewer from '@/components/common/SecureContentViewer'
 import SourceCopyLogs from '@/components/sources/SourceCopyLogs'
+import ContactLogs from '@/components/sources/ContactLogs'
 
 interface SourceNote {
   id: string
@@ -1020,6 +1021,9 @@ export default function SourceDetailClient({
           </div>
         </div>
       )}
+
+      {/* 연락 이력 타임라인 */}
+      <ContactLogs sourceId={source.id} currentUserId={userId} />
 
       {/* 등록자 정보 */}
       <div className="flex items-center gap-2 text-xs" style={{ color: '#485870' }}>

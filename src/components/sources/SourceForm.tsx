@@ -81,6 +81,23 @@ const FIELD_LABELS: Record<string, string> = {
 const VISIBILITY_LABEL: Record<string, string> = { personal: '내 목록만', shared: '편집국 공유' }
 const SENSITIVITY_LABEL: Record<string, string> = { public: '공개', private: '민감' }
 
+// ── 유효성 검사 ────────────────────────────────────────────────────────────────
+const PHONE_RE = /^0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}$/
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+
+function validatePhone(v: string): string | null {
+  if (!v) return null
+  const clean = v.replace(/[-.\s]/g, '')
+  if (!PHONE_RE.test(v) || !/^\d+$/.test(clean)) return '전화번호 형식이 올바르지 않습니다 (예: 010-1234-5678)'
+  return null
+}
+
+function validateEmail(v: string): string | null {
+  if (!v) return null
+  if (!EMAIL_RE.test(v)) return '이메일 형식이 올바르지 않습니다 (예: user@example.com)'
+  return null
+}
+
 function formatVal(key: string, val: unknown): string {
   if (val === null || val === undefined || val === '') return '(없음)'
   if (key === 'visibility') return VISIBILITY_LABEL[val as string] ?? String(val)
@@ -96,6 +113,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const [tagInput, setTagInput] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingPayload, setPendingPayload] = useState<Record<string, unknown> | null>(null)
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
   const [form, setForm] = useState({
     full_name: initialData?.full_name ?? '',
@@ -180,10 +198,39 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     return payload
   }
 
+  // 필드 변경 시 실시간 유효성 검사
+  function setWithValidation(field: string, value: string) {
+    set(field, value)
+    let err: string | null = null
+    if (field === 'phone_primary' || field === 'phone_secondary') err = validatePhone(value)
+    if (field === 'email_primary' || field === 'email_secondary') err = validateEmail(value)
+    setFieldErrors(prev => {
+      const next = { ...prev }
+      if (err) next[field] = err
+      else delete next[field]
+      return next
+    })
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!form.full_name.trim()) {
       setError('이름은 필수 입력 항목입니다.')
+      return
+    }
+    // 형식 오류가 있으면 제출 차단
+    const errs: Record<string, string> = {}
+    const phoneErr1 = validatePhone(form.phone_primary)
+    const phoneErr2 = validatePhone(form.phone_secondary)
+    const emailErr1 = validateEmail(form.email_primary)
+    const emailErr2 = validateEmail(form.email_secondary)
+    if (phoneErr1) errs['phone_primary'] = phoneErr1
+    if (phoneErr2) errs['phone_secondary'] = phoneErr2
+    if (emailErr1) errs['email_primary'] = emailErr1
+    if (emailErr2) errs['email_secondary'] = emailErr2
+    if (Object.keys(errs).length > 0) {
+      setFieldErrors(errs)
+      setError('입력 형식을 확인해 주세요.')
       return
     }
     setError('')
@@ -403,23 +450,31 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label style={labelStyle}>주 전화번호 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
-            <input value={form.phone_primary} onChange={e => set('phone_primary', e.target.value)}
-              placeholder="010-0000-0000" style={inputStyle} />
+            <input value={form.phone_primary} onChange={e => setWithValidation('phone_primary', e.target.value)}
+              placeholder="010-0000-0000"
+              style={{ ...inputStyle, borderColor: fieldErrors.phone_primary ? '#C04040' : undefined }} />
+            {fieldErrors.phone_primary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.phone_primary}</p>}
           </div>
           <div>
             <label style={labelStyle}>보조 전화번호</label>
-            <input value={form.phone_secondary} onChange={e => set('phone_secondary', e.target.value)}
-              placeholder="02-000-0000" style={inputStyle} />
+            <input value={form.phone_secondary} onChange={e => setWithValidation('phone_secondary', e.target.value)}
+              placeholder="02-000-0000"
+              style={{ ...inputStyle, borderColor: fieldErrors.phone_secondary ? '#C04040' : undefined }} />
+            {fieldErrors.phone_secondary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.phone_secondary}</p>}
           </div>
           <div>
             <label style={labelStyle}>이메일 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
-            <input type="email" value={form.email_primary} onChange={e => set('email_primary', e.target.value)}
-              placeholder="name@example.com" style={inputStyle} />
+            <input type="email" value={form.email_primary} onChange={e => setWithValidation('email_primary', e.target.value)}
+              placeholder="name@example.com"
+              style={{ ...inputStyle, borderColor: fieldErrors.email_primary ? '#C04040' : undefined }} />
+            {fieldErrors.email_primary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.email_primary}</p>}
           </div>
           <div>
             <label style={labelStyle}>보조 이메일</label>
-            <input type="email" value={form.email_secondary} onChange={e => set('email_secondary', e.target.value)}
-              placeholder="name@gmail.com" style={inputStyle} />
+            <input type="email" value={form.email_secondary} onChange={e => setWithValidation('email_secondary', e.target.value)}
+              placeholder="name@gmail.com"
+              style={{ ...inputStyle, borderColor: fieldErrors.email_secondary ? '#C04040' : undefined }} />
+            {fieldErrors.email_secondary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.email_secondary}</p>}
           </div>
           <div>
             <label style={labelStyle}>트위터/X</label>

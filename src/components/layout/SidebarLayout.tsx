@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
+import NotificationBell from './NotificationBell'
 import type { Profile } from '@/types/database'
 
 interface Props {
@@ -62,18 +63,22 @@ export default function SidebarLayout({ profile, children }: Props) {
           </div>
         </div>
 
-        {/* 햄버거 버튼 */}
-        <button
-          onClick={() => setMobileOpen(true)}
-          aria-label="메뉴 열기"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            padding: 8, color: '#687898',
-          }}>
-          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-            <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-          </svg>
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+          {/* 알림 벨 */}
+          <NotificationBell />
+          {/* 햄버거 버튼 */}
+          <button
+            onClick={() => setMobileOpen(true)}
+            aria-label="메뉴 열기"
+            style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              padding: 8, color: '#687898',
+            }}>
+            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+              <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+            </svg>
+          </button>
+        </div>
       </header>
 
       {/* ── 메인 콘텐츠 ── */}

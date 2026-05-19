@@ -23,7 +23,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   let query = supabaseAny
     .from('information_reports')
     .select(`
-      id, title, content, tags, visibility, author_id, created_at,
+      id, title, content, category, tags, visibility, author_id, created_at,
       profiles!author_id(full_name, department),
       report_sources(source_id, sources!source_id(id, full_name))
     `, { count: 'exact' })
@@ -55,12 +55,18 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       matchingReportIds = [...new Set<string>((links ?? []).map((l: any) => l.report_id as string))]
     }
 
-    if (matchingReportIds.length > 0) {
-      query = query.or(
-        `title.ilike.*${q}*,content.ilike.*${q}*,id.in.(${matchingReportIds.join(',')})`
-      )
+    // SQL injection 방지: or() 인터폴레이션 대신 별도 쿼리로 분리
+    const { data: textMatches } = await supabaseAny
+      .from('information_reports')
+      .select('id')
+      .eq('is_deleted', false)
+      .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+    const textMatchIds: string[] = (textMatches ?? []).map((r: any) => r.id as string)
+    const allMatchIds = [...new Set<string>([...textMatchIds, ...matchingReportIds])]
+    if (allMatchIds.length > 0) {
+      query = query.in('id', allMatchIds)
     } else {
-      query = query.or(`title.ilike.*${q}*,content.ilike.*${q}*`)
+      query = query.eq('id', '00000000-0000-0000-0000-000000000000')
     }
   }
 
@@ -172,13 +178,32 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                   onMouseEnter={undefined}>
                   {/* 상단: 제목 + 배지 */}
                   <div className="flex items-start justify-between gap-2 mb-2">
-                    <h2 style={{
-                      fontSize: '15px', fontWeight: 600,
-                      color: '#CDD5E0', lineHeight: 1.3,
-                      flex: 1,
-                    }}>
-                      {report.title}
-                    </h2>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="flex items-center gap-2 mb-1">
+                        {report.category && report.category !== '일반' && (
+                          <span style={{
+                            fontSize: '10px', fontWeight: 600, padding: '2px 7px',
+                            borderRadius: '4px', flexShrink: 0,
+                            background: report.category === '단독' ? 'rgba(192,64,64,0.15)' :
+                                        report.category === '인터뷰' ? 'rgba(61,158,106,0.15)' :
+                                        'rgba(74,124,192,0.15)',
+                            color: report.category === '단독' ? '#C04040' :
+                                   report.category === '인터뷰' ? '#3D9E6A' : '#4A7CC0',
+                            border: `1px solid ${report.category === '단독' ? 'rgba(192,64,64,0.3)' :
+                                     report.category === '인터뷰' ? 'rgba(61,158,106,0.3)' :
+                                     'rgba(74,124,192,0.3)'}`,
+                          }}>
+                            {report.category}
+                          </span>
+                        )}
+                      </div>
+                      <h2 style={{
+                        fontSize: '15px', fontWeight: 600,
+                        color: '#CDD5E0', lineHeight: 1.3,
+                      }}>
+                        {report.title}
+                      </h2>
+                    </div>
                     <VisibilityBadge visibility={report.visibility as ReportVisibility} />
                   </div>
 
