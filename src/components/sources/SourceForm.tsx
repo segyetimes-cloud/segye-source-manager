@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Source } from '@/types/database'
+import QuickFill from '@/components/sources/QuickFill'
 
 interface SourceFormProps {
   mode: 'create' | 'edit'
@@ -130,6 +131,32 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
+  // 명함 OCR / 연락처 가져오기 결과를 폼에 채움
+  function handleCardExtracted(data: { [key: string]: string | null | undefined }) {
+    setForm(prev => ({
+      ...prev,
+      full_name:            data.full_name            ?? prev.full_name,
+      current_organization: data.current_organization ?? prev.current_organization,
+      current_position:     data.current_position     ?? prev.current_position,
+      current_department:   data.department           ?? prev.current_department,
+      phone_primary:        data.phone                ?? prev.phone_primary,
+      phone_secondary:      data.office_phone         ?? prev.phone_secondary,
+      email_primary:        data.email                ?? prev.email_primary,
+    }))
+  }
+
+  // QuickFill 전용 (이름·소속·직책·전화·이메일)
+  function handleQuickFill(data: { full_name?: string; current_organization?: string; current_position?: string; phone?: string; email?: string }) {
+    setForm(prev => ({
+      ...prev,
+      full_name:            data.full_name            ?? prev.full_name,
+      current_organization: data.current_organization ?? prev.current_organization,
+      current_position:     data.current_position     ?? prev.current_position,
+      phone_primary:        data.phone                ?? prev.phone_primary,
+      email_primary:        data.email                ?? prev.email_primary,
+    }))
+  }
+
   function addTag(tag: string) {
     const trimmed = tag.trim()
     if (trimmed && !form.tags.includes(trimmed)) {
@@ -243,6 +270,16 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+
+      {/* 빠른 입력 */}
+      {mode === 'create' && (
+        <div>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#8899BB', marginBottom: '8px' }}>
+            ⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#4A6080' }}>(선택)</span>
+          </p>
+          <QuickFill onFill={handleQuickFill} />
+        </div>
+      )}
 
       {/* 완성도 게이지 */}
       <div className="glass-card px-4 py-2.5">
