@@ -269,17 +269,17 @@ export default function ExcelImporter() {
             <div className="flex items-center gap-2">
               <div className="w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold"
                 style={{
-                  background: step === s.key ? '#1E90FF'
-                    : ['upload', 'mapping', 'done'].indexOf(step) > i ? '#00CC66' : '#132850',
+                  background: step === s.key ? '#4A7CC0'
+                    : ['upload', 'mapping', 'done'].indexOf(step) > i ? '#3D9E6A' : '#182035',
                   color: 'white',
                 }}>
                 {['upload', 'mapping', 'done'].indexOf(step) > i ? '✓' : i + 1}
               </div>
-              <span className="text-sm" style={{ color: step === s.key ? '#E8F0FE' : '#4A6080' }}>
+              <span className="text-sm" style={{ color: step === s.key ? '#CDD5E0' : '#485870' }}>
                 {s.label}
               </span>
             </div>
-            {i < arr.length - 1 && <span style={{ color: '#1A3050' }}>→</span>}
+            {i < arr.length - 1 && <span style={{ color: '#1A2838' }}>→</span>}
           </div>
         ))}
       </div>
@@ -289,25 +289,25 @@ export default function ExcelImporter() {
         <div className="glass-card p-8 space-y-5">
 
           {/* 헤더 여부 토글 */}
-          <div className="p-4 rounded-xl" style={{ background: '#0F2040', border: '1px solid #1A3050' }}>
-            <p className="text-sm font-semibold mb-3" style={{ color: '#E8F0FE' }}>📋 엑셀 형식 선택</p>
+          <div className="p-4 rounded-xl" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
+            <p className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>📋 엑셀 형식 선택</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setHasHeader(true)}
                 className="p-3 rounded-xl text-left transition-all"
                 style={{
-                  background: hasHeader ? 'rgba(30,144,255,0.15)' : '#132850',
-                  border: `1px solid ${hasHeader ? 'rgba(30,144,255,0.4)' : '#1A3050'}`,
+                  background: hasHeader ? 'rgba(30,144,255,0.15)' : '#182035',
+                  border: `1px solid ${hasHeader ? 'rgba(30,144,255,0.4)' : '#1A2838'}`,
                   cursor: 'pointer',
                 }}>
-                <p className="text-sm font-medium" style={{ color: hasHeader ? '#1E90FF' : '#8899BB' }}>
+                <p className="text-sm font-medium" style={{ color: hasHeader ? '#4A7CC0' : '#687898' }}>
                   ✅ 첫 줄이 컬럼명 (권장)
                 </p>
-                <div className="mt-2 text-xs rounded overflow-hidden" style={{ border: '1px solid #1A3050' }}>
-                  <div className="px-2 py-1 font-bold" style={{ background: '#1A3050', color: '#8899BB' }}>이름 | 소속 | 전화</div>
-                  <div className="px-2 py-1" style={{ color: '#4A6080' }}>홍길동 | 기재부 | 010-…</div>
-                  <div className="px-2 py-1" style={{ color: '#4A6080' }}>김철수 | 행안부 | 010-…</div>
+                <div className="mt-2 text-xs rounded overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+                  <div className="px-2 py-1 font-bold" style={{ background: '#1A2838', color: '#687898' }}>이름 | 소속 | 전화</div>
+                  <div className="px-2 py-1" style={{ color: '#485870' }}>홍길동 | 기재부 | 010-…</div>
+                  <div className="px-2 py-1" style={{ color: '#485870' }}>김철수 | 행안부 | 010-…</div>
                 </div>
               </button>
 
@@ -316,22 +316,22 @@ export default function ExcelImporter() {
                 onClick={() => setHasHeader(false)}
                 className="p-3 rounded-xl text-left transition-all"
                 style={{
-                  background: !hasHeader ? 'rgba(255,153,0,0.12)' : '#132850',
-                  border: `1px solid ${!hasHeader ? 'rgba(255,153,0,0.4)' : '#1A3050'}`,
+                  background: !hasHeader ? 'rgba(255,153,0,0.12)' : '#182035',
+                  border: `1px solid ${!hasHeader ? 'rgba(255,153,0,0.4)' : '#1A2838'}`,
                   cursor: 'pointer',
                 }}>
-                <p className="text-sm font-medium" style={{ color: !hasHeader ? '#FF9900' : '#8899BB' }}>
+                <p className="text-sm font-medium" style={{ color: !hasHeader ? '#A87228' : '#687898' }}>
                   ⚠️ 첫 줄부터 데이터
                 </p>
-                <div className="mt-2 text-xs rounded overflow-hidden" style={{ border: '1px solid #1A3050' }}>
-                  <div className="px-2 py-1" style={{ color: '#4A6080' }}>홍길동 | 기재부 | 010-…</div>
-                  <div className="px-2 py-1" style={{ color: '#4A6080' }}>김철수 | 행안부 | 010-…</div>
-                  <div className="px-2 py-1" style={{ color: '#4A6080' }}>박영희 | 교육부 | 010-…</div>
+                <div className="mt-2 text-xs rounded overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+                  <div className="px-2 py-1" style={{ color: '#485870' }}>홍길동 | 기재부 | 010-…</div>
+                  <div className="px-2 py-1" style={{ color: '#485870' }}>김철수 | 행안부 | 010-…</div>
+                  <div className="px-2 py-1" style={{ color: '#485870' }}>박영희 | 교육부 | 010-…</div>
                 </div>
               </button>
             </div>
             {!hasHeader && (
-              <p className="text-xs mt-2" style={{ color: '#FF9900' }}>
+              <p className="text-xs mt-2" style={{ color: '#A87228' }}>
                 ⚠️ 헤더가 없으면 전화번호·이메일·이름 패턴으로 자동 감지합니다. 매핑 화면에서 확인하세요.
               </p>
             )}
@@ -340,28 +340,28 @@ export default function ExcelImporter() {
           {/* 파일 선택 */}
           <div
             className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-colors"
-            style={{ borderColor: '#1A3050' }}
+            style={{ borderColor: '#1A2838' }}
             onClick={() => fileRef.current?.click()}
-            onMouseEnter={e => (e.currentTarget.style.borderColor = '#1E90FF')}
-            onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A3050')}>
+            onMouseEnter={e => (e.currentTarget.style.borderColor = '#4A7CC0')}
+            onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A2838')}>
             <svg width="40" height="40" viewBox="0 0 48 48" fill="none" className="mx-auto mb-3">
-              <rect x="8" y="4" width="32" height="40" rx="3" stroke="#4A6080" strokeWidth="2"/>
-              <path d="M16 16h16M16 22h16M16 28h10" stroke="#4A6080" strokeWidth="1.5" strokeLinecap="round"/>
-              <path d="M28 36l4-4 4 4M32 32v8" stroke="#1E90FF" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+              <rect x="8" y="4" width="32" height="40" rx="3" stroke="#485870" strokeWidth="2"/>
+              <path d="M16 16h16M16 22h16M16 28h10" stroke="#485870" strokeWidth="1.5" strokeLinecap="round"/>
+              <path d="M28 36l4-4 4 4M32 32v8" stroke="#4A7CC0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p className="text-sm font-medium mb-1" style={{ color: '#E8F0FE' }}>클릭하여 엑셀 파일 선택</p>
-            <p className="text-xs" style={{ color: '#4A6080' }}>.xlsx · .xls · .csv 지원</p>
+            <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>클릭하여 엑셀 파일 선택</p>
+            <p className="text-xs" style={{ color: '#485870' }}>.xlsx · .xls · .csv 지원</p>
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} style={{ display: 'none' }} />
           </div>
 
           {loading && (
             <div className="flex items-center justify-center gap-3">
               <div className="w-5 h-5 rounded-full border-2 animate-spin"
-                style={{ borderColor: '#1A3050', borderTopColor: '#1E90FF' }} />
-              <p className="text-sm" style={{ color: '#8899BB' }}>컬럼 분석 중...</p>
+                style={{ borderColor: '#1A2838', borderTopColor: '#4A7CC0' }} />
+              <p className="text-sm" style={{ color: '#687898' }}>컬럼 분석 중...</p>
             </div>
           )}
-          {error && <p className="text-sm text-center" style={{ color: '#FF4444' }}>{error}</p>}
+          {error && <p className="text-sm text-center" style={{ color: '#C04040' }}>{error}</p>}
         </div>
       )}
 
@@ -372,33 +372,33 @@ export default function ExcelImporter() {
           {/* 요약 */}
           <div className="glass-card p-4 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>
-                총 <span style={{ color: '#1E90FF' }}>{totalRows}명</span> · {colCount}개 컬럼
+              <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+                총 <span style={{ color: '#4A7CC0' }}>{totalRows}명</span> · {colCount}개 컬럼
               </span>
               {mappingSource === 'ai' && (
                 <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(0,204,102,0.15)', color: '#00CC66', border: '1px solid rgba(0,204,102,0.3)' }}>✨ AI 자동분류</span>
+                  style={{ background: 'rgba(0,204,102,0.15)', color: '#3D9E6A', border: '1px solid rgba(0,204,102,0.3)' }}>✨ AI 자동분류</span>
               )}
               {(mappingSource === 'heuristic' || mappingSource === 'heuristic_fallback') && (
                 <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(255,153,0,0.15)', color: '#FF9900', border: '1px solid rgba(255,153,0,0.3)' }}>🔍 키워드 자동분류</span>
+                  style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)' }}>🔍 키워드 자동분류</span>
               )}
               {mappingSource === 'data_pattern' && (
                 <span className="text-xs px-2 py-0.5 rounded-full"
-                  style={{ background: 'rgba(0,212,255,0.12)', color: '#00D4FF', border: '1px solid rgba(0,212,255,0.3)' }}>📊 데이터 패턴 감지</span>
+                  style={{ background: 'rgba(0,212,255,0.12)', color: '#3A90A8', border: '1px solid rgba(0,212,255,0.3)' }}>📊 데이터 패턴 감지</span>
               )}
             </div>
-            <span className="text-xs" style={{ color: '#4A6080' }}>
+            <span className="text-xs" style={{ color: '#485870' }}>
               {mappedCount}개 컬럼 매핑됨
               {!mappings.some(m => m.field === 'full_name') && (
-                <span style={{ color: '#FF4444' }}> · 이름 컬럼 필수!</span>
+                <span style={{ color: '#C04040' }}> · 이름 컬럼 필수!</span>
               )}
             </span>
           </div>
 
           {/* 컬럼 매핑 카드들 */}
           <div className="glass-card p-5">
-            <p className="text-xs mb-4" style={{ color: '#8899BB' }}>
+            <p className="text-xs mb-4" style={{ color: '#687898' }}>
               각 컬럼이 어떤 정보인지 확인·수정하세요.
               샘플 데이터를 보고 잘못 분류된 컬럼은 드롭다운으로 직접 선택하세요.
             </p>
@@ -410,26 +410,26 @@ export default function ExcelImporter() {
                   <div key={idx}
                     className="rounded-xl p-3"
                     style={{
-                      background: isSkip ? '#0F1E35' : isLowConf ? 'rgba(255,153,0,0.05)' : '#132850',
-                      border: `1px solid ${isSkip ? '#1A3050' : isLowConf ? 'rgba(255,153,0,0.25)' : 'rgba(30,144,255,0.15)'}`,
+                      background: isSkip ? '#0F1E35' : isLowConf ? 'rgba(255,153,0,0.05)' : '#182035',
+                      border: `1px solid ${isSkip ? '#1A2838' : isLowConf ? 'rgba(255,153,0,0.25)' : 'rgba(30,144,255,0.15)'}`,
                       opacity: isSkip ? 0.6 : 1,
                     }}>
                     <div className="flex items-start gap-3">
 
                       {/* 컬럼 번호 */}
                       <div className="w-7 h-7 rounded-lg flex items-center justify-center flex-shrink-0 text-xs font-bold mt-0.5"
-                        style={{ background: '#1A3050', color: '#4A6080' }}>
+                        style={{ background: '#1A2838', color: '#485870' }}>
                         {m.colIndex + 1}
                       </div>
 
                       {/* 샘플 데이터 */}
                       <div className="flex-1 min-w-0">
                         {!hasHeader && (
-                          <p className="text-xs mb-1" style={{ color: '#4A6080' }}>{m.header}</p>
+                          <p className="text-xs mb-1" style={{ color: '#485870' }}>{m.header}</p>
                         )}
                         {hasHeader && (
-                          <p className="text-xs font-semibold mb-1" style={{ color: '#8899BB' }}>
-                            헤더: <span style={{ color: '#E8F0FE' }}>{m.header}</span>
+                          <p className="text-xs font-semibold mb-1" style={{ color: '#687898' }}>
+                            헤더: <span style={{ color: '#CDD5E0' }}>{m.header}</span>
                           </p>
                         )}
                         <div className="flex gap-2 flex-wrap">
@@ -437,32 +437,32 @@ export default function ExcelImporter() {
                             const { normalized, changed } = normalizeField(m.field, s)
                             return (
                               <span key={si} className="text-xs px-2 py-0.5 rounded-md flex items-center gap-1"
-                                style={{ background: '#0A1628', color: changed ? '#00CC66' : '#8899BB', border: `1px solid ${changed ? 'rgba(0,204,102,0.3)' : '#1A3050'}`, maxWidth: '200px', overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-flex' }}>
+                                style={{ background: '#0D1520', color: changed ? '#3D9E6A' : '#687898', border: `1px solid ${changed ? 'rgba(0,204,102,0.3)' : '#1A2838'}`, maxWidth: '200px', overflow: 'hidden', whiteSpace: 'nowrap', display: 'inline-flex' }}>
                                 {changed ? (
                                   <>
-                                    <span style={{ color: '#4A6080', textDecoration: 'line-through', fontSize: '11px' }}>{s}</span>
-                                    <span style={{ color: '#4A6080' }}>→</span>
-                                    <span style={{ color: '#00CC66' }}>{normalized}</span>
+                                    <span style={{ color: '#485870', textDecoration: 'line-through', fontSize: '11px' }}>{s}</span>
+                                    <span style={{ color: '#485870' }}>→</span>
+                                    <span style={{ color: '#3D9E6A' }}>{normalized}</span>
                                   </>
                                 ) : s}
                               </span>
                             )
                           }) : (
-                            <span className="text-xs" style={{ color: '#4A6080' }}>샘플 없음</span>
+                            <span className="text-xs" style={{ color: '#485870' }}>샘플 없음</span>
                           )}
                         </div>
                       </div>
 
                       {/* 매핑 선택 */}
                       <div className="flex items-center gap-2 flex-shrink-0">
-                        <span style={{ color: '#4A6080', fontSize: '12px' }}>→</span>
+                        <span style={{ color: '#485870', fontSize: '12px' }}>→</span>
                         <select
                           value={m.field}
                           onChange={e => updateMapping(idx, e.target.value)}
                           style={{
-                            background: '#0A1628',
-                            border: `1px solid ${isSkip ? '#1A3050' : isLowConf ? '#FF9900' : 'rgba(30,144,255,0.4)'}`,
-                            color: isSkip ? '#4A6080' : '#E8F0FE',
+                            background: '#0D1520',
+                            border: `1px solid ${isSkip ? '#1A2838' : isLowConf ? '#A87228' : 'rgba(30,144,255,0.4)'}`,
+                            color: isSkip ? '#485870' : '#CDD5E0',
                             borderRadius: '8px', padding: '5px 8px', fontSize: '13px',
                             minWidth: '130px',
                           }}>
@@ -472,7 +472,7 @@ export default function ExcelImporter() {
                         </select>
                         {!isSkip && (
                           <span className="text-xs w-9 text-right"
-                            style={{ color: m.confidence >= 0.8 ? '#00CC66' : m.confidence >= 0.5 ? '#FF9900' : '#FF4444' }}>
+                            style={{ color: m.confidence >= 0.8 ? '#3D9E6A' : m.confidence >= 0.5 ? '#A87228' : '#C04040' }}>
                             {Math.round(m.confidence * 100)}%
                           </span>
                         )}
@@ -486,8 +486,8 @@ export default function ExcelImporter() {
 
           {/* 목록 구분 */}
           <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: '#E8F0FE' }}>가져올 목록 구분</h3>
-            <div className="flex rounded-lg p-1 w-fit" style={{ background: '#0A1628', border: '1px solid #1A3050' }}>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>가져올 목록 구분</h3>
+            <div className="flex rounded-lg p-1 w-fit" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
               {[
                 { value: 'personal', label: '🔒 내 목록' },
                 { value: 'shared', label: '🌐 공유 목록' },
@@ -496,8 +496,8 @@ export default function ExcelImporter() {
                   onClick={() => setVisibility(opt.value as typeof visibility)}
                   className="px-5 py-2 rounded-md text-sm font-medium transition-all"
                   style={{
-                    background: visibility === opt.value ? '#1E90FF' : 'transparent',
-                    color: visibility === opt.value ? 'white' : '#8899BB',
+                    background: visibility === opt.value ? '#4A7CC0' : 'transparent',
+                    color: visibility === opt.value ? 'white' : '#687898',
                     cursor: 'pointer',
                   }}>
                   {opt.label}
@@ -508,17 +508,17 @@ export default function ExcelImporter() {
 
           {/* 실행 */}
           <div className="glass-card p-5">
-            {error && <p className="text-sm mb-3" style={{ color: '#FF4444' }}>{error}</p>}
+            {error && <p className="text-sm mb-3" style={{ color: '#C04040' }}>{error}</p>}
             <div className="flex gap-3">
               <button onClick={() => { setStep('upload'); setMappings([]); setRawRows([]) }}
                 className="px-4 py-2 rounded-lg text-sm"
-                style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>
+                style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>
                 ← 다시 선택
               </button>
               <button onClick={handleImport} disabled={loading}
                 className="flex-1 py-2.5 rounded-lg text-sm font-semibold"
                 style={{
-                  background: loading ? 'rgba(30,144,255,0.4)' : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+                  background: loading ? 'rgba(30,144,255,0.4)' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                   color: 'white', border: 'none', cursor: loading ? 'not-allowed' : 'pointer',
                 }}>
                 {loading ? `가져오는 중...` : `✅ ${totalRows}명 가져오기`}
@@ -535,15 +535,15 @@ export default function ExcelImporter() {
             style={{ background: 'rgba(0,204,102,0.15)', border: '2px solid rgba(0,204,102,0.3)' }}>
             <span style={{ fontSize: '32px' }}>✅</span>
           </div>
-          <h2 className="text-xl font-bold mb-2" style={{ color: '#E8F0FE' }}>가져오기 완료!</h2>
-          <p className="text-sm" style={{ color: '#8899BB' }}>
-            <span style={{ color: '#00CC66', fontWeight: 'bold' }}>{importCount}명</span>의 취재원이 등록되었습니다
+          <h2 className="text-xl font-bold mb-2" style={{ color: '#CDD5E0' }}>가져오기 완료!</h2>
+          <p className="text-sm" style={{ color: '#687898' }}>
+            <span style={{ color: '#3D9E6A', fontWeight: 'bold' }}>{importCount}명</span>의 취재원이 등록되었습니다
           </p>
           {normalizeCount > 0 && (
             <div className="mt-3 mb-4 mx-auto max-w-xs rounded-lg px-4 py-2.5 text-xs"
-              style={{ background: 'rgba(30,144,255,0.08)', border: '1px solid rgba(30,144,255,0.2)', color: '#8899BB' }}>
-              <span style={{ color: '#1E90FF', fontWeight: 600 }}>✦ {normalizeCount}건</span> 유사어 자동 정규화
-              <span className="block mt-0.5" style={{ color: '#4A6080' }}>
+              style={{ background: 'rgba(30,144,255,0.08)', border: '1px solid rgba(30,144,255,0.2)', color: '#687898' }}>
+              <span style={{ color: '#4A7CC0', fontWeight: 600 }}>✦ {normalizeCount}건</span> 유사어 자동 정규화
+              <span className="block mt-0.5" style={{ color: '#485870' }}>
                 연세대→연세대학교, 설대→서울대학교 등
               </span>
             </div>
@@ -552,12 +552,12 @@ export default function ExcelImporter() {
           <div className="flex gap-3 justify-center">
             <button onClick={() => { setStep('upload'); setMappings([]); setRawRows([]) }}
               className="px-4 py-2 rounded-lg text-sm"
-              style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>
+              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>
               추가 파일 가져오기
             </button>
             <button onClick={() => router.push('/sources')}
               className="px-6 py-2 rounded-lg text-sm font-semibold"
-              style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white', border: 'none', cursor: 'pointer' }}>
+              style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white', border: 'none', cursor: 'pointer' }}>
               취재원 목록으로 →
             </button>
           </div>

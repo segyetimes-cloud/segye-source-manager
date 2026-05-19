@@ -55,9 +55,9 @@ export default function NewHelpPage() {
   }
 
   const inputStyle = {
-    background: '#132850',
-    border: '1px solid #1A3050',
-    color: '#E8F0FE',
+    background: '#182035',
+    border: '1px solid #1A2838',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '9px 12px',
     fontSize: '14px',
@@ -69,17 +69,17 @@ export default function NewHelpPage() {
     fontSize: '13px',
     fontWeight: 500,
     marginBottom: '6px',
-    color: '#8899BB',
+    color: '#687898',
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Link href="/help" style={{ color: '#4A6080', textDecoration: 'none', fontSize: '20px' }}>←</Link>
+        <Link href="/help" style={{ color: '#485870', textDecoration: 'none', fontSize: '20px' }}>←</Link>
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>도움 요청</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#8899BB' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>도움 요청</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#687898' }}>
             동료 기자에게 취재 도움을 요청합니다. 채택 시 포인트가 지급됩니다.
           </p>
         </div>
@@ -97,12 +97,12 @@ export default function NewHelpPage() {
                 onClick={() => set('request_type', t.value)}
                 className="p-3 rounded-lg text-left transition-colors"
                 style={{
-                  background: form.request_type === t.value ? 'rgba(30,144,255,0.15)' : '#0F2040',
-                  border: `1px solid ${form.request_type === t.value ? 'rgba(30,144,255,0.4)' : '#1A3050'}`,
+                  background: form.request_type === t.value ? 'rgba(30,144,255,0.15)' : '#131C2C',
+                  border: `1px solid ${form.request_type === t.value ? 'rgba(30,144,255,0.4)' : '#1A2838'}`,
                   cursor: 'pointer',
                 }}>
-                <div className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>{t.label}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#4A6080' }}>{t.desc}</div>
+                <div className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{t.label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#485870' }}>{t.desc}</div>
               </button>
             ))}
           </div>
@@ -168,19 +168,19 @@ export default function NewHelpPage() {
               step="5"
               value={form.reward_points}
               onChange={e => set('reward_points', parseInt(e.target.value))}
-              style={{ flex: 1, accentColor: '#1E90FF' }}
+              style={{ flex: 1, accentColor: '#4A7CC0' }}
             />
-            <span className="text-lg font-bold min-w-[4rem] text-right" style={{ color: '#FFD700' }}>
+            <span className="text-lg font-bold min-w-[4rem] text-right" style={{ color: '#A88C30' }}>
               {form.reward_points}pt
             </span>
           </div>
-          <p className="text-xs mt-2" style={{ color: '#4A6080' }}>
+          <p className="text-xs mt-2" style={{ color: '#485870' }}>
             포인트가 높을수록 빠른 응답을 받을 수 있습니다 (5~100pt)
           </p>
         </div>
 
         {error && (
-          <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(255,68,68,0.1)', color: '#FF4444', border: '1px solid rgba(255,68,68,0.2)' }}>
+          <div className="p-3 rounded-lg text-sm" style={{ background: 'rgba(255,68,68,0.1)', color: '#C04040', border: '1px solid rgba(255,68,68,0.2)' }}>
             {error}
           </div>
         )}
@@ -191,7 +191,7 @@ export default function NewHelpPage() {
             disabled={submitting}
             className="flex-1 py-3 rounded-lg font-semibold text-sm"
             style={{
-              background: submitting ? '#1A3050' : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+              background: submitting ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white',
               border: 'none',
               cursor: submitting ? 'not-allowed' : 'pointer',
@@ -201,7 +201,7 @@ export default function NewHelpPage() {
           <Link
             href="/help"
             className="px-6 py-3 rounded-lg text-sm font-medium"
-            style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             취소
           </Link>
         </div>

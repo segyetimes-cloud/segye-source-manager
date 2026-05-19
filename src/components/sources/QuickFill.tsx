@@ -164,8 +164,8 @@ function PreviewRow({ label, value }: { label: string; value?: string }) {
   if (!value) return null
   return (
     <div style={{ display: 'flex', gap: '8px', fontSize: '12px', padding: '3px 0' }}>
-      <span style={{ color: '#4A6080', flexShrink: 0, width: '50px' }}>{label}</span>
-      <span style={{ color: '#C8D8F8', fontWeight: 500 }}>{value}</span>
+      <span style={{ color: '#485870', flexShrink: 0, width: '50px' }}>{label}</span>
+      <span style={{ color: '#A8B8C8', fontWeight: 500 }}>{value}</span>
     </div>
   )
 }
@@ -200,8 +200,8 @@ export default function QuickFill({ onFill }: Props) {
   // ── 완료 ────────────────────────────────────────────────────────────────────
   if (done) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '10px', background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.3)' }}>
-      <span style={{ fontSize: '13px', color: '#00CC66', fontWeight: 600 }}>✅ {doneLabel} 정보 입력 완료</span>
-      <button type="button" onClick={reset} style={{ fontSize: '11px', color: '#4A6080', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>다시</button>
+      <span style={{ fontSize: '13px', color: '#3D9E6A', fontWeight: 600 }}>✅ {doneLabel} 정보 입력 완료</span>
+      <button type="button" onClick={reset} style={{ fontSize: '11px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>다시</button>
     </div>
   )
 
@@ -211,11 +211,11 @@ export default function QuickFill({ onFill }: Props) {
 
       {/* 안내 */}
       <div style={{ padding: '10px 14px 0' }}>
-        <p style={{ fontSize: '13px', fontWeight: 600, color: '#00CC66', marginBottom: '3px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: '#3D9E6A', marginBottom: '3px' }}>
           📋 연락처 텍스트 붙여넣기
         </p>
-        <p style={{ fontSize: '11px', color: '#4A6080', lineHeight: 1.6 }}>
-          연락처 앱 → 해당 연락처 → <strong style={{ color: '#8899BB' }}>공유</strong> → <strong style={{ color: '#8899BB' }}>텍스트 복사</strong> 후 아래에 붙여넣으세요
+        <p style={{ fontSize: '11px', color: '#485870', lineHeight: 1.6 }}>
+          연락처 앱 → 해당 연락처 → <strong style={{ color: '#687898' }}>공유</strong> → <strong style={{ color: '#687898' }}>텍스트 복사</strong> 후 아래에 붙여넣으세요
         </p>
       </div>
 
@@ -230,8 +230,8 @@ export default function QuickFill({ onFill }: Props) {
           style={{
             width: '100%', boxSizing: 'border-box',
             padding: '10px 12px', resize: 'vertical',
-            background: '#1A3050', border: '1px solid #243858',
-            borderRadius: '8px', color: '#E8F0FE',
+            background: '#1A2838', border: '1px solid #202C3A',
+            borderRadius: '8px', color: '#CDD5E0',
             fontSize: '13px', lineHeight: 1.6, outline: 'none',
             fontFamily: 'inherit',
           }}
@@ -242,14 +242,14 @@ export default function QuickFill({ onFill }: Props) {
       {/* 추출 결과 미리보기 */}
       {preview && (
         <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(30,144,255,0.07)', border: '1px solid rgba(30,144,255,0.2)', borderRadius: '8px' }}>
-          <p style={{ fontSize: '11px', color: '#4A6080', marginBottom: '6px' }}>추출된 정보 확인</p>
+          <p style={{ fontSize: '11px', color: '#485870', marginBottom: '6px' }}>추출된 정보 확인</p>
           <PreviewRow label="이름"   value={preview.full_name} />
           <PreviewRow label="소속"   value={preview.current_organization} />
           <PreviewRow label="직책"   value={preview.current_position} />
           <PreviewRow label="전화"   value={preview.phone} />
           <PreviewRow label="이메일" value={preview.email} />
           {!preview.full_name && !preview.phone && !preview.email && (
-            <p style={{ fontSize: '12px', color: '#FF8888' }}>⚠ 인식된 정보가 없습니다. 텍스트를 확인해주세요.</p>
+            <p style={{ fontSize: '12px', color: '#C07070' }}>⚠ 인식된 정보가 없습니다. 텍스트를 확인해주세요.</p>
           )}
         </div>
       )}
@@ -259,11 +259,11 @@ export default function QuickFill({ onFill }: Props) {
         {!preview ? (
           <>
             <button type="button" onClick={analyze} disabled={!text.trim()}
-              style={{ flex: 1, padding: '10px', background: !text.trim() ? '#1A3050' : '#00CC66', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', opacity: text.trim() ? 1 : 0.5 }}>
+              style={{ flex: 1, padding: '10px', background: !text.trim() ? '#1A2838' : '#3D9E6A', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', opacity: text.trim() ? 1 : 0.5 }}>
               🔍 자동 분석
             </button>
             <button type="button" onClick={() => { setOpen(false); setText(''); setPreview(null) }}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A3050', borderRadius: '8px', color: '#4A6080', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
               취소
             </button>
           </>
@@ -271,16 +271,16 @@ export default function QuickFill({ onFill }: Props) {
           <>
             {(preview.full_name || preview.phone || preview.email) && (
               <button type="button" onClick={apply}
-                style={{ flex: 1, padding: '10px', background: '#1E90FF', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                style={{ flex: 1, padding: '10px', background: '#4A7CC0', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                 ✅ 입력 적용
               </button>
             )}
             <button type="button" onClick={() => setPreview(null)}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A3050', borderRadius: '8px', color: '#4A6080', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
               수정
             </button>
             <button type="button" onClick={() => { setOpen(false); setText(''); setPreview(null) }}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A3050', borderRadius: '8px', color: '#4A6080', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
               취소
             </button>
           </>
@@ -304,10 +304,10 @@ export default function QuickFill({ onFill }: Props) {
     >
       <span style={{ fontSize: '26px', flexShrink: 0 }}>📋</span>
       <div style={{ textAlign: 'left' }}>
-        <p style={{ fontSize: '13px', color: '#C8D8F8', fontWeight: 600, margin: 0 }}>연락처 붙여넣기</p>
-        <p style={{ fontSize: '10px', color: '#4A6080', margin: 0 }}>연락처 앱 공유 텍스트 → 이름·소속·전화 자동 입력</p>
+        <p style={{ fontSize: '13px', color: '#A8B8C8', fontWeight: 600, margin: 0 }}>연락처 붙여넣기</p>
+        <p style={{ fontSize: '10px', color: '#485870', margin: 0 }}>연락처 앱 공유 텍스트 → 이름·소속·전화 자동 입력</p>
       </div>
-      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#4A6080' }}>탭하여 열기 →</span>
+      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#485870' }}>탭하여 열기 →</span>
     </button>
   )
 }

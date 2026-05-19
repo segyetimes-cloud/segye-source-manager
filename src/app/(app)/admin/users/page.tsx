@@ -25,7 +25,7 @@ export default async function AdminUsersPage() {
   const { data: usersRaw } = await supabaseAny
     .from('profiles')
     .select(`
-      id, email, full_name, role, department, desk_name,
+      id, email, full_name, role, rank, department, desk_name,
       employee_id, phone, is_active, last_login_at, created_at
     `)
     .order('created_at', { ascending: false })
@@ -35,8 +35,8 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>계정 관리</h1>
-        <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>계정 관리</h1>
+        <p className="text-sm mt-1" style={{ color: '#687898' }}>
           기자 계정의 권한 및 활성 상태를 관리합니다
         </p>
       </div>

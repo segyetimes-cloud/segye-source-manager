@@ -70,7 +70,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
 
   const cardStyle = {
     background: 'rgba(15,32,64,0.85)',
-    border: '1px solid #1A3050',
+    border: '1px solid #1A2838',
     borderRadius: '12px',
     padding: '16px',
   }
@@ -79,9 +79,9 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
     <div className="space-y-8">
       {/* 대기 중 */}
       <section>
-        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#E8F0FE' }}>
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#CDD5E0' }}>
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold"
-            style={{ background: '#FF9900', color: 'white' }}>
+            style={{ background: '#A87228', color: 'white' }}>
             {pending.length}
           </span>
           승인 대기 중
@@ -89,7 +89,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
 
         {pending.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: '32px' }}>
-            <p className="text-sm" style={{ color: '#4A6080' }}>대기 중인 요청이 없습니다 ✅</p>
+            <p className="text-sm" style={{ color: '#485870' }}>대기 중인 요청이 없습니다 ✅</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -98,31 +98,31 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>
+                      <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
                         {app.profiles?.full_name ?? '—'}
                       </span>
                       {app.profiles?.department && (
                         <span className="text-xs px-2 py-0.5 rounded"
-                          style={{ background: 'rgba(30,144,255,0.1)', color: '#8899BB' }}>
+                          style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
                           {app.profiles.department}
                         </span>
                       )}
                     </div>
 
-                    <p className="text-xs mb-1" style={{ color: '#4A6080' }}>
+                    <p className="text-xs mb-1" style={{ color: '#485870' }}>
                       📄 취재원:{' '}
-                      <Link href={`/sources/${app.source_id}`} style={{ color: '#1E90FF', textDecoration: 'none' }}>
+                      <Link href={`/sources/${app.source_id}`} style={{ color: '#4A7CC0', textDecoration: 'none' }}>
                         {app.sources?.full_name ?? app.source_id}
                       </Link>
                       {app.sources?.current_organization && ` (${app.sources.current_organization})`}
                     </p>
 
-                    <div className="mt-2 p-3 rounded-lg" style={{ background: '#132850' }}>
-                      <p className="text-xs font-medium mb-1" style={{ color: '#8899BB' }}>신청 사유</p>
-                      <p className="text-sm" style={{ color: '#E8F0FE' }}>{app.reason}</p>
+                    <div className="mt-2 p-3 rounded-lg" style={{ background: '#182035' }}>
+                      <p className="text-xs font-medium mb-1" style={{ color: '#687898' }}>신청 사유</p>
+                      <p className="text-sm" style={{ color: '#CDD5E0' }}>{app.reason}</p>
                     </div>
 
-                    <p className="text-xs mt-2" style={{ color: '#4A6080' }}>
+                    <p className="text-xs mt-2" style={{ color: '#485870' }}>
                       신청일: {new Date(app.requested_at).toLocaleString('ko-KR')}
                     </p>
 
@@ -135,9 +135,9 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                           rows={2}
                           style={{
                             width: '100%',
-                            background: '#132850',
+                            background: '#182035',
                             border: '1px solid rgba(255,68,68,0.3)',
-                            color: '#E8F0FE',
+                            color: '#CDD5E0',
                             borderRadius: '8px',
                             padding: '8px',
                             fontSize: '13px',
@@ -155,8 +155,8 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                       disabled={processing === app.id}
                       className="px-4 py-2 rounded-lg text-xs font-semibold"
                       style={{
-                        background: processing === app.id ? '#1A3050' : 'rgba(0,204,102,0.15)',
-                        color: '#00CC66',
+                        background: processing === app.id ? '#1A2838' : 'rgba(0,204,102,0.15)',
+                        color: '#3D9E6A',
                         border: '1px solid rgba(0,204,102,0.3)',
                         cursor: processing === app.id ? 'not-allowed' : 'pointer',
                         whiteSpace: 'nowrap',
@@ -172,7 +172,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                           className="px-4 py-2 rounded-lg text-xs font-semibold"
                           style={{
                             background: 'rgba(255,68,68,0.15)',
-                            color: '#FF4444',
+                            color: '#C04040',
                             border: '1px solid rgba(255,68,68,0.3)',
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
@@ -182,7 +182,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                         <button
                           onClick={() => setShowRejectForm(null)}
                           className="px-4 py-1.5 rounded-lg text-xs"
-                          style={{ background: '#132850', color: '#4A6080', border: '1px solid #1A3050', cursor: 'pointer' }}>
+                          style={{ background: '#182035', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
                           취소
                         </button>
                       </div>
@@ -192,7 +192,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                         className="px-4 py-2 rounded-lg text-xs font-semibold"
                         style={{
                           background: 'rgba(255,68,68,0.1)',
-                          color: '#FF4444',
+                          color: '#C04040',
                           border: '1px solid rgba(255,68,68,0.2)',
                           cursor: 'pointer',
                           whiteSpace: 'nowrap',
@@ -210,10 +210,10 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
 
       {/* 최근 처리 내역 */}
       <section>
-        <h2 className="text-sm font-semibold mb-3" style={{ color: '#8899BB' }}>최근 처리 내역</h2>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: '#687898' }}>최근 처리 내역</h2>
         {recent.length === 0 ? (
           <div style={{ ...cardStyle, textAlign: 'center', padding: '24px' }}>
-            <p className="text-sm" style={{ color: '#4A6080' }}>처리 내역이 없습니다</p>
+            <p className="text-sm" style={{ color: '#485870' }}>처리 내역이 없습니다</p>
           </div>
         ) : (
           <div className="space-y-2">
@@ -225,29 +225,29 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                       className="text-xs px-2 py-0.5 rounded font-semibold"
                       style={{
                         background: app.status === 'approved' ? 'rgba(0,204,102,0.15)' : 'rgba(255,68,68,0.1)',
-                        color: app.status === 'approved' ? '#00CC66' : '#FF4444',
+                        color: app.status === 'approved' ? '#3D9E6A' : '#C04040',
                       }}>
                       {app.status === 'approved' ? '✅ 승인' : '✗ 거절'}
                     </span>
-                    <span className="text-sm" style={{ color: '#E8F0FE' }}>{app.profiles?.full_name ?? '—'}</span>
-                    <span className="text-xs" style={{ color: '#4A6080' }}>→</span>
-                    <Link href={`/sources/${app.source_id}`} className="text-sm" style={{ color: '#1E90FF', textDecoration: 'none' }}>
+                    <span className="text-sm" style={{ color: '#CDD5E0' }}>{app.profiles?.full_name ?? '—'}</span>
+                    <span className="text-xs" style={{ color: '#485870' }}>→</span>
+                    <Link href={`/sources/${app.source_id}`} className="text-sm" style={{ color: '#4A7CC0', textDecoration: 'none' }}>
                       {app.sources?.full_name ?? app.source_id}
                     </Link>
                   </div>
                   <div className="flex flex-col items-end gap-0.5">
-                    <span className="text-xs" style={{ color: '#4A6080' }}>
+                    <span className="text-xs" style={{ color: '#485870' }}>
                       {app.decided_at ? new Date(app.decided_at).toLocaleDateString('ko-KR') : '—'}
                     </span>
                     {app.status === 'approved' && app.expires_at && (
-                      <span className="text-xs" style={{ color: '#4A6080' }}>
+                      <span className="text-xs" style={{ color: '#485870' }}>
                         ~{new Date(app.expires_at).toLocaleDateString('ko-KR')} 만료
                       </span>
                     )}
                   </div>
                 </div>
                 {app.reject_reason && (
-                  <p className="text-xs mt-1.5" style={{ color: '#4A6080' }}>
+                  <p className="text-xs mt-1.5" style={{ color: '#485870' }}>
                     사유: {app.reject_reason}
                   </p>
                 )}

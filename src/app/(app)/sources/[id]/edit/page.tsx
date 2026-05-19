@@ -40,9 +40,9 @@ export default async function EditSourcePage({ params }: Params) {
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>취재원 수정</h1>
-        <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
-          <span style={{ color: '#1E90FF', fontWeight: 600 }}>{source.full_name}</span> 정보를 수정합니다
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>취재원 수정</h1>
+        <p className="text-sm mt-1" style={{ color: '#687898' }}>
+          <span style={{ color: '#4A7CC0', fontWeight: 600 }}>{source.full_name}</span> 정보를 수정합니다
         </p>
       </div>
       <SourceForm mode="edit" initialData={source} />

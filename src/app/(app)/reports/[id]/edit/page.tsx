@@ -4,11 +4,13 @@ import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
+import { VISIBILITY_OPTIONS } from '@/lib/reportVisibility'
+import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/AllowedUsersSelector'
 
 const inputStyle: React.CSSProperties = {
-  background: '#132850',
-  border: '1px solid #1A3050',
-  color: '#E8F0FE',
+  background: '#182035',
+  border: '1px solid #1A2838',
+  color: '#CDD5E0',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -20,14 +22,8 @@ const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 500,
   marginBottom: '6px',
-  color: '#8899BB',
+  color: '#687898',
 }
-
-const VISIBILITY_OPTIONS: { value: ReportVisibility; label: string; desc: string }[] = [
-  { value: 'author_only', label: '🔒 작성자만', desc: '나만 볼 수 있습니다' },
-  { value: 'desk_above',  label: '📋 데스크 이상', desc: '데스크/슈퍼관리자가 열람 가능합니다' },
-  { value: 'all',         label: '🌐 전체 공개', desc: '편집국 전체에 공개됩니다' },
-]
 
 interface SourceResult {
   id: string
@@ -49,6 +45,7 @@ export default function EditReportPage() {
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [visibility, setVisibility] = useState<ReportVisibility>('author_only')
+  const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([])
 
   const [sourceQuery, setSourceQuery] = useState('')
   const [sourceResults, setSourceResults] = useState<SourceResult[]>([])
@@ -68,6 +65,18 @@ export default function EditReportPage() {
           .map((rs: any) => rs.sources)
           .filter(Boolean)
         setSelectedSources(linkedSources)
+        // 기존 지정 열람자 로드
+        fetch(`/api/reports/${id}/allowed-users`)
+          .then(r => r.ok ? r.json() : { allowed: [] })
+          .then(d => {
+            const users = ((d.allowed ?? []) as any[]).map((a: any) => ({
+              id: a.user_id,
+              full_name: a.profiles?.full_name ?? '—',
+              department: a.profiles?.department ?? null,
+              rank: a.profiles?.rank ?? null,
+            }))
+            setAllowedUsers(users)
+          })
         setLoading(false)
       })
       .catch(() => { setError('불러오기 실패'); setLoading(false) })
@@ -122,6 +131,7 @@ export default function EditReportPage() {
         title, content, tags,
         visibility,
         source_ids: selectedSources.map(s => s.id),
+        allowed_user_ids: allowedUsers.map(u => u.id),
       }),
     })
 
@@ -137,7 +147,7 @@ export default function EditReportPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#4A6080' }}>불러오는 중...</div>
+      <div style={{ padding: '2rem', textAlign: 'center', color: '#485870' }}>불러오는 중...</div>
     )
   }
 
@@ -146,9 +156,12 @@ export default function EditReportPage() {
 
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Link href={`/reports/${id}`} style={{ color: '#4A6080', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+        <Link href={`/reports/${id}`} style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: '#E8F0FE' }}>보고서 수정</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>보고서 수정</h1>
+          <p style={{ fontSize: '12px', color: '#485870', marginTop: '2px' }}>
+            내용을 변경하면 수정 이력이 자동으로 기록됩니다
+          </p>
         </div>
       </div>
 
@@ -156,7 +169,7 @@ export default function EditReportPage() {
         <div style={{
           background: 'rgba(255,68,68,0.1)', border: '1px solid rgba(255,68,68,0.3)',
           borderRadius: '8px', padding: '10px 14px',
-          color: '#FF4444', fontSize: '13px',
+          color: '#C04040', fontSize: '13px',
         }}>
           {error}
         </div>
@@ -192,7 +205,7 @@ export default function EditReportPage() {
 
         {/* 태그 */}
         <div>
-          <label style={labelStyle}>태그 <span style={{ color: '#4A6080', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
+          <label style={labelStyle}>태그 <span style={{ color: '#485870', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
           <input
             type="text"
             value={tagInput}
@@ -206,14 +219,14 @@ export default function EditReportPage() {
               {tags.map(tag => (
                 <span key={tag} style={{
                   background: 'rgba(30,144,255,0.1)',
-                  color: '#1E90FF',
+                  color: '#4A7CC0',
                   border: '1px solid rgba(30,144,255,0.25)',
                   borderRadius: '5px', padding: '3px 9px',
                   fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px',
                 }}>
                   #{tag}
                   <button type="button" onClick={() => removeTag(tag)}
-                    style={{ background: 'none', border: 'none', color: '#1E90FF', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: 0 }}>
+                    style={{ background: 'none', border: 'none', color: '#4A7CC0', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: 0 }}>
                     ×
                   </button>
                 </span>
@@ -230,8 +243,8 @@ export default function EditReportPage() {
               <label key={opt.value} style={{
                 display: 'flex', alignItems: 'flex-start', gap: '10px',
                 padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
-                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#132850',
-                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#1A3050'}`,
+                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#182035',
+                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#1A2838'}`,
               }}>
                 <input
                   type="radio"
@@ -239,10 +252,10 @@ export default function EditReportPage() {
                   value={opt.value}
                   checked={visibility === opt.value}
                   onChange={() => setVisibility(opt.value)}
-                  style={{ marginTop: '2px', accentColor: '#1E90FF' }}
+                  style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#E8F0FE' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -250,9 +263,20 @@ export default function EditReportPage() {
           </div>
         </div>
 
+        {/* 지정 열람자 */}
+        {(visibility === 'author_only' || visibility === 'desk_above') && (
+          <div>
+            <label style={labelStyle}>
+              지정 열람자{' '}
+              <span style={{ color: '#485870', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
+            </label>
+            <AllowedUsersSelector selected={allowedUsers} onChange={setAllowedUsers} />
+          </div>
+        )}
+
         {/* 취재원 연결 */}
         <div>
-          <label style={labelStyle}>취재원 연결 <span style={{ color: '#4A6080', fontWeight: 400 }}>(선택)</span></label>
+          <label style={labelStyle}>취재원 연결 <span style={{ color: '#485870', fontWeight: 400 }}>(선택)</span></label>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -264,7 +288,7 @@ export default function EditReportPage() {
             {sourceResults.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                background: '#0F2040', border: '1px solid #1A3050',
+                background: '#131C2C', border: '1px solid #1A2838',
                 borderRadius: '8px', marginTop: '4px',
                 maxHeight: '200px', overflowY: 'auto',
               }}>
@@ -276,10 +300,10 @@ export default function EditReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#E8F0FE', fontSize: '13px',
-                      borderBottom: '1px solid #1A3050',
+                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
+                      borderBottom: '1px solid #1A2838',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#132850')}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                     <span style={{ fontWeight: 600 }}>{s.full_name}</span>
                     {s.current_organization && (
@@ -290,7 +314,7 @@ export default function EditReportPage() {
               </div>
             )}
             {sourceSearching && (
-              <p style={{ fontSize: '12px', color: '#4A6080', marginTop: '4px' }}>검색 중...</p>
+              <p style={{ fontSize: '12px', color: '#485870', marginTop: '4px' }}>검색 중...</p>
             )}
           </div>
 
@@ -299,14 +323,14 @@ export default function EditReportPage() {
               {selectedSources.map(s => (
                 <span key={s.id} style={{
                   background: 'rgba(0,212,255,0.08)',
-                  color: '#00D4FF',
+                  color: '#3A90A8',
                   border: '1px solid rgba(0,212,255,0.2)',
                   borderRadius: '5px', padding: '3px 9px',
                   fontSize: '12px', display: 'flex', alignItems: 'center', gap: '5px',
                 }}>
                   👤 {s.full_name}
                   <button type="button" onClick={() => removeSource(s.id)}
-                    style={{ background: 'none', border: 'none', color: '#00D4FF', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: 0 }}>
+                    style={{ background: 'none', border: 'none', color: '#3A90A8', cursor: 'pointer', fontSize: '14px', lineHeight: 1, padding: 0 }}>
                     ×
                   </button>
                 </span>
@@ -322,7 +346,7 @@ export default function EditReportPage() {
             disabled={submitting}
             style={{
               flex: 1,
-              background: submitting ? '#1A3050' : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+              background: submitting ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               borderRadius: '8px', padding: '11px',
               fontSize: '14px', fontWeight: 600,
@@ -331,8 +355,8 @@ export default function EditReportPage() {
             {submitting ? '저장 중...' : '수정 저장'}
           </button>
           <Link href={`/reports/${id}`} style={{
-            padding: '11px 20px', background: '#132850',
-            border: '1px solid #1A3050', color: '#8899BB',
+            padding: '11px 20px', background: '#182035',
+            border: '1px solid #1A2838', color: '#687898',
             borderRadius: '8px', fontSize: '14px',
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}>

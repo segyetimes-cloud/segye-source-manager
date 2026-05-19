@@ -60,20 +60,20 @@ function OTPContent() {
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'linear-gradient(135deg, #0A1628 0%, #0F2040 100%)' }}>
+      style={{ background: 'linear-gradient(135deg, #0D1520 0%, #131C2C 100%)' }}>
 
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-14 h-14 rounded-xl mb-4"
             style={{ background: 'rgba(255, 153, 0, 0.15)', border: '1px solid rgba(255,153,0,0.3)' }}>
             <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-              <rect x="6" y="3" width="16" height="22" rx="3" stroke="#FF9900" strokeWidth="1.5"/>
-              <circle cx="14" cy="19" r="1.5" fill="#FF9900"/>
-              <path d="M10 8h8M10 11h5" stroke="#FF9900" strokeWidth="1.5" strokeLinecap="round"/>
+              <rect x="6" y="3" width="16" height="22" rx="3" stroke="#A87228" strokeWidth="1.5"/>
+              <circle cx="14" cy="19" r="1.5" fill="#A87228"/>
+              <path d="M10 8h8M10 11h5" stroke="#A87228" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>외부 접속 인증</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>외부 접속 인증</h1>
+          <p className="text-sm mt-1" style={{ color: '#687898' }}>
             사외 접속 시 휴대전화 인증이 필요합니다
           </p>
         </div>
@@ -81,7 +81,7 @@ function OTPContent() {
         <div className="glass-card p-6">
           {step === 'phone' ? (
             <>
-              <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+              <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                 휴대전화번호
               </label>
               <input
@@ -90,20 +90,20 @@ function OTPContent() {
                 onChange={e => setPhone(e.target.value)}
                 placeholder="010-0000-0000"
                 style={{
-                  background: '#132850', border: '1px solid #1A3050',
-                  color: '#E8F0FE', borderRadius: '8px',
+                  background: '#182035', border: '1px solid #1A2838',
+                  color: '#CDD5E0', borderRadius: '8px',
                   padding: '10px 14px', fontSize: '14px', width: '100%',
                 }}
               />
               {error && (
-                <p className="mt-2 text-sm" style={{ color: '#FF4444' }}>{error}</p>
+                <p className="mt-2 text-sm" style={{ color: '#C04040' }}>{error}</p>
               )}
               <button
                 onClick={sendOTP}
                 disabled={loading || !phone}
                 className="w-full mt-4 py-3 rounded-lg font-semibold text-sm"
                 style={{
-                  background: 'linear-gradient(135deg, #FF9900, #FF6600)',
+                  background: 'linear-gradient(135deg, #A87228, #FF6600)',
                   color: 'white', border: 'none',
                   opacity: loading || !phone ? 0.5 : 1,
                   cursor: loading || !phone ? 'not-allowed' : 'pointer',
@@ -113,8 +113,8 @@ function OTPContent() {
             </>
           ) : (
             <>
-              <p className="text-sm mb-4" style={{ color: '#8899BB' }}>
-                <span style={{ color: '#E8F0FE' }}>{phone}</span>으로<br/>
+              <p className="text-sm mb-4" style={{ color: '#687898' }}>
+                <span style={{ color: '#CDD5E0' }}>{phone}</span>으로<br/>
                 인증번호 6자리를 입력해주세요
               </p>
               <input
@@ -124,21 +124,21 @@ function OTPContent() {
                 placeholder="000000"
                 maxLength={6}
                 style={{
-                  background: '#132850', border: '1px solid #1A3050',
-                  color: '#E8F0FE', borderRadius: '8px',
+                  background: '#182035', border: '1px solid #1A2838',
+                  color: '#CDD5E0', borderRadius: '8px',
                   padding: '10px 14px', fontSize: '20px',
                   width: '100%', letterSpacing: '0.3em', textAlign: 'center',
                 }}
               />
               {error && (
-                <p className="mt-2 text-sm" style={{ color: '#FF4444' }}>{error}</p>
+                <p className="mt-2 text-sm" style={{ color: '#C04040' }}>{error}</p>
               )}
               <button
                 onClick={verifyOTP}
                 disabled={loading || otp.length !== 6}
                 className="w-full mt-4 py-3 rounded-lg font-semibold text-sm"
                 style={{
-                  background: 'linear-gradient(135deg, #1E90FF, #0066CC)',
+                  background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                   color: 'white', border: 'none',
                   opacity: loading || otp.length !== 6 ? 0.5 : 1,
                   cursor: loading || otp.length !== 6 ? 'not-allowed' : 'pointer',
@@ -148,7 +148,7 @@ function OTPContent() {
               <button
                 onClick={() => { setStep('phone'); setOtp(''); setError('') }}
                 className="w-full mt-2 py-2 text-sm"
-                style={{ color: '#8899BB', background: 'none', border: 'none', cursor: 'pointer' }}>
+                style={{ color: '#687898', background: 'none', border: 'none', cursor: 'pointer' }}>
                 전화번호 다시 입력
               </button>
             </>

@@ -64,7 +64,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
   if (requests.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <p style={{ color: '#4A6080' }}>해결된 도움 요청이 없습니다</p>
+        <p style={{ color: '#485870' }}>해결된 도움 요청이 없습니다</p>
       </div>
     )
   }
@@ -73,7 +73,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
     <div className="space-y-4">
       {success && (
         <div className="p-3 rounded-lg text-sm text-center font-semibold"
-          style={{ background: 'rgba(0,204,102,0.1)', color: '#00CC66', border: '1px solid rgba(0,204,102,0.2)' }}>
+          style={{ background: 'rgba(0,204,102,0.1)', color: '#3D9E6A', border: '1px solid rgba(0,204,102,0.2)' }}>
           ✅ {success}
         </div>
       )}
@@ -87,19 +87,19 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: 'rgba(30,144,255,0.1)', color: '#8899BB' }}>
+                    style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
                     {REQUEST_TYPE_LABEL[req.request_type] ?? req.request_type}
                   </span>
-                  <span className="text-xs font-semibold" style={{ color: '#FFD700' }}>
+                  <span className="text-xs font-semibold" style={{ color: '#A88C30' }}>
                     기존 리워드: {req.reward_points}pt
                   </span>
                 </div>
-                <h3 className="font-semibold" style={{ color: '#E8F0FE' }}>{req.title}</h3>
+                <h3 className="font-semibold" style={{ color: '#CDD5E0' }}>{req.title}</h3>
                 {req.target_name && (
-                  <p className="text-xs mt-1" style={{ color: '#8899BB' }}>대상: {req.target_name}</p>
+                  <p className="text-xs mt-1" style={{ color: '#687898' }}>대상: {req.target_name}</p>
                 )}
               </div>
-              <span className="text-xs flex-shrink-0" style={{ color: '#4A6080' }}>
+              <span className="text-xs flex-shrink-0" style={{ color: '#485870' }}>
                 {new Date(req.created_at).toLocaleDateString('ko-KR')}
               </span>
             </div>
@@ -107,19 +107,19 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {/* 요청자 */}
               <div className="rounded-lg p-3" style={{ background: 'rgba(30,144,255,0.05)', border: '1px solid rgba(30,144,255,0.1)' }}>
-                <p className="text-xs mb-1" style={{ color: '#4A6080' }}>📝 요청자</p>
-                <p className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>
+                <p className="text-xs mb-1" style={{ color: '#485870' }}>📝 요청자</p>
+                <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
                   {req.profiles?.full_name ?? '—'}
                 </p>
                 {req.profiles?.department && (
-                  <p className="text-xs" style={{ color: '#8899BB' }}>{req.profiles.department}</p>
+                  <p className="text-xs" style={{ color: '#687898' }}>{req.profiles.department}</p>
                 )}
                 <button
                   onClick={() => givePoints(req.requester_id, req.id, req.profiles?.full_name ?? '요청자')}
                   disabled={awarding === req.requester_id + req.id}
                   className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold w-full"
                   style={{
-                    background: 'linear-gradient(135deg, #1E90FF, #0066CC)',
+                    background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                     color: 'white',
                     border: 'none',
                     cursor: 'pointer',
@@ -131,19 +131,19 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               {/* 응답자 */}
               {acceptedResp ? (
                 <div className="rounded-lg p-3" style={{ background: 'rgba(0,204,102,0.05)', border: '1px solid rgba(0,204,102,0.1)' }}>
-                  <p className="text-xs mb-1" style={{ color: '#4A6080' }}>✅ 채택된 응답자</p>
-                  <p className="text-sm font-semibold" style={{ color: '#E8F0FE' }}>
+                  <p className="text-xs mb-1" style={{ color: '#485870' }}>✅ 채택된 응답자</p>
+                  <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
                     {acceptedResp.profiles?.full_name ?? '—'}
                   </p>
                   {acceptedResp.profiles?.department && (
-                    <p className="text-xs" style={{ color: '#8899BB' }}>{acceptedResp.profiles.department}</p>
+                    <p className="text-xs" style={{ color: '#687898' }}>{acceptedResp.profiles.department}</p>
                   )}
                   <button
                     onClick={() => givePoints(acceptedResp.responder_id, req.id, acceptedResp.profiles?.full_name ?? '응답자')}
                     disabled={awarding === acceptedResp.responder_id + req.id}
                     className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold w-full"
                     style={{
-                      background: 'linear-gradient(135deg, #00CC66, #009944)',
+                      background: 'linear-gradient(135deg, #3D9E6A, #009944)',
                       color: 'white',
                       border: 'none',
                       cursor: 'pointer',
@@ -153,7 +153,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
                 </div>
               ) : (
                 <div className="rounded-lg p-3 flex items-center justify-center" style={{ background: 'rgba(74,96,128,0.05)', border: '1px solid rgba(74,96,128,0.1)' }}>
-                  <p className="text-xs" style={{ color: '#4A6080' }}>채택된 응답 없음</p>
+                  <p className="text-xs" style={{ color: '#485870' }}>채택된 응답 없음</p>
                 </div>
               )}
             </div>

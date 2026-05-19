@@ -67,8 +67,8 @@ export default async function SourcesPage({
       {/* 헤더 */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>취재원 목록</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#8899BB' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>취재원 목록</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
             {tab === 'personal' ? '내 취재원 목록' : '편집국 공유 목록'}
           </p>
         </div>
@@ -76,7 +76,7 @@ export default async function SourcesPage({
           <Link
             href="/sources/new"
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold"
-            style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white' }}>
+            style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white' }}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <path d="M6.5 1v11M1 6.5h11" stroke="white" strokeWidth="2" strokeLinecap="round"/>
             </svg>
@@ -86,7 +86,7 @@ export default async function SourcesPage({
           <Link
             href="/sources/import"
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors"
-            style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050' }}>
+            style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

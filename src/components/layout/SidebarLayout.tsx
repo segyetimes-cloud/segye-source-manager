@@ -57,7 +57,7 @@ export default function SidebarLayout({ profile, children }: Props) {
               style={{ filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
           </div>
           <div>
-            <p style={{ color: '#E8F0FE', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
+            <p style={{ color: '#CDD5E0', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
             <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원 관리</p>
           </div>
         </div>
@@ -68,7 +68,7 @@ export default function SidebarLayout({ profile, children }: Props) {
           aria-label="메뉴 열기"
           style={{
             background: 'none', border: 'none', cursor: 'pointer',
-            padding: 8, color: '#8899BB',
+            padding: 8, color: '#687898',
           }}>
           <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
             <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
@@ -79,7 +79,7 @@ export default function SidebarLayout({ profile, children }: Props) {
       {/* ── 메인 콘텐츠 ── */}
       <main
         className="app-main"
-        style={{ flex: 1, minHeight: '100vh', background: '#0A1628' }}>
+        style={{ flex: 1, minHeight: '100vh', background: '#0D1520' }}>
         <div style={{ padding: '1rem' }}>
           {children}
         </div>

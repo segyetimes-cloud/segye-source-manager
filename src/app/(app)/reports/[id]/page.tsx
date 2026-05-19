@@ -3,28 +3,21 @@ import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
 import ReportDeleteButton from '@/components/reports/ReportDeleteButton'
+import ReportPointAward from '@/components/reports/ReportPointAward'
+import ReportContentViewer from '@/components/reports/ReportContentViewer'
+import ReportCopyLogs from '@/components/reports/ReportCopyLogs'
+import ReportAllowedUsers from '@/components/reports/ReportAllowedUsers'
+import VisibilityBadge from '@/components/reports/VisibilityBadge'
 
 interface Params {
   params: Promise<{ id: string }>
 }
 
-function VisibilityBadge({ visibility }: { visibility: ReportVisibility }) {
-  const map = {
-    author_only: { bg: 'rgba(255,153,0,0.1)', color: '#FF9900', label: '🔒 작성자만' },
-    desk_above:  { bg: 'rgba(0,212,255,0.1)',  color: '#00D4FF', label: '📋 데스크' },
-    all:         { bg: 'rgba(0,204,102,0.1)',  color: '#00CC66', label: '🌐 전체' },
-  }
-  const s = map[visibility] ?? map.author_only
-  return (
-    <span style={{
-      background: s.bg, color: s.color,
-      border: `1px solid ${s.color}44`,
-      borderRadius: '6px', padding: '3px 10px',
-      fontSize: '12px', fontWeight: 600,
-    }}>
-      {s.label}
-    </span>
-  )
+function formatDateTime(iso: string) {
+  return new Date(iso).toLocaleString('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit',
+  })
 }
 
 export default async function ReportDetailPage({ params }: Params) {
@@ -35,77 +28,173 @@ export default async function ReportDetailPage({ params }: Params) {
 
   const supabaseAny = supabase as any
 
-  const { data: report } = await supabaseAny
-    .from('information_reports')
-    .select(`
-      *,
-      profiles!author_id(full_name, department),
-      report_sources(source_id, sources!source_id(id, full_name, current_organization))
-    `)
-    .eq('id', id)
-    .eq('is_deleted', false)
-    .single()
+  // 현재 사용자 프로필 (role 확인)
+  const { data: myProfile } = await supabaseAny
+    .from('profiles').select('role, full_name, department').eq('id', user.id).single()
+  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+
+  // 보고서 + 수정이력 병렬 조회
+  const [{ data: report }, { data: revisionsRaw }] = await Promise.all([
+    supabaseAny
+      .from('information_reports')
+      .select(`
+        *,
+        profiles!author_id(full_name, department),
+        report_sources(source_id, sources!source_id(id, full_name, current_organization))
+      `)
+      .eq('id', id)
+      .eq('is_deleted', false)
+      .single(),
+    supabaseAny
+      .from('report_revisions')
+      .select('id, author_id, content, created_at, profiles!author_id(full_name, department)')
+      .eq('report_id', id)
+      .order('created_at', { ascending: true }),
+  ])
 
   if (!report) notFound()
 
   const isAuthor = report.author_id === user.id
+  const canEdit = isAuthor || isDesk
 
   const author = report.profiles as { full_name: string; department: string | null } | null
   const sourcesRaw = (report.report_sources as any[]) ?? []
   const linkedSources = sourcesRaw.map((rs: any) => rs.sources).filter(Boolean)
+  const revisions: any[] = revisionsRaw ?? []
 
-  const dateStr = new Date(report.created_at).toLocaleString('ko-KR', {
-    year: 'numeric', month: '2-digit', day: '2-digit',
-    hour: '2-digit', minute: '2-digit',
-  })
+  // 수정이력이 2개 이상이면 이력 표시 (1개는 최초 작성본으로 본문에 표시)
+  const hasRevisions = revisions.length > 1
 
   return (
     <div className="max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
 
       {/* 뒤로가기 */}
       <div className="flex items-center gap-2">
-        <Link href="/reports" style={{ color: '#4A6080', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
-        <span style={{ fontSize: '13px', color: '#4A6080' }}>정보보고 목록</span>
+        <Link href="/reports" style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+        <span style={{ fontSize: '13px', color: '#485870' }}>정보보고 목록</span>
       </div>
 
       {/* 메인 카드 */}
       <div className="glass-card p-5">
         {/* 제목 + 배지 */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#E8F0FE', lineHeight: 1.35, flex: 1 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#CDD5E0', lineHeight: 1.35, flex: 1 }}>
             {report.title}
+            {hasRevisions && (
+              <span style={{
+                marginLeft: '10px', fontSize: '11px', fontWeight: 600,
+                background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+                border: '1px solid rgba(30,144,255,0.25)',
+                borderRadius: '5px', padding: '1px 7px',
+                verticalAlign: 'middle',
+              }}>
+                수정 {revisions.length - 1}회
+              </span>
+            )}
           </h1>
           <VisibilityBadge visibility={report.visibility as ReportVisibility} />
         </div>
 
-        {/* 메타 */}
-        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #1A3050', paddingBottom: '12px' }}>
-          <span style={{ fontSize: '13px', color: '#8899BB' }}>
+        {/* 작성자 + 날짜 메타 */}
+        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #1A2838', paddingBottom: '12px' }}>
+          <span style={{ fontSize: '13px', color: '#687898' }}>
             ✍️ {author?.full_name ?? '—'}
             {author?.department ? ` · ${author.department}` : ''}
           </span>
-          <span style={{ fontSize: '12px', color: '#4A6080' }}>🕐 {dateStr}</span>
+          <span style={{ fontSize: '12px', color: '#485870' }}>
+            🕐 {formatDateTime(report.created_at)}
+          </span>
         </div>
 
-        {/* 본문 */}
-        <div style={{
-          fontSize: '14px', color: '#D0DFF5',
-          lineHeight: 1.8, whiteSpace: 'pre-wrap',
-          marginBottom: '16px',
-        }}>
-          {report.content}
-        </div>
+        {/* ── 본문 (수정이력 없으면 단순 표시, 있으면 이력 타임라인) ── */}
+        {!hasRevisions ? (
+          /* 이력 없음: 보안 뷰어 (워터마크 + 복사 추적) */
+          <ReportContentViewer
+            reportId={id}
+            content={report.content}
+            userId={user.id}
+            userFullName={(myProfile as any)?.full_name ?? '—'}
+            userDepartment={(myProfile as any)?.department ?? null}
+          />
+        ) : (
+          /* 이력 있음: 버전별 스택 + 각각 보안 뷰어 */
+          <div style={{ marginBottom: '16px' }}>
+            {revisions.map((rev: any, idx: number) => {
+              const revAuthor = rev.profiles as { full_name: string; department?: string | null } | null
+              const isFirst = idx === 0
+              const isSameAuthor = rev.author_id === report.author_id
+
+              return (
+                <div key={rev.id}>
+                  {/* 구분선 (첫 번째 이후) */}
+                  {!isFirst && (
+                    <div style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      margin: '14px 0 12px',
+                    }}>
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #1A2838, transparent)' }} />
+                      <span style={{
+                        fontSize: '11px', color: '#4A7CC0',
+                        background: 'rgba(30,144,255,0.08)',
+                        border: '1px solid rgba(30,144,255,0.2)',
+                        borderRadius: '4px', padding: '1px 8px',
+                        whiteSpace: 'nowrap',
+                      }}>
+                        수정 {idx}
+                      </span>
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #1A2838, transparent)' }} />
+                    </div>
+                  )}
+
+                  {/* 저자 레이블 */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    marginBottom: '6px',
+                  }}>
+                    <span style={{
+                      fontSize: '11px', fontWeight: 600,
+                      color: isFirst ? '#687898' : (isSameAuthor ? '#687898' : '#3A90A8'),
+                    }}>
+                      {isFirst ? '최초 작성' : '수정'}
+                    </span>
+                    <span style={{ fontSize: '12px', color: isFirst ? '#687898' : '#3A90A8', fontWeight: 600 }}>
+                      {revAuthor?.full_name ?? '—'}
+                    </span>
+                    {revAuthor?.department && (
+                      <span style={{ fontSize: '11px', color: '#485870' }}>{revAuthor.department}</span>
+                    )}
+                    <span style={{ fontSize: '11px', color: '#485870', marginLeft: '2px' }}>
+                      · {formatDateTime(rev.created_at)}
+                    </span>
+                  </div>
+
+                  {/* 각 버전 본문 — 보안 뷰어로 감쌈 */}
+                  <div style={{
+                    borderLeft: isFirst ? 'none' : '2px solid rgba(30,144,255,0.3)',
+                    paddingLeft: isFirst ? '0' : '12px',
+                  }}>
+                    <ReportContentViewer
+                      reportId={id}
+                      content={rev.content}
+                      userId={user.id}
+                      userFullName={(myProfile as any)?.full_name ?? '—'}
+                      userDepartment={(myProfile as any)?.department ?? null}
+                    />
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
 
         {/* 태그 */}
         {(report.tags as string[]).length > 0 && (
           <div className="flex flex-wrap gap-1 mb-4">
-            {(report.tags as string[]).map((tag, i) => (
+            {(report.tags as string[]).map((tag: string, i: number) => (
               <span key={i} style={{
-                background: 'rgba(30,144,255,0.1)',
-                color: '#1E90FF',
+                background: 'rgba(30,144,255,0.1)', color: '#4A7CC0',
                 border: '1px solid rgba(30,144,255,0.2)',
-                borderRadius: '4px', padding: '2px 8px',
-                fontSize: '12px',
+                borderRadius: '4px', padding: '2px 8px', fontSize: '12px',
               }}>
                 #{tag}
               </span>
@@ -117,24 +206,19 @@ export default async function ReportDetailPage({ params }: Params) {
       {/* 연결된 취재원 */}
       {linkedSources.length > 0 && (
         <div className="glass-card p-4">
-          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#E8F0FE', marginBottom: '10px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', marginBottom: '10px' }}>
             👤 연결된 취재원 ({linkedSources.length}명)
           </h2>
           <div className="flex flex-wrap gap-2">
             {linkedSources.map((src: any) => (
-              <Link
-                key={src.id}
-                href={`/sources/${src.id}`}
-                style={{ textDecoration: 'none' }}>
+              <Link key={src.id} href={`/sources/${src.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  background: '#132850',
-                  border: '1px solid #1A3050',
-                  borderRadius: '8px', padding: '8px 14px',
-                  cursor: 'pointer',
+                  background: '#182035', border: '1px solid #1A2838',
+                  borderRadius: '8px', padding: '8px 14px', cursor: 'pointer',
                 }}
-                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#1E90FF')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A3050')}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#E8F0FE' }}>{src.full_name}</p>
+                  onMouseEnter={e => (e.currentTarget.style.borderColor = '#4A7CC0')}
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A2838')}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{src.full_name}</p>
                   {src.current_organization && (
                     <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{src.current_organization}</p>
                   )}
@@ -145,23 +229,37 @@ export default async function ReportDetailPage({ params }: Params) {
         </div>
       )}
 
-      {/* 작성자 액션 버튼 */}
-      {isAuthor && (
+      {/* ── 지정 열람자 (작성자 or 데스크만 표시) ── */}
+      {(isAuthor || isDesk) && report.visibility !== 'all' && (
+        <ReportAllowedUsers reportId={id} isAuthorOrDesk={true} />
+      )}
+
+      {/* ── 포인트 부여 (데스크만 표시) ── */}
+      {isDesk && (
+        <ReportPointAward
+          reportId={id}
+          authorName={author?.full_name ?? '기자'}
+          authorId={report.author_id}
+          currentUserId={user.id}
+        />
+      )}
+
+      {/* ── 복사 이력 추적 (데스크만 표시) ── */}
+      {isDesk && <ReportCopyLogs reportId={id} />}
+
+      {/* 액션 버튼 (작성자 or 데스크) */}
+      {canEdit && (
         <div className="flex gap-2">
           <Link
             href={`/reports/${id}/edit`}
             style={{
-              padding: '9px 20px',
-              background: '#132850',
-              border: '1px solid #1A3050',
-              color: '#8899BB',
-              borderRadius: '8px',
-              fontSize: '13px',
-              textDecoration: 'none',
+              padding: '9px 20px', background: '#182035',
+              border: '1px solid #1A2838', color: '#687898',
+              borderRadius: '8px', fontSize: '13px', textDecoration: 'none',
             }}>
             수정
           </Link>
-          <ReportDeleteButton reportId={id} />
+          {(isAuthor || isDesk) && <ReportDeleteButton reportId={id} />}
         </div>
       )}
     </div>

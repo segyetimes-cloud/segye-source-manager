@@ -32,7 +32,7 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
   return (
     <div className="rounded-lg px-4 py-3 flex items-start justify-between gap-3"
       style={{ background: 'rgba(255,153,0,0.1)', border: '1px solid rgba(255,153,0,0.3)' }}>
-      <div className="flex items-start gap-2 text-sm" style={{ color: '#FFB84D' }}>
+      <div className="flex items-start gap-2 text-sm" style={{ color: '#B08830' }}>
         <span className="flex-shrink-0 mt-0.5">⚠️</span>
         <span>
           <strong>중복 이름 감지:</strong>{' '}
@@ -42,7 +42,7 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
               <button
                 onClick={() => router.push(`/sources?tab=shared&q=${encodeURIComponent(name)}`)}
                 style={{
-                  color: '#FFD700',
+                  color: '#A88C30',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',

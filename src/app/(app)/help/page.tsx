@@ -21,15 +21,15 @@ export default async function HelpPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>🙋 도움 요청</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>🙋 도움 요청</h1>
+          <p className="text-sm mt-1" style={{ color: '#687898' }}>
             연락처나 정보가 필요하면 동료에게 요청하세요. 도움을 주면 포인트를 받습니다!
           </p>
         </div>
         <Link
           href="/help/new"
           className="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold"
-          style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white' }}>
+          style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white' }}>
           + 도움 요청하기
         </Link>
       </div>

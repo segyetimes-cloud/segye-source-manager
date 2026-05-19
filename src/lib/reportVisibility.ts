@@ -1,0 +1,37 @@
+import type { ReportVisibility } from '@/types/database'
+
+export interface VisibilityMeta {
+  label: string
+  shortLabel: string
+  desc: string
+  bg: string
+  color: string
+}
+
+export const VISIBILITY_META: Record<ReportVisibility, VisibilityMeta> = {
+  author_only: {
+    label: '🔒 최고 보안',
+    shortLabel: '최고 보안',
+    desc: '작성자 본인 + 직속 부장 + 부국장·편집국장·편집인만 열람. 취재원 신변 위협 우려 시 선택',
+    bg: 'rgba(255,68,68,0.1)',
+    color: '#C04040',
+  },
+  desk_above: {
+    label: '🏢 부장 이상',
+    shortLabel: '부장 이상',
+    desc: '전체 부장·부국장·편집국장·편집인 열람 가능. 타 부서 기자는 차단됨',
+    bg: 'rgba(0,212,255,0.1)',
+    color: '#3A90A8',
+  },
+  all: {
+    label: '🌐 사내 공유',
+    shortLabel: '사내 공유',
+    desc: '언론사 전체 공유. 부서 간 융합 취재가 필요한 사안에 사용',
+    bg: 'rgba(0,204,102,0.1)',
+    color: '#3D9E6A',
+  },
+}
+
+export const VISIBILITY_OPTIONS = (
+  Object.entries(VISIBILITY_META) as [ReportVisibility, VisibilityMeta][]
+).map(([value, meta]) => ({ value, ...meta }))

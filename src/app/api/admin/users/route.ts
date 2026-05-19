@@ -113,7 +113,7 @@ export async function PATCH(request: NextRequest) {
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const body = await request.json()
-  const { target_user_id, is_active, role, full_name, department, desk_name, send_reset_email, action } = body
+  const { target_user_id, is_active, role, rank, full_name, department, desk_name, send_reset_email, action } = body
 
   if (!target_user_id) return NextResponse.json({ error: 'target_user_id 필요' }, { status: 400 })
 
@@ -243,6 +243,7 @@ export async function PATCH(request: NextRequest) {
   const updates: Record<string, unknown> = {}
   if (is_active !== undefined) updates.is_active = is_active
   if (role !== undefined) updates.role = role
+  if (rank !== undefined) updates.rank = rank   // null 허용 (직급 해제)
   if (full_name !== undefined) updates.full_name = full_name
   if (department !== undefined) updates.department = department
   if (desk_name !== undefined) updates.desk_name = desk_name

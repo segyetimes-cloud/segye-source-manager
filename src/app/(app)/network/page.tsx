@@ -541,26 +541,27 @@ export default async function NetworkPage() {
   }, {} as Record<string, number>)
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>🕸️ 관계망 그래프</h1>
-          <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
-            소속·학교·시험기수·직책·이름언급 등 기반 자동 생성 — 겹치는 속성 많을수록 굵은 선, 연결 많은 인물일수록 큰 원
+    <div className="space-y-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="min-w-0">
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>🕸️ 관계망 그래프</h1>
+          {/* 통계: 모바일에서는 한 줄 요약만 */}
+          <p className="text-xs mt-0.5" style={{ color: '#485870' }}>
+            {nodes.length}명 · {allLinks.length}쌍 연결
           </p>
         </div>
-        <div className="text-right text-xs" style={{ color: '#4A6080' }}>
-          <p>{nodes.length}명 · {allLinks.length}쌍 연결</p>
+        {/* PC에서만 상세 통계 표시 */}
+        <div className="hidden md:block text-right text-xs flex-shrink-0" style={{ color: '#485870' }}>
           {Object.entries(linkTypeCounts).map(([type, count]) => (
             <p key={type}>{TYPE_LABELS[type] ?? type}: {count}건</p>
           ))}
         </div>
       </div>
 
-      {/* 중복 이름 경고 — 클릭으로 해당 취재원 이동, × 로 닫기 */}
+      {/* 중복 이름 경고 */}
       <DuplicateWarning duplicateNames={duplicateNames} />
 
-      <div className="graph-container" style={{ height: 'calc(100vh - 220px)' }}>
+      <div className="graph-container" style={{ height: 'calc(100vh - 140px)', minHeight: '420px' }}>
         <NetworkGraph nodes={nodes} links={allLinks} />
       </div>
     </div>

@@ -101,8 +101,8 @@ export default function LoginPage() {
 
   const inputStyle: React.CSSProperties = {
     background: '#0D1F3C',
-    border: '1px solid #1A3050',
-    color: '#E8F0FE',
+    border: '1px solid #1A2838',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '10px 14px',
     fontSize: '14px',
@@ -115,7 +115,7 @@ export default function LoginPage() {
     <div
       className="min-h-screen flex items-center justify-center px-4"
       style={{
-        background: 'linear-gradient(160deg, #060E1E 0%, #0A1628 40%, #0D1F3C 100%)',
+        background: 'linear-gradient(160deg, #060E1E 0%, #0D1520 40%, #0D1F3C 100%)',
       }}
     >
       {/* 배경 글로우 */}
@@ -170,7 +170,7 @@ export default function LoginPage() {
             </div>
           </div>
 
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#E8F0FE' }}>
+          <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#CDD5E0' }}>
             세계일보
           </h1>
           <p className="text-sm mt-1" style={{ color: '#5A7099' }}>
@@ -203,11 +203,11 @@ export default function LoginPage() {
                   padding: '14px',
                   fontSize: '14px',
                   fontWeight: tab === t ? 600 : 400,
-                  color: tab === t ? '#1E90FF' : '#4A6080',
+                  color: tab === t ? '#4A7CC0' : '#485870',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',
-                  borderBottom: tab === t ? '2px solid #1E90FF' : '2px solid transparent',
+                  borderBottom: tab === t ? '2px solid #4A7CC0' : '2px solid transparent',
                   transition: 'all 0.2s',
                   marginBottom: '-1px',
                 }}
@@ -222,7 +222,7 @@ export default function LoginPage() {
             {tab === 'login' && (
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                     이메일
                   </label>
                   <input
@@ -232,13 +232,13 @@ export default function LoginPage() {
                     placeholder="name@segye.com"
                     required
                     style={inputStyle}
-                    onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                    onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                    onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                    onBlur={e => (e.target.style.borderColor = '#1A2838')}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+                  <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                     비밀번호
                   </label>
                   <input
@@ -248,8 +248,8 @@ export default function LoginPage() {
                     placeholder="비밀번호 입력"
                     required
                     style={inputStyle}
-                    onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                    onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                    onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                    onBlur={e => (e.target.style.borderColor = '#1A2838')}
                   />
                 </div>
 
@@ -260,7 +260,7 @@ export default function LoginPage() {
                       background: loginError.includes('승인 대기')
                         ? 'rgba(255,153,0,0.1)'
                         : 'rgba(255,68,68,0.1)',
-                      color: loginError.includes('승인 대기') ? '#FF9900' : '#FF6666',
+                      color: loginError.includes('승인 대기') ? '#A87228' : '#BC5050',
                       border: `1px solid ${loginError.includes('승인 대기') ? 'rgba(255,153,0,0.25)' : 'rgba(255,68,68,0.2)'}`,
                       whiteSpace: 'pre-line',
                       lineHeight: '1.6',
@@ -284,7 +284,7 @@ export default function LoginPage() {
                     cursor: loginLoading ? 'not-allowed' : 'pointer',
                     background: loginLoading
                       ? 'rgba(30,144,255,0.35)'
-                      : 'linear-gradient(135deg, #1E90FF 0%, #0055CC 100%)',
+                      : 'linear-gradient(135deg, #4A7CC0 0%, #0055CC 100%)',
                     color: 'white',
                     transition: 'opacity 0.2s',
                     boxShadow: loginLoading ? 'none' : '0 4px 16px rgba(30,144,255,0.3)',
@@ -293,9 +293,9 @@ export default function LoginPage() {
                   {loginLoading ? '로그인 중...' : '로그인'}
                 </button>
 
-                <p className="text-center text-xs pt-2" style={{ color: '#3A5070' }}>
+                <p className="text-center text-xs pt-2" style={{ color: '#384860' }}>
                   계정 문의:{' '}
-                  <span style={{ color: '#1E90FF' }}>관리자에게 연락하세요</span>
+                  <span style={{ color: '#4A7CC0' }}>관리자에게 연락하세요</span>
                 </p>
               </form>
             )}
@@ -310,15 +310,15 @@ export default function LoginPage() {
                       style={{ background: 'rgba(0,204,102,0.15)', border: '1px solid rgba(0,204,102,0.3)' }}
                     >
                       <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                        <path d="M6 14l5 5 11-11" stroke="#00CC66" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
+                        <path d="M6 14l5 5 11-11" stroke="#3D9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
                       </svg>
                     </div>
                     <div>
-                      <p className="font-semibold" style={{ color: '#E8F0FE' }}>가입 신청 완료!</p>
-                      <p className="text-sm mt-2" style={{ color: '#8899BB' }}>
+                      <p className="font-semibold" style={{ color: '#CDD5E0' }}>가입 신청 완료!</p>
+                      <p className="text-sm mt-2" style={{ color: '#687898' }}>
                         관리자 승인 후 이메일로 안내가 발송됩니다.
                       </p>
-                      <p className="text-xs mt-1" style={{ color: '#4A6080' }}>
+                      <p className="text-xs mt-1" style={{ color: '#485870' }}>
                         승인까지 최대 1영업일이 소요될 수 있습니다.
                       </p>
                     </div>
@@ -329,9 +329,9 @@ export default function LoginPage() {
                         padding: '9px 24px',
                         borderRadius: '8px',
                         fontSize: '14px',
-                        border: '1px solid #1A3050',
+                        border: '1px solid #1A2838',
                         background: 'none',
-                        color: '#1E90FF',
+                        color: '#4A7CC0',
                         cursor: 'pointer',
                       }}
                     >
@@ -341,7 +341,7 @@ export default function LoginPage() {
                 ) : (
                   <form onSubmit={handleSignup} className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                         이름
                       </label>
                       <input
@@ -351,13 +351,13 @@ export default function LoginPage() {
                         placeholder="홍길동"
                         required
                         style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                        onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                         이메일
                       </label>
                       <input
@@ -367,14 +367,14 @@ export default function LoginPage() {
                         placeholder="name@segye.com"
                         required
                         style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                        onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
-                        비밀번호 <span style={{ color: '#3A5070', fontWeight: 400 }}>(8자 이상)</span>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                        비밀번호 <span style={{ color: '#384860', fontWeight: 400 }}>(8자 이상)</span>
                       </label>
                       <input
                         type="password"
@@ -383,13 +383,13 @@ export default function LoginPage() {
                         placeholder="비밀번호 설정"
                         required
                         style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                        onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
                       />
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#8899BB' }}>
+                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
                         비밀번호 확인
                       </label>
                       <input
@@ -399,8 +399,8 @@ export default function LoginPage() {
                         placeholder="비밀번호 재입력"
                         required
                         style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#1E90FF')}
-                        onBlur={e => (e.target.style.borderColor = '#1A3050')}
+                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
                       />
                     </div>
 
@@ -409,7 +409,7 @@ export default function LoginPage() {
                         className="rounded-lg p-3 text-sm"
                         style={{
                           background: 'rgba(255,68,68,0.1)',
-                          color: '#FF6666',
+                          color: '#BC5050',
                           border: '1px solid rgba(255,68,68,0.2)',
                         }}
                       >
@@ -438,7 +438,7 @@ export default function LoginPage() {
                       {signupLoading ? '처리 중...' : '가입 신청'}
                     </button>
 
-                    <p className="text-center text-xs pt-1" style={{ color: '#3A5070' }}>
+                    <p className="text-center text-xs pt-1" style={{ color: '#384860' }}>
                       가입 후 관리자 승인이 완료되어야 로그인 가능합니다
                     </p>
                   </form>

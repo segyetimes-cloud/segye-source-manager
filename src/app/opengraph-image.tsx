@@ -16,7 +16,7 @@ export default function Image() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          background: 'linear-gradient(135deg, #0A1628 0%, #0F2040 50%, #0A1628 100%)',
+          background: 'linear-gradient(135deg, #0D1520 0%, #131C2C 50%, #0D1520 100%)',
           position: 'relative',
         }}
       >
@@ -53,7 +53,7 @@ export default function Image() {
               border: '1px solid rgba(30,144,255,0.3)',
             }}
           >
-            <span style={{ fontSize: 14, color: '#1E90FF', letterSpacing: 2 }}>
+            <span style={{ fontSize: 14, color: '#4A7CC0', letterSpacing: 2 }}>
               SEGYE ILBO
             </span>
           </div>
@@ -71,7 +71,7 @@ export default function Image() {
               style={{
                 fontSize: 64,
                 fontWeight: 800,
-                color: '#E8F0FE',
+                color: '#CDD5E0',
                 letterSpacing: -1,
               }}
             >
@@ -80,7 +80,7 @@ export default function Image() {
             <span
               style={{
                 fontSize: 24,
-                color: '#8899BB',
+                color: '#687898',
                 letterSpacing: 1,
               }}
             >
@@ -93,7 +93,7 @@ export default function Image() {
             style={{
               width: 80,
               height: 2,
-              background: 'linear-gradient(90deg, transparent, #1E90FF, transparent)',
+              background: 'linear-gradient(90deg, transparent, #4A7CC0, transparent)',
               marginTop: 8,
             }}
           />
@@ -110,7 +110,7 @@ export default function Image() {
             gap: 6,
           }}
         >
-          <span style={{ fontSize: 14, color: '#2A4570' }}>세계일보</span>
+          <span style={{ fontSize: 14, color: '#263548' }}>세계일보</span>
         </div>
       </div>
     ),

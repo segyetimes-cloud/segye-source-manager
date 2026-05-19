@@ -2,28 +2,10 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
+import VisibilityBadge from '@/components/reports/VisibilityBadge'
 
 interface SearchParams {
   searchParams: Promise<{ tab?: string; q?: string; page?: string }>
-}
-
-function VisibilityBadge({ visibility }: { visibility: ReportVisibility }) {
-  const map = {
-    author_only: { bg: 'rgba(255,153,0,0.1)', color: '#FF9900', label: '🔒 작성자만' },
-    desk_above:  { bg: 'rgba(0,212,255,0.1)',  color: '#00D4FF', label: '📋 데스크' },
-    all:         { bg: 'rgba(0,204,102,0.1)',  color: '#00CC66', label: '🌐 전체' },
-  }
-  const s = map[visibility] ?? map.author_only
-  return (
-    <span style={{
-      background: s.bg, color: s.color,
-      border: `1px solid ${s.color}44`,
-      borderRadius: '6px', padding: '2px 8px',
-      fontSize: '11px', fontWeight: 600, whiteSpace: 'nowrap',
-    }}>
-      {s.label}
-    </span>
-  )
 }
 
 export default async function ReportsPage({ searchParams }: SearchParams) {
@@ -75,10 +57,10 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
     if (matchingReportIds.length > 0) {
       query = query.or(
-        `title.ilike.%${q}%,content.ilike.%${q}%,id.in.(${matchingReportIds.join(',')})`
+        `title.ilike.*${q}*,content.ilike.*${q}*,id.in.(${matchingReportIds.join(',')})`
       )
     } else {
-      query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+      query = query.or(`title.ilike.*${q}*,content.ilike.*${q}*`)
     }
   }
 
@@ -91,13 +73,13 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>📋 정보보고</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>📋 정보보고</h1>
           <p className="text-xs mt-0.5" style={{ color: '#5A7099' }}>취재 관련 정보 보고서를 작성하고 공유합니다</p>
         </div>
         <Link
           href="/reports/new"
           style={{
-            background: 'linear-gradient(135deg, #1E90FF, #0066CC)',
+            background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
             color: 'white', borderRadius: '8px',
             padding: '8px 16px', fontSize: '13px',
             fontWeight: 600, textDecoration: 'none',
@@ -110,7 +92,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       {/* 탭 + 검색 */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {/* 탭 */}
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A3050', flexShrink: 0 }}>
+        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838', flexShrink: 0 }}>
           {[
             { value: 'all',  label: '전체 공개' },
             { value: 'mine', label: '내 보고서' },
@@ -123,8 +105,8 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                 fontSize: '13px', fontWeight: 500,
                 textDecoration: 'none',
                 background: tab === t.value ? 'rgba(30,144,255,0.15)' : 'transparent',
-                color: tab === t.value ? '#1E90FF' : '#8899BB',
-                borderRight: t.value === 'all' ? '1px solid #1A3050' : 'none',
+                color: tab === t.value ? '#4A7CC0' : '#687898',
+                borderRight: t.value === 'all' ? '1px solid #1A2838' : 'none',
               }}>
               {t.label}
             </Link>
@@ -140,13 +122,13 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
             defaultValue={q}
             placeholder="제목·내용 검색"
             style={{
-              flex: 1, background: '#132850',
-              border: '1px solid #1A3050', color: '#E8F0FE',
+              flex: 1, background: '#182035',
+              border: '1px solid #1A2838', color: '#CDD5E0',
               borderRadius: '8px', padding: '7px 12px', fontSize: '13px',
             }}
           />
           <button type="submit" style={{
-            background: '#1E90FF', color: 'white',
+            background: '#4A7CC0', color: 'white',
             border: 'none', borderRadius: '8px',
             padding: '7px 14px', fontSize: '13px', cursor: 'pointer',
           }}>
@@ -158,7 +140,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       {/* 목록 */}
       {(!reports || reports.length === 0) ? (
         <div className="glass-card p-8 text-center">
-          <p style={{ color: '#4A6080', fontSize: '14px' }}>
+          <p style={{ color: '#485870', fontSize: '14px' }}>
             {q ? `"${q}"에 해당하는 보고서가 없습니다.` : '아직 보고서가 없습니다.'}
           </p>
         </div>
@@ -192,7 +174,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                   <div className="flex items-start justify-between gap-2 mb-2">
                     <h2 style={{
                       fontSize: '15px', fontWeight: 600,
-                      color: '#E8F0FE', lineHeight: 1.3,
+                      color: '#CDD5E0', lineHeight: 1.3,
                       flex: 1,
                     }}>
                       {report.title}
@@ -202,7 +184,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
                   {/* 본문 미리보기 */}
                   <p style={{
-                    fontSize: '13px', color: '#8899BB',
+                    fontSize: '13px', color: '#687898',
                     display: '-webkit-box',
                     WebkitLineClamp: 2,
                     WebkitBoxOrient: 'vertical',
@@ -219,7 +201,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                       {(report.tags as string[]).slice(0, 5).map((tag, i) => (
                         <span key={i} style={{
                           background: 'rgba(30,144,255,0.1)',
-                          color: '#1E90FF',
+                          color: '#4A7CC0',
                           border: '1px solid rgba(30,144,255,0.2)',
                           borderRadius: '4px', padding: '1px 7px',
                           fontSize: '11px',
@@ -236,7 +218,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                       {sourceNames.slice(0, 4).map((name: string, i: number) => (
                         <span key={i} style={{
                           background: 'rgba(0,212,255,0.08)',
-                          color: '#00D4FF',
+                          color: '#3A90A8',
                           border: '1px solid rgba(0,212,255,0.2)',
                           borderRadius: '4px', padding: '1px 7px',
                           fontSize: '11px',
@@ -245,7 +227,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                         </span>
                       ))}
                       {sourceNames.length > 4 && (
-                        <span style={{ fontSize: '11px', color: '#4A6080' }}>+{sourceNames.length - 4}명</span>
+                        <span style={{ fontSize: '11px', color: '#485870' }}>+{sourceNames.length - 4}명</span>
                       )}
                     </div>
                   )}
@@ -256,7 +238,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                       {author?.full_name ?? '—'}
                       {author?.department ? ` · ${author.department}` : ''}
                     </span>
-                    <span style={{ fontSize: '12px', color: '#4A6080' }}>{dateStr}</span>
+                    <span style={{ fontSize: '12px', color: '#485870' }}>{dateStr}</span>
                   </div>
                 </div>
               </Link>
@@ -270,7 +252,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
         <div className="flex items-center justify-center gap-2 pt-2">
           {pageNum > 1 && (
             <Link href={`/reports?tab=${tab}&q=${q}&page=${pageNum - 1}`}
-              style={{ padding: '6px 14px', background: '#132850', border: '1px solid #1A3050', color: '#8899BB', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               이전
             </Link>
           )}
@@ -279,7 +261,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
           </span>
           {pageNum < totalPages && (
             <Link href={`/reports?tab=${tab}&q=${q}&page=${pageNum + 1}`}
-              style={{ padding: '6px 14px', background: '#132850', border: '1px solid #1A3050', color: '#8899BB', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               다음
             </Link>
           )}

@@ -3,25 +3,25 @@
 
 :root {
   /* 세계일보 취재원 관리시스템 다크블루 테마 */
-  --bg-base: #0A1628;
-  --bg-card: #0F2040;
-  --bg-elevated: #132850;
-  --bg-hover: #1A3560;
+  --bg-base: #0D1520;
+  --bg-card: #131C2C;
+  --bg-elevated: #182035;
+  --bg-hover: #1E2C40;
 
-  --accent-blue: #1E90FF;
-  --accent-cyan: #00D4FF;
-  --accent-gold: #FFD700;
+  --accent-blue: #4A7CC0;
+  --accent-cyan: #3A90A8;
+  --accent-gold: #A88C30;
 
-  --text-primary: #E8F0FE;
-  --text-secondary: #8899BB;
-  --text-muted: #4A6080;
+  --text-primary: #CDD5E0;
+  --text-secondary: #687898;
+  --text-muted: #485870;
 
-  --border-default: #1A3050;
-  --border-bright: #2A4570;
+  --border-default: #1A2838;
+  --border-bright: #263548;
 
-  --danger: #FF4444;
-  --success: #00CC66;
-  --warning: #FF9900;
+  --danger: #C04040;
+  --success: #3D9E6A;
+  --warning: #A87228;
 
   --background: var(--bg-base);
   --foreground: var(--text-primary);
@@ -81,7 +81,7 @@ p, span, div, li, td, th, label, a, button {
 
 /* 글래스모피즘 카드 */
 .glass-card {
-  background: rgba(15, 32, 64, 0.85);
+  background: rgba(18, 26, 42, 0.85);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border-default);
@@ -110,7 +110,7 @@ p, span, div, li, td, th, label, a, button {
 
 /* 대시보드 취재원 링크 hover */
 .dashboard-source-link:hover {
-  background: #1A3560 !important;
+  background: #1E2C40 !important;
 }
 
 /* 워터마크 (보안용 — DOM에서 제거/변조 불가) */
@@ -140,8 +140,8 @@ p, span, div, li, td, th, label, a, button {
   align-items: center;
   justify-content: space-between;
   padding: 0 1rem;
-  background: #0A1628;
-  border-bottom: 1px solid #1A3050;
+  background: #0D1520;
+  border-bottom: 1px solid #1A2838;
 }
 @media (min-width: 768px) {
   .mobile-topbar { display: none !important; }
@@ -315,14 +315,14 @@ p, span, div, li, td, th, label, a, button {
 }
 
 /* 역할 배지 색상 */
-.role-superadmin { background: rgba(255, 68, 68, 0.15); color: #FF4444; border: 1px solid rgba(255, 68, 68, 0.3); }
-.role-admin { background: rgba(255, 215, 0, 0.15); color: #FFD700; border: 1px solid rgba(255, 215, 0, 0.3); }
-.role-deputy { background: rgba(0, 212, 255, 0.15); color: #00D4FF; border: 1px solid rgba(0, 212, 255, 0.3); }
-.role-reporter { background: rgba(30, 144, 255, 0.15); color: #1E90FF; border: 1px solid rgba(30, 144, 255, 0.3); }
+.role-superadmin { background: rgba(192, 64, 64, 0.15); color: #C04040; border: 1px solid rgba(192, 64, 64, 0.3); }
+.role-admin { background: rgba(168, 140, 48, 0.15); color: #A88C30; border: 1px solid rgba(168, 140, 48, 0.3); }
+.role-deputy { background: rgba(58, 144, 168, 0.15); color: #3A90A8; border: 1px solid rgba(58, 144, 168, 0.3); }
+.role-reporter { background: rgba(74, 124, 192, 0.15); color: #4A7CC0; border: 1px solid rgba(74, 124, 192, 0.3); }
 
 /* 민감도 배지 */
-.sensitivity-public { background: rgba(0, 204, 102, 0.15); color: #00CC66; }
-.sensitivity-private { background: rgba(255, 153, 0, 0.15); color: #FF9900; }
+.sensitivity-public { background: rgba(61, 158, 106, 0.15); color: #3D9E6A; }
+.sensitivity-private { background: rgba(168, 114, 40, 0.15); color: #A87228; }
 
 /* ── 정보보고 카드 그리드 ── */
 .report-card-grid {
@@ -349,7 +349,7 @@ input, textarea, select {
 input:focus, textarea:focus, select:focus {
   outline: none;
   border-color: var(--accent-blue);
-  box-shadow: 0 0 0 2px rgba(30, 144, 255, 0.2);
+  box-shadow: 0 0 0 2px rgba(74, 124, 192, 0.2);
 }
 input::placeholder, textarea::placeholder {
   color: var(--text-muted);

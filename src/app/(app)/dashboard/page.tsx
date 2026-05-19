@@ -42,22 +42,22 @@ export default async function DashboardPage() {
   const totalPoints = myPoints?.total_points ?? 0
 
   const scoreColor = (score: number) =>
-    score >= 90 ? '#00CC66' : score >= 60 ? '#FF9900' : '#FF4444'
+    score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
 
   return (
     <div className="space-y-6">
       {/* 헤더 */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#E8F0FE' }}>대시보드</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#8899BB' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>대시보드</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
             {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
           </p>
         </div>
         <Link
           href="/sources/new"
           className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80 flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #1E90FF, #0066CC)', color: 'white' }}>
+          style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white' }}>
           <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
             <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
           </svg>
@@ -69,19 +69,19 @@ export default async function DashboardPage() {
       {/* 통계 카드 4개 — 모바일 2열 / 데스크톱 4열 */}
       <div className="dashboard-stats-grid">
         {[
-          { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#1E90FF', icon: '👤' },
-          { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#00D4FF', icon: '🌐' },
-          { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#FFD700', icon: '⭐' },
-          { label: '공개 도움요청', value: openHelp?.length ?? 0, unit: '건', color: '#00CC66', icon: '🙋' },
+          { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#4A7CC0', icon: '👤' },
+          { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#3A90A8', icon: '🌐' },
+          { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#A88C30', icon: '⭐' },
+          { label: '공개 도움요청', value: openHelp?.length ?? 0, unit: '건', color: '#3D9E6A', icon: '🙋' },
         ].map(stat => (
           <div key={stat.label} className="glass-card p-4">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium mb-1" style={{ color: '#8899BB' }}>{stat.label}</p>
+                <p className="text-xs font-medium mb-1" style={{ color: '#687898' }}>{stat.label}</p>
                 <p className="text-2xl font-bold" style={{ color: stat.color }}>
                   {stat.value.toLocaleString()}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#4A6080' }}>{stat.unit}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#485870' }}>{stat.unit}</p>
               </div>
               <span className="text-xl">{stat.icon}</span>
             </div>
@@ -95,8 +95,8 @@ export default async function DashboardPage() {
         {/* 최근 등록 취재원 */}
         <div className="glass-card p-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold" style={{ color: '#E8F0FE' }}>최근 등록한 취재원</h2>
-            <Link href="/sources" className="text-xs" style={{ color: '#1E90FF' }}>
+            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>최근 등록한 취재원</h2>
+            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>
               전체 보기 →
             </Link>
           </div>
@@ -108,24 +108,24 @@ export default async function DashboardPage() {
                   key={source.id}
                   href={`/sources/${source.id}`}
                   className="flex items-center gap-4 p-3 rounded-lg transition-colors dashboard-source-link"
-                  style={{ background: '#132850' }}>
+                  style={{ background: '#182035' }}>
 
                   <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
-                    style={{ background: 'rgba(30,144,255,0.15)', color: '#1E90FF' }}>
+                    style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0' }}>
                     {source.full_name[0]}
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#E8F0FE' }}>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
                       {source.full_name}
                     </p>
-                    <p className="text-xs truncate" style={{ color: '#8899BB' }}>
+                    <p className="text-xs truncate" style={{ color: '#687898' }}>
                       {source.current_organization} {source.current_position}
                     </p>
                   </div>
 
                   <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#1A3050' }}>
+                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#1A2838' }}>
                       <div
                         className="h-full rounded-full transition-all"
                         style={{
@@ -143,9 +143,9 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8" style={{ color: '#4A6080' }}>
+            <div className="text-center py-8" style={{ color: '#485870' }}>
               <p className="text-sm">등록된 취재원이 없습니다</p>
-              <Link href="/sources/new" className="text-xs mt-2 block" style={{ color: '#1E90FF' }}>
+              <Link href="/sources/new" className="text-xs mt-2 block" style={{ color: '#4A7CC0' }}>
                 첫 번째 취재원을 등록해보세요 →
               </Link>
             </div>
@@ -155,8 +155,8 @@ export default async function DashboardPage() {
         {/* 우측: 포인트 리더보드 */}
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold" style={{ color: '#E8F0FE' }}>🏆 TOP 기여자</h2>
-            <span className="text-xs" style={{ color: '#4A6080' }}>전체 공개</span>
+            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🏆 TOP 기여자</h2>
+            <span className="text-xs" style={{ color: '#485870' }}>전체 공개</span>
           </div>
 
           {leaderboard && leaderboard.length > 0 ? (
@@ -172,14 +172,14 @@ export default async function DashboardPage() {
                       background: isMe ? 'rgba(255,215,0,0.08)' : 'transparent',
                       border: isMe ? '1px solid rgba(255,215,0,0.2)' : '1px solid transparent',
                     }}>
-                    <span className="text-sm w-5 text-center" style={{ color: '#4A6080' }}>
+                    <span className="text-sm w-5 text-center" style={{ color: '#485870' }}>
                       {medal || `${idx + 1}`}
                     </span>
-                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#FFD700' : '#E8F0FE' }}>
+                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#A88C30' : '#CDD5E0' }}>
                       {item.profiles?.full_name || '—'}
-                      {isMe && <span className="text-xs ml-1" style={{ color: '#FFD700' }}>(나)</span>}
+                      {isMe && <span className="text-xs ml-1" style={{ color: '#A88C30' }}>(나)</span>}
                     </span>
-                    <span className="text-sm font-bold flex-shrink-0" style={{ color: '#FFD700' }}>
+                    <span className="text-sm font-bold flex-shrink-0" style={{ color: '#A88C30' }}>
                       {item.total_points}
                     </span>
                   </div>
@@ -187,7 +187,7 @@ export default async function DashboardPage() {
               })}
             </div>
           ) : (
-            <p className="text-center text-sm py-4" style={{ color: '#4A6080' }}>
+            <p className="text-center text-sm py-4" style={{ color: '#485870' }}>
               포인트 집계 중...
             </p>
           )}
@@ -198,8 +198,8 @@ export default async function DashboardPage() {
       {openHelp && openHelp.length > 0 && (
         <div className="glass-card p-5">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="font-semibold" style={{ color: '#E8F0FE' }}>🙋 도움이 필요한 동료</h2>
-            <Link href="/help" className="text-xs" style={{ color: '#1E90FF' }}>
+            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🙋 도움이 필요한 동료</h2>
+            <Link href="/help" className="text-xs" style={{ color: '#4A7CC0' }}>
               전체 보기 →
             </Link>
           </div>
@@ -209,15 +209,15 @@ export default async function DashboardPage() {
                 key={req.id}
                 href={`/help/${req.id}`}
                 className="p-3 rounded-lg transition-colors"
-                style={{ background: '#132850', border: '1px solid #1A3050' }}>
-                <p className="text-sm font-medium truncate" style={{ color: '#E8F0FE' }}>
+                style={{ background: '#182035', border: '1px solid #1A2838' }}>
+                <p className="text-sm font-medium truncate" style={{ color: '#CDD5E0' }}>
                   {req.title}
                 </p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs" style={{ color: '#8899BB' }}>
+                  <span className="text-xs" style={{ color: '#687898' }}>
                     {new Date(req.created_at).toLocaleDateString('ko-KR')}
                   </span>
-                  <span className="text-xs font-bold" style={{ color: '#FFD700' }}>
+                  <span className="text-xs font-bold" style={{ color: '#A88C30' }}>
                     +{req.reward_points}pt
                   </span>
                 </div>

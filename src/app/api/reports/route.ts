@@ -52,10 +52,10 @@ export async function GET(request: NextRequest) {
 
     if (matchingReportIds.length > 0) {
       query = query.or(
-        `title.ilike.%${q}%,content.ilike.%${q}%,id.in.(${matchingReportIds.join(',')})`
+        `title.ilike.*${q}*,content.ilike.*${q}*,id.in.(${matchingReportIds.join(',')})`
       )
     } else {
-      query = query.or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+      query = query.or(`title.ilike.*${q}*,content.ilike.*${q}*`)
     }
   }
 
@@ -73,10 +73,15 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { title, content, tags, visibility, source_ids } = body
+  const { title, content, tags, visibility, source_ids, allowed_user_ids } = body
 
   if (!title?.trim()) return NextResponse.json({ error: '제목을 입력해 주세요.' }, { status: 400 })
   if (!content?.trim()) return NextResponse.json({ error: '본문을 입력해 주세요.' }, { status: 400 })
+
+  // 작성자의 소속 부서를 스냅샷으로 저장 (라인 격벽용)
+  const { data: authorProfile } = await supabaseAny
+    .from('profiles').select('department').eq('id', user.id).single()
+  const authorDepartment = authorProfile?.department ?? null
 
   const { data: report, error } = await supabaseAny
     .from('information_reports')
@@ -86,6 +91,7 @@ export async function POST(request: NextRequest) {
       content: content.trim(),
       tags: tags ?? [],
       visibility: visibility ?? 'author_only',
+      author_department: authorDepartment,
     })
     .select()
     .single()
@@ -96,6 +102,23 @@ export async function POST(request: NextRequest) {
   if (Array.isArray(source_ids) && source_ids.length > 0) {
     const rows = source_ids.map((sid: string) => ({ report_id: report.id, source_id: sid }))
     await supabaseAny.from('report_sources').insert(rows)
+  }
+
+  // 최초 작성 revision 기록
+  await supabaseAny.from('report_revisions').insert({
+    report_id: report.id,
+    author_id: user.id,
+    content: report.content,
+  })
+
+  // 지정 열람자 등록
+  if (Array.isArray(allowed_user_ids) && allowed_user_ids.length > 0) {
+    const rows = allowed_user_ids.map((uid: string) => ({
+      report_id: report.id,
+      user_id: uid,
+      granted_by: user.id,
+    }))
+    await supabaseAny.from('report_allowed_users').insert(rows)
   }
 
   return NextResponse.json(report, { status: 201 })

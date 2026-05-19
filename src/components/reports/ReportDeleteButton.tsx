@@ -27,7 +27,7 @@ export default function ReportDeleteButton({ reportId }: { reportId: string }) {
         padding: '9px 20px',
         background: 'rgba(255,68,68,0.1)',
         border: '1px solid rgba(255,68,68,0.3)',
-        color: '#FF4444',
+        color: '#C04040',
         borderRadius: '8px',
         fontSize: '13px',
         cursor: deleting ? 'not-allowed' : 'pointer',

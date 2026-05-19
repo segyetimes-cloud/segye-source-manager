@@ -28,7 +28,7 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#0A1628' }}>
+    <div className="min-h-screen" style={{ background: '#0D1520' }}>
       <SidebarLayout profile={profile}>
         {children}
       </SidebarLayout>

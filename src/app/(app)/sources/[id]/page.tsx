@@ -67,8 +67,8 @@ export default async function SourceDetailPage({ params }: Params) {
     ? ratings.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / ratings.length
     : null
 
-  const { data: profileRaw2 } = await supabaseAny.from('profiles').select('role').eq('id', user.id).single()
-  const profile = profileRaw2 as { role: string } | null
+  const { data: profileRaw2 } = await supabaseAny.from('profiles').select('role, full_name, department').eq('id', user.id).single()
+  const profile = profileRaw2 as { role: string; full_name: string | null; department: string | null } | null
   const isOwner = source.owner_id === user.id
   const userRole = profile?.role ?? 'reporter'
   const isAdmin = ['admin', 'superadmin'].includes(userRole)
@@ -139,6 +139,8 @@ export default async function SourceDetailPage({ params }: Params) {
       isDeputyOrAbove={isDeputyOrAbove}
       userRole={userRole}
       userId={user.id}
+      userFullName={profile?.full_name ?? '—'}
+      userDepartment={profile?.department ?? null}
       initialNotes={initialNotes}
       lockedNotesCount={lockedNotesCount}
       canSeePersonalNotes={canSeePersonalNotes}

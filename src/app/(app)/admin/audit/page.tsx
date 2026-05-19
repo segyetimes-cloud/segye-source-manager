@@ -53,8 +53,8 @@ export default async function AdminAuditPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>접근 로그</h1>
-        <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>접근 로그</h1>
+        <p className="text-sm mt-1" style={{ color: '#687898' }}>
           시스템 내 모든 주요 동작을 기록합니다 (조회/수정/내보내기)
         </p>
       </div>

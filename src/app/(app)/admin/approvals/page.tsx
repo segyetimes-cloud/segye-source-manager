@@ -48,8 +48,8 @@ export default async function AdminApprovalsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>민감정보 열람 승인</h1>
-        <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>민감정보 열람 승인</h1>
+        <p className="text-sm mt-1" style={{ color: '#687898' }}>
           기자들의 민감정보 열람 요청을 검토하고 승인/거절합니다
         </p>
       </div>

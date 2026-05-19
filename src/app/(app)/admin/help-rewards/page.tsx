@@ -35,8 +35,8 @@ export default async function HelpRewardsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#E8F0FE' }}>🏆 도움 보너스 포인트</h1>
-        <p className="text-sm mt-1" style={{ color: '#8899BB' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>🏆 도움 보너스 포인트</h1>
+        <p className="text-sm mt-1" style={{ color: '#687898' }}>
           해결된 도움 요청에 대해 요청자 및 응답자에게 추가 포인트를 지급합니다
         </p>
       </div>

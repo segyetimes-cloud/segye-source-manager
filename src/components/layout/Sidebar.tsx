@@ -107,21 +107,21 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
   return (
     <aside
       className={`app-sidebar flex flex-col h-screen w-60 fixed left-0 top-0 z-40${mobileOpen ? ' sidebar-open' : ''}`}
-      style={{ background: '#0A1628', borderRight: '1px solid #1A3050' }}>
+      style={{ background: '#0D1520', borderRight: '1px solid #1A2838' }}>
 
       {/* 모바일 닫기 버튼 */}
       {onMobileClose && (
         <button
           className="sidebar-close-btn"
           onClick={onMobileClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A6080', fontSize: 22, lineHeight: 1, padding: 4 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#485870', fontSize: 22, lineHeight: 1, padding: 4 }}
           aria-label="메뉴 닫기">
           ×
         </button>
       )}
 
       {/* 로고 */}
-      <div className="px-5 py-2.5" style={{ borderBottom: '1px solid #1A3050' }}>
+      <div className="px-5 py-2.5" style={{ borderBottom: '1px solid #1A2838' }}>
         <div className="flex items-center gap-3">
           <div
             style={{
@@ -148,7 +148,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             />
           </div>
           <div>
-            <p className="text-sm font-bold leading-tight" style={{ color: '#E8F0FE' }}>세계일보</p>
+            <p className="text-sm font-bold leading-tight" style={{ color: '#CDD5E0' }}>세계일보</p>
             <p className="text-xs leading-tight" style={{ color: '#5A7099' }}>취재원 관리</p>
           </div>
         </div>
@@ -156,8 +156,8 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
 
       {/* 내 정보 */}
       <div className="px-3 py-2 mx-3 mt-2 rounded-lg"
-        style={{ background: '#0F2040', border: '1px solid #1A3050' }}>
-        <p className="text-sm font-semibold truncate" style={{ color: '#E8F0FE' }}>
+        style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
+        <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
           {profile.full_name || profile.email}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -165,7 +165,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             {roleLabel}
           </span>
           {profile.department && (
-            <span className="text-xs truncate" style={{ color: '#4A6080' }}>
+            <span className="text-xs truncate" style={{ color: '#485870' }}>
               {profile.department}
             </span>
           )}
@@ -180,11 +180,11 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             href={item.href}
             className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             style={{
-              color: isActive(item.href) ? '#1E90FF' : '#8899BB',
+              color: isActive(item.href) ? '#4A7CC0' : '#687898',
               background: isActive(item.href) ? 'rgba(30,144,255,0.1)' : 'transparent',
               border: isActive(item.href) ? '1px solid rgba(30,144,255,0.2)' : '1px solid transparent',
             }}>
-            <span style={{ color: isActive(item.href) ? '#1E90FF' : '#4A6080' }}>
+            <span style={{ color: isActive(item.href) ? '#4A7CC0' : '#485870' }}>
               {item.icon}
             </span>
             {item.label}
@@ -193,8 +193,8 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
 
         {/* 어드민 메뉴 */}
         {(profile.role === 'admin' || profile.role === 'superadmin') && (
-          <div className="mt-2 pt-2" style={{ borderTop: '1px solid #1A3050' }}>
-            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#4A6080' }}>
+          <div className="mt-2 pt-2" style={{ borderTop: '1px solid #1A2838' }}>
+            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#485870' }}>
               관리자 메뉴
             </p>
             {adminNavItems.map(item => (
@@ -203,7 +203,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
                 style={{
-                  color: pathname === item.href ? '#FFD700' : '#8899BB',
+                  color: pathname === item.href ? '#A88C30' : '#687898',
                   background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
                 }}>
                 {item.label}
@@ -214,13 +214,13 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
       </nav>
 
       {/* 하단: 로그아웃 */}
-      <div className="px-3 py-2" style={{ borderTop: '1px solid #1A3050' }}>
+      <div className="px-3 py-2" style={{ borderTop: '1px solid #1A2838' }}>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm w-full transition-all"
-          style={{ color: '#4A6080' }}
-          onMouseEnter={e => (e.currentTarget.style.color = '#FF4444')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#4A6080')}>
+          style={{ color: '#485870' }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#C04040')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#485870')}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 2H13a1 1 0 011 1v10a1 1 0 01-1 1H10M7 11l3-3-3-3M10 8H2"
               stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

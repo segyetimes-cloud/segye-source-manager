@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(*)",
+      "PowerShell(*)",
+      "Read(*)",
+      "Write(*)",
+      "Edit(*)",
+      "Glob(*)",
+      "Grep(*)",
+      "mcp__supabase__*",
+      "mcp__Claude_in_Chrome__*",
+      "mcp__playwright__*"
+    ]
+  }
+}

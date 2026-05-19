@@ -124,7 +124,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
   const score = calcScore(form)
   const pts = calcFieldPoints(form)
-  const scoreColor = score >= 55 ? '#00CC66' : score >= 35 ? '#FF9900' : '#FF4444'
+  const scoreColor = score >= 55 ? '#3D9E6A' : score >= 35 ? '#A87228' : '#C04040'
   const isPersonal = form.visibility === 'personal'
 
   function set(field: string, value: unknown) {
@@ -257,16 +257,16 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   }
 
   const inputStyle = {
-    background: '#132850',
-    border: '1px solid #1A3050',
-    color: '#E8F0FE',
+    background: '#182035',
+    border: '1px solid #1A2838',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '9px 12px',
     fontSize: '14px',
     width: '100%',
   }
 
-  const labelStyle: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '6px', color: '#8899BB' }
+  const labelStyle: React.CSSProperties = { display: 'block', fontSize: '13px', fontWeight: 500, marginBottom: '6px', color: '#687898' }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -274,8 +274,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       {/* 빠른 입력 */}
       {mode === 'create' && (
         <div>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: '#8899BB', marginBottom: '8px' }}>
-            ⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#4A6080' }}>(선택)</span>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '8px' }}>
+            ⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#485870' }}>(선택)</span>
           </p>
           <QuickFill onFill={handleQuickFill} />
         </div>
@@ -284,13 +284,13 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       {/* 완성도 게이지 */}
       <div className="glass-card px-4 py-2.5">
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#8899BB' }}>완성도</span>
-          <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1A3050' }}>
+          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#687898' }}>완성도</span>
+          <div className="flex-1 h-1.5 rounded-full" style={{ background: '#1A2838' }}>
             <div className="h-full rounded-full transition-all duration-300"
               style={{ width: `${score}%`, background: scoreColor }} />
           </div>
           <span className="text-sm font-bold flex-shrink-0" style={{ color: scoreColor }}>{score}점</span>
-          <span className="text-xs flex-shrink-0" style={{ color: '#4A6080' }}>
+          <span className="text-xs flex-shrink-0" style={{ color: '#485870' }}>
             +{pts}pt
           </span>
         </div>
@@ -299,10 +299,10 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       {/* 공개 범위 */}
       <div className="glass-card px-4 py-3">
         <div className={`flex items-center gap-3 ${!isPersonal ? 'flex-wrap' : ''}`}>
-          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#8899BB' }}>🔒 공개 설정</span>
+          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#687898' }}>🔒 공개 설정</span>
 
           {/* 목록 구분 토글 */}
-          <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0A1628', border: '1px solid #1A3050' }}>
+          <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
             {[
               { value: 'personal', label: '🔒 내 목록' },
               { value: 'shared', label: '🌐 편집국 공유' },
@@ -310,8 +310,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
               <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)}
                 className="px-3 py-1 rounded-md text-xs font-medium transition-all"
                 style={{
-                  background: form.visibility === opt.value ? '#1E90FF' : 'transparent',
-                  color: form.visibility === opt.value ? 'white' : '#8899BB',
+                  background: form.visibility === opt.value ? '#4A7CC0' : 'transparent',
+                  color: form.visibility === opt.value ? 'white' : '#687898',
                 }}>
                 {opt.label}
               </button>
@@ -320,7 +320,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
           {/* 민감도 토글 — 공유일 때만 */}
           {!isPersonal && (
-            <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0A1628', border: '1px solid #1A3050' }}>
+            <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
               {[
                 { value: 'public', label: '✅ 공개' },
                 { value: 'private', label: '🔴 민감' },
@@ -329,9 +329,9 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                   className="px-3 py-1 rounded-md text-xs font-medium transition-all"
                   style={{
                     background: form.sensitivity === opt.value
-                      ? (opt.value === 'private' ? '#CC3300' : '#00CC66')
+                      ? (opt.value === 'private' ? '#CC3300' : '#3D9E6A')
                       : 'transparent',
-                    color: form.sensitivity === opt.value ? 'white' : '#8899BB',
+                    color: form.sensitivity === opt.value ? 'white' : '#687898',
                   }}>
                   {opt.label}
                 </button>
@@ -341,31 +341,31 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
           {/* 인라인 안내 */}
           {isPersonal ? (
-            <span className="text-xs" style={{ color: '#4A6080' }}>나만 열람</span>
+            <span className="text-xs" style={{ color: '#485870' }}>나만 열람</span>
           ) : form.sensitivity === 'public' ? (
-            <span className="text-xs" style={{ color: '#4A6080' }}>편집국 전체 열람</span>
+            <span className="text-xs" style={{ color: '#485870' }}>편집국 전체 열람</span>
           ) : (
-            <span className="text-xs font-medium" style={{ color: '#FF6633' }}>🔴 데스크·슈퍼관리자만 열람</span>
+            <span className="text-xs font-medium" style={{ color: '#BC5028' }}>🔴 데스크·슈퍼관리자만 열람</span>
           )}
         </div>
       </div>
 
       {/* 기본 정보 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#E8F0FE' }}>👤 기본 정보</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>👤 기본 정보</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label style={labelStyle}>이름 <span style={{ color: '#FF4444' }}>*</span> <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>이름 <span style={{ color: '#C04040' }}>*</span> <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.full_name} onChange={e => set('full_name', e.target.value)}
               placeholder="홍길동" required style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>현 소속 기관 <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>현 소속 기관 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.current_organization} onChange={e => set('current_organization', e.target.value)}
               placeholder="기획재정부" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>현 직책 <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>현 직책 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.current_position} onChange={e => set('current_position', e.target.value)}
               placeholder="예산실장" style={inputStyle} />
           </div>
@@ -375,14 +375,14 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
               placeholder="예산실" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>생년월일 <span style={{ color: '#8899BB', fontSize: '11px' }}>+0.5pt</span></label>
+            <label style={labelStyle}>생년월일 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
             <input type="text" value={form.birthday} onChange={e => set('birthday', e.target.value)}
               placeholder="1970 또는 1970-03 또는 1970-03-15"
               style={inputStyle} />
-            <p style={{ fontSize: '11px', color: '#4A6080', marginTop: '4px' }}>연도만 입력해도 됩니다</p>
+            <p style={{ fontSize: '11px', color: '#485870', marginTop: '4px' }}>연도만 입력해도 됩니다</p>
           </div>
           <div>
-            <label style={labelStyle}>출신 광역시도 <span style={{ color: '#8899BB', fontSize: '11px' }}>+0.5pt</span></label>
+            <label style={labelStyle}>출신 광역시도 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
             <select value={form.hometown_province} onChange={e => set('hometown_province', e.target.value)}
               style={inputStyle}>
               <option value="">선택</option>
@@ -399,10 +399,10 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 연락처 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#E8F0FE' }}>📞 연락처</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>📞 연락처</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>주 전화번호 <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>주 전화번호 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.phone_primary} onChange={e => set('phone_primary', e.target.value)}
               placeholder="010-0000-0000" style={inputStyle} />
           </div>
@@ -412,7 +412,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
               placeholder="02-000-0000" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>이메일 <span style={{ color: '#8899BB', fontSize: '11px' }}>+0.5pt</span></label>
+            <label style={labelStyle}>이메일 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
             <input type="email" value={form.email_primary} onChange={e => set('email_primary', e.target.value)}
               placeholder="name@example.com" style={inputStyle} />
           </div>
@@ -436,25 +436,25 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 학력 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#E8F0FE' }}>🎓 학력</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>출신 고교 <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>출신 고교 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.high_school} onChange={e => set('high_school', e.target.value)}
               placeholder="서울고등학교" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>출신 대학 <span style={{ color: '#FFD700', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>출신 대학 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.university} onChange={e => set('university', e.target.value)}
               placeholder="서울대학교" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>학과/전공 <span style={{ color: '#8899BB', fontSize: '11px' }}>+0.5pt</span></label>
+            <label style={labelStyle}>학과/전공 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
             <input value={form.university_major} onChange={e => set('university_major', e.target.value)}
               placeholder="경제학과" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>대학원 <span style={{ color: '#8899BB', fontSize: '11px' }}>+0.5pt</span></label>
+            <label style={labelStyle}>대학원 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
             <input value={form.graduate_school} onChange={e => set('graduate_school', e.target.value)}
               placeholder="서울대 행정대학원" style={inputStyle} />
           </div>
@@ -468,10 +468,10 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 태그 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: '#E8F0FE' }}>
-          🏷️ 태그 / 키워드 <span style={{ color: '#8899BB', fontSize: '11px', fontWeight: 400 }}>+0.5pt</span>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
+          🏷️ 태그 / 키워드 <span style={{ color: '#687898', fontSize: '11px', fontWeight: 400 }}>+0.5pt</span>
         </h3>
-        <p className="text-xs mb-3" style={{ color: '#4A6080' }}>공개 정보 — 모두에게 보임</p>
+        <p className="text-xs mb-3" style={{ color: '#485870' }}>공개 정보 — 모두에게 보임</p>
         <div className="flex gap-2 mb-3">
           <input value={tagInput} onChange={e => setTagInput(e.target.value)}
             onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
@@ -479,7 +479,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
             style={{ ...inputStyle, flex: 1 }} />
           <button type="button" onClick={() => addTag(tagInput)}
             className="px-3 py-2 rounded-lg text-sm"
-            style={{ background: '#1E90FF', color: 'white', border: 'none', cursor: 'pointer' }}>
+            style={{ background: '#4A7CC0', color: 'white', border: 'none', cursor: 'pointer' }}>
             추가
           </button>
         </div>
@@ -487,10 +487,10 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
           <div className="flex flex-wrap gap-2">
             {form.tags.map(tag => (
               <span key={tag} className="flex items-center gap-1.5 text-sm px-2.5 py-1 rounded-full"
-                style={{ background: 'rgba(30,144,255,0.15)', color: '#1E90FF', border: '1px solid rgba(30,144,255,0.2)' }}>
+                style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)' }}>
                 {tag}
                 <button type="button" onClick={() => set('tags', form.tags.filter(t => t !== tag))}
-                  style={{ color: '#4A6080', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+                  style={{ color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
               </span>
             ))}
           </div>
@@ -499,11 +499,11 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 정보 (개인 메모) */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: '#E8F0FE' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
           📝 정보
-          {!isPersonal && <span className="text-xs ml-2 font-normal" style={{ color: '#4A6080' }}>나에게만 보이는 메모</span>}
+          {!isPersonal && <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>나에게만 보이는 메모</span>}
         </h3>
-        <p className="text-xs mb-3" style={{ color: '#4A6080' }}>
+        <p className="text-xs mb-3" style={{ color: '#485870' }}>
           친분 관계, 성격, 인터뷰 팁 등 — 상세한 정보를 추가하면 취재원 상세 페이지에서 +10pt
         </p>
         <textarea
@@ -518,7 +518,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       {/* 오류 */}
       {error && (
         <div className="rounded-lg p-3 text-sm"
-          style={{ background: 'rgba(255,68,68,0.1)', color: '#FF4444', border: '1px solid rgba(255,68,68,0.2)' }}>
+          style={{ background: 'rgba(255,68,68,0.1)', color: '#C04040', border: '1px solid rgba(255,68,68,0.2)' }}>
           {error}
         </div>
       )}
@@ -527,20 +527,20 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       <div className="flex items-center justify-between">
         <button type="button" onClick={() => router.back()}
           className="px-5 py-2.5 rounded-lg text-sm"
-          style={{ background: '#132850', color: '#8899BB', border: '1px solid #1A3050', cursor: 'pointer' }}>
+          style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>
           취소
         </button>
 
         <div className="flex items-center gap-3">
           {mode === 'create' && (
-            <span className="text-sm" style={{ color: '#4A6080' }}>
+            <span className="text-sm" style={{ color: '#485870' }}>
               저장 시 약 +{pts}pt 예정
             </span>
           )}
           <button type="submit" disabled={submitting}
             className="px-6 py-2.5 rounded-lg text-sm font-semibold"
             style={{
-              background: submitting ? 'rgba(30,144,255,0.4)' : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+              background: submitting ? 'rgba(30,144,255,0.4)' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               cursor: submitting ? 'not-allowed' : 'pointer',
             }}>
@@ -557,19 +557,19 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
           onClick={e => { if (e.target === e.currentTarget) setShowConfirm(false) }}>
           <div
             className="relative w-full max-w-lg mx-4 rounded-2xl overflow-hidden"
-            style={{ background: '#0F2040', border: '1px solid #1A3050', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
+            style={{ background: '#131C2C', border: '1px solid #1A2838', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
 
             {/* 모달 헤더 */}
             <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
-              style={{ borderBottom: '1px solid #1A3050' }}>
+              style={{ borderBottom: '1px solid #1A2838' }}>
               <div>
-                <h3 className="text-base font-bold" style={{ color: '#E8F0FE' }}>✏️ 수정 내용 확인</h3>
-                <p className="text-xs mt-0.5" style={{ color: '#8899BB' }}>
+                <h3 className="text-base font-bold" style={{ color: '#CDD5E0' }}>✏️ 수정 내용 확인</h3>
+                <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
                   아래 항목이 변경됩니다. 저장하시겠습니까?
                 </p>
               </div>
               <button onClick={() => setShowConfirm(false)}
-                style={{ color: '#4A6080', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>
+                style={{ color: '#485870', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px', lineHeight: 1 }}>
                 ✕
               </button>
             </div>
@@ -577,24 +577,24 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
             {/* 변경 내역 */}
             <div className="overflow-y-auto flex-1 px-6 py-4 space-y-3">
               {changedFields.length === 0 ? (
-                <p className="text-sm text-center py-6" style={{ color: '#8899BB' }}>
+                <p className="text-sm text-center py-6" style={{ color: '#687898' }}>
                   변경된 내용이 없습니다.
                 </p>
               ) : (
                 changedFields.map(({ key, label, before, after }) => (
                   <div key={key} className="rounded-lg p-3"
                     style={{ background: 'rgba(30,144,255,0.05)', border: '1px solid rgba(30,144,255,0.12)' }}>
-                    <p className="text-xs font-semibold mb-1.5" style={{ color: '#1E90FF' }}>{label}</p>
+                    <p className="text-xs font-semibold mb-1.5" style={{ color: '#4A7CC0' }}>{label}</p>
                     <div className="flex items-start gap-2 text-xs">
                       <div className="flex-1 rounded px-2 py-1.5 leading-relaxed"
-                        style={{ background: 'rgba(255,68,68,0.08)', color: '#FF8888', borderLeft: '2px solid #FF4444' }}>
-                        <span style={{ color: '#FF4444', fontWeight: 600, marginRight: '4px' }}>변경 전</span>
+                        style={{ background: 'rgba(255,68,68,0.08)', color: '#C07070', borderLeft: '2px solid #C04040' }}>
+                        <span style={{ color: '#C04040', fontWeight: 600, marginRight: '4px' }}>변경 전</span>
                         {before}
                       </div>
-                      <span style={{ color: '#4A6080', marginTop: '6px', flexShrink: 0 }}>→</span>
+                      <span style={{ color: '#485870', marginTop: '6px', flexShrink: 0 }}>→</span>
                       <div className="flex-1 rounded px-2 py-1.5 leading-relaxed"
-                        style={{ background: 'rgba(0,204,102,0.08)', color: '#88FFBB', borderLeft: '2px solid #00CC66' }}>
-                        <span style={{ color: '#00CC66', fontWeight: 600, marginRight: '4px' }}>변경 후</span>
+                        style={{ background: 'rgba(0,204,102,0.08)', color: '#88FFBB', borderLeft: '2px solid #3D9E6A' }}>
+                        <span style={{ color: '#3D9E6A', fontWeight: 600, marginRight: '4px' }}>변경 후</span>
                         {after}
                       </div>
                     </div>
@@ -605,13 +605,13 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
             {/* 모달 하단 버튼 */}
             <div className="px-6 py-4 flex items-center justify-end gap-3 flex-shrink-0"
-              style={{ borderTop: '1px solid #1A3050' }}>
+              style={{ borderTop: '1px solid #1A2838' }}>
               <button
                 onClick={() => setShowConfirm(false)}
                 style={{
                   padding: '8px 20px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-                  background: 'transparent', color: '#8899BB',
-                  border: '1px solid #1A3050', cursor: 'pointer',
+                  background: 'transparent', color: '#687898',
+                  border: '1px solid #1A2838', cursor: 'pointer',
                 }}>
                 ← 계속 수정
               </button>
@@ -622,7 +622,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                   padding: '8px 24px', borderRadius: '8px', fontSize: '13px', fontWeight: 700,
                   background: (submitting || changedFields.length === 0)
                     ? 'rgba(30,144,255,0.3)'
-                    : 'linear-gradient(135deg, #1E90FF, #0066CC)',
+                    : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                   color: 'white', border: 'none',
                   cursor: (submitting || changedFields.length === 0) ? 'not-allowed' : 'pointer',
                   minWidth: '100px',
