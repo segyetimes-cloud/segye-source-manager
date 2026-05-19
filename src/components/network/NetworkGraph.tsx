@@ -36,7 +36,7 @@ const LINK_COLORS: Record<string, string> = {
   same_org:        '#A87228',   // 주황 — 동료
   same_university: '#3D9E6A',   // 녹색 — 대학동문
   same_highschool: '#4A7CC0',   // 파랑 — 고교동문
-  same_exam:       '#A88C30',   // 금색 — 시험동기
+  same_exam:       '#7E6E48',   // 금색 — 시험동기
   same_hometown:   '#8858C0',   // 보라 — 동향
   same_tag:        '#3A90A8',   // 시안 — 공통태그
   same_position:   '#BC5028',   // 주홍 — 직책공유 (위원회 등)

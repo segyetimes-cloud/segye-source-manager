@@ -35,7 +35,7 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
   update: { label: '수정', color: '#4A7CC0' },
   delete: { label: '삭제', color: '#C04040' },
   export: { label: '내보내기', color: '#A87228' },
-  import: { label: '가져오기', color: '#A88C30' },
+  import: { label: '가져오기', color: '#7E6E48' },
   view_private: { label: '민감정보 열람', color: '#A87228' },
   approve: { label: '승인', color: '#3D9E6A' },
   reject: { label: '거절', color: '#C04040' },

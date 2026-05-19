@@ -75,7 +75,7 @@ function StarRating({ rating, onRate }: { rating: number | null; onRate: (r: num
         <button key={star} type="button" onClick={() => onRate(star)}
           onMouseEnter={() => setHover(star)} onMouseLeave={() => setHover(0)}
           style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer',
-            color: star <= (hover || rating || 0) ? '#A88C30' : '#1A2838' }}>
+            color: star <= (hover || rating || 0) ? '#7E6E48' : '#1A2838' }}>
           ★
         </button>
       ))}
@@ -706,7 +706,7 @@ export default function SourceDetailClient({
               background: isOwner ? 'rgba(255,215,0,0.05)' : 'rgba(0,212,255,0.04)',
               border: `1px solid ${isOwner ? 'rgba(255,215,0,0.15)' : 'rgba(0,212,255,0.15)'}`,
             }}>
-            <p className="text-xs font-semibold mb-2" style={{ color: isOwner ? '#A88C30' : '#3A90A8' }}>
+            <p className="text-xs font-semibold mb-2" style={{ color: isOwner ? '#7E6E48' : '#3A90A8' }}>
               {isOwner ? '📌 내 정보 (등록자 본인)' : '📌 정보'}
             </p>
             <SecureContentViewer
@@ -851,7 +851,7 @@ export default function SourceDetailClient({
         {source.visibility === 'shared' && (
           <form onSubmit={handleAddNote} className="mt-4 pt-4 space-y-2" style={{ borderTop: '1px solid #1A2838' }}>
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>
-              + 정보 추가 <span style={{ color: '#A88C30' }}>+10pt</span>
+              + 정보 추가 <span style={{ color: '#7E6E48' }}>+10pt</span>
             </p>
             <textarea
               value={noteContent}

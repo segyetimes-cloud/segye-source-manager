@@ -203,7 +203,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
                 style={{
-                  color: pathname === item.href ? '#A88C30' : '#687898',
+                  color: pathname === item.href ? '#7E6E48' : '#687898',
                   background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
                 }}>
                 {item.label}

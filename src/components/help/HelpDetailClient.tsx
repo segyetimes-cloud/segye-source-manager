@@ -163,7 +163,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
           </div>
 
           <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <span className="text-2xl font-bold" style={{ color: '#A88C30' }}>
+            <span className="text-2xl font-bold" style={{ color: '#7E6E48' }}>
               +{help.reward_points}pt
             </span>
             <span className="text-xs" style={{ color: '#485870' }}>

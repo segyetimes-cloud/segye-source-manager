@@ -85,7 +85,7 @@ export default function ReportPointAward({ reportId, authorName, authorId, curre
         </h2>
         {totalAwarded > 0 && (
           <span style={{
-            background: 'rgba(255,215,0,0.12)', color: '#A88C30',
+            background: 'rgba(255,215,0,0.12)', color: '#7E6E48',
             border: '1px solid rgba(255,215,0,0.25)',
             borderRadius: '6px', padding: '2px 10px',
             fontSize: '12px', fontWeight: 600,
@@ -119,7 +119,7 @@ export default function ReportPointAward({ reportId, authorName, authorId, curre
                     padding: '5px 14px',
                     background: points === p ? 'rgba(255,215,0,0.2)' : '#182035',
                     border: `1px solid ${points === p ? 'rgba(255,215,0,0.5)' : '#1A2838'}`,
-                    color: points === p ? '#A88C30' : '#687898',
+                    color: points === p ? '#7E6E48' : '#687898',
                     borderRadius: '6px', fontSize: '13px',
                     fontWeight: points === p ? 600 : 400,
                     cursor: 'pointer',
@@ -175,7 +175,7 @@ export default function ReportPointAward({ reportId, authorName, authorId, curre
               width: '100%', padding: '9px',
               background: (submitting || !points)
                 ? '#1A2838'
-                : 'linear-gradient(135deg, #A88C30, #A87228)',
+                : 'linear-gradient(135deg, #7E6E48, #A87228)',
               color: (submitting || !points) ? '#485870' : '#0D1520',
               border: 'none', borderRadius: '8px',
               fontSize: '14px', fontWeight: 700,
@@ -218,7 +218,7 @@ export default function ReportPointAward({ reportId, authorName, authorId, curre
                   {' '}— {a.description.split('—')[1]?.trim() || ''}
                 </span>
                 <div className="flex items-center gap-2" style={{ flexShrink: 0 }}>
-                  <span style={{ fontSize: '12px', color: '#A88C30', fontWeight: 600 }}>+{a.points}점</span>
+                  <span style={{ fontSize: '12px', color: '#7E6E48', fontWeight: 600 }}>+{a.points}점</span>
                   <span style={{ fontSize: '11px', color: '#485870' }}>{formatDate(a.created_at)}</span>
                 </div>
               </div>

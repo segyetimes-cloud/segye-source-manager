@@ -71,7 +71,7 @@ export default async function DashboardPage() {
         {[
           { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#4A7CC0', icon: '👤' },
           { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#3A90A8', icon: '🌐' },
-          { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#A88C30', icon: '⭐' },
+          { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#7E6E48', icon: '⭐' },
           { label: '공개 도움요청', value: openHelp?.length ?? 0, unit: '건', color: '#3D9E6A', icon: '🙋' },
         ].map(stat => (
           <div key={stat.label} className="glass-card p-4">
@@ -175,11 +175,11 @@ export default async function DashboardPage() {
                     <span className="text-sm w-5 text-center" style={{ color: '#485870' }}>
                       {medal || `${idx + 1}`}
                     </span>
-                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#A88C30' : '#CDD5E0' }}>
+                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#7E6E48' : '#CDD5E0' }}>
                       {item.profiles?.full_name || '—'}
-                      {isMe && <span className="text-xs ml-1" style={{ color: '#A88C30' }}>(나)</span>}
+                      {isMe && <span className="text-xs ml-1" style={{ color: '#7E6E48' }}>(나)</span>}
                     </span>
-                    <span className="text-sm font-bold flex-shrink-0" style={{ color: '#A88C30' }}>
+                    <span className="text-sm font-bold flex-shrink-0" style={{ color: '#7E6E48' }}>
                       {item.total_points}
                     </span>
                   </div>
@@ -217,7 +217,7 @@ export default async function DashboardPage() {
                   <span className="text-xs" style={{ color: '#687898' }}>
                     {new Date(req.created_at).toLocaleDateString('ko-KR')}
                   </span>
-                  <span className="text-xs font-bold" style={{ color: '#A88C30' }}>
+                  <span className="text-xs font-bold" style={{ color: '#7E6E48' }}>
                     +{req.reward_points}pt
                   </span>
                 </div>

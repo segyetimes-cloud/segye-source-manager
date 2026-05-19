@@ -219,7 +219,7 @@ export default function StatsClient() {
 
   const summaryCards = [
     { label: '취재원 등록', value: totalSources, unit: '건', color: '#4A7CC0' },
-    { label: '적립 포인트', value: totalPoints, unit: 'pt', color: '#A88C30' },
+    { label: '적립 포인트', value: totalPoints, unit: 'pt', color: '#7E6E48' },
     { label: '수정 횟수', value: totalEdits, unit: '회', color: '#3D9E6A' },
     { label: '도움 응답', value: totalHelp, unit: '건', color: '#FF6B6B' },
   ]
@@ -432,7 +432,7 @@ export default function StatsClient() {
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: row.help_responses === 0 ? '#2A4060' : '#CDD5E0' }}>
                       {row.help_responses}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.points_earned === 0 ? '#2A4060' : '#A88C30', fontWeight: row.points_earned > 0 ? 600 : 400 }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.points_earned === 0 ? '#2A4060' : '#7E6E48', fontWeight: row.points_earned > 0 ? 600 : 400 }}>
                       {row.points_earned > 0 ? `+${row.points_earned.toLocaleString()}` : '0'}
                     </td>
                   </tr>
@@ -448,7 +448,7 @@ export default function StatsClient() {
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalSources}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalEdits}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalHelp}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#A88C30', fontWeight: 700 }}>+{totalPoints.toLocaleString()}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#7E6E48', fontWeight: 700 }}>+{totalPoints.toLocaleString()}</td>
                   </tr>
                 )}
 

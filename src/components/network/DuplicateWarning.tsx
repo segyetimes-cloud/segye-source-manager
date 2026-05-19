@@ -42,7 +42,7 @@ export default function DuplicateWarning({ duplicateNames }: Props) {
               <button
                 onClick={() => router.push(`/sources?tab=shared&q=${encodeURIComponent(name)}`)}
                 style={{
-                  color: '#A88C30',
+                  color: '#7E6E48',
                   background: 'none',
                   border: 'none',
                   cursor: 'pointer',

@@ -283,7 +283,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
             { label: '가입대기', value: stats.pending,   color: '#A87228' },
             { label: '기자',    value: stats.reporters,  color: '#4A7CC0' },
             { label: '차장',    value: stats.deputies,   color: '#3A90A8' },
-            { label: '데스크',  value: stats.admins,     color: '#A88C30' },
+            { label: '데스크',  value: stats.admins,     color: '#7E6E48' },
           ].map(s => (
             <div key={s.label} className="glass-card p-3 text-center">
               <div className="text-xl font-bold" style={{ color: s.color }}>{s.value}</div>

@@ -131,7 +131,7 @@ export default function HelpBoard({ requests: initialRequests, userId }: Props) 
               </div>
 
               <div className="flex flex-col items-end gap-2 flex-shrink-0">
-                <span className="text-sm font-bold" style={{ color: '#A88C30' }}>
+                <span className="text-sm font-bold" style={{ color: '#7E6E48' }}>
                   +{req.reward_points}pt
                 </span>
                 <span className="text-xs" style={{ color: '#485870' }}>

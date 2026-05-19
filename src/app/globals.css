@@ -10,7 +10,7 @@
 
   --accent-blue: #4A7CC0;
   --accent-cyan: #3A90A8;
-  --accent-gold: #A88C30;
+  --accent-gold: #7E6E48;
 
   --text-primary: #CDD5E0;
   --text-secondary: #687898;
@@ -316,7 +316,7 @@ p, span, div, li, td, th, label, a, button {
 
 /* 역할 배지 색상 */
 .role-superadmin { background: rgba(192, 64, 64, 0.15); color: #C04040; border: 1px solid rgba(192, 64, 64, 0.3); }
-.role-admin { background: rgba(168, 140, 48, 0.15); color: #A88C30; border: 1px solid rgba(168, 140, 48, 0.3); }
+.role-admin { background: rgba(126, 110, 72, 0.15); color: #7E6E48; border: 1px solid rgba(126, 110, 72, 0.3); }
 .role-deputy { background: rgba(58, 144, 168, 0.15); color: #3A90A8; border: 1px solid rgba(58, 144, 168, 0.3); }
 .role-reporter { background: rgba(74, 124, 192, 0.15); color: #4A7CC0; border: 1px solid rgba(74, 124, 192, 0.3); }
 

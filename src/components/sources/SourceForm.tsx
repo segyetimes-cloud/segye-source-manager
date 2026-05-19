@@ -355,17 +355,17 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>👤 기본 정보</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
-            <label style={labelStyle}>이름 <span style={{ color: '#C04040' }}>*</span> <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>이름 <span style={{ color: '#C04040' }}>*</span> <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.full_name} onChange={e => set('full_name', e.target.value)}
               placeholder="홍길동" required style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>현 소속 기관 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>현 소속 기관 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.current_organization} onChange={e => set('current_organization', e.target.value)}
               placeholder="기획재정부" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>현 직책 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>현 직책 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.current_position} onChange={e => set('current_position', e.target.value)}
               placeholder="예산실장" style={inputStyle} />
           </div>
@@ -402,7 +402,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>📞 연락처</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>주 전화번호 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>주 전화번호 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.phone_primary} onChange={e => set('phone_primary', e.target.value)}
               placeholder="010-0000-0000" style={inputStyle} />
           </div>
@@ -439,12 +439,12 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label style={labelStyle}>출신 고교 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>출신 고교 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.high_school} onChange={e => set('high_school', e.target.value)}
               placeholder="서울고등학교" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>출신 대학 <span style={{ color: '#A88C30', fontSize: '11px' }}>+1pt</span></label>
+            <label style={labelStyle}>출신 대학 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
             <input value={form.university} onChange={e => set('university', e.target.value)}
               placeholder="서울대학교" style={inputStyle} />
           </div>

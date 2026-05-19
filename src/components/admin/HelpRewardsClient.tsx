@@ -90,7 +90,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
                     style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
                     {REQUEST_TYPE_LABEL[req.request_type] ?? req.request_type}
                   </span>
-                  <span className="text-xs font-semibold" style={{ color: '#A88C30' }}>
+                  <span className="text-xs font-semibold" style={{ color: '#7E6E48' }}>
                     기존 리워드: {req.reward_points}pt
                   </span>
                 </div>

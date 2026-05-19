@@ -170,7 +170,7 @@ export default function NewHelpPage() {
               onChange={e => set('reward_points', parseInt(e.target.value))}
               style={{ flex: 1, accentColor: '#4A7CC0' }}
             />
-            <span className="text-lg font-bold min-w-[4rem] text-right" style={{ color: '#A88C30' }}>
+            <span className="text-lg font-bold min-w-[4rem] text-right" style={{ color: '#7E6E48' }}>
               {form.reward_points}pt
             </span>
           </div>
