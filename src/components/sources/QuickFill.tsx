@@ -57,9 +57,23 @@ function parseContactText(raw: string): FillData {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i]
 
-    // 형식 A: "레이블: 값" 또는 "레이블값" (콜론 있음)
+    // 형식 C: "[레이블] 값"  예) [이름] 이천종 11기  [휴대전화] 01087273483
+    const bracketMatch = line.match(/^\[([^\]]+)\]\s*(.*)/)
+    if (bracketMatch) {
+      const cat = labelOf(bracketMatch[1]) ?? bracketMatch[1].toLowerCase()
+      const val = bracketMatch[2].trim()
+      if (val && !kv[cat]) kv[cat] = val
+      // 값이 없으면 다음 줄이 값
+      else if (!val && i + 1 < lines.length && !lines[i+1].startsWith('[')) {
+        if (!kv[cat]) kv[cat] = lines[i+1].trim()
+        i++
+      }
+      continue
+    }
+
+    // 형식 A: "레이블: 값"
     const colonMatch = line.match(
-      /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|부서|department)\s*[:：]\s*(.+)/i
+      /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|휴대전화|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|부서|department)\s*[:：]\s*(.+)/i
     )
     if (colonMatch) {
       const cat = labelOf(colonMatch[1]) ?? colonMatch[1].toLowerCase()
@@ -71,9 +85,9 @@ function parseContactText(raw: string): FillData {
     const cat = labelOf(line)
     if (cat && i + 1 < lines.length) {
       const next = lines[i + 1]
-      if (!labelOf(next)) {           // 다음 줄이 또 레이블이면 건너뜀
+      if (!labelOf(next)) {
         if (!kv[cat]) kv[cat] = next.trim()
-        i++                           // 값 줄 소비
+        i++
       }
     }
   }
@@ -98,12 +112,19 @@ function parseContactText(raw: string): FillData {
   // 2순위: 레이블이 아닌 한글 2~5자 단독 줄
   if (!full_name) {
     for (const line of lines) {
-      if (labelOf(line)) continue                       // 레이블 줄 제외
-      if (ALL_LBLS.includes(line.toLowerCase())) continue  // 레이블 단어 제외
+      if (labelOf(line)) continue
+      if (line.startsWith('[')) continue                // 대괄호 레이블 줄 제외
+      if (ALL_LBLS.includes(line.toLowerCase())) continue
       if (/^[가-힣]{2,5}$/.test(line) && !/\d/.test(line)) {
         full_name = line; break
       }
     }
+  }
+
+  // 이름 정제: "이천종 11기" → "이천종"  (앞부분 한글 이름만 추출)
+  if (full_name) {
+    const nameOnly = full_name.match(/^[가-힣]{2,5}/)
+    if (nameOnly) full_name = nameOnly[0]
   }
 
   // ── 소속 ───────────────────────────────────────────────────────────────────
