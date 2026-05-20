@@ -57,6 +57,14 @@ export default async function ReportDetailPage({ params }: Params) {
   const isAuthor = report.author_id === user.id
   const canEdit = isAuthor || isDesk
 
+  // 열람 권한 체크
+  const vis = report.visibility as string
+  if (!isDesk && !isAuthor) {
+    if (vis === 'author_only') notFound()
+    if (vis === 'desk_above') notFound()
+    if (vis === 'team' && myProfile?.department !== report.author_department) notFound()
+  }
+
   const author = report.profiles as { full_name: string; department: string | null } | null
   const sourcesRaw = (report.report_sources as any[]) ?? []
   const linkedSources = sourcesRaw.map((rs: any) => rs.sources).filter(Boolean)

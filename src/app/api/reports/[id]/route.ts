@@ -33,6 +33,19 @@ export async function GET(
 
   if (error || !data) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // 열람 권한 체크
+  const { data: viewer } = await supabaseAny
+    .from('profiles').select('role, department').eq('id', user.id).single()
+  const viewerIsDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(viewer?.role ?? '')
+  const isAuthor = data.author_id === user.id
+  if (!viewerIsDesk && !isAuthor) {
+    if (data.visibility === 'author_only') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (data.visibility === 'desk_above') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (data.visibility === 'team' && viewer?.department !== data.author_department) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   return NextResponse.json({ ...data, revisions: revisions ?? [] })
 }
 
@@ -50,7 +63,7 @@ export async function PUT(
   // 현재 사용자 role 확인
   const { data: myProfile } = await supabaseAny
     .from('profiles')
-    .select('role')
+    .select('role, department')
     .eq('id', user.id)
     .single()
   const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')

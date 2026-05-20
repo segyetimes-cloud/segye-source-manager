@@ -15,6 +15,12 @@ export async function GET(request: NextRequest) {
   const page = parseInt(sp.get('page') ?? '1')
   const pageSize = 20
 
+  // 현재 사용자 프로필 (team 열람 범위 판단용)
+  const { data: myProfile } = await supabaseAny
+    .from('profiles').select('role, department').eq('id', user.id).single()
+  const myDept = myProfile?.department ?? null
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
+
   let query = supabaseAny
     .from('information_reports')
     .select(`
@@ -28,6 +34,18 @@ export async function GET(request: NextRequest) {
 
   if (visibilityFilter === 'mine') {
     query = query.eq('author_id', user.id)
+  } else if (!isDesk) {
+    // 일반 기자·차장: team 보고서는 같은 부서만 열람
+    // author_only는 자기 것만, desk_above는 제외, team은 같은 부서, all은 전체
+    if (myDept) {
+      query = query.or(
+        `visibility.in.(all),` +
+        `and(visibility.eq.team,author_department.eq.${myDept}),` +
+        `author_id.eq.${user.id}`
+      )
+    } else {
+      query = query.or(`visibility.eq.all,author_id.eq.${user.id}`)
+    }
   }
 
   if (q) {

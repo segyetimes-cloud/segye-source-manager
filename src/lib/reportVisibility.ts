@@ -23,6 +23,13 @@ export const VISIBILITY_META: Record<ReportVisibility, VisibilityMeta> = {
     bg: 'rgba(0,212,255,0.1)',
     color: '#3A90A8',
   },
+  team: {
+    label: '👥 팀 공개',
+    shortLabel: '팀 공개',
+    desc: '작성자와 같은 부서 기자 전원 열람 가능. 타 부서 기자는 차단됨',
+    bg: 'rgba(168,114,40,0.1)',
+    color: '#A87228',
+  },
   all: {
     label: '🌐 사내 공유',
     shortLabel: '사내 공유',
