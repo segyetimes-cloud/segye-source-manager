@@ -133,7 +133,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     graduate_school: initialData?.graduate_school ?? '',
     exam_batch: initialData?.exam_batch ?? '',
     tags: initialData?.tags ?? [] as string[],
-    visibility: initialData?.visibility ?? 'personal' as 'personal' | 'shared',
+    visibility: 'shared' as 'personal' | 'shared',
     sensitivity: initialData?.sensitivity ?? 'public' as 'public' | 'private',
     personal_notes: initialData?.personal_notes ?? '',
     sns_twitter: (initialData?.sns_links as Record<string, string> | undefined)?.twitter ?? '',
@@ -143,7 +143,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const score = calcScore(form)
   const pts = calcFieldPoints(form)
   const scoreColor = score >= 55 ? '#3D9E6A' : score >= 35 ? '#A87228' : '#C04040'
-  const isPersonal = form.visibility === 'personal'
+  const isPersonal = false
 
   function set(field: string, value: unknown) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -186,8 +186,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   function buildPayload() {
     const payload: Record<string, unknown> = {
       ...form,
-      // 개인 목록은 sensitivity 항상 public
-      sensitivity: isPersonal ? 'public' : form.sensitivity,
+      visibility: 'shared',
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
@@ -343,53 +342,28 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         </div>
       </div>
 
-      {/* 공개 범위 */}
+      {/* 민감도 */}
       <div className="glass-card px-4 py-3">
-        <div className={`flex items-center gap-3 ${!isPersonal ? 'flex-wrap' : ''}`}>
-          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#687898' }}>🔒 공개 설정</span>
-
-          {/* 목록 구분 토글 */}
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-xs font-medium flex-shrink-0" style={{ color: '#687898' }}>민감도</span>
           <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
             {[
-              { value: 'personal', label: '🔒 내 목록' },
-              { value: 'shared', label: '🌐 편집국 공유' },
+              { value: 'public', label: '✅ 일반' },
+              { value: 'private', label: '🔴 민감' },
             ].map(opt => (
-              <button key={opt.value} type="button" onClick={() => set('visibility', opt.value)}
+              <button key={opt.value} type="button" onClick={() => set('sensitivity', opt.value)}
                 className="px-3 py-1 rounded-md text-xs font-medium transition-all"
                 style={{
-                  background: form.visibility === opt.value ? '#4A7CC0' : 'transparent',
-                  color: form.visibility === opt.value ? 'white' : '#687898',
+                  background: form.sensitivity === opt.value
+                    ? (opt.value === 'private' ? '#CC3300' : '#3D9E6A')
+                    : 'transparent',
+                  color: form.sensitivity === opt.value ? 'white' : '#687898',
                 }}>
                 {opt.label}
               </button>
             ))}
           </div>
-
-          {/* 민감도 토글 — 공유일 때만 */}
-          {!isPersonal && (
-            <div className="flex rounded-lg p-0.5 flex-shrink-0" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
-              {[
-                { value: 'public', label: '✅ 공개' },
-                { value: 'private', label: '🔴 민감' },
-              ].map(opt => (
-                <button key={opt.value} type="button" onClick={() => set('sensitivity', opt.value)}
-                  className="px-3 py-1 rounded-md text-xs font-medium transition-all"
-                  style={{
-                    background: form.sensitivity === opt.value
-                      ? (opt.value === 'private' ? '#CC3300' : '#3D9E6A')
-                      : 'transparent',
-                    color: form.sensitivity === opt.value ? 'white' : '#687898',
-                  }}>
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          )}
-
-          {/* 인라인 안내 */}
-          {isPersonal ? (
-            <span className="text-xs" style={{ color: '#485870' }}>나만 열람</span>
-          ) : form.sensitivity === 'public' ? (
+          {form.sensitivity === 'public' ? (
             <span className="text-xs" style={{ color: '#485870' }}>편집국 전체 열람</span>
           ) : (
             <span className="text-xs font-medium" style={{ color: '#BC5028' }}>🔴 데스크·슈퍼관리자만 열람</span>

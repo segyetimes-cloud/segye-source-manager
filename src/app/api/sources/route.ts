@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
   const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
 
   const sp = request.nextUrl.searchParams
-  const tab = sp.get('tab') ?? 'personal'
+  const filter = sp.get('filter') ?? 'all'   // 'all' | 'mine'
   const q = sp.get('q') ?? ''
   const page = parseInt(sp.get('page') ?? '1')
   const pageSize = Math.min(Math.max(1, parseInt(sp.get('limit') ?? '20') || 20), 100)
@@ -49,11 +49,11 @@ export async function GET(request: NextRequest) {
     .order('updated_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (tab === 'personal') {
+  if (filter === 'mine') {
     query = query.eq('owner_id', user.id)
   } else {
-    query = query.eq('visibility', 'shared')
-    // 기자·차장은 공유+민감 소스 제외
+    // 전체: 공유 소스 + 내 개인 소스
+    query = query.or(`visibility.eq.shared,owner_id.eq.${user.id}`)
     if (!canSeeSensitive) {
       query = query.neq('sensitivity', 'private')
     }
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     user_email: user.email,
     action: 'view',
     resource_type: 'source_list',
-    metadata: { tab, query: q, page },
+    metadata: { filter, query: q, page },
   })
 
   return NextResponse.json({ sources: data, total: count })
@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
     graduate_school: body.graduate_school || null,
     exam_batch: body.exam_batch || null,
     tags: body.tags ?? [],
-    visibility: body.visibility ?? 'personal',
+    visibility: 'shared',
     sensitivity: body.sensitivity ?? 'public',
     personal_notes: body.personal_notes || null,
     sns_links: body.sns_links ?? {},

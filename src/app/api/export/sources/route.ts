@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
 
   // 데이터 조회 (공개 필드만)
   const sp = request.nextUrl.searchParams
-  const tab = sp.get('tab') ?? 'shared'
+  const filter = sp.get('filter') ?? 'all'   // 'all' | 'mine'
   const q = sp.get('q') ?? ''
 
   let query = supabase
@@ -55,8 +55,8 @@ export async function GET(request: NextRequest) {
     .eq('is_deleted', false)
     .limit(maxRows)
 
-  if (tab === 'personal') query = query.eq('owner_id', user.id)
-  else query = query.eq('visibility', 'shared')
+  if (filter === 'mine') query = (query as any).eq('owner_id', user.id)
+  else query = (query as any).or(`visibility.eq.shared,owner_id.eq.${user.id}`)
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,current_organization.ilike.%${q}%`)
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
   await (supabase as any).from('export_logs').insert({
     user_id: user.id,
     row_count: sources?.length ?? 0,
-    filter_params: { tab, q },
+    filter_params: { filter, q },
     watermark_id: watermarkId,
   })
 
@@ -131,7 +131,7 @@ export async function GET(request: NextRequest) {
     resource_type: 'source',
     export_row_count: sources?.length ?? 0,
     watermark_token: watermarkId,
-    metadata: { tab, query: q, role, daily_count: (todayExports ?? 0) + 1 },
+    metadata: { filter, query: q, role, daily_count: (todayExports ?? 0) + 1 },
   })
 
   const filename = `취재원목록_${new Date().toLocaleDateString('ko-KR').replace(/\./g, '').replace(/ /g, '')}.xlsx`

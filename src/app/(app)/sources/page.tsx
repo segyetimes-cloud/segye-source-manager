@@ -3,7 +3,7 @@ import Link from 'next/link'
 import SourceListClient from '@/components/sources/SourceListClient'
 
 interface SearchParams {
-  tab?: 'personal' | 'shared'
+  filter?: 'all' | 'mine'
   q?: string
   page?: string
 }
@@ -14,7 +14,7 @@ export default async function SourcesPage({
   searchParams: Promise<SearchParams>
 }) {
   const params = await searchParams
-  const tab = params.tab ?? 'personal'
+  const filter = params.filter ?? 'all'
   const query = params.q ?? ''
   const page = parseInt(params.page ?? '1')
   const pageSize = 20
@@ -23,16 +23,15 @@ export default async function SourcesPage({
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  // 역할 조회 — 공유+민감 열람 권한 판별
   const { data: callerProfile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
-  const canSeeSensitive = ['admin', 'superadmin'].includes(callerRole)
+  const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
 
-  let sourcesQuery = supabase
+  let sourcesQuery = (supabase as any)
     .from('sources')
     .select(`
       id, full_name, current_organization, current_position,
@@ -44,11 +43,12 @@ export default async function SourcesPage({
     .order('updated_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (tab === 'personal') {
+  if (filter === 'mine') {
+    // 내가 등록한 것 — visibility 무관하게 내 소스 전체
     sourcesQuery = sourcesQuery.eq('owner_id', user.id)
   } else {
-    sourcesQuery = sourcesQuery.eq('visibility', 'shared')
-    // 기자·차장: 공유+민감 소스 제외
+    // 전체: 공유 소스 + 내 개인 소스
+    sourcesQuery = sourcesQuery.or(`visibility.eq.shared,owner_id.eq.${user.id}`)
     if (!canSeeSensitive) {
       sourcesQuery = sourcesQuery.neq('sensitivity', 'private')
     }
@@ -64,13 +64,10 @@ export default async function SourcesPage({
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
       <div className="flex items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>취재원 목록</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
-            {tab === 'personal' ? '내 취재원 목록' : '편집국 공유 목록'}
-          </p>
+          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>편집국 공유 취재원 데이터베이스</p>
         </div>
         <div className="source-header-actions">
           <Link
@@ -99,7 +96,7 @@ export default async function SourcesPage({
       <SourceListClient
         initialSources={(sources ?? []) as any[]}
         totalCount={count ?? 0}
-        currentTab={tab}
+        currentFilter={filter}
         currentQuery={query}
         currentPage={page}
         pageSize={pageSize}
