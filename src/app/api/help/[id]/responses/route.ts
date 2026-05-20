@@ -13,7 +13,6 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // 요청 확인
   const { data: helpReq } = await supabase
     .from('help_requests')
     .select('id, requester_id, status, reward_points')
@@ -53,7 +52,6 @@ export async function POST(
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // 응답 작성 포인트 +3
   const serviceClient = createServiceClient()
   await serviceClient.from('point_transactions').insert({
     user_id: user.id,
@@ -77,7 +75,6 @@ export async function PATCH(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // 요청자 확인
   const { data: helpReq } = await supabase
     .from('help_requests')
     .select('requester_id, status, reward_points, accepted_response_id')
@@ -96,7 +93,6 @@ export async function PATCH(
   const { response_id } = body
   if (!response_id) return NextResponse.json({ error: 'response_id 필요' }, { status: 400 })
 
-  // 응답 채택 처리
   const { data: response } = await supabase
     .from('help_responses')
     .select('responder_id')
@@ -106,7 +102,6 @@ export async function PATCH(
 
   if (!response) return NextResponse.json({ error: '응답을 찾을 수 없습니다' }, { status: 404 })
 
-  // 트랜잭션 처리: 응답 채택 + 요청 resolved
   await Promise.all([
     supabase.from('help_responses').update({ is_accepted: true }).eq('id', response_id),
     supabase.from('help_requests').update({
@@ -115,7 +110,6 @@ export async function PATCH(
     }).eq('id', requestId),
   ])
 
-  // 채택된 응답자에게 리워드 포인트 지급
   const serviceClient = createServiceClient()
   await serviceClient.from('point_transactions').insert({
     user_id: response.responder_id,
@@ -127,4 +121,43 @@ export async function PATCH(
   })
 
   return NextResponse.json({ ok: true, response_id, reward_points: helpReq.reward_points })
+}
+
+// PUT /api/help/[id]/responses — 응답 추천(upvote)
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id: requestId } = await params
+  const supabase = await createClient()
+
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json()
+  const { response_id } = body
+  if (!response_id) return NextResponse.json({ error: 'response_id 필요' }, { status: 400 })
+
+  const { data: resp } = await supabase
+    .from('help_responses')
+    .select('responder_id, upvotes')
+    .eq('id', response_id)
+    .eq('request_id', requestId)
+    .single()
+
+  if (!resp) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (resp.responder_id === user.id) {
+    return NextResponse.json({ error: '본인 응답은 추천할 수 없습니다' }, { status: 403 })
+  }
+
+  const { data: updated, error } = await supabase
+    .from('help_responses')
+    .update({ upvotes: (resp.upvotes ?? 0) + 1 })
+    .eq('id', response_id)
+    .select('upvotes')
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  return NextResponse.json({ upvotes: updated.upvotes })
 }

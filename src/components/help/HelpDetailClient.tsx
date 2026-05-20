@@ -52,8 +52,17 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   const [responses, setResponses] = useState(initialResponses)
   const [newResponse, setNewResponse] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [votedIds, setVotedIds] = useState<Set<string>>(new Set())
 
   const isRequester = help.requester_id === userId
+
+  // 로컬 스토리지에서 이미 추천한 응답 ID 복원
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(`help_upvotes_${help.id}`)
+      if (stored) setVotedIds(new Set(JSON.parse(stored)))
+    } catch {}
+  }, [help.id])
 
   // Realtime: 새 응답 실시간 수신
   useEffect(() => {
@@ -72,6 +81,13 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
     return () => { supabase.removeChannel(channel) }
   }, [help.id])
+
+  // 응답 정렬: 채택된 것 먼저, 그 다음 추천 수 내림차순
+  const sortedResponses = [...responses].sort((a, b) => {
+    if (a.is_accepted && !b.is_accepted) return -1
+    if (!a.is_accepted && b.is_accepted) return 1
+    return (b.upvotes ?? 0) - (a.upvotes ?? 0)
+  })
 
   async function handleSubmitResponse() {
     if (!newResponse.trim()) return
@@ -98,6 +114,25 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
     if (res.ok) {
       setHelp(prev => ({ ...prev, status: 'resolved', accepted_response_id: responseId }))
       setResponses(prev => prev.map(r => ({ ...r, is_accepted: r.id === responseId })))
+    }
+  }
+
+  async function handleUpvote(responseId: string) {
+    if (votedIds.has(responseId)) return
+    const res = await fetch(`/api/help/${help.id}/responses`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ response_id: responseId }),
+    })
+    if (res.ok) {
+      const { upvotes } = await res.json()
+      setResponses(prev => prev.map(r => r.id === responseId ? { ...r, upvotes } : r))
+      const newVoted = new Set(votedIds)
+      newVoted.add(responseId)
+      setVotedIds(newVoted)
+      try {
+        localStorage.setItem(`help_upvotes_${help.id}`, JSON.stringify([...newVoted]))
+      } catch {}
     }
   }
 
@@ -176,7 +211,6 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
           </div>
         </div>
 
-        {/* 액션 버튼 */}
         {(isRequester || isAdmin) && help.status === 'open' && (
           <div className="mt-4 pt-4 flex gap-2" style={{ borderTop: '1px solid #1A2838' }}>
             <button
@@ -193,6 +227,11 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
       <div>
         <h2 className="text-sm font-semibold mb-3" style={{ color: '#687898' }}>
           응답 {responses.length}개
+          {responses.length > 1 && (
+            <span className="ml-2 font-normal text-xs" style={{ color: '#384860' }}>
+              채택순·추천순 정렬
+            </span>
+          )}
         </h2>
 
         {responses.length === 0 ? (
@@ -201,64 +240,101 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
           </div>
         ) : (
           <div className="space-y-3">
-            {responses.map(resp => (
-              <div
-                key={resp.id}
-                className="glass-card p-5"
-                style={{
-                  border: resp.is_accepted ? '1px solid rgba(0,204,102,0.3)' : undefined,
-                  background: resp.is_accepted ? 'rgba(0,204,102,0.03)' : undefined,
-                }}>
-                {resp.is_accepted && (
-                  <div className="flex items-center gap-2 mb-3 text-xs font-semibold" style={{ color: '#3D9E6A' }}>
-                    ✅ 채택된 응답
-                  </div>
-                )}
+            {sortedResponses.map(resp => {
+              const isOwnResponse = resp.responder_id === userId
+              const hasVoted = votedIds.has(resp.id)
 
-                <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#CDD5E0' }}>
-                  {resp.body}
-                </p>
+              return (
+                <div
+                  key={resp.id}
+                  className="glass-card p-5"
+                  style={{
+                    border: resp.is_accepted ? '1px solid rgba(0,204,102,0.3)' : undefined,
+                    background: resp.is_accepted ? 'rgba(0,204,102,0.03)' : undefined,
+                  }}>
+                  {resp.is_accepted && (
+                    <div className="flex items-center gap-2 mb-3 text-xs font-semibold" style={{ color: '#3D9E6A' }}>
+                      ✅ 채택된 응답
+                    </div>
+                  )}
 
-                <div className="flex items-center mt-3">
-                  <div className="text-xs" style={{ color: '#485870' }}>
-                    <span style={{ color: '#687898' }}>{resp.profiles?.full_name ?? '—'}</span>
-                    {resp.profiles?.department && ` · ${resp.profiles.department}`}
-                    {' · '}
-                    {new Date(resp.created_at).toLocaleString('ko-KR')}
-                  </div>
-                </div>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#CDD5E0' }}>
+                    {resp.body}
+                  </p>
 
-                {/* 채택 버튼 — 요청자에게만 표시 */}
-                {isRequester && (
-                  <div className="mt-4">
-                    {help.status === 'resolved' && resp.is_accepted ? (
-                      <div
-                        className="w-full py-3 rounded-xl text-sm font-bold text-center"
-                        style={{
-                          background: 'rgba(0,204,102,0.12)',
-                          color: '#3D9E6A',
-                          border: '1px solid rgba(0,204,102,0.35)',
-                        }}>
-                        ✅ 채택됨 · 고마워요!
-                      </div>
-                    ) : help.status === 'open' && !resp.is_accepted ? (
+                  <div className="flex items-center justify-between mt-3">
+                    <div className="text-xs" style={{ color: '#485870' }}>
+                      <span style={{ color: '#687898' }}>{resp.profiles?.full_name ?? '—'}</span>
+                      {resp.profiles?.department && ` · ${resp.profiles.department}`}
+                      {' · '}
+                      {new Date(resp.created_at).toLocaleString('ko-KR')}
+                    </div>
+
+                    {/* 추천 버튼 */}
+                    {!isOwnResponse && (
                       <button
-                        onClick={() => handleAccept(resp.id)}
-                        className="w-full py-3 rounded-xl text-sm font-bold"
+                        onClick={() => handleUpvote(resp.id)}
+                        disabled={hasVoted}
                         style={{
-                          background: 'linear-gradient(135deg, #3D9E6A, #009944)',
-                          color: 'white',
-                          border: 'none',
-                          cursor: 'pointer',
-                          letterSpacing: '0.01em',
-                        }}>
-                        🙏 도움이 됐어요! 해결 완료
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '4px 10px',
+                          borderRadius: '20px',
+                          fontSize: '12px',
+                          fontWeight: 500,
+                          background: hasVoted ? 'rgba(74,124,192,0.2)' : 'rgba(74,124,192,0.08)',
+                          color: hasVoted ? '#4A7CC0' : '#687898',
+                          border: hasVoted ? '1px solid rgba(74,124,192,0.4)' : '1px solid rgba(74,124,192,0.15)',
+                          cursor: hasVoted ? 'default' : 'pointer',
+                          transition: 'all 0.15s',
+                        }}
+                        onMouseEnter={e => { if (!hasVoted) (e.currentTarget as HTMLElement).style.background = 'rgba(74,124,192,0.15)' }}
+                        onMouseLeave={e => { if (!hasVoted) (e.currentTarget as HTMLElement).style.background = 'rgba(74,124,192,0.08)' }}
+                      >
+                        👍 {resp.upvotes > 0 ? resp.upvotes : '도움돼요'}
                       </button>
-                    ) : null}
+                    )}
+
+                    {isOwnResponse && resp.upvotes > 0 && (
+                      <span className="text-xs" style={{ color: '#485870' }}>
+                        👍 {resp.upvotes}
+                      </span>
+                    )}
                   </div>
-                )}
-              </div>
-            ))}
+
+                  {/* 채택 버튼 — 요청자에게만 표시 */}
+                  {isRequester && (
+                    <div className="mt-4">
+                      {help.status === 'resolved' && resp.is_accepted ? (
+                        <div
+                          className="w-full py-3 rounded-xl text-sm font-bold text-center"
+                          style={{
+                            background: 'rgba(0,204,102,0.12)',
+                            color: '#3D9E6A',
+                            border: '1px solid rgba(0,204,102,0.35)',
+                          }}>
+                          ✅ 채택됨 · 고마워요!
+                        </div>
+                      ) : help.status === 'open' && !resp.is_accepted ? (
+                        <button
+                          onClick={() => handleAccept(resp.id)}
+                          className="w-full py-3 rounded-xl text-sm font-bold"
+                          style={{
+                            background: 'linear-gradient(135deg, #3D9E6A, #009944)',
+                            color: 'white',
+                            border: 'none',
+                            cursor: 'pointer',
+                            letterSpacing: '0.01em',
+                          }}>
+                          🙏 도움이 됐어요! 해결 완료
+                        </button>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         )}
       </div>
@@ -269,7 +345,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
           <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
             💡 응답하기
             <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>
-              채택 시 {help.reward_points}pt + 작성만 해도 3pt
+              채택 시 {help.reward_points}pt + 작성만 해도 1pt
             </span>
           </h3>
           <textarea
@@ -287,6 +363,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               fontSize: '14px',
               resize: 'vertical',
               outline: 'none',
+              boxSizing: 'border-box',
             }}
           />
           <div className="flex justify-end mt-3">

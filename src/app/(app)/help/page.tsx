@@ -7,15 +7,28 @@ export default async function HelpPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: requests } = await supabase
+  const { data: requests } = await (supabase as any)
     .from('help_requests')
     .select(`
       id, title, body, request_type, target_name, target_org,
       status, reward_points, created_at, requester_id,
-      profiles!requester_id(full_name, department)
+      profiles!requester_id(full_name, department),
+      help_responses!request_id(count)
     `)
     .order('created_at', { ascending: false })
     .limit(50)
+
+  const { data: myResponses } = await (supabase as any)
+    .from('help_responses')
+    .select('request_id')
+    .eq('responder_id', user.id)
+
+  const respondedIds: string[] = (myResponses ?? []).map((r: any) => r.request_id as string)
+
+  const requestsWithCount = (requests ?? []).map((r: any) => ({
+    ...r,
+    response_count: (r.help_responses as any[])?.[0]?.count ?? 0,
+  }))
 
   return (
     <div className="space-y-6">
@@ -34,7 +47,7 @@ export default async function HelpPage() {
         </Link>
       </div>
 
-      <HelpBoard requests={(requests ?? []) as any[]} userId={user.id} />
+      <HelpBoard requests={requestsWithCount} userId={user.id} respondedIds={respondedIds} />
     </div>
   )
 }
