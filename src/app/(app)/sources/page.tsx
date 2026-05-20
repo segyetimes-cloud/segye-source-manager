@@ -6,6 +6,7 @@ interface SearchParams {
   filter?: 'all' | 'mine'
   q?: string
   page?: string
+  tag?: string
 }
 
 export default async function SourcesPage({
@@ -17,6 +18,7 @@ export default async function SourcesPage({
   const filter = params.filter ?? 'all'
   const query = params.q ?? ''
   const page = parseInt(params.page ?? '1')
+  const tag = params.tag ?? ''
   const pageSize = 20
 
   const supabase = await createClient()
@@ -56,6 +58,10 @@ export default async function SourcesPage({
     sourcesQuery = sourcesQuery.or(
       `full_name.ilike.%${query}%,current_organization.ilike.%${query}%,current_position.ilike.%${query}%,exam_batch.ilike.%${query}%,university.ilike.%${query}%,high_school.ilike.%${query}%`
     )
+  }
+
+  if (tag) {
+    sourcesQuery = sourcesQuery.contains('tags', [tag])
   }
 
   // range는 모든 필터 이후 마지막에 적용
@@ -102,6 +108,7 @@ export default async function SourcesPage({
         currentPage={page}
         pageSize={pageSize}
         userId={user.id}
+        currentTag={tag}
       />
     </div>
   )

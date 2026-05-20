@@ -29,6 +29,7 @@ interface Props {
   currentPage: number
   pageSize: number
   userId: string
+  currentTag?: string
 }
 
 export default function SourceListClient({
@@ -39,6 +40,7 @@ export default function SourceListClient({
   currentPage,
   pageSize,
   userId,
+  currentTag = '',
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
@@ -52,6 +54,7 @@ export default function SourceListClient({
     if (params.filter && params.filter !== 'all') sp.set('filter', params.filter)
     if (params.q) sp.set('q', params.q)
     if (params.page && params.page !== '1') sp.set('page', params.page)
+    if (params.tag) sp.set('tag', params.tag)
     startTransition(() => router.push(`${pathname}?${sp.toString()}`))
   }
 
@@ -123,6 +126,23 @@ export default function SourceListClient({
             </button>
           )}
         </form>
+        {currentTag && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
+            <span style={{ fontSize: 12, color: '#485870' }}>태그 필터:</span>
+            <span style={{
+              fontSize: 12, padding: '3px 10px', borderRadius: 99, fontWeight: 600,
+              background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.35)',
+              display: 'flex', alignItems: 'center', gap: 5,
+            }}>
+              🏷️ {currentTag}
+              <button type="button"
+                onClick={() => navigate({ filter: currentFilter, q: currentQuery, page: '1' })}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#4A7CC0', fontSize: 14, lineHeight: 1, padding: 0 }}>
+                ×
+              </button>
+            </span>
+          </div>
+        )}
       </div>
 
       {/* 목록 */}
@@ -201,9 +221,11 @@ export default function SourceListClient({
                           {source.exam_batch}
                         </span>
                       )}
-                      {source.tags.slice(0, 3).map(tag => (
-                        <span key={tag} style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
-                          {tag}
+                      {source.tags.slice(0, 3).map(t => (
+                        <span key={t}
+                          onClick={e => { e.preventDefault(); e.stopPropagation(); navigate({ filter: currentFilter, q: currentQuery, page: '1', tag: t }) }}
+                          style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer' }}>
+                          {t}
                         </span>
                       ))}
                     </div>
@@ -257,9 +279,12 @@ export default function SourceListClient({
                         {source.exam_batch}
                       </span>
                     )}
-                    {source.tags.slice(0, 2).map(tag => (
-                      <span key={tag} style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
-                        {tag}
+                    {source.tags.slice(0, 2).map(t => (
+                      <span key={t}
+                        onClick={e => { e.preventDefault(); e.stopPropagation(); navigate({ filter: currentFilter, q: currentQuery, page: '1', tag: t }) }}
+                        style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer', border: '1px solid rgba(30,144,255,0.2)' }}
+                        title={`태그 "${t}"로 필터`}>
+                        {t}
                       </span>
                     ))}
                   </div>

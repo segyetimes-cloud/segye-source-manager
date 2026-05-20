@@ -12,6 +12,7 @@ export default async function DashboardPage() {
   type LeaderboardRow = { user_id: string; total_points: number; profiles: { full_name: string; department: string | null } | null }
   type HelpRow = { id: string; title: string; reward_points: number; created_at: string }
   type ReportRow = { category: string | null }
+  type FollowupRow = { id: string; next_followup_at: string; summary: string | null; source_id: string; sources: { id: string; full_name: string; current_organization: string | null } | null }
 
   const [
     { count: mySourceCount },
@@ -23,6 +24,7 @@ export default async function DashboardPage() {
     { data: mySourcesForChartRaw },
     { data: allSharedSourcesRaw },
     { data: myReportsRaw },
+    { data: followupRaw },
   ] = await Promise.all([
     supabase.from('sources').select('*', { count: 'exact', head: true })
       .eq('owner_id', user.id).eq('is_deleted', false),
@@ -50,6 +52,15 @@ export default async function DashboardPage() {
     supabase.from('information_reports')
       .select('category')
       .eq('author_id', user.id).eq('is_deleted', false),
+    // Followup 쿼리 추가: 7일 이내 next_followup_at 있는 내 연락 이력
+    (supabase as any)
+      .from('contact_logs')
+      .select('id, next_followup_at, summary, source_id, sources!source_id(id, full_name, current_organization)')
+      .not('next_followup_at', 'is', null)
+      .lte('next_followup_at', (() => { const d = new Date(); d.setDate(d.getDate() + 7); return d.toISOString() })())
+      .eq('user_id', user.id)
+      .order('next_followup_at', { ascending: true })
+      .limit(8),
   ])
 
   const myPoints = myPointsRaw as PointsSummary | null
@@ -57,6 +68,7 @@ export default async function DashboardPage() {
   const recentSources = recentSourcesRaw as SourceRow[] | null
   const openHelp = openHelpRaw as HelpRow[] | null
   const totalPoints = myPoints?.total_points ?? 0
+  const followups = (followupRaw ?? []) as FollowupRow[]
 
   // ── 차트 데이터 계산 ──────────────────────────────────────
   const mySourcesForChart = (mySourcesForChartRaw ?? []) as { created_at: string; completeness_score: number; current_organization: string | null }[]
@@ -278,6 +290,58 @@ export default async function DashboardPage() {
           )}
         </div>
       </div>
+
+      {/* 팔로업 예정 취재원 */}
+      {followups.length > 0 && (
+        <div className="glass-card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>📅 팔로업 예정</h2>
+              <p className="text-xs mt-0.5" style={{ color: '#485870' }}>7일 이내 연락 예정된 취재원</p>
+            </div>
+            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
+          </div>
+          <div className="space-y-2">
+            {followups.map((f: FollowupRow) => {
+              const due = new Date(f.next_followup_at)
+              const now = new Date()
+              const isOverdue = due < now
+              const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              const dueTxt = isOverdue
+                ? `${Math.abs(diffDays)}일 지남`
+                : diffDays === 0 ? '오늘'
+                : `${diffDays}일 후`
+              const dueColor = isOverdue ? '#C04040' : diffDays <= 1 ? '#A87228' : '#3D9E6A'
+              return (
+                <Link key={f.id} href={f.sources ? `/sources/${f.sources.id}` : '/sources'}
+                  style={{ textDecoration: 'none', display: 'block' }}>
+                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
+                    style={{ background: '#182035', border: `1px solid ${isOverdue ? 'rgba(192,64,64,0.25)' : '#1A2838'}` }}
+                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#4A7CC0')}
+                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = isOverdue ? 'rgba(192,64,64,0.25)' : '#1A2838')}>
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
+                      style={{ background: `${dueColor}20`, color: dueColor }}>
+                      {f.sources?.full_name?.[0] ?? '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
+                        {f.sources?.full_name ?? '—'}
+                      </p>
+                      {f.summary && (
+                        <p className="text-xs truncate" style={{ color: '#687898' }}>{f.summary}</p>
+                      )}
+                    </div>
+                    <span className="text-xs font-bold flex-shrink-0 px-2 py-0.5 rounded-full"
+                      style={{ background: `${dueColor}18`, color: dueColor }}>
+                      {dueTxt}
+                    </span>
+                  </div>
+                </Link>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* 도움 요청 */}
       {openHelp && openHelp.length > 0 && (
