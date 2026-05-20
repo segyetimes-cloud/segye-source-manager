@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState, useEffect } from 'react'
+import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -13,18 +13,18 @@ interface Node {
   position: string | null
   tags: string[]
   isOwner?: boolean
-  degree: number          // 연결 강도 합산 → 원 크기 결정
-  isDuplicate?: boolean   // 동일 이름 중복 레코드 여부
+  degree: number
+  isDuplicate?: boolean
 }
 
 interface Link {
   source: string
   target: string
-  type: string            // 대표 타입
-  types?: string[]        // 모든 타입 (필터용)
+  type: string
+  types?: string[]
   label: string
-  strength: number        // 합산 강도 → 선 굵기
-  connectionCount?: number // 겹치는 속성 수
+  strength: number
+  connectionCount?: number
 }
 
 interface Props {
@@ -32,16 +32,42 @@ interface Props {
   links: Link[]
 }
 
+// ── Org-based color palette (FNV hash for consistency) ────────────────────────
+const ORG_PALETTE = [
+  '#4A90D9', '#5CAB7D', '#E2844A', '#9B6BE6',
+  '#E24A6B', '#27AE80', '#E6B42A', '#16A0A8',
+  '#3A7EC8', '#C05A8A', '#6EB848', '#D46020',
+]
+
+function orgColor(org: string | null): string {
+  if (!org) return '#4A90D9'
+  let h = 2166136261
+  for (let i = 0; i < org.length; i++) {
+    h ^= org.charCodeAt(i)
+    h = Math.imul(h, 16777619)
+  }
+  return ORG_PALETTE[Math.abs(h) % ORG_PALETTE.length]
+}
+
+function hexToRgb(hex: string): [number, number, number] {
+  if (!hex.startsWith('#')) return [74, 144, 217]
+  const r = parseInt(hex.slice(1, 3), 16)
+  const g = parseInt(hex.slice(3, 5), 16)
+  const b = parseInt(hex.slice(5, 7), 16)
+  return [r, g, b]
+}
+
+// ── Constants ─────────────────────────────────────────────────────────────────
 const LINK_COLORS: Record<string, string> = {
-  same_org:        '#A87228',   // 주황 — 동료
-  same_university: '#3D9E6A',   // 녹색 — 대학동문
-  same_highschool: '#4A7CC0',   // 파랑 — 고교동문
-  same_exam:       '#7E6E48',   // 금색 — 시험동기
-  same_hometown:   '#8858C0',   // 보라 — 동향
-  same_tag:        '#3A90A8',   // 시안 — 공통태그
-  same_position:   '#BC5028',   // 주홍 — 직책공유 (위원회 등)
-  mention:         '#A87090',   // 핑크 — 직접 언급 (notes/tags)
-  manual:          '#C04040',   // 빨강 — 수동등록
+  same_org:        '#A87228',
+  same_university: '#3D9E6A',
+  same_highschool: '#4A7CC0',
+  same_exam:       '#B09048',
+  same_hometown:   '#8858C0',
+  same_tag:        '#3A90A8',
+  same_position:   '#BC5028',
+  mention:         '#A87090',
+  manual:          '#C04040',
 }
 
 const LINK_LABELS: Record<string, string> = {
@@ -56,18 +82,14 @@ const LINK_LABELS: Record<string, string> = {
   manual:          '수동등록',
 }
 
-/** 연결 수 기반 노드 반지름 (로그 스케일) */
 function nodeRadius(degree: number): number {
-  // degree 1 → r≈4,  5 → r≈6,  20 → r≈9,  100 → r≈13
-  return Math.max(4, Math.min(3 + Math.log2(degree + 1) * 2.2, 13))
+  return Math.max(3.5, Math.min(3.5 + Math.log2(degree + 1) * 2.2, 13))
 }
 
-/** 합산 강도 기반 선 굵기 */
-function linkWidth(strength: number, connectionCount: number): number {
-  // connectionCount 1 → 얇게, 5+ → 굵게
-  const base = Math.max(0.5, strength * 0.35)
-  const bonus = Math.min((connectionCount - 1) * 0.6, 3)
-  return Math.min(base + bonus, 6)
+function baseLinkWidth(strength: number, connectionCount: number): number {
+  const base = Math.max(0.4, strength * 0.3)
+  const bonus = Math.min((connectionCount - 1) * 0.5, 2.5)
+  return Math.min(base + bonus, 4.5)
 }
 
 const ForceGraph2D = dynamic(
@@ -75,14 +97,17 @@ const ForceGraph2D = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div className="flex items-center justify-center h-full">
-        <div className="text-center">
-          <div className="w-10 h-10 rounded-full border-2 animate-spin mx-auto mb-3"
-            style={{ borderColor: '#1A2838', borderTopColor: '#4A7CC0' }} />
-          <p className="text-sm" style={{ color: '#485870' }}>그래프 로딩 중...</p>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{
+            width: '36px', height: '36px', borderRadius: '50%',
+            border: '2px solid #1A2838', borderTopColor: '#4A7CC0',
+            animation: 'spin 0.8s linear infinite', margin: '0 auto 10px',
+          }} />
+          <p style={{ fontSize: '13px', color: '#485870' }}>그래프 로딩 중...</p>
         </div>
       </div>
-    )
+    ),
   }
 )
 
@@ -90,25 +115,41 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const router = useRouter()
   const containerRef = useRef<HTMLDivElement>(null)
   const fgRef = useRef<any>(null)
-  const [activeTypes, setActiveTypes] = useState<Set<string>>(
-    new Set(Object.keys(LINK_COLORS))
-  )
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [isMobile, setIsMobile] = useState(false)
-  const [legendOpen, setLegendOpen] = useState(false) // 모바일: 기본 접힘
 
-  // 컨테이너 크기 + 모바일 감지
+  // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
+  const hoveredIdRef = useRef<string | null>(null)
+  const highlightIdsRef = useRef<Set<string>>(new Set())
+  const [hoveredInfo, setHoveredInfo] = useState<Node | null>(null)
+
+  // ── Search ────────────────────────────────────────────────────────────────
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchMatchCount, setSearchMatchCount] = useState<number | null>(null)
+  const searchMatchIdsRef = useRef<Set<string> | null>(null)
+
+  // ── Filter & display ──────────────────────────────────────────────────────
+  const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(Object.keys(LINK_COLORS)))
+  const [colorMode, setColorMode] = useState<'org' | 'degree'>('org')
+  const colorModeRef = useRef<'org' | 'degree'>('org')
+
+  // ── Panel UI state ────────────────────────────────────────────────────────
+  const [panelOpen, setPanelOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(false)
+
+  // ── Mobile detection ──────────────────────────────────────────────────────
   useEffect(() => {
-    const checkMobile = () => {
+    const check = () => {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      setLegendOpen(!mobile) // PC: 기본 열림, 모바일: 기본 접힘
+      setPanelOpen(!mobile)
     }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
+  // ── Container sizing ──────────────────────────────────────────────────────
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -122,7 +163,34 @@ export default function NetworkGraph({ nodes, links }: Props) {
     return () => ro.disconnect()
   }, [])
 
-  // 노드 수에 따라 반발력·거리 동적 조정
+  // ── Sync refs ─────────────────────────────────────────────────────────────
+  useEffect(() => { colorModeRef.current = colorMode }, [colorMode])
+
+  // ── Search: update match IDs ref + state for count display ────────────────
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      searchMatchIdsRef.current = null
+      setSearchMatchCount(null)
+      return
+    }
+    const q = searchQuery.toLowerCase()
+    const matched = nodes.filter(n =>
+      n.label.toLowerCase().includes(q) ||
+      n.org?.toLowerCase().includes(q) ||
+      n.position?.toLowerCase().includes(q) ||
+      n.tags?.some(t => t.toLowerCase().includes(q))
+    )
+    searchMatchIdsRef.current = new Set(matched.map(n => n.id))
+    setSearchMatchCount(matched.length)
+  }, [searchQuery, nodes])
+
+  // ── Filtered links ────────────────────────────────────────────────────────
+  const filteredLinks = useMemo(
+    () => links.filter(l => (l.types ?? [l.type]).some(t => activeTypes.has(t))),
+    [links, activeTypes]
+  )
+
+  // ── Force simulation setup ────────────────────────────────────────────────
   const nodeCount = nodes.length
   const chargeStrength = Math.min(-180 - nodeCount * 15, -1200)
   const linkDistance   = Math.max(100, Math.min(80 + nodeCount * 4, 280))
@@ -133,24 +201,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const timer = setTimeout(() => {
       try {
         fg.d3Force('charge')?.strength(chargeStrength)
-
-        // 링크 거리: 연결된 두 노드의 실제 반지름 합산 + 여백
-        // → 큰 원끼리는 자동으로 더 멀리 배치됨
         fg.d3Force('link')?.distance((link: any) => {
           const srcR = nodeRadius((link.source as any)?.degree ?? 1)
           const tgtR = nodeRadius((link.target as any)?.degree ?? 1)
           return Math.max(srcR + tgtR + 55, linkDistance)
         }).iterations(5)
-
-        // 충돌 반경: 노드 반지름에 비례한 패딩 (대형 노드일수록 더 넓은 간격)
-        // r=4  → 4*2.4+6 = 15.6
-        // r=9  → 9*2.4+6 = 27.6
-        // r=13 → 13*2.4+6 = 37.2
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
           return r * 2.4 + 6
         }).iterations(6))
-
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }, 150)
@@ -158,40 +217,194 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length])
 
-  // 시뮬레이션 완료 후 전체 뷰 자동 맞춤
+  // ── Auto-fit after simulation stabilizes ─────────────────────────────────
   const handleEngineStop = useCallback(() => {
-    try {
-      fgRef.current?.zoomToFit(400, 40)
-    } catch (e) { /* noop */ }
+    try { fgRef.current?.zoomToFit(400, 60) } catch {}
   }, [])
 
-  // 링크에 존재하는 모든 타입 수집 (types 배열 포함)
-  const allTypes = [...new Set(
-    links.flatMap(l => l.types ?? [l.type])
-  )]
+  // ── Hover handler — updates refs (for canvas) + state (for overlay) ───────
+  const handleNodeHover = useCallback((node: unknown) => {
+    const n = node as (Node & { x?: number; y?: number }) | null
+    hoveredIdRef.current = n?.id ?? null
 
-  // 활성 타입 중 하나라도 포함된 링크만 표시
-  const filteredLinks = links.filter(l =>
-    (l.types ?? [l.type]).some(t => activeTypes.has(t))
-  )
+    const ids = new Set<string>()
+    if (n) {
+      ids.add(n.id)
+      try {
+        const graphLinks: any[] = fgRef.current?.graphData()?.links ?? []
+        for (const l of graphLinks) {
+          const srcId = l.source?.id ?? l.source
+          const tgtId = l.target?.id ?? l.target
+          if (srcId === n.id) ids.add(tgtId)
+          if (tgtId === n.id) ids.add(srcId)
+        }
+      } catch {}
+    }
+    highlightIdsRef.current = ids
+    setHoveredInfo(n ? (n as unknown as Node) : null)
+  }, [])
 
+  // ── Node canvas renderer ──────────────────────────────────────────────────
+  // Uses refs — called every animation frame, always picks up latest state
+  const nodeCanvasObject = useCallback((node: unknown, ctx: CanvasRenderingContext2D, globalScale: number) => {
+    const n = node as Node & { x?: number; y?: number }
+    if (n.x === undefined || n.y === undefined) return
+
+    const degree = n.degree ?? 1
+    const r = nodeRadius(degree)
+    const isHovered = hoveredIdRef.current === n.id
+    const hasHoverActive = hoveredIdRef.current !== null
+    const isHighlighted = highlightIdsRef.current.has(n.id)
+    const isFadedByHover = hasHoverActive && !isHighlighted
+
+    const searchIds = searchMatchIdsRef.current
+    const isSearchMatch = searchIds?.has(n.id) ?? false
+    const isFadedBySearch = searchIds !== null && !isSearchMatch
+
+    const isFaded = isFadedByHover || isFadedBySearch
+    const rDraw = isHovered ? r * 1.3 : r
+
+    // Determine base color
+    let baseColor: string
+    if (n.isDuplicate) {
+      baseColor = '#E8A030'
+    } else if (n.isOwner) {
+      baseColor = '#38C8B8'
+    } else if (colorModeRef.current === 'org') {
+      baseColor = orgColor(n.org)
+    } else {
+      const intensity = Math.min(degree / 15, 1)
+      const g = Math.round(144 + intensity * 111)
+      baseColor = `rgb(30,${g},255)`
+    }
+
+    ctx.save()
+    ctx.globalAlpha = isFaded ? 0.06 : 1
+
+    // Radial glow (hover / highlighted / high-degree)
+    if (!isFaded && (isHovered || isHighlighted || degree >= 4)) {
+      const glowR = isHovered ? rDraw * 3.2 : rDraw * 2.2
+      const glowAlpha = isHovered ? 0.5 : isHighlighted ? 0.2 : 0.1
+      const [cr, cg, cb] = baseColor.startsWith('rgb')
+        ? baseColor.match(/\d+/g)!.map(Number) as [number, number, number]
+        : hexToRgb(baseColor)
+      const grad = ctx.createRadialGradient(n.x, n.y, rDraw * 0.2, n.x, n.y, glowR)
+      grad.addColorStop(0, `rgba(${cr},${cg},${cb},${glowAlpha})`)
+      grad.addColorStop(1, `rgba(${cr},${cg},${cb},0)`)
+      ctx.beginPath()
+      ctx.arc(n.x, n.y, glowR, 0, 2 * Math.PI)
+      ctx.fillStyle = grad
+      ctx.fill()
+    }
+
+    // Main circle
+    ctx.beginPath()
+    ctx.arc(n.x, n.y, rDraw, 0, 2 * Math.PI)
+    ctx.fillStyle = baseColor
+    ctx.fill()
+
+    // Border
+    if (n.isDuplicate) {
+      ctx.setLineDash([2, 2])
+      ctx.strokeStyle = 'rgba(255,165,50,0.8)'
+      ctx.lineWidth = 1.5
+    } else {
+      ctx.setLineDash([])
+      ctx.strokeStyle = isHovered
+        ? 'rgba(255,255,255,0.95)'
+        : isHighlighted
+          ? `${baseColor.startsWith('#') ? baseColor : '#4A90D9'}CC`
+          : `${baseColor.startsWith('#') ? baseColor : '#4A90D9'}50`
+      ctx.lineWidth = isHovered ? 2.5 : 1.5
+    }
+    ctx.stroke()
+    ctx.setLineDash([])
+
+    // Label
+    if (globalScale > 0.38) {
+      const fontSize = Math.max((isHovered ? 12 : 9) / globalScale, 2.5)
+      ctx.font = `${isHovered ? '600 ' : ''}${fontSize}px -apple-system, "Pretendard", "Noto Sans KR", sans-serif`
+      ctx.textAlign = 'center'
+      ctx.textBaseline = 'top'
+
+      // Text shadow for readability
+      ctx.globalAlpha = isFaded ? 0 : 0.75
+      ctx.fillStyle = '#050A12'
+      ctx.fillText(n.label, n.x + 0.5, n.y + rDraw + 2.5)
+
+      ctx.globalAlpha = isFaded ? 0.06 : 1
+      ctx.fillStyle = isHovered
+        ? '#FFFFFF'
+        : isHighlighted
+          ? '#D0E8FF'
+          : degree >= 5 ? '#9ABCD8' : '#607890'
+      ctx.fillText(n.label, n.x, n.y + rDraw + 2)
+
+      if (n.isDuplicate && globalScale > 0.65) {
+        ctx.font = `${fontSize * 0.8}px -apple-system, sans-serif`
+        ctx.fillStyle = '#E8A030'
+        ctx.fillText('⚠ 중복', n.x, n.y + rDraw + fontSize + 3)
+      }
+    }
+
+    ctx.restore()
+  }, [])
+
+  // ── Link color ────────────────────────────────────────────────────────────
+  const getLinkColor = useCallback((link: unknown) => {
+    const l = link as { source: any; target: any; type: string; connectionCount?: number }
+    const srcId = l.source?.id ?? l.source
+    const tgtId = l.target?.id ?? l.target
+
+    const hasHover = hoveredIdRef.current !== null
+    const both = highlightIdsRef.current.has(srcId) && highlightIdsRef.current.has(tgtId)
+    const isFadedByHover = hasHover && !both
+
+    const searchIds = searchMatchIdsRef.current
+    const either = searchIds?.has(srcId) || searchIds?.has(tgtId)
+    const isFadedBySearch = searchIds !== null && !either
+
+    const color = LINK_COLORS[l.type] ?? '#485870'
+    if (isFadedByHover || isFadedBySearch) return color + '0C'
+
+    const count = l.connectionCount ?? 1
+    const alpha = Math.min(55 + count * 28, 215).toString(16).padStart(2, '0')
+    return color + alpha
+  }, [])
+
+  // ── Link width ────────────────────────────────────────────────────────────
+  const getLinkWidth = useCallback((link: unknown) => {
+    const l = link as { source: any; target: any; strength?: number; connectionCount?: number }
+    const srcId = l.source?.id ?? l.source
+    const tgtId = l.target?.id ?? l.target
+    const hasHover = hoveredIdRef.current !== null
+    const both = highlightIdsRef.current.has(srcId) && highlightIdsRef.current.has(tgtId)
+    const base = baseLinkWidth(l.strength ?? 1, l.connectionCount ?? 1)
+    return hasHover && both ? Math.min(base * 2.2, 6) : base
+  }, [])
+
+  // ── Click to navigate ─────────────────────────────────────────────────────
   const handleNodeClick = useCallback((node: unknown) => {
     const n = node as Node
     if (n.id) router.push(`/sources/${n.id}`)
   }, [router])
 
-  function toggleType(type: string) {
-    setActiveTypes(prev => {
-      const next = new Set(prev)
-      if (next.has(type)) next.delete(type)
-      else next.add(type)
-      return next
-    })
-  }
+  // ── All types present in current links ───────────────────────────────────
+  const allTypes = useMemo(
+    () => [...new Set(links.flatMap(l => l.types ?? [l.type]))],
+    [links]
+  )
 
+  // ── Unique orgs for legend ────────────────────────────────────────────────
+  const uniqueOrgs = useMemo(
+    () => [...new Set(nodes.map(n => n.org).filter(Boolean))] as string[],
+    [nodes]
+  )
+
+  // ── Empty state ───────────────────────────────────────────────────────────
   if (nodes.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-4">
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px' }}>
         <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
           <circle cx="32" cy="32" r="8" stroke="#485870" strokeWidth="2"/>
           <circle cx="12" cy="12" r="6" stroke="#485870" strokeWidth="2"/>
@@ -200,242 +413,59 @@ export default function NetworkGraph({ nodes, links }: Props) {
           <circle cx="52" cy="52" r="6" stroke="#485870" strokeWidth="2"/>
           <path d="M18 18L26 26M38 26L46 18M18 46L26 38M38 38L46 46" stroke="#485870" strokeWidth="1.5"/>
         </svg>
-        <div className="text-center">
-          <p className="text-sm font-medium" style={{ color: '#687898' }}>연결된 취재원이 없습니다</p>
-          <p className="text-xs mt-1" style={{ color: '#485870' }}>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: '#687898' }}>연결된 취재원이 없습니다</p>
+          <p style={{ fontSize: '12px', marginTop: '4px', color: '#485870' }}>
             취재원 등록 시 소속·대학·시험기수 등을 입력하면
           </p>
-          <p className="text-xs" style={{ color: '#485870' }}>자동으로 관계망이 그려집니다</p>
+          <p style={{ fontSize: '12px', color: '#485870' }}>자동으로 관계망이 그려집니다</p>
         </div>
       </div>
     )
   }
 
   const graphData = {
-    nodes: nodes.map(n => ({
-      ...n,
-      name: n.label,
-      // forceCollide가 실제 반지름을 쓰므로 val은 1로 고정
-      val: 1,
-    })),
+    nodes: nodes.map(n => ({ ...n, name: n.label, val: 1 })),
     links: filteredLinks.map(l => ({
       ...l,
-      curvature: (l.connectionCount ?? 1) > 1 ? 0.2 : 0.05,
+      curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
     })),
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0A0E1A', overflow: 'hidden' }}>
 
-      {/* ── PC 범례 (우상단 고정) ── */}
-      {!isMobile && legendOpen && (
-        <div style={{
-          position: 'absolute', top: '16px', right: '16px', zIndex: 10,
-          padding: '12px', borderRadius: '12px',
-          background: 'rgba(10,22,40,0.96)', border: '1px solid #1A2838',
-          minWidth: '150px', backdropFilter: 'blur(8px)',
-        }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#687898' }}>관계 유형 필터</p>
-          <div className="space-y-1.5">
-            {allTypes.map(type => (
-              <button key={type} type="button" onClick={() => toggleType(type)}
-                className="flex items-center gap-2 w-full text-left"
-                style={{ background: 'none', border: 'none', cursor: 'pointer',
-                  opacity: activeTypes.has(type) ? 1 : 0.3, transition: 'opacity 0.15s' }}>
-                <span className="flex-shrink-0 rounded-full"
-                  style={{ width: '12px', height: '5px', background: LINK_COLORS[type] ?? '#687898' }} />
-                <span className="text-xs" style={{ color: '#CDD5E0' }}>{LINK_LABELS[type] ?? type}</span>
-              </button>
-            ))}
-          </div>
-          <div className="mt-3 pt-2 space-y-1" style={{ borderTop: '1px solid #1A2838' }}>
-            <p className="text-xs font-semibold mb-1.5" style={{ color: '#687898' }}>원 크기</p>
-            {[{ label: '연결 많음', r: 10 }, { label: '연결 적음', r: 5 }].map(({ label, r }) => (
-              <div key={label} className="flex items-center gap-2">
-                <span className="rounded-full flex-shrink-0" style={{
-                  width: r * 2, height: r * 2, display: 'inline-block',
-                  background: 'rgba(30,144,255,0.5)', border: '1px solid rgba(30,144,255,0.7)',
-                }} />
-                <span className="text-xs" style={{ color: '#485870' }}>{label}</span>
-              </div>
-            ))}
-            <p className="text-xs mt-1" style={{ color: '#485870' }}>굵은 선 = 겹치는 관계 多</p>
-          </div>
-          <p className="text-xs mt-2 pt-2" style={{ color: '#485870', borderTop: '1px solid #1A2838' }}>
-            노드 클릭 → 상세 페이지
-          </p>
-        </div>
-      )}
-
-      {/* ── 모바일 범례 (하단 가로 칩 바) ── */}
-      {isMobile && (
-        <div style={{
-          position: 'absolute', bottom: '8px', left: '8px', right: '8px', zIndex: 10,
-          display: 'flex', gap: '6px', flexWrap: 'wrap', justifyContent: 'center',
-          padding: '8px 10px', borderRadius: '10px',
-          background: 'rgba(10,22,40,0.88)', border: '1px solid #1A2838',
-          backdropFilter: 'blur(8px)',
-        }}>
-          {allTypes.map(type => (
-            <button
-              key={type}
-              type="button"
-              onClick={() => toggleType(type)}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '5px',
-                padding: '4px 10px', borderRadius: '20px',
-                background: activeTypes.has(type)
-                  ? `${LINK_COLORS[type] ?? '#485870'}22`
-                  : 'rgba(26,48,80,0.5)',
-                border: `1px solid ${activeTypes.has(type) ? (LINK_COLORS[type] ?? '#485870') : '#1A2838'}`,
-                cursor: 'pointer', transition: 'all 0.15s',
-                opacity: activeTypes.has(type) ? 1 : 0.5,
-              }}
-            >
-              <span style={{
-                width: '8px', height: '8px', borderRadius: '50%', flexShrink: 0,
-                background: LINK_COLORS[type] ?? '#687898',
-              }} />
-              <span style={{ fontSize: '11px', color: '#CDD5E0', whiteSpace: 'nowrap' }}>
-                {LINK_LABELS[type] ?? type}
-              </span>
-            </button>
-          ))}
-        </div>
-      )}
-
-
-      <div ref={containerRef} style={{ width: '100%', height: '100%', background: '#0D1520' }}>
+      {/* ── Canvas ─────────────────────────────────────────────────────────── */}
+      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
         <ForceGraph2D
           ref={fgRef}
           graphData={graphData}
-          backgroundColor="#0D1520"
+          backgroundColor="#0A0E1A"
 
-          // ── 노드 렌더링: degree 기반 크기 ──
-          nodeCanvasObject={(node: unknown, ctx: CanvasRenderingContext2D, globalScale: number) => {
-            const n = node as Node & { x?: number; y?: number }
-            if (n.x === undefined || n.y === undefined) return
-
-            const degree = n.degree ?? 1
-            const r = nodeRadius(degree)
-            const fontSize = Math.max(9 / globalScale, 2.5)
-            const isOwner = n.isOwner
-            const isDuplicate = n.isDuplicate
-
-            // 연결 강도가 높을수록 더 밝은 색
-            const intensity = Math.min(degree / 15, 1)
-            const blue = Math.round(100 + intensity * 100)
-            const cyan = Math.round(144 + intensity * 111)
-            const color = isDuplicate
-              ? '#A87228'
-              : isOwner
-                ? '#3A90A8'
-                : `rgb(30, ${cyan}, 255)`
-
-            // 글로우 효과
-            if (degree >= 3 || isDuplicate) {
-              ctx.beginPath()
-              ctx.arc(n.x, n.y, r + 3, 0, 2 * Math.PI)
-              const glowAlpha = isDuplicate ? 0.3 : Math.min(0.12 + intensity * 0.2, 0.35)
-              ctx.fillStyle = isDuplicate
-                ? `rgba(255,153,0,${glowAlpha})`
-                : isOwner
-                  ? `rgba(0,212,255,${glowAlpha})`
-                  : `rgba(30,${blue},255,${glowAlpha})`
-              ctx.fill()
-            }
-
-            // 노드 원
-            ctx.beginPath()
-            ctx.arc(n.x, n.y, r, 0, 2 * Math.PI)
-            ctx.fillStyle = color
-            ctx.fill()
-            // 중복 노드는 점선 테두리
-            if (isDuplicate) {
-              ctx.setLineDash([2, 2])
-              ctx.strokeStyle = 'rgba(255,153,0,0.9)'
-              ctx.lineWidth = 2
-            } else {
-              ctx.setLineDash([])
-              ctx.strokeStyle = isOwner
-                ? 'rgba(0,212,255,0.7)'
-                : `rgba(30,${blue},255,0.5)`
-              ctx.lineWidth = r > 10 ? 2 : 1.5
-            }
-            ctx.stroke()
-            ctx.setLineDash([])
-
-            // 레이블 (일정 줌 이상에서만)
-            if (globalScale > 0.45) {
-              ctx.font = `${fontSize}px Pretendard, sans-serif`
-              ctx.fillStyle = isDuplicate ? '#B08830' : degree >= 5 ? '#FFFFFF' : '#A8B8C8'
-              ctx.textAlign = 'center'
-              ctx.textBaseline = 'top'
-              ctx.fillText(n.label, n.x, n.y + r + 2)
-              // 중복 경고 표시
-              if (isDuplicate && globalScale > 0.7) {
-                ctx.font = `${fontSize * 0.85}px Pretendard, sans-serif`
-                ctx.fillStyle = '#A87228'
-                ctx.fillText('⚠ 중복', n.x, n.y + r + fontSize + 3)
-              }
-            }
-          }}
+          nodeCanvasObject={nodeCanvasObject}
+          nodeCanvasObjectMode={() => 'replace'}
 
           nodeLabel={(node: unknown) => {
             const n = node as Node
             const parts = [n.label]
             if (n.org) parts.push(n.org)
             if (n.position) parts.push(n.position)
-            parts.push(`연결강도: ${n.degree}`)
+            parts.push(`연결강도 ${n.degree}`)
             return parts.join('\n')
           }}
 
-          // ── 링크 색상: 대표 타입 색상 사용 ──
-          linkColor={(link: unknown) => {
-            const l = link as Link
-            const color = LINK_COLORS[l.type] ?? '#485870'
-            // 겹치는 관계 많을수록 더 불투명
-            const count = l.connectionCount ?? 1
-            const alpha = Math.min(40 + count * 20, 200).toString(16).padStart(2, '0')
-            return color + alpha
-          }}
-
-          // ── 선 굵기: 강도 + 겹침 수에 비례 ──
-          linkWidth={(link: unknown) => {
-            const l = link as Link
-            return linkWidth(l.strength ?? 1, l.connectionCount ?? 1)
-          }}
-
-          // ── 파티클: 연결 강도에 따라 ──
-          linkDirectionalParticles={(link: unknown) => {
-            const l = link as Link
-            return Math.min(Math.ceil((l.connectionCount ?? 1) * 0.7), 3)
-          }}
-          linkDirectionalParticleColor={(link: unknown) => {
-            const l = link as Link
-            return LINK_COLORS[l.type] ?? '#485870'
-          }}
-          linkDirectionalParticleSpeed={(link: unknown) => {
-            const l = link as Link
-            return 0.002 + (l.connectionCount ?? 1) * 0.001
-          }}
-          linkDirectionalParticleWidth={(link: unknown) => {
-            const l = link as Link
-            return Math.min(1.5 + (l.connectionCount ?? 1) * 0.4, 3.5)
-          }}
-
+          linkColor={getLinkColor}
+          linkWidth={getLinkWidth}
           linkLabel={(link: unknown) => (link as Link).label ?? ''}
 
           onNodeClick={handleNodeClick}
+          onNodeHover={handleNodeHover}
           onEngineStop={handleEngineStop}
 
           width={dimensions.width}
           height={dimensions.height}
-
           minZoom={0.02}
           maxZoom={12}
-
-          // 물리 시뮬레이션 — 수렴 시간 확보해서 초기 배치 안정화
           cooldownTicks={500}
           warmupTicks={150}
           d3AlphaDecay={0.008}
@@ -443,6 +473,281 @@ export default function NetworkGraph({ nodes, links }: Props) {
           nodeRelSize={1}
         />
       </div>
+
+      {/* ── Obsidian-style settings panel (bottom-left) ──────────────────── */}
+      <div style={{
+        position: 'absolute', bottom: '16px', left: '16px',
+        zIndex: 20, display: 'flex', flexDirection: 'column-reverse', gap: '8px',
+        alignItems: 'flex-start',
+      }}>
+        {/* Toggle button */}
+        <button
+          type="button"
+          onClick={() => setPanelOpen(p => !p)}
+          title={panelOpen ? '패널 닫기' : '설정 패널 열기'}
+          style={{
+            width: '36px', height: '36px', borderRadius: '8px',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: panelOpen ? 'rgba(74,124,192,0.25)' : 'rgba(8,14,28,0.88)',
+            border: `1px solid ${panelOpen ? 'rgba(74,124,192,0.55)' : '#1A2838'}`,
+            cursor: 'pointer', fontSize: '15px',
+            backdropFilter: 'blur(10px)',
+          }}>
+          ⚙
+        </button>
+
+        {/* Panel body */}
+        {panelOpen && (
+          <div style={{
+            width: isMobile ? 'min(260px, calc(100vw - 80px))' : '228px',
+            background: 'rgba(6,12,24,0.97)',
+            border: '1px solid #1A2838',
+            borderRadius: '12px',
+            backdropFilter: 'blur(16px)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            overflow: 'hidden',
+          }}>
+
+            {/* ── Search ── */}
+            <div style={{ padding: '12px 14px 10px' }}>
+              <p style={sectionLabel}>검색</p>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#485870', pointerEvents: 'none' }}>🔍</span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="이름, 소속, 직책..."
+                  style={{
+                    width: '100%', paddingLeft: '26px', paddingRight: '8px',
+                    paddingTop: '6px', paddingBottom: '6px',
+                    background: '#101828', border: '1px solid #1A2838',
+                    borderRadius: '6px', fontSize: '12px', color: '#CDD5E0',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              {searchMatchCount !== null && (
+                <p style={{ fontSize: '11px', color: '#4A7CC0', marginTop: '5px' }}>
+                  {searchMatchCount > 0 ? `${searchMatchCount}명 일치` : '일치하는 취재원 없음'}
+                </p>
+              )}
+            </div>
+
+            <Divider />
+
+            {/* ── Color mode ── */}
+            <div style={{ padding: '10px 14px' }}>
+              <p style={sectionLabel}>색상 기준</p>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                {([
+                  { value: 'org', label: '소속기관' },
+                  { value: 'degree', label: '연결강도' },
+                ] as const).map(m => (
+                  <button
+                    key={m.value}
+                    type="button"
+                    onClick={() => setColorMode(m.value)}
+                    style={{
+                      flex: 1, padding: '5px 0', borderRadius: '6px',
+                      fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s',
+                      background: colorMode === m.value ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.03)',
+                      color: colorMode === m.value ? '#88B8E8' : '#485870',
+                      border: colorMode === m.value ? '1px solid rgba(74,124,192,0.5)' : '1px solid #1A2838',
+                    }}>
+                    {m.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* ── Org color legend ── */}
+            {colorMode === 'org' && uniqueOrgs.length > 0 && (
+              <>
+                <Divider />
+                <div style={{ padding: '10px 14px 12px' }}>
+                  <p style={sectionLabel}>소속 색상</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '120px', overflowY: 'auto' }}>
+                    {uniqueOrgs.slice(0, 12).map(org => (
+                      <div key={org} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{
+                          width: '8px', height: '8px', borderRadius: '50%',
+                          background: orgColor(org), flexShrink: 0,
+                          boxShadow: `0 0 5px ${orgColor(org)}80`,
+                        }} />
+                        <span style={{ fontSize: '11px', color: '#687898', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {org.length > 14 ? org.slice(0, 14) + '…' : org}
+                        </span>
+                      </div>
+                    ))}
+                    {uniqueOrgs.length > 12 && (
+                      <p style={{ fontSize: '10px', color: '#384860', marginTop: '2px' }}>외 {uniqueOrgs.length - 12}개</p>
+                    )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            <Divider />
+
+            {/* ── Link type filters ── */}
+            <div style={{ padding: '10px 14px 12px' }}>
+              <button
+                type="button"
+                onClick={() => setFiltersOpen(p => !p)}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                }}>
+                <p style={sectionLabel}>관계 유형 필터</p>
+                <span style={{ fontSize: '10px', color: '#485870' }}>{filtersOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {filtersOpen && (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                    <button type="button" onClick={() => setActiveTypes(new Set(allTypes))}
+                      style={smallBtn('#4A7CC0')}>전체 선택</button>
+                    <button type="button" onClick={() => setActiveTypes(new Set())}
+                      style={smallBtn('#485870')}>전체 해제</button>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                    {allTypes.map(type => (
+                      <button
+                        key={type}
+                        type="button"
+                        onClick={() => setActiveTypes(prev => {
+                          const next = new Set(prev)
+                          next.has(type) ? next.delete(type) : next.add(type)
+                          return next
+                        })}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          padding: '1px 0', opacity: activeTypes.has(type) ? 1 : 0.28,
+                          transition: 'opacity 0.15s',
+                        }}>
+                        <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#687898', flexShrink: 0 }} />
+                        <span style={{ fontSize: '11px', color: '#CDD5E0', textAlign: 'left' }}>
+                          {LINK_LABELS[type] ?? type}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* ── Legend ── */}
+            <Divider />
+            <div style={{ padding: '8px 14px 10px', display: 'flex', gap: '12px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#38C8B8', boxShadow: '0 0 4px #38C8B870', display: 'inline-block' }} />
+                <span style={{ fontSize: '10px', color: '#485870' }}>내 취재원</span>
+              </div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#E8A030', border: '1px dashed rgba(255,165,50,0.7)', display: 'inline-block' }} />
+                <span style={{ fontSize: '10px', color: '#485870' }}>중복</span>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* ── Hovered node info card (top-right) ───────────────────────────── */}
+      {hoveredInfo && (
+        <div style={{
+          position: 'absolute', top: '16px', right: '16px', zIndex: 20,
+          padding: '12px 14px', borderRadius: '10px', maxWidth: '210px',
+          background: 'rgba(6,12,24,0.97)', border: '1px solid #1A2838',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+            <span style={{
+              width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
+              background: hoveredInfo.isDuplicate ? '#E8A030' :
+                hoveredInfo.isOwner ? '#38C8B8' :
+                colorMode === 'org' ? orgColor(hoveredInfo.org) : '#4A90D9',
+              boxShadow: `0 0 6px ${
+                hoveredInfo.isDuplicate ? '#E8A03088' :
+                hoveredInfo.isOwner ? '#38C8B888' :
+                colorMode === 'org' ? orgColor(hoveredInfo.org) + '88' : '#4A90D988'
+              }`,
+            }} />
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {hoveredInfo.label}
+            </p>
+          </div>
+          {hoveredInfo.org && (
+            <p style={{ fontSize: '11px', color: '#687898', margin: '2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              🏢 {hoveredInfo.org}
+            </p>
+          )}
+          {hoveredInfo.position && (
+            <p style={{ fontSize: '11px', color: '#485870', margin: '2px 0' }}>
+              {hoveredInfo.position}
+            </p>
+          )}
+          <div style={{ marginTop: '8px', paddingTop: '7px', borderTop: '1px solid #1A2838', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#485870' }}>연결강도</span>
+            <span style={{ fontSize: '12px', color: '#7E6E48', fontWeight: 700 }}>{hoveredInfo.degree}</span>
+          </div>
+          <p style={{ fontSize: '10px', color: '#2A3848', marginTop: '5px', textAlign: 'center' }}>
+            클릭하면 상세 페이지로 이동
+          </p>
+        </div>
+      )}
+
+      {/* ── Zoom controls (top-left) ──────────────────────────────────────── */}
+      <div style={{
+        position: 'absolute', top: '16px', left: '16px', zIndex: 20,
+        display: 'flex', flexDirection: 'column', gap: '4px',
+      }}>
+        {[
+          { label: '+', action: () => { try { const z = fgRef.current?.zoom(); fgRef.current?.zoom(Math.min((z ?? 1) * 1.4, 12), 300) } catch {} } },
+          { label: '−', action: () => { try { const z = fgRef.current?.zoom(); fgRef.current?.zoom(Math.max((z ?? 1) / 1.4, 0.02), 300) } catch {} } },
+          { label: '⊡', action: () => { try { fgRef.current?.zoomToFit(400, 60) } catch {} } },
+        ].map(btn => (
+          <button
+            key={btn.label}
+            type="button"
+            onClick={btn.action}
+            style={{
+              width: '30px', height: '30px', borderRadius: '6px',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(6,12,24,0.88)', border: '1px solid #1A2838',
+              cursor: 'pointer', fontSize: btn.label === '⊡' ? '13px' : '17px',
+              color: '#485870', backdropFilter: 'blur(8px)',
+              lineHeight: 1,
+            }}>
+            {btn.label}
+          </button>
+        ))}
+      </div>
     </div>
   )
+}
+
+// ── Shared micro-components ────────────────────────────────────────────────────
+function Divider() {
+  return <div style={{ height: '1px', background: '#131C2C' }} />
+}
+
+const sectionLabel: React.CSSProperties = {
+  fontSize: '9px',
+  fontWeight: 700,
+  color: '#3A5070',
+  textTransform: 'uppercase',
+  letterSpacing: '0.1em',
+  margin: 0,
+  marginBottom: '8px',
+}
+
+function smallBtn(color: string): React.CSSProperties {
+  return {
+    fontSize: '10px', color, background: 'none', border: 'none',
+    cursor: 'pointer', padding: 0, textDecoration: 'underline',
+    textDecorationColor: color + '60',
+  }
 }
