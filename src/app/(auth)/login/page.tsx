@@ -207,16 +207,28 @@ export default function LoginPage() {
           >
             📰
           </div>
-          <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '3px',
-              color: '#4A7CC0',
-            }}
-          >
-            SEGYE ILBO
-          </span>
+          <div>
+            <div
+              style={{
+                fontSize: '13px',
+                fontWeight: 700,
+                letterSpacing: '2.5px',
+                color: '#4A9EFF',
+              }}
+            >
+              THE SEGYE TIMES
+            </div>
+            <div
+              style={{
+                fontSize: '10px',
+                letterSpacing: '0.3px',
+                color: 'rgba(180,200,230,0.5)',
+                marginTop: '2px',
+              }}
+            >
+              가장 먼저, 그리고 끝까지&nbsp;&nbsp;·&nbsp;&nbsp;First to report, Last to cover
+            </div>
+          </div>
         </div>
 
         {/* 2. 메인 헤딩 */}
