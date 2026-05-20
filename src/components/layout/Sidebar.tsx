@@ -95,12 +95,16 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
     return pathname === href
   }
 
-  const roleLabel = {
-    superadmin: '최고관리자',
-    admin: '데스크',
-    deputy: '차장',
-    reporter: '기자',
-  }[profile.role]
+  const roleLabel: Record<string, string> = {
+    superadmin:     '최고관리자',
+    publisher:      '편집인',
+    editor:         '국장',
+    section_editor: '부국장',
+    admin:          '부장',
+    deputy:         '차장',
+    reporter:       '기자',
+  }
+  const roleLabelText = roleLabel[profile.role] ?? profile.role
 
   const roleClass = `role-${profile.role}`
 
@@ -162,7 +166,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         </p>
         <div className="flex items-center gap-2 mt-1">
           <span className={`text-xs px-2 py-0.5 rounded-full ${roleClass}`}>
-            {roleLabel}
+            {roleLabelText}
           </span>
           {profile.department && (
             <span className="text-xs truncate" style={{ color: '#485870' }}>

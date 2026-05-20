@@ -16,7 +16,7 @@ export async function POST(
   // 데스크(admin/superadmin)만 허용
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role, full_name').eq('id', user.id).single()
-  if (!['admin', 'superadmin'].includes(myProfile?.role ?? '')) {
+  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')) {
     return NextResponse.json({ error: '데스크 이상만 포인트를 부여할 수 있습니다.' }, { status: 403 })
   }
 
@@ -76,7 +76,7 @@ export async function GET(
   // 데스크만 내역 조회 가능
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  if (!['admin', 'superadmin'].includes(myProfile?.role ?? '')) {
+  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')) {
     return NextResponse.json({ awards: [] })
   }
 

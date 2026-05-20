@@ -124,8 +124,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // 노드 수에 따라 반발력·거리 동적 조정
   const nodeCount = nodes.length
-  const chargeStrength = Math.min(-120 - nodeCount * 12, -800)
-  const linkDistance   = Math.max(80, Math.min(60 + nodeCount * 3, 200))
+  const chargeStrength = Math.min(-180 - nodeCount * 15, -1200)
+  const linkDistance   = Math.max(100, Math.min(80 + nodeCount * 4, 280))
 
   useEffect(() => {
     const fg = fgRef.current
@@ -133,8 +133,24 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const timer = setTimeout(() => {
       try {
         fg.d3Force('charge')?.strength(chargeStrength)
-        fg.d3Force('link')?.distance(linkDistance).iterations(4)
-        fg.d3Force('collide', forceCollide((n: any) => nodeRadius(n.degree ?? 1) + 10).iterations(3))
+
+        // 링크 거리: 연결된 두 노드의 실제 반지름 합산 + 여백
+        // → 큰 원끼리는 자동으로 더 멀리 배치됨
+        fg.d3Force('link')?.distance((link: any) => {
+          const srcR = nodeRadius((link.source as any)?.degree ?? 1)
+          const tgtR = nodeRadius((link.target as any)?.degree ?? 1)
+          return Math.max(srcR + tgtR + 55, linkDistance)
+        }).iterations(5)
+
+        // 충돌 반경: 노드 반지름에 비례한 패딩 (대형 노드일수록 더 넓은 간격)
+        // r=4  → 4*2.4+6 = 15.6
+        // r=9  → 9*2.4+6 = 27.6
+        // r=13 → 13*2.4+6 = 37.2
+        fg.d3Force('collide', forceCollide((n: any) => {
+          const r = nodeRadius(n.degree ?? 1)
+          return r * 2.4 + 6
+        }).iterations(6))
+
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }, 150)
@@ -419,11 +435,11 @@ export default function NetworkGraph({ nodes, links }: Props) {
           minZoom={0.02}
           maxZoom={12}
 
-          // 물리 시뮬레이션
-          cooldownTicks={300}
-          warmupTicks={80}
-          d3AlphaDecay={0.01}
-          d3VelocityDecay={0.3}
+          // 물리 시뮬레이션 — 수렴 시간 확보해서 초기 배치 안정화
+          cooldownTicks={500}
+          warmupTicks={150}
+          d3AlphaDecay={0.008}
+          d3VelocityDecay={0.35}
           nodeRelSize={1}
         />
       </div>

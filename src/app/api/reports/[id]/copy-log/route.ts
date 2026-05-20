@@ -41,7 +41,7 @@ export async function GET(
 
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  if (!['admin', 'superadmin'].includes(myProfile?.role ?? '')) {
+  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')) {
     return NextResponse.json({ logs: [] }, { status: 403 })
   }
 

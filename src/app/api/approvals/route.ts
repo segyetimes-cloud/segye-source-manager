@@ -2,7 +2,23 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
-// GET /api/approvals — 관리자용: 전체 승인 목록 / 일반 기자: 내 요청 목록
+// ── 역할 분류 헬퍼 ────────────────────────────────────────────────────────────
+// 전 부서 승인 가능: superadmin, publisher(편집인), editor(국장), section_editor(부국장)
+const CROSS_DEPT_ROLES = ['superadmin', 'publisher', 'editor', 'section_editor'] as const
+// 소속 부서만 승인 가능: admin(부장)
+const DEPT_ADMIN_ROLES = ['admin'] as const
+
+function canApproveAnyDept(role: string) {
+  return (CROSS_DEPT_ROLES as readonly string[]).includes(role)
+}
+function canApproveSameDept(role: string) {
+  return (DEPT_ADMIN_ROLES as readonly string[]).includes(role)
+}
+function hasAnyApprovalRight(role: string) {
+  return canApproveAnyDept(role) || canApproveSameDept(role)
+}
+
+// GET /api/approvals — 승인권자: 관할 승인 목록 / 일반 기자: 내 요청 목록
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
 
@@ -11,11 +27,13 @@ export async function GET(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, department')
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const role = (profile as any)?.role ?? 'reporter'
+  const myDept = (profile as any)?.department ?? null
+  const approver = hasAnyApprovalRight(role)
 
   const { searchParams } = new URL(request.url)
   const status = searchParams.get('status') // pending | approved | rejected | all
@@ -30,15 +48,30 @@ export async function GET(request: NextRequest) {
     `)
     .order('requested_at', { ascending: false })
 
-  if (!isAdmin) {
-    // 일반 기자는 본인 요청만
+  if (!approver) {
+    // 일반 기자(차장 포함)는 본인 요청만
     query = query.eq('requester_id', user.id)
+  } else if (canApproveSameDept(role) && myDept) {
+    // 부장: 자기 부서 신청만 조회
+    // profiles 조인 필터는 PostgREST에서 직접 지원되지 않으므로
+    // requester_ids 먼저 조회 후 in() 필터
+    const { data: deptUsers } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('department', myDept)
+    const deptUserIds = (deptUsers ?? []).map((u: any) => u.id as string)
+    if (deptUserIds.length > 0) {
+      query = query.in('requester_id', deptUserIds)
+    } else {
+      // 소속 부서 기자 없음 → 빈 결과
+      return NextResponse.json([])
+    }
   }
+  // cross-dept roles: 필터 없이 전체 조회
 
   if (status && status !== 'all') {
     query = query.eq('status', status)
   } else if (!status) {
-    // 기본: pending만
     query = query.eq('status', 'pending')
   }
 
@@ -121,18 +154,38 @@ export async function PATCH(request: NextRequest) {
 
   const { data: profile } = await supabase
     .from('profiles')
-    .select('role')
+    .select('role, department')
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
-  if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const role = (profile as any)?.role ?? 'reporter'
+  const myDept = (profile as any)?.department ?? null
+
+  if (!hasAnyApprovalRight(role)) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
 
   const body = await request.json()
   const { approval_id, action, reject_reason } = body
 
   if (!approval_id || !['approve', 'reject'].includes(action)) {
     return NextResponse.json({ error: 'approval_id와 action(approve|reject)이 필요합니다' }, { status: 400 })
+  }
+
+  // 부장(admin): 요청자가 같은 부서인지 확인
+  if (canApproveSameDept(role)) {
+    const { data: approval } = await supabase
+      .from('source_access_approvals')
+      .select('requester_id, profiles!requester_id(department)')
+      .eq('id', approval_id)
+      .single()
+    const requesterDept = (approval as any)?.profiles?.department ?? null
+    if (!myDept || requesterDept !== myDept) {
+      return NextResponse.json(
+        { error: '부장은 소속 부서 기자의 신청만 승인·거절할 수 있습니다.' },
+        { status: 403 }
+      )
+    }
   }
 
   const now = new Date().toISOString()

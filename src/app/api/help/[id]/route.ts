@@ -64,7 +64,7 @@ export async function PATCH(
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   const isOwner = helpReq.requester_id === user.id
 
   if (!isOwner && !isAdmin) {
@@ -135,7 +135,7 @@ export async function DELETE(
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (helpReq.requester_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

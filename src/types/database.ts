@@ -1,4 +1,11 @@
-export type UserRole = 'superadmin' | 'admin' | 'deputy' | 'reporter'
+export type UserRole = 'superadmin' | 'publisher' | 'editor' | 'section_editor' | 'admin' | 'deputy' | 'reporter'
+// superadmin  : 시스템 관리자
+// publisher   : 편집인  — 전 부서 승인 가능
+// editor      : 국장    — 전 부서 승인 가능
+// section_editor : 부국장 — 전 부서 승인 가능
+// admin       : 부장    — 소속 부서 신청만 승인 가능
+// deputy      : 차장
+// reporter    : 기자
 export type SourceVisibility = 'personal' | 'shared'
 export type SensitivityLevel = 'public' | 'private'
 export type ReportVisibility = 'author_only' | 'desk_above' | 'all'

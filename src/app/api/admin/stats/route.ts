@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
-  if (!['admin', 'superadmin'].includes((profile as any)?.role)) {
+  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes((profile as any)?.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

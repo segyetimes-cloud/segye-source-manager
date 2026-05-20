@@ -35,8 +35,9 @@ export async function GET(request: NextRequest, { params }: Params) {
     .eq('id', user.id)
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
-  const isAdminOrAbove   = ['admin', 'superadmin'].includes(callerRole)
-  const isDeputyOrAbove  = ['deputy', 'admin', 'superadmin'].includes(callerRole)
+  // 부국장·국장·편집인·superadmin·부장 모두 admin급 이상으로 취급
+  const isAdminOrAbove   = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
+  const isDeputyOrAbove  = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
   const isOwner = source.owner_id === user.id
 
   // ── 접근 권한 확인 ──────────────────────────────────────────────────────────
@@ -49,25 +50,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: '민감 정보로 분류된 취재원입니다. 데스크 이상만 열람할 수 있습니다.' }, { status: 403 })
   }
 
-  // ── 민감 정보 마스킹 (공유+민감이더라도 열람 승인 없으면 personal_notes 차단) ─
-  // admin+는 승인 없이도 모든 필드 열람
-  if (source.sensitivity === 'private' && !isOwner && !isAdminOrAbove) {
-    const hasApproval = await supabase
-      .from('source_access_approvals')
-      .select('id')
-      .eq('source_id', id)
-      .eq('requester_id', user.id)
-      .eq('status', 'approved')
-      .gt('expires_at', new Date().toISOString())
-      .maybeSingle()
-
-    if (!hasApproval.data) {
-      source.personal_notes = null
-    }
-  }
-
-  // personal_notes는 소유자만
-  if (source.owner_id !== user.id) {
+  // ── personal_notes 마스킹: 소유자 또는 admin+ 만 열람 가능 ──────────────────
+  if (!isOwner && !isAdminOrAbove) {
     source.personal_notes = null
   }
 
@@ -104,7 +88,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // 소유자 또는 관리자만 수정 가능
   const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
-  const isAdmin = profile && ['admin', 'superadmin'].includes(profile.role)
+  const isAdmin = profile && ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile.role)
 
   if (existing.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -184,8 +168,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   let incrementalPts = 0
   for (const [field, pts] of pointFields) {
     const wasEmpty = !existing[field]
-    const nowFilled = !!(updateFields[field] ?? existing[field])
-    if (wasEmpty && nowFilled) incrementalPts += pts
+    const isChanging = body[field] !== undefined
+    const nowFilled = isChanging ? !!body[field] : false
+    if (wasEmpty && isChanging && nowFilled) incrementalPts += pts
   }
   // 태그 신규 추가
   if (body.tags !== undefined) {
@@ -246,7 +231,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const isAdmin = profile && ['admin', 'superadmin'].includes(profile.role)
+  const isAdmin = profile && ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile.role)
 
   if (source.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

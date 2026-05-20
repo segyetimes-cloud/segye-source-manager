@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
@@ -44,6 +44,12 @@ export default function NewReportPage() {
   const [visibility, setVisibility] = useState<ReportVisibility>('author_only')
   const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([])
 
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [hasDraft, setHasDraft] = useState(false)
+  const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null)
+  const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
   // 취재원 연결
   const [sourceQuery, setSourceQuery] = useState('')
   const [sourceResults, setSourceResults] = useState<SourceResult[]>([])
@@ -85,6 +91,70 @@ export default function NewReportPage() {
     setTags(prev => prev.filter(x => x !== t))
   }
 
+  const DRAFT_KEY = 'report_draft_new'
+
+  const saveDraft = useCallback(() => {
+    if (!title && !content) return
+    setIsSaving(true)
+    const draft = {
+      title, content, category,
+      tags, visibility,
+      savedAt: new Date().toISOString(),
+    }
+    try {
+      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+      setLastSaved(new Date())
+    } catch {}
+    setIsSaving(false)
+  }, [title, content, category, tags, visibility])
+
+  function restoreDraft() {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    if (!raw) return
+    try {
+      const draft = JSON.parse(raw)
+      if (draft.title !== undefined) setTitle(draft.title)
+      if (draft.content !== undefined) setContent(draft.content)
+      if (draft.category !== undefined) setCategory(draft.category)
+      if (draft.tags !== undefined) setTags(draft.tags)
+      if (draft.visibility !== undefined) setVisibility(draft.visibility)
+      setHasDraft(false)
+      setDraftInfo(null)
+    } catch {}
+  }
+
+  function dismissDraft() {
+    localStorage.removeItem(DRAFT_KEY)
+    setHasDraft(false)
+    setDraftInfo(null)
+  }
+
+  // 마운트 시 draft 확인
+  useEffect(() => {
+    const raw = localStorage.getItem(DRAFT_KEY)
+    if (raw) {
+      try {
+        const draft = JSON.parse(raw)
+        if (draft.savedAt) {
+          setHasDraft(true)
+          setDraftInfo({ savedAt: draft.savedAt })
+        }
+      } catch {}
+    }
+  }, [])
+
+  // 내용 변경 시 2초 후 자동저장
+  useEffect(() => {
+    if (!title && !content) return
+    if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    autoSaveTimer.current = setTimeout(() => {
+      saveDraft()
+    }, 2000)
+    return () => {
+      if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
+    }
+  }, [title, content, category, tags, visibility, saveDraft])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) { setError('제목을 입력해 주세요.'); return }
@@ -110,6 +180,7 @@ export default function NewReportPage() {
       return
     }
 
+    localStorage.removeItem(DRAFT_KEY)
     router.push(`/reports/${data.id}`)
   }
 
@@ -119,11 +190,60 @@ export default function NewReportPage() {
       {/* 헤더 */}
       <div className="flex items-center gap-3">
         <Link href="/reports" style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
-        <div>
+        <div style={{ flex: 1 }}>
           <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>새 보고서 작성</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#5A7099' }}>정보보고 작성</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+            <p className="text-xs" style={{ color: '#5A7099' }}>정보보고 작성</p>
+            {isSaving && (
+              <span style={{ fontSize: '11px', color: '#485870' }}>저장 중...</span>
+            )}
+            {!isSaving && lastSaved && (
+              <span style={{ fontSize: '11px', color: '#3D7A50' }}>
+                ✓ 자동 저장됨 · {lastSaved.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
         </div>
       </div>
+
+      {hasDraft && draftInfo && (
+        <div style={{
+          background: 'rgba(74,124,192,0.1)', border: '1px solid rgba(74,124,192,0.3)',
+          borderRadius: '8px', padding: '12px 14px',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px',
+        }}>
+          <div>
+            <p style={{ fontSize: '13px', color: '#7AADE0', fontWeight: 600, margin: 0 }}>
+              💾 저장된 임시보고가 있습니다
+            </p>
+            <p style={{ fontSize: '11px', color: '#485870', margin: '2px 0 0' }}>
+              {new Date(draftInfo.savedAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 저장
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button
+              type="button"
+              onClick={restoreDraft}
+              style={{
+                background: 'rgba(74,124,192,0.2)', border: '1px solid rgba(74,124,192,0.4)',
+                color: '#7AADE0', borderRadius: '6px', padding: '5px 12px',
+                fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+              }}>
+              불러오기
+            </button>
+            <button
+              type="button"
+              onClick={dismissDraft}
+              style={{
+                background: 'none', border: '1px solid #1A2838',
+                color: '#485870', borderRadius: '6px', padding: '5px 12px',
+                fontSize: '12px', cursor: 'pointer',
+              }}>
+              무시
+            </button>
+          </div>
+        </div>
+      )}
 
       {error && (
         <div style={{
@@ -311,6 +431,17 @@ export default function NewReportPage() {
 
         {/* 버튼 */}
         <div className="flex gap-3 pt-2">
+          <button
+            type="button"
+            onClick={saveDraft}
+            style={{
+              background: '#182035', border: '1px solid #1A2838',
+              color: '#687898', borderRadius: '8px', padding: '11px 16px',
+              fontSize: '13px', fontWeight: 500, cursor: 'pointer',
+              flexShrink: 0,
+            }}>
+            💾 임시저장
+          </button>
           <button
             type="submit"
             disabled={submitting}

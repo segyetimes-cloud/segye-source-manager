@@ -33,14 +33,14 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
-  // 데스크(admin) / 슈퍼관리자(superadmin)만 공유+민감 열람 가능
-  const canSeeSensitive = ['admin', 'superadmin'].includes(callerRole)
+  // 부장 이상(admin+) 공유+민감 열람 가능
+  const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
 
   const sp = request.nextUrl.searchParams
   const tab = sp.get('tab') ?? 'personal'
   const q = sp.get('q') ?? ''
   const page = parseInt(sp.get('page') ?? '1')
-  const pageSize = parseInt(sp.get('limit') ?? '20')
+  const pageSize = Math.min(Math.max(1, parseInt(sp.get('limit') ?? '20') || 20), 100)
 
   let query = supabase
     .from('sources')
@@ -60,8 +60,10 @@ export async function GET(request: NextRequest) {
   }
 
   if (q) {
+    // PostgREST ilike에서 %, _ 는 와일드카드이므로 이스케이프
+    const escaped = q.replace(/[%_\\]/g, '\\$&')
     query = query.or(
-      `full_name.ilike.%${q}%,current_organization.ilike.%${q}%,current_position.ilike.%${q}%,exam_batch.ilike.%${q}%,university.ilike.%${q}%,high_school.ilike.%${q}%`
+      `full_name.ilike.%${escaped}%,current_organization.ilike.%${escaped}%,current_position.ilike.%${escaped}%,exam_batch.ilike.%${escaped}%,university.ilike.%${escaped}%,high_school.ilike.%${escaped}%`
     )
   }
 

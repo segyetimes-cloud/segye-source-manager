@@ -16,11 +16,13 @@ export default async function AdminUsersPage() {
     .single()
 
   const profile = profileRaw as { role: string } | null
-  if (!['admin', 'superadmin'].includes(profile?.role ?? '')) {
+  const ADMIN_ROLES = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin']
+  if (!ADMIN_ROLES.includes(profile?.role ?? '')) {
     redirect('/dashboard')
   }
 
-  const isSuperadmin = profile?.role === 'superadmin'
+  // 슈퍼관리자·편집인·국장·부국장은 전체 역할 변경 권한
+  const isSuperadmin = ['superadmin', 'publisher', 'editor', 'section_editor'].includes(profile?.role ?? '')
 
   const { data: usersRaw } = await supabaseAny
     .from('profiles')

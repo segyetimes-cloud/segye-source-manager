@@ -86,7 +86,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!note) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: profile } = await supabaseAny.from('profiles').select('role').eq('id', user.id).single()
-  const isAdmin = ['admin', 'superadmin'].includes(profile?.role ?? '')
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (note.author_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

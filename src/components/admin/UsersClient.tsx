@@ -6,7 +6,7 @@ interface UserProfile {
   id: string
   email: string
   full_name: string
-  role: 'superadmin' | 'admin' | 'deputy' | 'reporter'
+  role: 'superadmin' | 'publisher' | 'editor' | 'section_editor' | 'admin' | 'deputy' | 'reporter'
   department: string | null
   desk_name: string | null
   employee_id: string | null
@@ -48,10 +48,13 @@ interface CreateForm {
 }
 
 const ROLE_LABEL: Record<string, { label: string; className: string }> = {
-  superadmin: { label: '슈퍼관리자', className: 'role-superadmin' },
-  admin:      { label: '데스크',     className: 'role-admin' },
-  deputy:     { label: '차장',       className: 'role-deputy' },
-  reporter:   { label: '기자',       className: 'role-reporter' },
+  superadmin:     { label: '슈퍼관리자', className: 'role-superadmin' },
+  publisher:      { label: '편집인',     className: 'role-superadmin' },
+  editor:         { label: '국장',       className: 'role-superadmin' },
+  section_editor: { label: '부국장',     className: 'role-admin' },
+  admin:          { label: '부장',       className: 'role-admin' },
+  deputy:         { label: '차장',       className: 'role-deputy' },
+  reporter:       { label: '기자',       className: 'role-reporter' },
 }
 
 const EMPTY_FORM: CreateForm = {
@@ -386,7 +389,10 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                           }}>
                           <option value="reporter">기자</option>
                           <option value="deputy">차장</option>
-                          <option value="admin">데스크</option>
+                          <option value="admin">부장</option>
+                          {isSuperadmin && <option value="section_editor">부국장</option>}
+                          {isSuperadmin && <option value="editor">국장</option>}
+                          {isSuperadmin && <option value="publisher">편집인</option>}
                           {isSuperadmin && <option value="superadmin">슈퍼관리자</option>}
                         </select>
                       ) : (
@@ -592,7 +598,10 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                         }}>
                         <option value="reporter">기자</option>
                         <option value="deputy">차장</option>
-                        {isSuperadmin && <option value="admin">데스크</option>}
+                        {isSuperadmin && <option value="admin">부장</option>}
+                        {isSuperadmin && <option value="section_editor">부국장</option>}
+                        {isSuperadmin && <option value="editor">국장</option>}
+                        {isSuperadmin && <option value="publisher">편집인</option>}
                         {isSuperadmin && <option value="superadmin">슈퍼관리자</option>}
                       </select>
 
@@ -711,7 +720,10 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                       style={{ ...inputStyle, cursor: 'pointer' }}>
                       <option value="reporter">기자</option>
                       <option value="deputy">차장</option>
-                      {isSuperadmin && <option value="admin">데스크</option>}
+                      {isSuperadmin && <option value="admin">부장</option>}
+                      {isSuperadmin && <option value="section_editor">부국장</option>}
+                      {isSuperadmin && <option value="editor">국장</option>}
+                      {isSuperadmin && <option value="publisher">편집인</option>}
                       {isSuperadmin && <option value="superadmin">슈퍼관리자</option>}
                     </select>
                   </div>

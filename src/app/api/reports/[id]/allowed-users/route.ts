@@ -20,7 +20,7 @@ export async function GET(
 
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
   if (report.author_id !== user.id && !isDesk) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -51,7 +51,7 @@ export async function POST(
 
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
   if (report.author_id !== user.id && !isDesk) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -94,7 +94,7 @@ export async function DELETE(
 
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
   if (report.author_id !== user.id && !isDesk) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }

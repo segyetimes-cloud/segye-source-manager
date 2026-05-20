@@ -112,7 +112,8 @@ export async function POST(request: NextRequest) {
   // 연결 취재원 등록
   if (Array.isArray(source_ids) && source_ids.length > 0) {
     const rows = source_ids.map((sid: string) => ({ report_id: report.id, source_id: sid }))
-    await supabaseAny.from('report_sources').insert(rows)
+    const { error: sourceErr } = await supabaseAny.from('report_sources').insert(rows)
+    if (sourceErr) return NextResponse.json({ error: '취재원 연결에 실패했습니다.' }, { status: 500 })
   }
 
   // 최초 작성 revision 기록
@@ -129,7 +130,8 @@ export async function POST(request: NextRequest) {
       user_id: uid,
       granted_by: user.id,
     }))
-    await supabaseAny.from('report_allowed_users').insert(rows)
+    const { error: allowedErr } = await supabaseAny.from('report_allowed_users').insert(rows)
+    if (allowedErr) return NextResponse.json({ error: '열람자 등록에 실패했습니다.' }, { status: 500 })
   }
 
   return NextResponse.json(report, { status: 201 })

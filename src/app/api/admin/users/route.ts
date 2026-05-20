@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   const callerRole = (profile as any)?.role as string | undefined
-  const isAdmin = callerRole === 'admin' || callerRole === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
   const isSuperadmin = callerRole === 'superadmin'
 
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
   // 역할 권한 체계: admin은 reporter/deputy만, superadmin은 전체
   const targetRole = (role as string | undefined) ?? 'reporter'
   const allowedRoles = isSuperadmin
-    ? ['reporter', 'deputy', 'admin', 'superadmin']
+    ? ['reporter', 'deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin']
     : ['reporter', 'deputy']
   if (!allowedRoles.includes(targetRole)) {
     return NextResponse.json({ error: '데스크는 기자/차장 계정만 생성할 수 있습니다' }, { status: 403 })
@@ -107,7 +107,7 @@ export async function PATCH(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const isAdmin = (profile as any)?.role === 'admin' || (profile as any)?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes((profile as any)?.role)
   const isSuperadmin = (profile as any)?.role === 'superadmin'
 
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -169,7 +169,7 @@ export async function PATCH(request: NextRequest) {
     const approveRole = role ?? 'reporter'
     // admin은 reporter/deputy만 승인 가능
     const approveAllowed = isSuperadmin
-      ? ['reporter', 'deputy', 'admin', 'superadmin']
+      ? ['reporter', 'deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin']
       : ['reporter', 'deputy']
     if (!approveAllowed.includes(approveRole)) {
       return NextResponse.json({ error: '해당 역할은 슈퍼관리자만 승인할 수 있습니다' }, { status: 403 })

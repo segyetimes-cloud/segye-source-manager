@@ -53,7 +53,7 @@ export async function PUT(
     .select('role')
     .eq('id', user.id)
     .single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
 
   // 기존 보고서 조회
   const { data: existing } = await supabaseAny
@@ -132,7 +132,7 @@ export async function DELETE(
 
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role').eq('id', user.id).single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
 
   const { data: existing } = await supabaseAny
     .from('information_reports')

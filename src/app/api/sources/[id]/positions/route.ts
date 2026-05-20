@@ -42,7 +42,7 @@ export async function POST(
   ])
 
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (source.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -114,7 +114,7 @@ export async function PATCH(
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (source?.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -151,7 +151,7 @@ export async function DELETE(
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (source?.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
