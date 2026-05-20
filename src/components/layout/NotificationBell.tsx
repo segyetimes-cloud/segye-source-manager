@@ -72,7 +72,7 @@ export default function NotificationBell() {
     setOpen(prev => !prev)
     if (!open && unread > 0) {
       // 전체 읽음 처리
-      await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+      await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
       setUnread(0)
       setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
     }
@@ -141,7 +141,7 @@ export default function NotificationBell() {
               <button
                 type="button"
                 onClick={async () => {
-                  await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: '{}' })
+                  await fetch('/api/notifications', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) })
                   setUnread(0)
                   setNotifications(prev => prev.map(n => ({ ...n, is_read: true })))
                 }}

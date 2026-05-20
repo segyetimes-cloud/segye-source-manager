@@ -35,13 +35,14 @@ export async function GET(request: NextRequest) {
   if (visibilityFilter === 'mine') {
     query = query.eq('author_id', user.id)
   } else if (!isDesk) {
-    // 일반 기자·차장: team 보고서는 같은 부서만 열람
-    // 비작성자에게는 status='approved' 인 보고서만 노출, 자기 것은 모든 status 표시
+    // 일반 기자·차장: 비작성자에게는 status='approved' 보고서만 노출
     if (myDept) {
+      // PostgREST 필터에서 특수문자 포함 부서명을 안전하게 처리하기 위해 따옴표로 감쌈
+      const safeDept = `"${myDept.replace(/"/g, '')}"`
       query = query.or(
         `and(author_id.eq.${user.id}),` +
-        `and(status.eq.approved,visibility.in.(all)),` +
-        `and(status.eq.approved,visibility.eq.team,author_department.eq.${myDept})`
+        `and(status.eq.approved,visibility.eq.all),` +
+        `and(status.eq.approved,visibility.eq.team,author_department.eq.${safeDept})`
       )
     } else {
       query = query.or(
