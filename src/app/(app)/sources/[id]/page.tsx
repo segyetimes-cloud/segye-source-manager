@@ -2,6 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import SourceDetailClient from '@/components/sources/SourceDetailClient'
+import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE } from '@/lib/permissions'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -35,7 +36,7 @@ export default async function SourceDetailPage({ params }: Params) {
   if (source.visibility === 'personal' && source.owner_id !== user.id) {
     const { data: profileRaw } = await supabaseAny.from('profiles').select('role').eq('id', user.id).single()
     const profile = profileRaw as { role: string } | null
-    if (!['admin', 'superadmin'].includes(profile?.role ?? '')) {
+    if (!can(profile?.role, CAN_EDIT_ANY_SOURCE)) {
       redirect('/sources?error=forbidden')
     }
   }
@@ -71,9 +72,9 @@ export default async function SourceDetailPage({ params }: Params) {
   const profile = profileRaw2 as { role: string; full_name: string | null; department: string | null } | null
   const isOwner = source.owner_id === user.id
   const userRole = profile?.role ?? 'reporter'
-  const isAdmin = ['admin', 'superadmin'].includes(userRole)
+  const isAdmin = can(userRole, CAN_EDIT_ANY_SOURCE)
   // 차장 이상은 민감 정보 무조건 열람 가능
-  const isDeputyOrAbove = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(userRole)
+  const isDeputyOrAbove = can(userRole, CAN_VIEW_PERSONAL_NOTES)
 
   // personal_notes(민감 정보) 열람 규칙:
   //   소유자 OR 차장 이상 → 항상 열람

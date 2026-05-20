@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calcCompletenessScore, INCREMENTAL_POINT_FIELDS } from '@/lib/points'
+import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE, CAN_DELETE_SOURCE } from '@/lib/permissions'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -37,8 +38,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
   // 부국장·국장·편집인·superadmin·부장 모두 admin급 이상으로 취급
-  const isAdminOrAbove   = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
-  const isDeputyOrAbove  = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
+  const isAdminOrAbove   = can(callerRole, CAN_VIEW_SENSITIVE_SOURCE)
+  const isDeputyOrAbove  = can(callerRole, CAN_VIEW_PERSONAL_NOTES)
   const isOwner = source.owner_id === user.id
 
   // ── 접근 권한 확인 ──────────────────────────────────────────────────────────
@@ -101,7 +102,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   // 소유자 또는 관리자만 수정 가능
   const { data: profile } = await supabase.from('profiles').select('role, full_name').eq('id', user.id).single()
-  const isAdmin = profile && ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile.role)
+  const isAdmin = profile && can(profile.role, CAN_EDIT_ANY_SOURCE)
 
   if (existing.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
@@ -241,7 +242,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const isAdmin = profile && ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile.role)
+  const isAdmin = profile && can(profile.role, CAN_DELETE_SOURCE)
 
   if (source.owner_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })

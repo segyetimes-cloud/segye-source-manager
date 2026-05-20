@@ -1,10 +1,12 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AuditClient from '@/components/admin/AuditClient'
+import { CAN_VIEW_AUDIT_LOGS, can } from '@/lib/permissions'
 
 interface SearchParams {
   action?: string
   user_email?: string
+  resource_type?: string
   page?: string
 }
 
@@ -27,7 +29,7 @@ export default async function AdminAuditPage({
     .single()
 
   const profile = profileRaw as { role: string } | null
-  if (!['admin', 'superadmin'].includes(profile?.role ?? '')) {
+  if (!can(profile?.role, CAN_VIEW_AUDIT_LOGS)) {
     redirect('/dashboard')
   }
 
@@ -35,6 +37,7 @@ export default async function AdminAuditPage({
   const pageSize = 50
   const action = params.action ?? ''
   const userEmail = params.user_email ?? ''
+  const resourceType = params.resource_type ?? ''
 
   let query = supabaseAny
     .from('audit_logs')
@@ -44,6 +47,7 @@ export default async function AdminAuditPage({
 
   if (action) query = query.eq('action', action)
   if (userEmail) query = query.ilike('user_email', `%${userEmail}%`)
+  if (resourceType) query = query.eq('resource_type', resourceType)
 
   const { data: logsRaw, count } = await query
 
@@ -65,6 +69,7 @@ export default async function AdminAuditPage({
         totalPages={totalPages}
         currentAction={action}
         currentEmail={userEmail}
+        currentResourceType={resourceType}
       />
     </div>
   )

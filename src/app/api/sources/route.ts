@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calcCompletenessScore, calcRegistrationPoints } from '@/lib/points'
+import { can, CAN_VIEW_SENSITIVE_SOURCE } from '@/lib/permissions'
 
 // GET /api/sources — 목록 조회
 export async function GET(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
   // 부장 이상(admin+) 공유+민감 열람 가능
-  const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
+  const canSeeSensitive = can(callerRole, CAN_VIEW_SENSITIVE_SOURCE)
 
   const sp = request.nextUrl.searchParams
   const filter = sp.get('filter') ?? 'all'   // 'all' | 'mine'

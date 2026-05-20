@@ -1,18 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as XLSX from 'xlsx'
-
-const EXPORT_LIMITS: Record<string, number> = {
-  reporter: parseInt(process.env.EXPORT_MAX_ROWS_REPORTER ?? '100'),
-  admin: parseInt(process.env.EXPORT_MAX_ROWS_ADMIN ?? '500'),
-  superadmin: parseInt(process.env.EXPORT_MAX_ROWS_SUPERADMIN ?? '2000'),
-}
-
-const DAILY_LIMITS: Record<string, number> = {
-  reporter: parseInt(process.env.EXPORT_DAILY_LIMIT_REPORTER ?? '3'),
-  admin: parseInt(process.env.EXPORT_DAILY_LIMIT_ADMIN ?? '10'),
-  superadmin: 999,
-}
+import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT } from '@/lib/permissions'
 
 // GET /api/export/sources
 export async function GET(request: NextRequest) {
@@ -25,8 +14,8 @@ export async function GET(request: NextRequest) {
   if (!profile?.role) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const role = profile.role
-  const maxRows = EXPORT_LIMITS[role] ?? 100
-  const dailyLimit = DAILY_LIMITS[role] ?? 3
+  const maxRows = EXPORT_MAX_ROWS[role] ?? 100
+  const dailyLimit = EXPORT_DAILY_LIMIT[role] ?? 3
 
   // 하루 내보내기 횟수 확인
   const todayStart = new Date()

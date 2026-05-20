@@ -44,12 +44,25 @@ export interface AuditParams {
 export function logAudit({
   supabase, userId, userEmail, action, resourceType, resourceId, metadata,
 }: AuditParams): void {
-  void (supabase as any).from('audit_logs').insert({
-    user_id: userId,
-    user_email: userEmail ?? null,
-    action,
-    resource_type: resourceType,
-    resource_id: resourceId ?? null,
-    metadata: metadata ?? null,
-  })
+  ;(supabase as any)
+    .from('audit_logs')
+    .insert({
+      user_id: userId,
+      user_email: userEmail ?? null,
+      action,
+      resource_type: resourceType,
+      resource_id: resourceId ?? null,
+      metadata: metadata ?? null,
+    })
+    .then(({ error }: { error: { message: string } | null }) => {
+      if (error && process.env.NODE_ENV !== 'production') {
+        console.warn('[audit] 감사 로그 기록 실패:', error.message, { action, resourceType, userId })
+      }
+      // TODO: 운영환경 — Sentry 또는 Slack webhook으로 누락 알림 연동
+    })
+    .catch((err: unknown) => {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('[audit] logAudit threw:', err)
+      }
+    })
 }

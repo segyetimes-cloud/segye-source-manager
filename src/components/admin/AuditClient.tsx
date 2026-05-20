@@ -27,6 +27,7 @@ interface Props {
   totalPages: number
   currentAction: string
   currentEmail: string
+  currentResourceType: string
 }
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
@@ -44,18 +45,20 @@ const ACTION_LABELS: Record<string, { label: string; color: string }> = {
 const ACTION_OPTIONS = ['', 'view', 'create', 'update', 'delete', 'export', 'import', 'view_private', 'approve', 'reject']
 
 export default function AuditClient({
-  logs, totalCount, currentPage, totalPages, currentAction, currentEmail,
+  logs, totalCount, currentPage, totalPages, currentAction, currentEmail, currentResourceType,
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [action, setAction] = useState(currentAction)
   const [email, setEmail] = useState(currentEmail)
+  const [resourceType, setResourceType] = useState(currentResourceType)
 
   function applyFilter() {
     const params = new URLSearchParams()
     if (action) params.set('action', action)
     if (email) params.set('user_email', email)
+    if (resourceType) params.set('resource_type', resourceType)
     params.set('page', '1')
     startTransition(() => router.push(`${pathname}?${params}`))
   }
@@ -64,6 +67,7 @@ export default function AuditClient({
     const params = new URLSearchParams()
     if (currentAction) params.set('action', currentAction)
     if (currentEmail) params.set('user_email', currentEmail)
+    if (currentResourceType) params.set('resource_type', currentResourceType)
     params.set('page', String(p))
     return `${pathname}?${params}`
   }
@@ -112,6 +116,28 @@ export default function AuditClient({
               width: '220px',
             }}
           />
+        </div>
+
+        <div>
+          <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>리소스 유형</label>
+          <select
+            value={resourceType}
+            onChange={e => setResourceType(e.target.value)}
+            style={{
+              background: '#182035',
+              border: '1px solid #1A2838',
+              color: '#CDD5E0',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              fontSize: '13px',
+              cursor: 'pointer',
+            }}>
+            {['', 'source', 'report', 'user', 'approval', 'contact_log', 'export', 'help'].map(rt => (
+              <option key={rt} value={rt}>
+                {rt || '전체'}
+              </option>
+            ))}
+          </select>
         </div>
 
         <button
