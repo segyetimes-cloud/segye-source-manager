@@ -1,5 +1,6 @@
 'use client'
-// ReportContentViewer → SecureContentViewer 래퍼
+// ReportContentViewer → SecureContainer(1단계) + SecureContentViewer(canvas+워터마크)
+import SecureContainer from '@/components/common/SecureContainer'
 import SecureContentViewer from '@/components/common/SecureContentViewer'
 
 interface Props {
@@ -12,12 +13,14 @@ interface Props {
 
 export default function ReportContentViewer({ reportId, content, userId, userFullName, userDepartment }: Props) {
   return (
-    <SecureContentViewer
-      apiPath={`/api/reports/${reportId}/copy-log`}
-      content={content}
-      userId={userId}
-      userFullName={userFullName}
-      userDepartment={userDepartment}
-    />
+    <SecureContainer>
+      <SecureContentViewer
+        apiPath={`/api/reports/${reportId}/copy-log`}
+        content={content}
+        userId={userId}
+        userFullName={userFullName}
+        userDepartment={userDepartment}
+      />
+    </SecureContainer>
   )
 }

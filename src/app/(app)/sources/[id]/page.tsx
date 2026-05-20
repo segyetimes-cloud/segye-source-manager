@@ -2,6 +2,7 @@ import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
 import Link from 'next/link'
 import SourceDetailClient from '@/components/sources/SourceDetailClient'
+import BookmarkButton from '@/components/sources/BookmarkButton'
 import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE } from '@/lib/permissions'
 
 interface Params {
@@ -129,6 +130,15 @@ export default async function SourceDetailPage({ params }: Params) {
     ...sensitiveNotes,
   ].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) as any[]
 
+  // 즐겨찾기 여부 조회
+  const { data: bookmarkRaw } = await supabaseAny
+    .from('source_bookmarks')
+    .select('id')
+    .eq('user_id', user.id)
+    .eq('source_id', id)
+    .maybeSingle()
+  const isBookmarked = !!bookmarkRaw
+
   // 관련 정보보고 조회
   const { data: relatedReportsRaw } = await supabaseAny
     .from('report_sources')
@@ -141,24 +151,30 @@ export default async function SourceDetailPage({ params }: Params) {
     .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
 
   return (
-    <SourceDetailClient
-      source={source as any}
-      positions={(source.source_positions as any[]) ?? []}
-      editHistory={(source.source_edit_history as any[]) ?? []}
-      avgRating={avgRating}
-      myRating={myRating}
-      hasPrivateAccess={hasPrivateAccess}
-      isOwner={isOwner}
-      isAdmin={isAdmin}
-      isDeputyOrAbove={isDeputyOrAbove}
-      userRole={userRole}
-      userId={user.id}
-      userFullName={profile?.full_name ?? '—'}
-      userDepartment={profile?.department ?? null}
-      initialNotes={initialNotes}
-      lockedNotesCount={lockedNotesCount}
-      canSeePersonalNotes={canSeePersonalNotes}
-      relatedReports={relatedReports}
-    />
+    <>
+      {/* 즐겨찾기 버튼 — 오른쪽 상단 */}
+      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
+        <BookmarkButton sourceId={id} initialBookmarked={isBookmarked} />
+      </div>
+      <SourceDetailClient
+        source={source as any}
+        positions={(source.source_positions as any[]) ?? []}
+        editHistory={(source.source_edit_history as any[]) ?? []}
+        avgRating={avgRating}
+        myRating={myRating}
+        hasPrivateAccess={hasPrivateAccess}
+        isOwner={isOwner}
+        isAdmin={isAdmin}
+        isDeputyOrAbove={isDeputyOrAbove}
+        userRole={userRole}
+        userId={user.id}
+        userFullName={profile?.full_name ?? '—'}
+        userDepartment={profile?.department ?? null}
+        initialNotes={initialNotes}
+        lockedNotesCount={lockedNotesCount}
+        canSeePersonalNotes={canSeePersonalNotes}
+        relatedReports={relatedReports}
+      />
+    </>
   )
 }

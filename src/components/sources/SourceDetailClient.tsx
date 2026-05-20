@@ -6,6 +6,7 @@ import Link from 'next/link'
 import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
 import SecureContentViewer from '@/components/common/SecureContentViewer'
 import ProtectedText from '@/components/common/ProtectedText'
+import SecureContainer from '@/components/common/SecureContainer'
 import SourceCopyLogs from '@/components/sources/SourceCopyLogs'
 import ContactLogs from '@/components/sources/ContactLogs'
 import { extractEducationFields } from '@/components/sources/QuickFill'
@@ -163,7 +164,10 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
         </div>
       </div>
       {/* 카드 본문 */}
-      <div className="px-4 py-3">
+      <SecureContainer
+        className="px-4 py-3"
+        disabled={!note.is_sensitive}
+      >
         <SecureContentViewer
           apiPath={`/api/sources/${sourceId}/copy-log`}
           content={note.content}
@@ -171,7 +175,7 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
           userFullName={userFullName}
           userDepartment={userDepartment}
         />
-      </div>
+      </SecureContainer>
     </div>
   )
 }
@@ -397,16 +401,27 @@ export default function SourceDetailClient({
     }
   }
 
+  // Canvas로 렌더링할 민감 필드 목록 (텍스트 긁기·DOM 추출 방지)
+  const CANVAS_FIELDS = new Set(['📞', '📧', '🎂', '📍'])
+
   const infoCard = (label: string, value: string | null | undefined, icon?: string) => {
     if (!value) return null
     const isPhone = icon === '📞'
     const isEmail = icon === '📧'
     const href = isPhone ? `tel:${value.replace(/\s/g, '')}` : isEmail ? `mailto:${value}` : null
+    const useCanvas = !!icon && CANVAS_FIELDS.has(icon)
+
     return (
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 secure-field">
         <span className="text-xs" style={{ color: '#485870' }}>{icon} {label}</span>
-        {href ? (
-          <ProtectedText text={value} href={href} fontSize={14} fontWeight={500} color="#4A7CC0" />
+        {useCanvas ? (
+          <ProtectedText
+            text={value}
+            href={href ?? undefined}
+            fontSize={14}
+            fontWeight={500}
+            color={isPhone || isEmail ? '#4A7CC0' : '#CDD5E0'}
+          />
         ) : (
           <span className="text-sm font-medium" style={{ color: '#CDD5E0' }}>{value}</span>
         )}
@@ -656,12 +671,18 @@ export default function SourceDetailClient({
       {/* 학력 */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력 / 이력</h2>
-        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 secure-field">
           {infoCard('고교', source.high_school, '🏫')}
           {infoCard('대학', source.university, '🎓')}
           {infoCard('전공', source.university_major, '📚')}
           {infoCard('대학원', source.graduate_school, '🔬')}
-          {infoCard('고시/기수', source.exam_batch, '📋')}
+          {/* 고시기수: Canvas 렌더링 (개인식별 민감정보) */}
+          {source.exam_batch ? (
+            <div className="flex flex-col gap-1 secure-field">
+              <span className="text-xs" style={{ color: '#485870' }}>📋 고시/기수</span>
+              <ProtectedText text={source.exam_batch} fontSize={14} fontWeight={500} color="#CDD5E0" />
+            </div>
+          ) : null}
         </div>
       </div>
 
@@ -829,12 +850,14 @@ export default function SourceDetailClient({
 
         {/* personal_notes(민감 정보) — 차장이상/승인된 기자: 표시 */}
         {canSeePersonalNotes && source.personal_notes && (
-          <div className="mb-4 p-4 rounded-lg"
+          <SecureContainer
+            className="mb-4 p-4 rounded-lg"
             style={{
               background: 'rgba(255,153,0,0.04)',
               border: '1px solid rgba(255,153,0,0.2)',
-            }}>
-            <p className="text-xs font-semibold mb-2" style={{ color: '#A87228' }}>
+            }}
+          >
+            <p className="text-xs font-semibold mb-2" style={{ color: '#A87228', userSelect: 'text' }}>
               {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
             </p>
             <SecureContentViewer
@@ -844,7 +867,7 @@ export default function SourceDetailClient({
               userFullName={userFullName}
               userDepartment={userDepartment ?? null}
             />
-          </div>
+          </SecureContainer>
         )}
 
         {/* 차장 이상이지만 민감 정보 없을 때 */}

@@ -7,6 +7,9 @@ interface SearchParams {
   action?: string
   user_email?: string
   resource_type?: string
+  resource_id?: string
+  date_from?: string
+  date_to?: string
   page?: string
 }
 
@@ -33,11 +36,14 @@ export default async function AdminAuditPage({
     redirect('/dashboard')
   }
 
-  const page = parseInt(params.page ?? '1')
-  const pageSize = 50
-  const action = params.action ?? ''
-  const userEmail = params.user_email ?? ''
+  const page         = Math.max(1, parseInt(params.page ?? '1'))
+  const pageSize     = 50
+  const action       = params.action       ?? ''
+  const userEmail    = params.user_email   ?? ''
   const resourceType = params.resource_type ?? ''
+  const resourceId   = params.resource_id  ?? ''
+  const dateFrom     = params.date_from    ?? ''
+  const dateTo       = params.date_to      ?? ''
 
   let query = supabaseAny
     .from('audit_logs')
@@ -45,13 +51,20 @@ export default async function AdminAuditPage({
     .order('created_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (action) query = query.eq('action', action)
-  if (userEmail) query = query.ilike('user_email', `%${userEmail}%`)
+  if (action)       query = query.eq('action', action)
+  if (userEmail)    query = query.ilike('user_email', `%${userEmail}%`)
   if (resourceType) query = query.eq('resource_type', resourceType)
+  if (resourceId)   query = query.ilike('resource_id', `%${resourceId}%`)
+  if (dateFrom)     query = query.gte('created_at', new Date(dateFrom).toISOString())
+  if (dateTo) {
+    const toDate = new Date(dateTo)
+    toDate.setDate(toDate.getDate() + 1)
+    query = query.lt('created_at', toDate.toISOString())
+  }
 
   const { data: logsRaw, count } = await query
 
-  const logs = (logsRaw ?? []) as any[]
+  const logs       = (logsRaw ?? []) as any[]
   const totalPages = Math.ceil((count ?? 0) / pageSize)
 
   return (
@@ -59,7 +72,7 @@ export default async function AdminAuditPage({
       <div>
         <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>접근 로그</h1>
         <p className="text-sm mt-1" style={{ color: '#687898' }}>
-          시스템 내 모든 주요 동작을 기록합니다 (조회/수정/내보내기)
+          시스템 내 모든 주요 동작을 기록합니다 · 최대 5,000건 Excel 내보내기 지원
         </p>
       </div>
       <AuditClient
@@ -70,6 +83,9 @@ export default async function AdminAuditPage({
         currentAction={action}
         currentEmail={userEmail}
         currentResourceType={resourceType}
+        currentResourceId={resourceId}
+        currentDateFrom={dateFrom}
+        currentDateTo={dateTo}
       />
     </div>
   )

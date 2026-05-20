@@ -31,6 +31,14 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 
   const { data } = await query
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'note_view',
+    resource_type: 'note',
+    resource_id:   id,
+    metadata:      { source_id: id, count: data?.length ?? 0 },
+  })
   return NextResponse.json(data ?? [])
 }
 
@@ -68,6 +76,15 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'note_create',
+    resource_type: 'note',
+    resource_id:   note?.id ?? id,
+    metadata:      { source_id: id, is_sensitive: body.is_sensitive },
+  })
+
   // 정보 추가 포인트 +10pt
   const serviceClient = createServiceClient()
   await serviceClient.from('point_transactions').insert({
@@ -104,5 +121,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   }
 
   await supabaseAny.from('source_notes').delete().eq('id', noteId)
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'note_delete',
+    resource_type: 'note',
+    resource_id:   noteId,
+    metadata:      { source_id: id },
+  })
   return NextResponse.json({ ok: true })
 }

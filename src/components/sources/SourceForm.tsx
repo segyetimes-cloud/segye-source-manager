@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Source } from '@/types/database'
 import QuickFill, { extractEducationFields, type FillData } from '@/components/sources/QuickFill'
+import BusinessCardScanner from '@/components/sources/BusinessCardScanner'
 import { calcCompletenessScore, calcRegistrationPoints, calcNoteScore, calcTotalScore } from '@/lib/points'
 
 interface SourceFormProps {
@@ -118,6 +119,11 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingPayload, setPendingPayload] = useState<Record<string, unknown> | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+  // 빠른 입력 탭: 'contact'(연락처붙여넣기) | 'camera'(명함스캔) | 'excel'(엑셀붙여넣기) | null(닫힘)
+  const [quickMode, setQuickMode] = useState<'contact' | 'camera' | 'excel' | null>(null)
+  const [excelText, setExcelText] = useState('')
+  const [excelPreview, setExcelPreview] = useState<FillData | null>(null)
+  const [excelError, setExcelError] = useState('')
 
   // 정보 창 붙여넣기 감지 상태
   const [notesHint, setNotesHint] = useState<{
@@ -189,20 +195,6 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     setForm(prev => ({ ...prev, [field]: value }))
   }
 
-  // 명함 OCR / 연락처 가져오기 결과를 폼에 채움
-  function handleCardExtracted(data: { [key: string]: string | null | undefined }) {
-    setForm(prev => ({
-      ...prev,
-      full_name:            data.full_name            ?? prev.full_name,
-      current_organization: data.current_organization ?? prev.current_organization,
-      current_position:     data.current_position     ?? prev.current_position,
-      current_department:   data.department           ?? prev.current_department,
-      phone_primary:        data.phone                ?? prev.phone_primary,
-      phone_secondary:      data.office_phone         ?? prev.phone_secondary,
-      email_primary:        data.email                ?? prev.email_primary,
-    }))
-  }
-
   // QuickFill 전용
   function handleQuickFill(data: FillData) {
     setForm(prev => ({
@@ -226,6 +218,95 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                               ? (prev.personal_notes ? prev.personal_notes + '\n' + data.personal_notes : data.personal_notes)
                               : prev.personal_notes,
     }))
+  }
+
+  // ── 명함 OCR 결과를 폼에 채움 (BusinessCardScanner → SourceForm) ─────────────
+  function handleCardExtracted(data: { [key: string]: string | null | undefined }) {
+    setForm(prev => ({
+      ...prev,
+      full_name:            data.full_name            ?? prev.full_name,
+      current_organization: data.current_organization ?? prev.current_organization,
+      current_position:     data.current_position     ?? prev.current_position,
+      current_department:   data.department           ?? prev.current_department,
+      phone_primary:        data.phone_primary        ?? data.phone  ?? prev.phone_primary,
+      phone_secondary:      data.phone_secondary      ?? data.office_phone ?? prev.phone_secondary,
+      email_primary:        data.email_primary        ?? data.email ?? prev.email_primary,
+    }))
+    setQuickMode(null)  // 스캔 완료 → 패널 닫기
+  }
+
+  // ── 엑셀/스프레드시트 셀 붙여넣기 파서 ─────────────────────────────────────
+  // Excel·Numbers·Google Sheets에서 복사하면 탭(\t) 구분 TSV로 클립보드에 들어옴
+  const EXCEL_HEADER_MAP: Record<string, keyof FillData> = {
+    '이름': 'full_name',         '성명': 'full_name',       'name': 'full_name',
+    '소속': 'current_organization', '기관': 'current_organization', '회사': 'current_organization',
+    '직책': 'current_position',  '직함': 'current_position', 'title': 'current_position',
+    '부서': 'current_department', '팀': 'current_department', 'department': 'current_department',
+    '전화': 'phone',             '전화번호': 'phone',        '휴대폰': 'phone',       '연락처': 'phone',
+    '전화2': 'phone_secondary',  '전화(보조)': 'phone_secondary', '사무실': 'phone_secondary',
+    '이메일': 'email',           'email': 'email',           '메일': 'email',
+    '대학': 'university',        '학교': 'university',       '대학교': 'university',
+    '전공': 'university_major',  '학과': 'university_major',
+    '대학원': 'graduate_school',
+    '고교': 'high_school',       '고등학교': 'high_school',
+    '생년월일': 'birthday',       '생일': 'birthday',         '생년': 'birthday',
+    '기수': 'exam_batch',        '고시': 'exam_batch',
+    '출신지': 'hometown_province', '고향': 'hometown_province',
+  }
+
+  function parseExcelTSV(raw: string): { rows: FillData[]; error: string } {
+    const lines = raw.split(/\r?\n/).filter(l => l.trim())
+    if (lines.length < 2) {
+      return { rows: [], error: '2행 이상 필요합니다. 첫 행 = 헤더, 두 번째 행부터 = 데이터' }
+    }
+
+    const headers = lines[0].split('\t').map(h => h.trim().toLowerCase())
+    if (headers.length < 2) {
+      return { rows: [], error: '엑셀에서 복사한 데이터가 아닙니다 (탭 구분자 없음)' }
+    }
+
+    // 헤더 → 필드 매핑
+    const fieldMap: Array<keyof FillData | null> = headers.map(h => {
+      const mapped = EXCEL_HEADER_MAP[h] ?? EXCEL_HEADER_MAP[h.replace(/\s/g, '')]
+      return mapped ?? null
+    })
+
+    const rows: FillData[] = lines.slice(1).map(line => {
+      const cells = line.split('\t')
+      const row: FillData = {}
+      fieldMap.forEach((field, i) => {
+        if (field && cells[i]?.trim()) {
+          (row as Record<string, string>)[field] = cells[i].trim()
+        }
+      })
+      return row
+    }).filter(row => Object.values(row).some(v => v))
+
+    if (rows.length === 0) {
+      return { rows: [], error: '인식된 데이터 행이 없습니다.' }
+    }
+    return { rows, error: '' }
+  }
+
+  function handleExcelAnalyze() {
+    setExcelError('')
+    setExcelPreview(null)
+    if (!excelText.trim()) return
+    const { rows, error } = parseExcelTSV(excelText)
+    if (error) { setExcelError(error); return }
+    setExcelPreview(rows[0])  // 미리보기는 첫 번째 행
+    if (rows.length > 1) {
+      setExcelError(`${rows.length}행 발견 — 첫 번째 행만 이 폼에 적용됩니다. 여러 명을 한꺼번에 등록하려면 엑셀 가져오기를 이용하세요.`)
+    }
+  }
+
+  function applyExcelRow() {
+    if (!excelPreview) return
+    handleQuickFill(excelPreview)
+    setQuickMode(null)
+    setExcelText('')
+    setExcelPreview(null)
+    setExcelError('')
   }
 
   // 정보 창에 붙여넣을 때 교육/배경 필드 감지
@@ -412,16 +493,223 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* 빠른 입력 / 정보 보충 */}
-      <div>
-        <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '8px' }}>
-          {mode === 'create'
-            ? <>⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#485870' }}>(선택)</span></>
-            : <>📋 정보 보충 <span style={{ fontWeight: 400, color: '#485870' }}>— 뉴스·네이버·연락처 복사 후 붙여넣으면 빈 항목을 자동으로 채워드립니다</span></>
-          }
-        </p>
-        <QuickFill onFill={handleQuickFill} />
-      </div>
+      {/* ── 빠른 입력 (3탭) ─────────────────────────────────────────────────── */}
+      {mode === 'create' && (
+        <div style={{
+          borderRadius: '12px',
+          border: '1px solid rgba(30,144,255,0.25)',
+          background: 'rgba(10,20,40,0.6)',
+          padding: '16px',
+        }}>
+          <p style={{ fontSize: '12px', fontWeight: 700, color: '#687898', marginBottom: '12px', letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+            ⚡ 빠른 입력 — 방법을 선택하세요
+          </p>
+
+          {/* 탭 선택 버튼 3개 */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: quickMode ? '14px' : '0' }}>
+            {[
+              {
+                key: 'contact' as const,
+                icon: '📋',
+                label: '연락처 붙여넣기',
+                sub: '연락처 앱·네이버 복사',
+                color: '#3D9E6A',
+                bg: 'rgba(0,170,85,0.08)',
+                border: 'rgba(0,170,85,0.3)',
+              },
+              {
+                key: 'camera' as const,
+                icon: '📸',
+                label: '명함 사진 스캔',
+                sub: '카메라 촬영·사진 선택',
+                color: '#4A7CC0',
+                bg: 'rgba(30,144,255,0.1)',
+                border: 'rgba(30,144,255,0.4)',
+              },
+              {
+                key: 'excel' as const,
+                icon: '📊',
+                label: '엑셀 붙여넣기',
+                sub: '시트 셀 복사 후 Ctrl+V',
+                color: '#A87228',
+                bg: 'rgba(255,153,0,0.08)',
+                border: 'rgba(255,153,0,0.3)',
+              },
+            ].map(tab => {
+              const active = quickMode === tab.key
+              return (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setQuickMode(prev => prev === tab.key ? null : tab.key)}
+                  style={{
+                    padding: '12px 10px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px',
+                    borderRadius: '10px', cursor: 'pointer',
+                    background: active ? tab.bg : 'rgba(255,255,255,0.02)',
+                    border: `2px solid ${active ? tab.border : 'rgba(255,255,255,0.06)'}`,
+                    transition: 'all 0.15s',
+                    boxShadow: active ? `0 0 12px ${tab.bg}` : 'none',
+                  }}
+                >
+                  <span style={{ fontSize: '26px' }}>{tab.icon}</span>
+                  <p style={{
+                    fontSize: '12px', fontWeight: 700, margin: 0,
+                    color: active ? tab.color : '#8898A8',
+                  }}>
+                    {tab.label}
+                  </p>
+                  <p style={{ fontSize: '10px', color: '#485870', margin: 0, textAlign: 'center', lineHeight: 1.4 }}>
+                    {tab.sub}
+                  </p>
+                  <span style={{
+                    fontSize: '10px', fontWeight: 600, marginTop: '2px',
+                    color: active ? tab.color : '#384860',
+                  }}>
+                    {active ? '▲ 닫기' : '▼ 열기'}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── 연락처 붙여넣기 패널 ───────────────────────────────────────── */}
+          {quickMode === 'contact' && (
+            <QuickFill onFill={data => { handleQuickFill(data); setQuickMode(null) }} />
+          )}
+
+          {/* ── 명함 스캔 패널 (1장) ──────────────────────────────────────── */}
+          {quickMode === 'camera' && (
+            <div>
+              <BusinessCardScanner onExtracted={handleCardExtracted} />
+              <div style={{ marginTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <a
+                  href="/sources/import-cards"
+                  style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'underline' }}
+                >
+                  📇 여러 장 한꺼번에 등록하려면 명함 일괄 등록 →
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* ── 엑셀 셀 붙여넣기 패널 ─────────────────────────────────────── */}
+          {quickMode === 'excel' && (
+            <div style={{ borderRadius: '10px', border: '1px solid rgba(30,144,255,0.25)', overflow: 'hidden', background: 'rgba(30,144,255,0.03)' }}>
+              <div style={{ padding: '10px 14px 0' }}>
+                <p style={{ fontSize: '13px', fontWeight: 600, color: '#4A7CC0', marginBottom: '3px' }}>
+                  📊 엑셀 셀 붙여넣기
+                </p>
+                <p style={{ fontSize: '11px', color: '#485870', lineHeight: 1.6 }}>
+                  Excel·Numbers·Google Sheets에서 <b style={{ color: '#CDD5E0' }}>헤더 포함 셀을 선택</b>해 복사(Ctrl+C) 후 아래에 붙여넣으세요.<br />
+                  인식 가능한 헤더: <span style={{ color: '#A8B8C8' }}>이름, 소속, 직책, 부서, 전화, 이메일, 대학, 전공, 기수, 생년월일 등</span>
+                </p>
+              </div>
+              <div style={{ padding: '8px 14px' }}>
+                <textarea
+                  value={excelText}
+                  onChange={e => { setExcelText(e.target.value); setExcelPreview(null); setExcelError('') }}
+                  onPaste={e => {
+                    // 붙여넣기 직후 자동 분석
+                    setTimeout(() => {
+                      const val = e.currentTarget.value || e.clipboardData.getData('text')
+                      if (val.includes('\t')) {
+                        setExcelText(val)
+                        const { rows, error } = parseExcelTSV(val)
+                        if (rows.length) setExcelPreview(rows[0])
+                        if (error) setExcelError(error)
+                      }
+                    }, 50)
+                  }}
+                  placeholder={`헤더 행을 포함해서 붙여넣으세요 (Ctrl+V)\n\n예시:\n이름\t소속\t직책\t전화\t이메일\n홍길동\t기획재정부\t예산실장\t010-1234-5678\thgd@moef.go.kr`}
+                  rows={5}
+                  style={{
+                    width: '100%', boxSizing: 'border-box',
+                    padding: '10px 12px', resize: 'vertical',
+                    background: '#1A2838', border: '1px solid #202C3A',
+                    borderRadius: '8px', color: '#CDD5E0',
+                    fontSize: '13px', lineHeight: 1.6, outline: 'none',
+                    fontFamily: 'ui-monospace, SFMono-Regular, monospace',
+                  }}
+                  autoFocus
+                />
+              </div>
+
+              {/* 엑셀 미리보기 */}
+              {excelPreview && (
+                <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(30,144,255,0.07)', border: '1px solid rgba(30,144,255,0.2)', borderRadius: '8px' }}>
+                  <p style={{ fontSize: '11px', color: '#485870', marginBottom: '6px' }}>추출된 정보 확인</p>
+                  {(Object.entries(excelPreview) as [string, string | undefined][])
+                    .filter(([, v]) => v)
+                    .map(([k, v]) => (
+                      <div key={k} style={{ display: 'flex', gap: '8px', fontSize: '12px', padding: '2px 0' }}>
+                        <span style={{ color: '#485870', flexShrink: 0, width: '72px' }}>
+                          {{ full_name: '이름', current_organization: '소속', current_position: '직책',
+                             current_department: '부서', phone: '전화(주)', phone_secondary: '전화(보조)',
+                             email: '이메일', university: '대학', university_major: '전공',
+                             graduate_school: '대학원', high_school: '고교',
+                             birthday: '생년월일', exam_batch: '기수' }[k] ?? k}
+                        </span>
+                        <span style={{ color: '#A8B8C8', fontWeight: 500 }}>{v}</span>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {excelError && (
+                <p style={{ fontSize: '12px', color: excelPreview ? '#A87228' : '#C04040', margin: '0 14px 8px', padding: '6px 10px', borderRadius: '6px', background: 'rgba(192,64,64,0.06)' }}>
+                  ⚠ {excelError}
+                  {excelError.includes('여러 명') && (
+                    <a href="/sources/import" style={{ marginLeft: '8px', color: '#4A7CC0', textDecoration: 'underline' }}>
+                      엑셀 가져오기 →
+                    </a>
+                  )}
+                </p>
+              )}
+
+              <div style={{ padding: '0 14px 12px', display: 'flex', gap: '8px' }}>
+                {!excelPreview ? (
+                  <>
+                    <button type="button" onClick={handleExcelAnalyze} disabled={!excelText.trim()}
+                      style={{ flex: 1, padding: '10px', background: excelText.trim() ? '#4A7CC0' : '#1A2838', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: excelText.trim() ? 'pointer' : 'default' }}>
+                      🔍 분석
+                    </button>
+                    <button type="button" onClick={() => { setQuickMode(null); setExcelText(''); setExcelPreview(null); setExcelError('') }}
+                      style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+                      취소
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button type="button" onClick={applyExcelRow}
+                      style={{ flex: 1, padding: '10px', background: '#4A7CC0', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                      ✅ 폼에 적용
+                    </button>
+                    <button type="button" onClick={() => { setExcelPreview(null); setExcelError('') }}
+                      style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+                      수정
+                    </button>
+                    <button type="button" onClick={() => { setQuickMode(null); setExcelText(''); setExcelPreview(null); setExcelError('') }}
+                      style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+                      취소
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* 편집 모드: 정보 보충 (연락처·텍스트 붙여넣기만) */}
+      {mode === 'edit' && (
+        <div>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '8px' }}>
+            📋 정보 보충 <span style={{ fontWeight: 400, color: '#485870' }}>— 뉴스·네이버·연락처 복사 후 붙여넣으면 빈 항목을 자동으로 채워드립니다</span>
+          </p>
+          <QuickFill onFill={handleQuickFill} />
+        </div>
+      )}
 
       {/* 완성도 게이지 */}
       <div className="glass-card px-4 py-2.5">

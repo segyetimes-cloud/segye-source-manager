@@ -113,6 +113,41 @@ p, span, div, li, td, th, label, a, button {
   background: #1E2C40 !important;
 }
 
+/* ── 프린트 완전 차단 (@media print) ────────────────────────────────────────
+   Ctrl+P / 인쇄 메뉴 → 모든 콘텐츠를 숨기고 보안 경고만 표시
+   canvas 요소도 포함해 스크린샷-to-PDF 차단
+*/
+@media print {
+  body > * {
+    display: none !important;
+    visibility: hidden !important;
+  }
+  body::after {
+    display: block !important;
+    visibility: visible !important;
+    content: '🔒 세계일보 취재원관리시스템 — 보안 정책에 따라 인쇄가 제한됩니다.\A무단 인쇄·캡처·외부 유출 시 법적 책임이 있습니다.';
+    white-space: pre;
+    font-size: 18px;
+    font-weight: bold;
+    color: #000;
+    text-align: center;
+    padding: 80px 40px;
+    position: fixed;
+    inset: 0;
+    background: #fff;
+    z-index: 999999;
+  }
+}
+
+/* ── 전체 선택(Ctrl+A) 방지 — 민감 섹션 ──────────────────────────────────── */
+/* ProtectedText(canvas)에는 이미 userSelect:none 인라인 적용됨 */
+/* 추가로 .secure-field 클래스가 붙은 요소도 보호 */
+.secure-field {
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+}
+
 /* 워터마크 (보안용 — DOM에서 제거/변조 불가) */
 .watermark-overlay {
   position: fixed !important;

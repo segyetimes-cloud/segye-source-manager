@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as XLSX from 'xlsx'
 import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT } from '@/lib/permissions'
+import { decryptNullable } from '@/lib/crypto'
 
 // GET /api/export/sources
 export async function GET(request: NextRequest) {
@@ -16,22 +17,6 @@ export async function GET(request: NextRequest) {
   const role = profile.role
   const maxRows = EXPORT_MAX_ROWS[role] ?? 100
   const dailyLimit = EXPORT_DAILY_LIMIT[role] ?? 3
-
-  // 하루 내보내기 횟수 확인
-  const todayStart = new Date()
-  todayStart.setHours(0, 0, 0, 0)
-
-  const { count: todayExports } = await supabase
-    .from('export_logs')
-    .select('*', { count: 'exact', head: true })
-    .eq('user_id', user.id)
-    .gte('exported_at', todayStart.toISOString())
-
-  if ((todayExports ?? 0) >= dailyLimit) {
-    return NextResponse.json({
-      error: `오늘 내보내기 한도(${dailyLimit}회)를 초과했습니다. 내일 다시 시도해주세요.`
-    }, { status: 429 })
-  }
 
   // 데이터 조회 (공개 필드만)
   const sp = request.nextUrl.searchParams
@@ -53,11 +38,46 @@ export async function GET(request: NextRequest) {
 
   type ExportRow = { full_name: string; current_organization: string | null; current_position: string | null; current_department: string | null; phone_primary: string | null; email_primary: string | null; university: string | null; high_school: string | null; exam_batch: string | null; hometown_province: string | null; birthday: string | null; tags: string[]; updated_at: string }
   const { data: sourcesRaw, error } = await query
-  const sources = sourcesRaw as ExportRow[] | null
+  const sourcesDecrypted = sourcesRaw as ExportRow[] | null
+  const sources = sourcesDecrypted?.map(s => ({
+    ...s,
+    phone_primary: decryptNullable(s.phone_primary),
+  })) ?? null
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // 요청 IP (감사 추적용)
+  const exportIP =
+    request.headers.get('x-real-ip') ||
+    (request.headers.get('x-forwarded-for') ?? '').split(',').pop()?.trim() ||
+    'unknown'
+
   // 워터마크 ID 생성
-  const watermarkId = Buffer.from(`${user.id}:${user.email}:${Date.now()}`).toString('base64').slice(0, 32)
+  const watermarkId = Buffer.from(`${user.id}:${user.email}:${exportIP}:${Date.now()}`).toString('base64').slice(0, 32)
+
+  // ── 원자적 내보내기 한도 확인 + 로그 기록 (TOCTOU 방지) ─────────────────
+  // DB 함수가 트랜잭션 내에서 SELECT FOR UPDATE + INSERT를 수행
+  const { data: exportCheck, error: exportErr } = await (supabase as any).rpc(
+    'try_log_export',
+    {
+      p_user_id:       user.id,
+      p_daily_limit:   dailyLimit,
+      p_row_count:     sources?.length ?? 0,
+      p_filter_params: { filter, q },
+      p_watermark_id:  watermarkId,
+    }
+  )
+
+  if (exportErr) {
+    console.error('[export] try_log_export error:', exportErr.message)
+    return NextResponse.json({ error: '내보내기 처리 중 오류가 발생했습니다.' }, { status: 500 })
+  }
+
+  const todayCount: number = exportCheck?.today_count ?? 0
+  if (!exportCheck?.allowed) {
+    return NextResponse.json({
+      error: `오늘 내보내기 한도(${dailyLimit}회)를 초과했습니다. 내일 다시 시도해주세요.`
+    }, { status: 429 })
+  }
 
   // Excel 생성
   const wb = XLSX.utils.book_new()
@@ -95,23 +115,19 @@ export async function GET(request: NextRequest) {
 
   // 메타 시트 (워터마크용)
   const metaData = [
-    ['내보낸 사용자', user.email],
-    ['내보낸 시간', new Date().toLocaleString('ko-KR')],
-    ['워터마크 ID', watermarkId],
-    ['총 행 수', sources?.length ?? 0],
+    ['내보낸 사용자',  user.email],
+    ['사용자 이름',    profile.full_name ?? ''],
+    ['내보낸 시간',    new Date().toLocaleString('ko-KR')],
+    ['접속 IP',        exportIP],
+    ['워터마크 ID',    watermarkId],
+    ['총 행 수',       sources?.length ?? 0],
+    ['',               ''],
+    ['⚠ 주의',        '이 파일은 열람자 정보가 기록되어 있습니다. 무단 배포 시 책임을 질 수 있습니다.'],
   ]
   const wsMeta = XLSX.utils.aoa_to_sheet(metaData)
   XLSX.utils.book_append_sheet(wb, wsMeta, '메타정보')
 
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
-
-  // 내보내기 로그
-  await (supabase as any).from('export_logs').insert({
-    user_id: user.id,
-    row_count: sources?.length ?? 0,
-    filter_params: { filter, q },
-    watermark_id: watermarkId,
-  })
 
   void (supabase as any).from('audit_logs').insert({
     user_id: user.id,
@@ -120,7 +136,7 @@ export async function GET(request: NextRequest) {
     resource_type: 'source',
     export_row_count: sources?.length ?? 0,
     watermark_token: watermarkId,
-    metadata: { filter, query: q, role, daily_count: (todayExports ?? 0) + 1 },
+    metadata: { filter, query: q, role, daily_count: todayCount, ip: exportIP },
   })
 
   const filename = `취재원목록_${new Date().toLocaleDateString('ko-KR').replace(/\./g, '').replace(/ /g, '')}.xlsx`
@@ -129,7 +145,7 @@ export async function GET(request: NextRequest) {
     headers: {
       'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
       'Content-Disposition': `attachment; filename*=UTF-8''${encodeURIComponent(filename)}`,
-      'X-Remaining-Exports': String(dailyLimit - (todayExports ?? 0) - 1),
+      'X-Remaining-Exports': String(dailyLimit - todayCount),
     },
   })
 }

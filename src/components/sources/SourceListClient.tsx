@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useCallback, type CSSProperties } from 'react'
 
 interface Source {
   id: string
@@ -32,6 +32,8 @@ interface Props {
   currentTag?: string
 }
 
+type BulkAction = 'delete' | 'set_visibility' | 'add_tag' | 'remove_tag' | null
+
 export default function SourceListClient({
   initialSources,
   totalCount,
@@ -46,6 +48,12 @@ export default function SourceListClient({
   const pathname = usePathname()
   const [isPending, startTransition] = useTransition()
   const [searchInput, setSearchInput] = useState(currentQuery)
+
+  // ── 대량 작업 상태 ──────────────────────────────────────────────────
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const [bulkLoading, setBulkLoading] = useState(false)
+  const [bulkAction, setBulkAction] = useState<BulkAction>(null)
+  const [tagInput, setTagInput] = useState('')
 
   const totalPages = Math.ceil(totalCount / pageSize)
 
@@ -63,8 +71,60 @@ export default function SourceListClient({
     navigate({ filter: currentFilter, q: searchInput, page: '1' })
   }
 
+  // ── 체크박스 핸들러 ────────────────────────────────────────────────
+  const toggleSelect = useCallback((id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }, [])
+
+  const toggleAll = useCallback(() => {
+    if (selectedIds.size === initialSources.length) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(initialSources.map(s => s.id)))
+    }
+  }, [selectedIds.size, initialSources])
+
+  // ── 대량 작업 실행 ─────────────────────────────────────────────────
+  async function executeBulk(action: string, value?: string) {
+    if (selectedIds.size === 0) return
+    setBulkLoading(true)
+    try {
+      const res = await fetch('/api/sources/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ids: Array.from(selectedIds), value }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        alert(data.error ?? '오류가 발생했습니다')
+      } else {
+        setSelectedIds(new Set())
+        setBulkAction(null)
+        setTagInput('')
+        startTransition(() => router.refresh())
+      }
+    } catch {
+      alert('네트워크 오류가 발생했습니다')
+    } finally {
+      setBulkLoading(false)
+    }
+  }
+
+  function confirmBulkDelete() {
+    if (!confirm(`선택한 ${selectedIds.size}명의 취재원을 삭제하시겠습니까?\n(본인이 등록한 취재원만 삭제됩니다)`)) return
+    executeBulk('delete')
+  }
+
   const scoreColor = (score: number) =>
     score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
+
+  const allSelected = initialSources.length > 0 && selectedIds.size === initialSources.length
+  const someSelected = selectedIds.size > 0
 
   return (
     <div className="space-y-4">
@@ -156,6 +216,17 @@ export default function SourceListClient({
           {/* 데스크톱 테이블 헤더 */}
           <div className="source-table-header"
             style={{ background: '#182035', color: '#485870', borderBottom: '1px solid #1A2838' }}>
+            {/* 전체 선택 체크박스 */}
+            <div style={{ width: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                ref={el => { if (el) el.indeterminate = !allSelected && someSelected }}
+                onChange={toggleAll}
+                style={{ cursor: 'pointer', accentColor: '#4A7CC0' }}
+                title="전체 선택/해제"
+              />
+            </div>
             <div style={{ flex: '3 1 0' }}>이름 / 소속</div>
             <div style={{ flex: '2 1 0' }}>직책</div>
             <div style={{ flex: '2 1 0' }}>연락처</div>
@@ -166,149 +237,172 @@ export default function SourceListClient({
 
           {initialSources.map(source => {
             const isMine = source.owner_id === userId
+            const isChecked = selectedIds.has(source.id)
             return (
-              <Link
+              <div
                 key={source.id}
-                href={`/sources/${source.id}`}
-                className="source-list-row"
-                style={{ borderBottom: '1px solid #1A2838', color: 'inherit', textDecoration: 'none', display: 'block' }}
-                onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
-                onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
+                style={{
+                  display: 'flex', alignItems: 'stretch',
+                  borderBottom: '1px solid #1A2838',
+                  background: isChecked ? 'rgba(74,124,192,0.07)' : 'transparent',
+                  transition: 'background 0.1s',
+                }}
+                onMouseEnter={e => { if (!isChecked) (e.currentTarget as HTMLElement).style.background = '#182035' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = isChecked ? 'rgba(74,124,192,0.07)' : 'transparent' }}>
 
-                {/* 모바일 카드 뷰 */}
-                <div className="source-card-mobile">
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div style={{
-                      width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
-                      fontSize: 14, fontWeight: 700,
-                    }}>
-                      {source.full_name[0]}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {source.full_name}
+                {/* 체크박스 셀 */}
+                <label
+                  onClick={e => e.stopPropagation()}
+                  style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 10px', cursor: 'pointer', flexShrink: 0, width: 36 }}>
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => toggleSelect(source.id)}
+                    style={{ cursor: 'pointer', accentColor: '#4A7CC0' }}
+                  />
+                </label>
+
+                {/* 행 콘텐츠 — Link */}
+                <Link
+                  href={`/sources/${source.id}`}
+                  className="source-list-row"
+                  style={{ flex: 1, color: 'inherit', textDecoration: 'none', display: 'block' }}>
+
+                  {/* 모바일 카드 뷰 */}
+                  <div className="source-card-mobile">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                      <div style={{
+                        width: 36, height: 36, borderRadius: '50%', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
+                        fontSize: 14, fontWeight: 700,
+                      }}>
+                        {source.full_name[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {source.full_name}
+                          </p>
+                          {isMine && (
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
+                              내 등록
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {source.current_organization ?? '—'} {source.current_position ? `· ${source.current_position}` : ''}
                         </p>
-                        {isMine && (
-                          <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
-                            내 등록
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
+                        <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
+                          {source.completeness_score}점
+                        </span>
+                        <span className={`sensitivity-${source.sensitivity}`}
+                          style={{ fontSize: 11, padding: '1px 6px', borderRadius: 99 }}>
+                          {source.sensitivity === 'private' ? '🔒 민감' : '일반'}
+                        </span>
+                      </div>
+                    </div>
+                    {(source.phone_primary || source.email_primary || source.exam_batch || source.tags.length > 0) && (
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
+                        {source.phone_primary && (
+                          <span style={{ fontSize: 11, color: '#687898' }}>{source.phone_primary}</span>
+                        )}
+                        {source.exam_batch && (
+                          <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#3A90A8' }}>
+                            {source.exam_batch}
                           </span>
                         )}
+                        {source.tags.slice(0, 3).map(t => (
+                          <span key={t}
+                            onClick={e => { e.preventDefault(); e.stopPropagation(); navigate({ filter: currentFilter, q: currentQuery, page: '1', tag: t }) }}
+                            style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer' }}>
+                            {t}
+                          </span>
+                        ))}
                       </div>
-                      <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {source.current_organization ?? '—'} {source.current_position ? `· ${source.current_position}` : ''}
+                    )}
+                  </div>
+
+                  {/* 데스크톱 테이블 뷰 */}
+                  <div className="source-row-desktop">
+                    {/* 이름/소속 */}
+                    <div style={{ flex: '3 1 0', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
+                        fontSize: 12, fontWeight: 700,
+                      }}>
+                        {source.full_name[0]}
+                      </div>
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {source.full_name}
+                          </p>
+                          {isMine && (
+                            <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
+                              내 등록
+                            </span>
+                          )}
+                        </div>
+                        <p style={{ color: '#687898', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {source.current_organization ?? '—'}
+                        </p>
+                      </div>
+                    </div>
+                    {/* 직책 */}
+                    <div style={{ flex: '2 1 0', minWidth: 0 }}>
+                      <p style={{ color: '#687898', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {source.current_position ?? '—'}
                       </p>
                     </div>
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
-                      <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
-                        {source.completeness_score}점
-                      </span>
-                      <span className={`sensitivity-${source.sensitivity}`}
-                        style={{ fontSize: 11, padding: '1px 6px', borderRadius: 99 }}>
-                        {source.sensitivity === 'private' ? '🔒 민감' : '일반'}
-                      </span>
+                    {/* 연락처 */}
+                    <div style={{ flex: '2 1 0', minWidth: 0 }}>
+                      <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {source.phone_primary ?? source.email_primary ?? '—'}
+                      </p>
                     </div>
-                  </div>
-                  {(source.phone_primary || source.email_primary || source.exam_batch || source.tags.length > 0) && (
-                    <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
-                      {source.phone_primary && (
-                        <span style={{ fontSize: 11, color: '#687898' }}>{source.phone_primary}</span>
-                      )}
+                    {/* 태그 */}
+                    <div style={{ flex: '2 1 0', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                       {source.exam_batch && (
-                        <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#3A90A8' }}>
+                        <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#3A90A8' }}>
                           {source.exam_batch}
                         </span>
                       )}
-                      {source.tags.slice(0, 3).map(t => (
+                      {source.tags.slice(0, 2).map(t => (
                         <span key={t}
                           onClick={e => { e.preventDefault(); e.stopPropagation(); navigate({ filter: currentFilter, q: currentQuery, page: '1', tag: t }) }}
-                          style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer' }}>
+                          style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer', border: '1px solid rgba(30,144,255,0.2)' }}
+                          title={`태그 "${t}"로 필터`}>
                           {t}
                         </span>
                       ))}
                     </div>
-                  )}
-                </div>
-
-                {/* 데스크톱 테이블 뷰 */}
-                <div className="source-row-desktop">
-                  {/* 이름/소속 */}
-                  <div style={{ flex: '3 1 0', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                    <div style={{
-                      width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
-                      fontSize: 12, fontWeight: 700,
-                    }}>
-                      {source.full_name[0]}
-                    </div>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {source.full_name}
-                        </p>
-                        {isMine && (
-                          <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
-                            내 등록
-                          </span>
-                        )}
+                    {/* 완성도 */}
+                    <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+                      <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
+                        {source.completeness_score}
+                      </span>
+                      <div style={{ width: 40, height: 4, borderRadius: 99, background: '#1A2838' }}>
+                        <div style={{
+                          width: `${source.completeness_score}%`, height: '100%',
+                          borderRadius: 99, background: scoreColor(source.completeness_score),
+                        }} />
                       </div>
-                      <p style={{ color: '#687898', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {source.current_organization ?? '—'}
-                      </p>
+                    </div>
+                    {/* 민감도 */}
+                    <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'center' }}>
+                      <span className={`sensitivity-${source.sensitivity}`}
+                        style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99 }}>
+                        {source.sensitivity === 'private' ? '🔒 민감' : '일반'}
+                      </span>
                     </div>
                   </div>
-                  {/* 직책 */}
-                  <div style={{ flex: '2 1 0', minWidth: 0 }}>
-                    <p style={{ color: '#687898', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {source.current_position ?? '—'}
-                    </p>
-                  </div>
-                  {/* 연락처 */}
-                  <div style={{ flex: '2 1 0', minWidth: 0 }}>
-                    <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {source.phone_primary ?? source.email_primary ?? '—'}
-                    </p>
-                  </div>
-                  {/* 태그 */}
-                  <div style={{ flex: '2 1 0', display: 'flex', flexWrap: 'wrap', gap: 4 }}>
-                    {source.exam_batch && (
-                      <span style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#3A90A8' }}>
-                        {source.exam_batch}
-                      </span>
-                    )}
-                    {source.tags.slice(0, 2).map(t => (
-                      <span key={t}
-                        onClick={e => { e.preventDefault(); e.stopPropagation(); navigate({ filter: currentFilter, q: currentQuery, page: '1', tag: t }) }}
-                        style={{ fontSize: 11, padding: '2px 6px', borderRadius: 4, background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', cursor: 'pointer', border: '1px solid rgba(30,144,255,0.2)' }}
-                        title={`태그 "${t}"로 필터`}>
-                        {t}
-                      </span>
-                    ))}
-                  </div>
-                  {/* 완성도 */}
-                  <div style={{ flex: '1 1 0', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
-                    <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor(source.completeness_score) }}>
-                      {source.completeness_score}
-                    </span>
-                    <div style={{ width: 40, height: 4, borderRadius: 99, background: '#1A2838' }}>
-                      <div style={{
-                        width: `${source.completeness_score}%`, height: '100%',
-                        borderRadius: 99, background: scoreColor(source.completeness_score),
-                      }} />
-                    </div>
-                  </div>
-                  {/* 민감도 */}
-                  <div style={{ flex: '1 1 0', display: 'flex', justifyContent: 'center' }}>
-                    <span className={`sensitivity-${source.sensitivity}`}
-                      style={{ fontSize: 11, padding: '2px 8px', borderRadius: 99 }}>
-                      {source.sensitivity === 'private' ? '🔒 민감' : '일반'}
-                    </span>
-                  </div>
-                </div>
-              </Link>
+                </Link>
+              </div>
             )
           })}
         </div>
@@ -359,6 +453,142 @@ export default function SourceListClient({
           </button>
         </div>
       )}
+
+      {/* ── 대량 작업 플로팅 바 ──────────────────────────────────────────── */}
+      {someSelected && (
+        <div style={{
+          position: 'fixed',
+          bottom: 28,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 50,
+          background: '#0D1726',
+          border: '1px solid #1E3050',
+          borderRadius: 14,
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+          padding: '10px 16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: 10,
+          flexWrap: 'wrap',
+          maxWidth: 'calc(100vw - 40px)',
+        }}>
+          {/* 선택 수 표시 */}
+          <span style={{ color: '#4A7CC0', fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>
+            {selectedIds.size}개 선택됨
+          </span>
+
+          <div style={{ width: 1, height: 20, background: '#1E3050', flexShrink: 0 }} />
+
+          {/* 태그 추가 */}
+          {bulkAction === 'add_tag' ? (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && tagInput.trim() && executeBulk('add_tag', tagInput.trim())}
+                placeholder="태그 입력 후 Enter"
+                autoFocus
+                style={{
+                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
+                  borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
+                }}
+              />
+              <button
+                onClick={() => tagInput.trim() && executeBulk('add_tag', tagInput.trim())}
+                disabled={!tagInput.trim() || bulkLoading}
+                style={{ ...bulkBtnStyle('#3D9E6A'), opacity: !tagInput.trim() ? 0.5 : 1 }}>
+                적용
+              </button>
+              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#485870')}>취소</button>
+            </div>
+          ) : bulkAction === 'remove_tag' ? (
+            <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+              <input
+                type="text"
+                value={tagInput}
+                onChange={e => setTagInput(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && tagInput.trim() && executeBulk('remove_tag', tagInput.trim())}
+                placeholder="제거할 태그 입력"
+                autoFocus
+                style={{
+                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
+                  borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
+                }}
+              />
+              <button
+                onClick={() => tagInput.trim() && executeBulk('remove_tag', tagInput.trim())}
+                disabled={!tagInput.trim() || bulkLoading}
+                style={{ ...bulkBtnStyle('#A87228'), opacity: !tagInput.trim() ? 0.5 : 1 }}>
+                적용
+              </button>
+              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#485870')}>취소</button>
+            </div>
+          ) : (
+            <>
+              <button
+                onClick={() => setBulkAction('add_tag')}
+                disabled={bulkLoading}
+                style={bulkBtnStyle('#3A90A8')}>
+                🏷️ 태그 추가
+              </button>
+              <button
+                onClick={() => setBulkAction('remove_tag')}
+                disabled={bulkLoading}
+                style={bulkBtnStyle('#7E6E48')}>
+                태그 제거
+              </button>
+              <button
+                onClick={() => executeBulk('set_visibility', 'shared')}
+                disabled={bulkLoading}
+                style={bulkBtnStyle('#4A7CC0')}>
+                🌐 공유 전환
+              </button>
+              <button
+                onClick={() => executeBulk('set_visibility', 'personal')}
+                disabled={bulkLoading}
+                style={bulkBtnStyle('#687898')}>
+                🔒 개인 전환
+              </button>
+              <button
+                onClick={confirmBulkDelete}
+                disabled={bulkLoading}
+                style={bulkBtnStyle('#C04040')}>
+                🗑️ 삭제
+              </button>
+            </>
+          )}
+
+          <div style={{ width: 1, height: 20, background: '#1E3050', flexShrink: 0 }} />
+
+          <button
+            onClick={() => { setSelectedIds(new Set()); setBulkAction(null); setTagInput('') }}
+            style={{ background: 'none', border: 'none', color: '#485870', cursor: 'pointer', fontSize: 18, padding: '0 4px', lineHeight: 1 }}
+            title="선택 취소">
+            ✕
+          </button>
+
+          {bulkLoading && (
+            <div className="w-4 h-4 rounded-full border-2 animate-spin"
+              style={{ borderColor: '#1A2838', borderTopColor: '#4A7CC0', flexShrink: 0 }} />
+          )}
+        </div>
+      )}
     </div>
   )
+}
+
+function bulkBtnStyle(color: string): CSSProperties {
+  return {
+    background: `${color}22`,
+    border: `1px solid ${color}55`,
+    color,
+    borderRadius: 8,
+    padding: '5px 12px',
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: 'pointer',
+    whiteSpace: 'nowrap',
+  }
 }

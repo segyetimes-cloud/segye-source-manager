@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calcCompletenessScore, calcRegistrationPoints } from '@/lib/points'
 import { can, CAN_VIEW_SENSITIVE_SOURCE } from '@/lib/permissions'
+import { encryptNullable } from '@/lib/crypto'
 
 // GET /api/sources — 목록 조회
 export async function GET(request: NextRequest) {
@@ -22,7 +23,8 @@ export async function GET(request: NextRequest) {
 
   const sp = request.nextUrl.searchParams
   const filter = sp.get('filter') ?? 'all'   // 'all' | 'mine'
-  const q = sp.get('q') ?? ''
+  const rawQ = sp.get('q') ?? ''
+  const q = rawQ.slice(0, 100)  // 검색어 최대 100자 제한 (DoS·ReDoS 방어)
   const page = parseInt(sp.get('page') ?? '1')
   const pageSize = Math.min(Math.max(1, parseInt(sp.get('limit') ?? '20') || 20), 100)
 
@@ -43,10 +45,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (q) {
-    const escaped = q.replace(/[%_\\]/g, '\\$&')
-    query = query.or(
-      `full_name.ilike.%${escaped}%,current_organization.ilike.%${escaped}%,current_position.ilike.%${escaped}%,exam_batch.ilike.%${escaped}%,university.ilike.%${escaped}%,high_school.ilike.%${escaped}%`
-    )
+    if (q.length >= 2) {
+      // GIN 인덱스 전문 검색: search_vector (simple 사전, 한국어 공백 분리 토큰)
+      query = (query as any).textSearch('search_vector', q, { type: 'plain', config: 'simple' })
+    } else {
+      // 1글자 검색은 ilike 유지 (tsvector는 단일 문자에 비효율)
+      const escaped = q.replace(/[%_\\]/g, '\\$&')
+      query = query.or(`full_name.ilike.%${escaped}%,current_organization.ilike.%${escaped}%`)
+    }
   }
 
   // range는 모든 필터 이후 마지막에 적용
@@ -87,8 +93,8 @@ export async function POST(request: NextRequest) {
     current_organization: body.current_organization || null,
     current_position: body.current_position || null,
     current_department: body.current_department || null,
-    phone_primary: body.phone_primary || null,
-    phone_secondary: body.phone_secondary || null,
+    phone_primary:   encryptNullable(body.phone_primary   || null),
+    phone_secondary: encryptNullable(body.phone_secondary || null),
     email_primary: body.email_primary || null,
     email_secondary: body.email_secondary || null,
     birthday: body.birthday || null,
@@ -103,7 +109,7 @@ export async function POST(request: NextRequest) {
     visibility: 'shared',
     sensitivity: body.sensitivity ?? 'public',
     public_notes: body.public_notes || null,
-    personal_notes: body.personal_notes || null,
+    personal_notes: encryptNullable(body.personal_notes || null),
     on_record_status: body.on_record_status || null,
     sns_links: body.sns_links ?? {},
     completeness_score: calcCompletenessScore(body),

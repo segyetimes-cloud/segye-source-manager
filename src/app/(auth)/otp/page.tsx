@@ -36,25 +36,26 @@ function OTPContent() {
   async function verifyOTP() {
     setLoading(true)
     setError('')
-    const supabase = createClient()
 
-    const formatted = phone.startsWith('+82')
-      ? phone
-      : '+82' + phone.replace(/^0/, '').replace(/-/g, '')
+    try {
+      const res = await fetch('/api/auth/otp-verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, otp }),
+        credentials: 'same-origin',  // 쿠키 수신을 위해 필요
+      })
 
-    const { error } = await supabase.auth.verifyOtp({
-      phone: formatted,
-      token: otp,
-      type: 'sms',
-    })
-
-    if (error) {
-      setError('인증 실패: 코드를 다시 확인해주세요.')
-    } else {
-      // OTP 인증 완료 쿠키 설정
-      document.cookie = `otp_verified=true; path=/; max-age=${60 * 60 * 8}; SameSite=Strict`
-      router.push(next)
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? '인증 실패: 코드를 다시 확인해주세요.')
+      } else {
+        // HttpOnly 쿠키는 서버에서 Set-Cookie 헤더로 자동 설정됨
+        router.push(next)
+      }
+    } catch {
+      setError('네트워크 오류가 발생했습니다. 다시 시도해주세요.')
     }
+
     setLoading(false)
   }
 

@@ -173,5 +173,13 @@ export async function POST(request: NextRequest) {
     if (allowedErr) return NextResponse.json({ error: '열람자 등록에 실패했습니다.' }, { status: 500 })
   }
 
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'report_create',
+    resource_type: 'report',
+    resource_id:   report?.id ?? null,
+    metadata:      { title: body?.title },
+  })
   return NextResponse.json(report, { status: 201 })
 }

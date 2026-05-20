@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { injectFullWatermark } from '@/lib/copyWatermark'
 
 interface Props {
   apiPath: string        // 복사 로그 전송 엔드포인트 (예: /api/reports/xxx/copy-log)
@@ -11,26 +12,23 @@ interface Props {
   minHeight?: string     // 워터마크 최소 높이 (기본 없음)
 }
 
-function encodeZeroWidth(text: string): string {
-  const bits = Array.from(text)
-    .map(c => c.charCodeAt(0).toString(2).padStart(8, '0'))
-    .join('')
-  return bits.split('').map(b => b === '0' ? '​' : '‌').join('')
-}
-
 function buildWatermarkedText(selected: string, userId: string, userName: string): string {
-  const ts = new Date().toISOString()
-  const hidden = encodeZeroWidth(`${userId}|${ts}`)
-  const mid = Math.floor(selected.length / 2)
-  const body = selected.slice(0, mid) + hidden + selected.slice(mid)
+  const now = new Date().toLocaleString('ko-KR', {
+    year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+  // 1차(ZW) + 2차(쉼표/마침표) 워터마크 삽입
+  const watermarked = injectFullWatermark(selected, userId)
   const footer = [
     '',
     '',
-    `[출처: 세계일보 취재원관리시스템]`,
-    `[열람자: ${userName}  |  일시: ${new Date().toLocaleString('ko-KR')}]`,
-    `[무단 외부 유출 시 법적 책임이 있습니다]`,
+    '─────────────────────────────────',
+    '⚠️  세계일보 취재원관리시스템 내부자료',
+    `열람자: ${userName}  |  일시: ${now}`,
+    '무단 외부 유출 시 법적 책임을 집니다.',
+    '─────────────────────────────────',
   ].join('\n')
-  return hidden + body + footer
+  return watermarked + footer
 }
 
 function sendCopyLog(apiPath: string, copiedLength: number, copiedPreview: string) {

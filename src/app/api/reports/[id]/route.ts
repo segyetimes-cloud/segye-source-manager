@@ -58,6 +58,14 @@ export async function GET(
     }
   }
 
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'report_view',
+    resource_type: 'report',
+    resource_id:   id,
+    metadata:      { title: data?.title },
+  })
   return NextResponse.json({ ...data, revisions: revisions ?? [] })
 }
 
@@ -110,6 +118,15 @@ export async function PUT(
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'report_update',
+    resource_type: 'report',
+    resource_id:   id,
+    metadata:      { fields_updated: Object.keys(body ?? {}) },
+  })
 
   // 내용이 바뀐 경우에만 수정이력 추가
   const newContent = content?.trim() ?? ''
@@ -177,5 +194,13 @@ export async function DELETE(
     .eq('id', id)
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  void (supabase as any).from('audit_logs').insert({
+    user_id:       user.id,
+    user_email:    user.email,
+    action:        'report_delete',
+    resource_type: 'report',
+    resource_id:   id,
+    metadata:      {},
+  })
   return NextResponse.json({ success: true })
 }

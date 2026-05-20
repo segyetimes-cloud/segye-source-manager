@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>취재원 관리 시스템 — 세계일보</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --bg: #080E1C;
+    --card: #0D1520;
+    --border: #1A2838;
+    --blue: #4A7CC0;
+    --blue-light: #6A9CE0;
+    --green: #3D9E6A;
+    --gold: #A87228;
+    --red: #C04040;
+    --text: #CDD5E0;
+    --muted: #687898;
+    --dim: #485870;
+  }
+
+  body {
+    font-family: "Pretendard", "Noto Sans KR", -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    overflow: hidden;
+    height: 100vh;
+  }
+
+  /* ── Slide Engine ── */
+  .deck { width: 100vw; height: 100vh; position: relative; }
+
+  .slide {
+    position: absolute; inset: 0;
+    display: flex; flex-direction: column;
+    padding: 60px 80px;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.35s ease;
+    overflow: hidden;
+  }
+  .slide.active { opacity: 1; pointer-events: all; }
+
+  /* ── Nav ── */
+  .nav {
+    position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%);
+    display: flex; gap: 12px; align-items: center; z-index: 100;
+    background: rgba(8,14,28,0.9); border: 1px solid var(--border);
+    padding: 10px 20px; border-radius: 40px;
+    backdrop-filter: blur(12px);
+  }
+  .nav button {
+    background: none; border: none; color: var(--muted);
+    font-size: 18px; cursor: pointer; padding: 4px 10px;
+    border-radius: 8px; transition: all 0.15s;
+  }
+  .nav button:hover { color: var(--text); background: rgba(255,255,255,0.06); }
+  .nav .count { font-size: 13px; color: var(--dim); min-width: 60px; text-align: center; }
+
+  .progress {
+    position: fixed; top: 0; left: 0; height: 3px;
+    background: linear-gradient(90deg, var(--blue), #6AD4FF);
+    transition: width 0.35s ease; z-index: 100;
+  }
+
+  /* ── Shared Typography ── */
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 700;
+    padding: 3px 10px; border-radius: 20px; letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .tag-blue { background: rgba(74,124,192,0.15); color: var(--blue-light); border: 1px solid rgba(74,124,192,0.4); }
+  .tag-green { background: rgba(61,158,106,0.15); color: #5EC88A; border: 1px solid rgba(61,158,106,0.4); }
+  .tag-gold { background: rgba(168,114,40,0.15); color: #D4963A; border: 1px solid rgba(168,114,40,0.4); }
+  .tag-red { background: rgba(192,64,64,0.15); color: #E06060; border: 1px solid rgba(192,64,64,0.4); }
+
+  .slide-number {
+    position: absolute; top: 24px; right: 36px;
+    font-size: 12px; color: var(--dim); font-variant-numeric: tabular-nums;
+  }
+
+  h1.hero { font-size: 52px; font-weight: 800; line-height: 1.15; letter-spacing: -0.02em; }
+  h2.title { font-size: 36px; font-weight: 700; line-height: 1.2; margin-bottom: 8px; }
+  h3.subtitle { font-size: 20px; font-weight: 600; color: var(--blue-light); margin-bottom: 32px; }
+  .body { font-size: 15px; color: var(--muted); line-height: 1.7; }
+
+  /* ── Glass Card ── */
+  .glass {
+    background: rgba(13,21,32,0.8);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    backdrop-filter: blur(8px);
+  }
+  .glass-sm { border-radius: 12px; padding: 16px 20px; }
+
+  /* ── Grid ── */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 18px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+
+  /* ── Table ── */
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; padding: 10px 14px; color: var(--dim); font-size: 12px;
+    font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase;
+    border-bottom: 1px solid var(--border); }
+  td { padding: 10px 14px; border-bottom: 1px solid rgba(26,40,56,0.5); color: var(--text); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: rgba(74,124,192,0.04); }
+
+  /* ── Diff Row ── */
+  .before { color: #C04040; font-size: 13px; }
+  .after  { color: #3D9E6A; font-size: 13px; }
+
+  /* ── Big Stat ── */
+  .stat-box { text-align: center; }
+  .stat-num { font-size: 48px; font-weight: 800; line-height: 1; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ── Timeline ── */
+  .timeline { display: flex; flex-direction: column; gap: 12px; }
+  .t-item { display: flex; gap: 16px; align-items: flex-start; }
+  .t-dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 5px;
+    background: var(--blue); box-shadow: 0 0 8px rgba(74,124,192,0.6);
+  }
+  .t-line { width: 2px; background: rgba(74,124,192,0.2); flex-shrink: 0; align-self: stretch; }
+
+  /* ── Badge ── */
+  .badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; font-weight: 600; padding: 4px 10px; border-radius: 20px;
+  }
+
+  /* ── Code Block ── */
+  .code {
+    background: rgba(8,14,28,0.9); border: 1px solid var(--border);
+    border-radius: 10px; padding: 16px 20px;
+    font-family: 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 12.5px; line-height: 1.65; color: #8BA8C8;
+    white-space: pre;
+  }
+  .code .kw { color: #6A9CE0; }
+  .code .str { color: #5EC88A; }
+  .code .cm { color: #3A5070; }
+
+  /* ── Role ladder ── */
+  .ladder { display: flex; flex-direction: column; gap: 0; }
+  .ladder-row {
+    display: flex; align-items: center; gap: 12px;
+    padding: 8px 16px; border-left: 3px solid transparent;
+    font-size: 14px; transition: background 0.15s;
+  }
+  .ladder-row:hover { background: rgba(74,124,192,0.05); }
+
+  /* ── Feature icon card ── */
+  .feat { display: flex; flex-direction: column; gap: 10px; }
+  .feat-icon { font-size: 28px; }
+  .feat-title { font-size: 15px; font-weight: 700; color: var(--text); }
+  .feat-desc { font-size: 12px; color: var(--muted); line-height: 1.6; }
+
+  /* ── Arrow ── */
+  .arrow { font-size: 24px; color: var(--dim); align-self: center; }
+
+  /* ── Decorative Glow ── */
+  .glow-circle {
+    position: absolute; border-radius: 50%;
+    filter: blur(80px); opacity: 0.12; pointer-events: none;
+  }
+
+  /* Slide-specific overrides */
+  #s2 { padding: 36px 60px; }
+  #s2 h3.subtitle { margin-bottom: 14px; }
+  #s2 .glass-sm { padding: 9px 14px; }
+
+  #s1 { justify-content: center; align-items: flex-start; }
+  #s1 .deco { position: absolute; right: 0; top: 0; bottom: 0; width: 45%;
+    background: linear-gradient(135deg, rgba(74,124,192,0.08), rgba(0,212,255,0.04));
+    border-left: 1px solid rgba(74,124,192,0.15); clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%); }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<div class="deck" id="deck">
+
+  <!-- ══════════════ SLIDE 1: Title ══════════════ -->
+  <div class="slide active" id="s1">
+    <div class="deco"></div>
+    <div class="glow-circle" style="width:400px;height:400px;background:#4A7CC0;top:-100px;right:100px;"></div>
+    <div style="margin-top:auto;margin-bottom:auto;max-width:620px;">
+      <div style="margin-bottom:24px;">
+        <span class="tag tag-blue">AI 기반 취재 인프라</span>
+      </div>
+      <h1 class="hero" style="color:var(--text);margin-bottom:16px;">
+        취재원<br>관리 시스템
+      </h1>
+      <p style="font-size:20px;color:var(--muted);line-height:1.6;margin-bottom:40px;">
+        기자의 인맥을 조직의 자산으로 전환하는<br>
+        전사(全社) 취재원 플랫폼
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:48px;">
+        <span class="badge" style="background:rgba(74,124,192,0.15);color:var(--blue-light);border:1px solid rgba(74,124,192,0.3);">Next.js 16</span>
+        <span class="badge" style="background:rgba(61,158,106,0.15);color:#5EC88A;border:1px solid rgba(61,158,106,0.3);">Supabase PostgreSQL</span>
+        <span class="badge" style="background:rgba(168,114,40,0.15);color:#D4963A;border:1px solid rgba(168,114,40,0.3);">TypeScript</span>
+        <span class="badge" style="background:rgba(74,124,192,0.1);color:var(--dim);border:1px solid var(--border);">Vercel 배포</span>
+      </div>
+      <p style="font-size:13px;color:var(--dim);">세계일보 — 2026년 5월</p>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 2: 목차 ══════════════ -->
+  <div class="slide" id="s2">
+    <div class="slide-number">2 / 18</div>
+    <h2 class="title">목차</h2>
+    <h3 class="subtitle">발표 순서</h3>
+    <div class="grid-2" style="gap:10px;flex:1;">
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">01</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">문제 정의</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">기존 업무의 구조적 한계</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">02</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">솔루션 개요</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">시스템 아키텍처 &amp; 설계 원칙</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">03</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">역할 권한 체계</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">7단계 역할별 차등 접근 제어</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">04</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">핵심 기능 ①</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">취재원 DB · 온더레코드 동의</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">05</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">핵심 기능 ②</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">정보 노트 협업 · 연락 이력</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">06</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">핵심 기능 ③</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">네트워크 그래프 · 2촌 검색</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">07</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">정보보고 시스템</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">구조화된 취재 정보 공유</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">08</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">보안 설계</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">다층 보안 · 워터마크 · 감사</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">09</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">도입 전후 비교</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">업무 효율 &amp; 보안 수준 비교</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">10</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">기대 성과</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">정량·정성 효과</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">11</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">기술 스택</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">상세 구현 기술</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">12</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">개발 과정</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">4단계 구현 이력</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">13</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">참고 오픈소스</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">글로벌 언론사 벤치마킹</div></div>
+      </div>
+
+      <div class="glass glass-sm" style="display:flex;align-items:center;gap:14px;">
+        <span style="font-size:13px;font-weight:800;color:var(--blue);min-width:24px;">14</span>
+        <div><div style="font-size:14px;font-weight:600;color:var(--text);">향후 계획</div><div style="font-size:12px;color:var(--dim);margin-top:2px;">로드맵</div></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 3: 문제 정의 ══════════════ -->
+  <div class="slide" id="s3">
+    <div class="slide-number">3 / 18</div>
+    <h2 class="title">문제 정의</h2>
+    <h3 class="subtitle">기존 업무 방식의 구조적 한계</h3>
+    <div class="grid-3" style="flex:1;gap:14px;align-content:stretch;">
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">📱</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">분산된 개인 관리</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">스마트폰 주소록 · 개인 메모앱 · 엑셀 파일에 분산 저장. 부서 내 공유 불가.</div>
+      </div>
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">👥</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">중복 취재원 접촉</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">여러 기자가 동일 취재원에게 무관하게 접촉 → 취재원 피로 유발, 조직 신뢰 훼손.</div>
+      </div>
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">🚪</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">퇴사 시 정보 소멸</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">기자 1인 평균 200~500명의 취재원 네트워크가 퇴사와 함께 조직에서 사라짐.</div>
+      </div>
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">🔓</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">민감 정보 무방비 노출</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">파일 공유만으로 취재원 성향·비공개 발언 내용이 통제 없이 유출 가능.</div>
+      </div>
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">🕸</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">관계망 파악 불가</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">취재원 간 인맥은 기자 머릿속에만 존재. 탐사 기획 시 연결 고리 활용 불가.</div>
+      </div>
+
+      <div class="glass" style="border-color:rgba(192,64,64,0.25);background:rgba(192,64,64,0.04);display:flex;flex-direction:column;gap:6px;padding:18px 20px;">
+        <div style="font-size:24px;">📋</div>
+        <div style="font-size:14px;font-weight:700;color:#E06060;">연락 이력 단절</div>
+        <div style="font-size:12.5px;color:var(--muted);line-height:1.6;">팔로업 일정이 메신저 기록에 묻혀 후속 취재가 반복적으로 단절됨.</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 4: 솔루션 개요 ══════════════ -->
+  <div class="slide" id="s4">
+    <div class="slide-number">4 / 18</div>
+    <h2 class="title">솔루션 개요</h2>
+    <h3 class="subtitle">전사(全社) 취재원 플랫폼</h3>
+    <div class="grid-3" style="flex:1;gap:20px;align-content:start;">
+      <div class="glass feat">
+        <div class="feat-icon">🗄️</div>
+        <div class="feat-title">전사 통합 DB</div>
+        <div class="feat-desc">기자 개인 정보를 조직 공용 DB로 전환. PostgreSQL + Row Level Security</div>
+      </div>
+      <div class="glass feat">
+        <div class="feat-icon">🔐</div>
+        <div class="feat-title">역할 기반 접근 제어</div>
+        <div class="feat-desc">7단계 직급별 정보 차등 열람. 민감 정보는 승인 워크플로 적용</div>
+      </div>
+      <div class="glass feat">
+        <div class="feat-icon">🕸️</div>
+        <div class="feat-title">인맥 네트워크 시각화</div>
+        <div class="feat-desc">취재원 간 관계를 인터랙티브 그래프로. 2촌 관계까지 탐색 가능</div>
+      </div>
+      <div class="glass feat">
+        <div class="feat-icon">📋</div>
+        <div class="feat-title">정보보고 시스템</div>
+        <div class="feat-desc">취재 정보를 구조화 보고서로. 역할별 가시성 제어</div>
+      </div>
+      <div class="glass feat">
+        <div class="feat-icon">📞</div>
+        <div class="feat-title">연락 이력 + 팔로업</div>
+        <div class="feat-desc">통화·문자·대면 이력 타임라인. 팔로업 날짜 자동 배너 알림</div>
+      </div>
+      <div class="glass feat">
+        <div class="feat-icon">🔍</div>
+        <div class="feat-title">감사 로그 + 워터마크</div>
+        <div class="feat-desc">모든 열람·수정 이력 기록. 복사 시 사용자 식별 코드 자동 삽입</div>
+      </div>
+    </div>
+    <div style="margin-top:20px;padding:14px 20px;background:rgba(74,124,192,0.07);border:1px solid rgba(74,124,192,0.2);border-radius:10px;">
+      <span style="font-size:14px;color:var(--blue-light);">📌 핵심 원칙</span>
+      <span style="font-size:14px;color:var(--muted);margin-left:12px;">기자의 취재원 인맥을 조직의 영구 자산으로 전환하되, 정보 보호는 더 강하게</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 5: 역할 권한 체계 ══════════════ -->
+  <div class="slide" id="s5">
+    <div class="slide-number">5 / 18</div>
+    <h2 class="title">역할 · 권한 체계</h2>
+    <h3 class="subtitle">7단계 직급별 차등 접근 제어</h3>
+    <div class="grid-2" style="flex:1;gap:24px;">
+      <div class="glass">
+        <div style="font-size:12px;font-weight:700;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;">역할 계층</div>
+        <div class="ladder">
+          <div class="ladder-row" style="border-color:#9B6BE6;background:rgba(155,107,230,0.08);">
+            <span style="font-size:16px;">👑</span>
+            <span style="font-size:14px;font-weight:700;color:#C09AFF;">슈퍼관리자</span>
+            <span style="font-size:11px;color:var(--dim);margin-left:auto;">전체 권한</span>
+          </div>
+          <div class="ladder-row" style="border-color:#4A7CC0;background:rgba(74,124,192,0.06);">
+            <span style="font-size:16px;">📰</span>
+            <span style="font-size:14px;font-weight:600;color:var(--blue-light);">편집인 / 국장 / 부국장</span>
+            <span style="font-size:11px;color:var(--dim);margin-left:auto;">전부서 열람</span>
+          </div>
+          <div class="ladder-row" style="border-color:var(--gold);background:rgba(168,114,40,0.06);">
+            <span style="font-size:16px;">🏢</span>
+            <span style="font-size:14px;font-weight:600;color:#D4963A;">부장 (admin)</span>
+            <span style="font-size:11px;color:var(--dim);margin-left:auto;">소속 부서만</span>
+          </div>
+          <div class="ladder-row" style="border-color:#3D9E6A;background:rgba(61,158,106,0.06);">
+            <span style="font-size:16px;">✏️</span>
+            <span style="font-size:14px;font-weight:600;color:#5EC88A;">차장 (deputy)</span>
+            <span style="font-size:11px;color:var(--dim);margin-left:auto;">민감 노트 열람</span>
+          </div>
+          <div class="ladder-row" style="border-color:var(--border);">
+            <span style="font-size:16px;">📝</span>
+            <span style="font-size:14px;color:var(--muted);">기자 (reporter)</span>
+            <span style="font-size:11px;color:var(--dim);margin-left:auto;">기본 + 승인 시 민감</span>
+          </div>
+        </div>
+      </div>
+      <div>
+        <div style="font-size:12px;font-weight:700;color:var(--dim);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:16px;">정보 유형별 접근 매트릭스</div>
+        <table>
+          <thead>
+            <tr>
+              <th>정보 유형</th>
+              <th>기자</th>
+              <th>차장</th>
+              <th>부장+</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>기본 정보</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+            </tr>
+            <tr>
+              <td>공개 노트</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+            </tr>
+            <tr>
+              <td>민감 노트 (타인)</td>
+              <td style="color:var(--red);">❌</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+            </tr>
+            <tr>
+              <td>민감 정보 필드</td>
+              <td style="color:var(--gold);">승인 시</td>
+              <td style="color:var(--green);">✅</td>
+              <td style="color:var(--green);">✅</td>
+            </tr>
+            <tr>
+              <td>타부서 정보보고</td>
+              <td style="color:var(--red);">❌</td>
+              <td style="color:var(--red);">❌</td>
+              <td style="color:var(--gold);">부장=소속</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 6: 핵심 기능 ① ══════════════ -->
+  <div class="slide" id="s6">
+    <div class="slide-number">6 / 18</div>
+    <h2 class="title">핵심 기능 ①</h2>
+    <h3 class="subtitle">취재원 DB · 온더레코드 동의</h3>
+    <div class="grid-2" style="flex:1;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">📋 등록 필드 구성</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="tag tag-blue">이름 · 소속 · 직책</span>
+              <span class="tag tag-blue">연락처 · 이메일</span>
+              <span class="tag tag-green">대학 · 고교 · 전공</span>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px;">
+              <span class="tag tag-gold">고시/기수</span>
+              <span class="tag tag-gold">출신 지역</span>
+              <span class="tag" style="background:rgba(74,124,192,0.1);color:var(--dim);border:1px solid var(--border);">SNS · 태그</span>
+            </div>
+          </div>
+        </div>
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:10px;">📊 완성도 점수 자동 계산</div>
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+            <div style="flex:1;height:8px;background:var(--border);border-radius:4px;">
+              <div style="width:72%;height:100%;background:linear-gradient(90deg,var(--blue),#38C8B8);border-radius:4px;"></div>
+            </div>
+            <span style="font-size:14px;font-weight:700;color:var(--gold);">72점</span>
+          </div>
+          <div style="font-size:12px;color:var(--dim);">기본 20 + 연락처 20 + 학력 20 + 정보 노트 40 = 100점</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass" style="border-color:rgba(61,158,106,0.3);background:rgba(61,158,106,0.05);">
+          <div style="font-size:13px;font-weight:700;color:#5EC88A;margin-bottom:12px;">🆕 온더레코드 동의 상태 (신규)</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(61,158,106,0.1);border-radius:8px;border:1px solid rgba(61,158,106,0.2);">
+              <span>✅</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#5EC88A;">온더레코드</div>
+                <div style="font-size:11px;color:var(--dim);">실명 인용 가능</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(168,114,40,0.1);border-radius:8px;border:1px solid rgba(168,114,40,0.2);">
+              <span>🟡</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#D4963A;">백그라운드</div>
+                <div style="font-size:11px;color:var(--dim);">익명 인용만 가능</div>
+              </div>
+            </div>
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(192,64,64,0.1);border-radius:8px;border:1px solid rgba(192,64,64,0.2);">
+              <span>🔴</span>
+              <div>
+                <div style="font-size:13px;font-weight:600;color:#E06060;">오프더레코드</div>
+                <div style="font-size:11px;color:var(--dim);">인용 불가 — 참고용</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 7: 핵심 기능 ② ══════════════ -->
+  <div class="slide" id="s7">
+    <div class="slide-number">7 / 18</div>
+    <h2 class="title">핵심 기능 ②</h2>
+    <h3 class="subtitle">정보 노트 협업 · 연락 이력 관리</h3>
+    <div class="grid-2" style="flex:1;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:10px;">📝 공유 정보 노트</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="padding:10px 14px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:8px;">
+              <div style="font-size:11px;color:var(--blue-light);font-weight:600;margin-bottom:4px;">📢 공개 노트 — 편집국 전원</div>
+              <div style="font-size:12px;color:var(--muted);">경제부 핵심 출입 기자. 예산 전문가로 코멘트 적극적.</div>
+            </div>
+            <div style="padding:10px 14px;background:rgba(255,153,0,0.05);border:1px solid rgba(255,153,0,0.25);border-radius:8px;">
+              <div style="font-size:11px;color:#D4963A;font-weight:600;margin-bottom:4px;">🔒 민감 노트 — 차장 이상만</div>
+              <div style="font-size:12px;color:var(--muted);">특정 장관과 대학 동기. 단독 제보 가능성 높음.</div>
+            </div>
+          </div>
+          <div style="margin-top:10px;font-size:12px;color:var(--dim);">여러 기자가 한 취재원에 공동 기록 · +10pt 포인트 지급</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:#5EC88A;margin-bottom:10px;">📞 연락 이력 타임라인</div>
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:20px;height:20px;border-radius:50%;background:rgba(74,124,192,0.2);border:2px solid var(--blue);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">📞</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:var(--blue-light);">전화</div>
+                <div style="font-size:12px;color:var(--muted);">인터뷰 제안 → 다음 주 검토하겠다고 함</div>
+              </div>
+            </div>
+            <div style="display:flex;gap:10px;align-items:flex-start;">
+              <div style="width:20px;height:20px;border-radius:50%;background:rgba(61,158,106,0.2);border:2px solid var(--green);display:flex;align-items:center;justify-content:center;font-size:9px;flex-shrink:0;">🤝</div>
+              <div>
+                <div style="font-size:12px;font-weight:600;color:#5EC88A;">대면</div>
+                <div style="font-size:12px;color:var(--muted);">커피 미팅 — 인터뷰 최종 수락</div>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:10px;padding:8px 12px;background:rgba(61,158,106,0.08);border:1px solid rgba(61,158,106,0.25);border-radius:6px;display:flex;align-items:center;gap:8px;">
+            <span>🔔</span>
+            <span style="font-size:12px;font-weight:600;color:#5EC88A;">다음 팔로업</span>
+            <span style="font-size:12px;color:var(--text);">05/22 14:00 (2일 후!) — 신규 기능</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 8: 핵심 기능 ③ ══════════════ -->
+  <div class="slide" id="s8">
+    <div class="slide-number">8 / 18</div>
+    <h2 class="title">핵심 기능 ③</h2>
+    <h3 class="subtitle">네트워크 그래프 · 2촌 관계 검색</h3>
+    <div class="grid-2" style="flex:1;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">🕸️ 자동 관계 감지 기준</div>
+          <div style="display:flex;flex-direction:column;gap:6px;">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(26,40,56,0.5);">
+              <span style="font-size:13px;color:var(--text);">동료 (같은 소속)</span>
+              <div style="width:18px;height:3px;background:#A87228;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(26,40,56,0.5);">
+              <span style="font-size:13px;color:var(--text);">대학 동문</span>
+              <div style="width:18px;height:3px;background:#3D9E6A;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(26,40,56,0.5);">
+              <span style="font-size:13px;color:var(--text);">고교 동문</span>
+              <div style="width:18px;height:3px;background:#4A7CC0;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(26,40,56,0.5);">
+              <span style="font-size:13px;color:var(--text);">고시 동기</span>
+              <div style="width:18px;height:3px;background:#B09048;border-radius:2px;"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 0;">
+              <span style="font-size:13px;color:var(--text);">수동 등록</span>
+              <div style="width:18px;height:3px;background:#C04040;border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass" style="border-color:rgba(61,158,106,0.3);">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+            <span style="font-size:13px;font-weight:700;color:#5EC88A;">🆕 2촌 관계 검색 (신규)</span>
+          </div>
+          <div style="display:flex;gap:8px;margin-bottom:14px;">
+            <div style="flex:1;padding:8px;background:rgba(74,124,192,0.15);border:1px solid rgba(74,124,192,0.4);border-radius:6px;text-align:center;font-size:12px;font-weight:600;color:var(--blue-light);">1촌만</div>
+            <div style="flex:1;padding:8px;background:rgba(61,158,106,0.15);border:1px solid rgba(61,158,106,0.4);border-radius:6px;text-align:center;font-size:12px;font-weight:600;color:#5EC88A;">2촌 포함</div>
+          </div>
+          <div style="font-size:13px;color:var(--muted);line-height:1.7;">
+            검색어와 직접 일치하는 취재원뿐 아니라,<br>
+            <strong style="color:var(--text);">그 취재원과 연결된 1촌 네트워크</strong>까지<br>
+            함께 강조 표시.<br><br>
+            <span style="color:#5EC88A;">탐사 보도 기획 시 간접 접근 경로 발견에 활용.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 9: 정보보고 ══════════════ -->
+  <div class="slide" id="s9">
+    <div class="slide-number">9 / 18</div>
+    <h2 class="title">정보보고 시스템</h2>
+    <h3 class="subtitle">구조화된 취재 정보 공유 플랫폼</h3>
+    <div class="grid-2" style="flex:1;gap:24px;">
+      <div style="display:flex;flex-direction:column;gap:16px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">📄 보고서 구성</div>
+          <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);">
+            <div>• <strong style="color:var(--text);">제목 · 본문</strong> — 자유 서술</div>
+            <div>• <strong style="color:var(--text);">카테고리</strong> — 단독 / 인터뷰 / 기획 / 일반</div>
+            <div>• <strong style="color:var(--text);">태그</strong> — 검색·분류용</div>
+            <div>• <strong style="color:var(--text);">연결 취재원</strong> — 관련 취재원 연동</div>
+            <div>• <strong style="color:var(--text);">가시성 레벨</strong> — 4단계 공개 범위</div>
+          </div>
+        </div>
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:10px;">🏷️ 카테고리 배지</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;background:rgba(192,64,64,0.15);color:#E06060;border:1px solid rgba(192,64,64,0.3);">단독</span>
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;background:rgba(61,158,106,0.15);color:#5EC88A;border:1px solid rgba(61,158,106,0.3);">인터뷰</span>
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;background:rgba(74,124,192,0.15);color:var(--blue-light);border:1px solid rgba(74,124,192,0.3);">기획</span>
+            <span style="font-size:11px;font-weight:600;padding:3px 10px;border-radius:4px;background:rgba(74,74,74,0.2);color:var(--muted);border:1px solid var(--border);">일반</span>
+          </div>
+        </div>
+      </div>
+      <div class="glass">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">👁️ 가시성 4단계</div>
+        <div style="display:flex;flex-direction:column;gap:10px;">
+          <div style="padding:10px 14px;background:rgba(30,144,255,0.06);border:1px solid rgba(30,144,255,0.2);border-radius:8px;">
+            <div style="font-size:13px;font-weight:600;color:var(--blue-light);">🌐 전체 공개</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:2px;">편집국 전원 열람 가능</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(168,114,40,0.06);border:1px solid rgba(168,114,40,0.2);border-radius:8px;">
+            <div style="font-size:13px;font-weight:600;color:#D4963A;">📊 데스크 이상</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:2px;">부장급 이상만 열람 — 민감 기획 정보</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(61,158,106,0.06);border:1px solid rgba(61,158,106,0.2);border-radius:8px;">
+            <div style="font-size:13px;font-weight:600;color:#5EC88A;">👥 팀 공개</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:2px;">소속 부서 구성원만</div>
+          </div>
+          <div style="padding:10px 14px;background:rgba(74,74,74,0.1);border:1px solid var(--border);border-radius:8px;">
+            <div style="font-size:13px;font-weight:600;color:var(--muted);">🔒 작성자만</div>
+            <div style="font-size:12px;color:var(--dim);margin-top:2px;">임시저장·개인 메모용</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 10: 보안 설계 ══════════════ -->
+  <div class="slide" id="s10">
+    <div class="slide-number">10 / 18</div>
+    <h2 class="title">보안 및 정보 보호 설계</h2>
+    <h3 class="subtitle">다층 보안 아키텍처</h3>
+    <div class="grid-2" style="flex:1;gap:20px;">
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:4px;">🔒 5계층 보안 구조</div>
+        <div style="display:flex;flex-direction:column;gap:0;border:1px solid var(--border);border-radius:12px;overflow:hidden;">
+          <div style="padding:10px 16px;background:rgba(155,107,230,0.1);border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;font-weight:700;color:#C09AFF;">Layer 5</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:12px;">UI 조건부 렌더링</span>
+          </div>
+          <div style="padding:10px 16px;background:rgba(74,124,192,0.08);border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;font-weight:700;color:var(--blue-light);">Layer 4</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:12px;">API Route 역할 검증</span>
+          </div>
+          <div style="padding:10px 16px;background:rgba(61,158,106,0.08);border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;font-weight:700;color:#5EC88A;">Layer 3</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:12px;">Row Level Security (DB)</span>
+          </div>
+          <div style="padding:10px 16px;background:rgba(168,114,40,0.08);border-bottom:1px solid var(--border);">
+            <span style="font-size:12px;font-weight:700;color:#D4963A;">Layer 2</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:12px;">Next.js 서버사이드 세션</span>
+          </div>
+          <div style="padding:10px 16px;background:rgba(192,64,64,0.08);">
+            <span style="font-size:12px;font-weight:700;color:#E06060;">Layer 1</span>
+            <span style="font-size:12px;color:var(--muted);margin-left:12px;">Supabase Auth (JWT)</span>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="glass" style="border-color:rgba(61,158,106,0.2);">
+          <div style="font-size:13px;font-weight:700;color:#5EC88A;margin-bottom:10px;">🔍 제로-폭 워터마크</div>
+          <div class="code" style="font-size:11px;">
+<span class="cm">// 복사 시 사용자 ID를 비가시 문자로 인코딩</span>
+<span class="kw">U+200B</span> = 0비트  <span class="kw">U+200C</span> = 1비트
+사용자 ID → 이진수 → 제로-폭 문자열
+          </div>
+          <div style="font-size:12px;color:var(--dim);margin-top:8px;">육안 식별 불가 · 디지털 포렌식으로 유출자 추적</div>
+        </div>
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:10px;">📋 감사 로그 자동 기록</div>
+          <table style="font-size:12px;">
+            <tr><td style="color:var(--dim);">열람</td><td>사용자 · IP · 시각</td></tr>
+            <tr><td style="color:var(--dim);">수정</td><td>변경 전/후 값 기록</td></tr>
+            <tr><td style="color:var(--dim);">민감 열람</td><td><code style="color:#E06060;">view_private</code> 별도 이벤트</td></tr>
+            <tr><td style="color:var(--dim);">내보내기</td><td>건수 + 워터마크 토큰</td></tr>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 11: 도입 전후 비교 ══════════════ -->
+  <div class="slide" id="s11">
+    <div class="slide-number">11 / 18</div>
+    <h2 class="title">도입 전후 비교</h2>
+    <h3 class="subtitle">업무 방식의 전면적 변화</h3>
+    <div style="flex:1;overflow-y:auto;">
+      <table>
+        <thead>
+          <tr>
+            <th>업무 영역</th>
+            <th class="before">도입 전</th>
+            <th class="after">도입 후</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td style="font-weight:600;">취재원 등록</td>
+            <td class="before">개인 주소록 · 메모앱</td>
+            <td class="after">전사 DB에 구조화 등록</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">정보 검색</td>
+            <td class="before">동료에게 직접 문의 (5~20분)</td>
+            <td class="after">키워드 검색 1초 이내</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">관계망 파악</td>
+            <td class="before">기자 머릿속에만 존재</td>
+            <td class="after">인터랙티브 네트워크 그래프</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">연락 이력</td>
+            <td class="before">카카오톡 채팅에 묻힘</td>
+            <td class="after">타임라인 체계적 기록 + 팔로업 알림</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">민감 정보 보호</td>
+            <td class="before">파일 공유 시 무방비 노출</td>
+            <td class="after">역할 기반 접근 제어 + 워터마크</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">퇴사자 정보</td>
+            <td class="before">개인 기기와 함께 소멸</td>
+            <td class="after">조직 자산으로 영구 보존</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">인맥 탐색</td>
+            <td class="before">부서 내 구두 문의</td>
+            <td class="after">2촌 네트워크 검색</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">감사 추적</td>
+            <td class="before">불가능</td>
+            <td class="after">모든 열람 · 수정 자동 기록</td>
+          </tr>
+          <tr>
+            <td style="font-weight:600;">온더레코드 관리</td>
+            <td class="before">기자 개인 기억에만 의존</td>
+            <td class="after">3단계 상태 배지로 즉시 확인</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 12: 기대 성과 ══════════════ -->
+  <div class="slide" id="s12">
+    <div class="slide-number">12 / 18</div>
+    <h2 class="title">기대 성과</h2>
+    <h3 class="subtitle">정량 · 정성 효과</h3>
+    <div class="grid-4" style="margin-bottom:20px;">
+      <div class="glass stat-box">
+        <div class="stat-num" style="color:var(--blue);">0s</div>
+        <div class="stat-label">취재원 검색 소요 시간<br>(기존 5~20분)</div>
+      </div>
+      <div class="glass stat-box">
+        <div class="stat-num" style="color:var(--green);">100%</div>
+        <div class="stat-label">퇴사자 취재원 정보<br>보존율 (기존 0%)</div>
+      </div>
+      <div class="glass stat-box">
+        <div class="stat-num" style="color:var(--gold);">∞</div>
+        <div class="stat-label">조직 축적 취재원 수<br>(개인 한계 없음)</div>
+      </div>
+      <div class="glass stat-box">
+        <div class="stat-num" style="color:#E06060;">0</div>
+        <div class="stat-label">민감 정보 무단 열람<br>(구조적 차단)</div>
+      </div>
+    </div>
+    <div class="grid-2" style="gap:20px;">
+      <div class="glass">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:10px;">📈 업무 효율성</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--muted);">
+          <div>✅ 신입 기자 취재원 파악 기간 — 즉시 DB 활용</div>
+          <div>✅ 중복 취재원 접촉 방지</div>
+          <div>✅ 팔로업 누락 제로화</div>
+          <div>✅ 탐사 기획 시 2·3촌 연결 고리 발견</div>
+        </div>
+      </div>
+      <div class="glass">
+        <div style="font-size:13px;font-weight:700;color:#5EC88A;margin-bottom:10px;">🔐 보안 강화</div>
+        <div style="display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--muted);">
+          <div>✅ 민감 정보 노출 사고 구조적 차단</div>
+          <div>✅ 내부자 위협 — 감사 로그 + 워터마크</div>
+          <div>✅ 개인정보 접근 이력 추적 가능</div>
+          <div>✅ 취재원 신원 보호 강화</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 13: 기술 스택 ══════════════ -->
+  <div class="slide" id="s13">
+    <div class="slide-number">13 / 18</div>
+    <h2 class="title">기술 스택</h2>
+    <h3 class="subtitle">상세 구현 기술</h3>
+    <div class="grid-2" style="flex:1;gap:20px;">
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="glass">
+          <table>
+            <thead><tr><th>영역</th><th>기술</th></tr></thead>
+            <tbody>
+              <tr><td>프레임워크</td><td style="color:var(--blue-light);">Next.js 16 App Router</td></tr>
+              <tr><td>언어</td><td style="color:var(--blue-light);">TypeScript</td></tr>
+              <tr><td>DB / BaaS</td><td style="color:#5EC88A;">Supabase (PostgreSQL)</td></tr>
+              <tr><td>인증</td><td style="color:#5EC88A;">Supabase Auth (JWT)</td></tr>
+              <tr><td>스타일</td><td style="color:var(--muted);">Inline styles + Tailwind 레이아웃</td></tr>
+              <tr><td>그래프</td><td style="color:#D4963A;">react-force-graph-2d (D3)</td></tr>
+              <tr><td>배포</td><td style="color:var(--blue-light);">Vercel (Edge)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="glass">
+          <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">🗄️ 주요 DB 테이블</div>
+          <div class="code" style="font-size:11.5px;line-height:1.8;">
+<span class="kw">sources</span>             <span class="cm">-- 취재원 기본 정보</span>
+<span class="kw">source_positions</span>    <span class="cm">-- 직책 이력 타임라인</span>
+<span class="kw">source_notes</span>        <span class="cm">-- 협업 정보 노트</span>
+<span class="kw">contact_logs</span>        <span class="cm">-- 연락 이력 + 팔로업</span>
+<span class="kw">source_relationships</span> <span class="cm">-- 관계망</span>
+<span class="kw">information_reports</span> <span class="cm">-- 정보보고</span>
+<span class="kw">source_access_approvals</span> <span class="cm">-- 열람 승인</span>
+<span class="kw">point_transactions</span>  <span class="cm">-- 포인트</span>
+<span class="kw">audit_logs</span>          <span class="cm">-- 전체 감사 로그</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 14: 개발 과정 ══════════════ -->
+  <div class="slide" id="s14">
+    <div class="slide-number">14 / 18</div>
+    <h2 class="title">개발 과정</h2>
+    <h3 class="subtitle">단계별 구현 이력</h3>
+    <div style="flex:1;display:flex;flex-direction:column;gap:12px;">
+      <div style="display:flex;gap:0;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-right:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--blue);flex-shrink:0;"></div>
+          <div style="width:2px;flex:1;background:rgba(74,124,192,0.2);"></div>
+        </div>
+        <div class="glass" style="flex:1;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text);">1단계 — 기초 인프라</span>
+            <span class="tag tag-blue">인증 · DB 설계</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">기본 CRUD · 역할 시스템 · Row Level Security · 완성도 점수 엔진</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-right:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--green);flex-shrink:0;"></div>
+          <div style="width:2px;flex:1;background:rgba(61,158,106,0.2);"></div>
+        </div>
+        <div class="glass" style="flex:1;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text);">2단계 — 시각화 · 포인트</span>
+            <span class="tag tag-green">그래프 · 게임화</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">네트워크 그래프 · 포인트 거래 시스템 · 도움 요청/응답 기능</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-right:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:var(--gold);flex-shrink:0;"></div>
+          <div style="width:2px;flex:1;background:rgba(168,114,40,0.2);"></div>
+        </div>
+        <div class="glass" style="flex:1;margin-bottom:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text);">3단계 — 보안 강화</span>
+            <span class="tag tag-gold">워터마크 · 감사</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">정보보고 · 승인 워크플로 · 감사 로그 · 제로-폭 워터마크 · 열람 권한 제어</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:0;">
+        <div style="display:flex;flex-direction:column;align-items:center;margin-right:16px;">
+          <div style="width:10px;height:10px;border-radius:50%;background:#C09AFF;flex-shrink:0;"></div>
+        </div>
+        <div class="glass" style="flex:1;border-color:rgba(155,107,230,0.3);background:rgba(155,107,230,0.05);">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+            <span style="font-size:13px;font-weight:700;color:var(--text);">4단계 — 최종 고도화</span>
+            <span class="tag" style="background:rgba(155,107,230,0.15);color:#C09AFF;border:1px solid rgba(155,107,230,0.4);">최종 완성</span>
+          </div>
+          <div style="font-size:12px;color:var(--muted);">온더레코드 동의 배지 · 연락 팔로업 · 2촌 네트워크 검색 · 오픈소스 참고 기능 통합</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 15: 참고 오픈소스 ══════════════ -->
+  <div class="slide" id="s15">
+    <div class="slide-number">15 / 18</div>
+    <h2 class="title">참고 오픈소스 & 업계 사례</h2>
+    <h3 class="subtitle">글로벌 언론 취재원 관리 도구 벤치마킹</h3>
+    <div class="grid-2" style="flex:1;gap:18px;">
+      <div class="glass feat">
+        <div style="font-size:22px;">🦎</div>
+        <div class="feat-title">django-rolodex</div>
+        <div class="feat-desc">언론사용 오픈소스 취재원 관리 시스템. 카테고리 분류 체계와 조직 구조 설계 참고.</div>
+        <div style="margin-top:8px;"><span class="tag tag-blue">카테고리 분류</span></div>
+      </div>
+      <div class="glass feat">
+        <div style="font-size:22px;">📡</div>
+        <div class="feat-title">SourceFourth</div>
+        <div class="feat-desc">취재원 인용 상태 관리에 특화. 온더레코드 / 백그라운드 / 오프더레코드 상태 시스템 도입.</div>
+        <div style="margin-top:8px;"><span class="tag tag-green">온더레코드 동의</span></div>
+      </div>
+      <div class="glass feat">
+        <div style="font-size:22px;">🗞️</div>
+        <div class="feat-title">Superdesk</div>
+        <div class="feat-desc">AP 등 대형 통신사 사용 편집국 플랫폼. 통합 편집국 워크플로와 역할 기반 접근 구조 참고.</div>
+        <div style="margin-top:8px;"><span class="tag tag-gold">워크플로 구조</span></div>
+      </div>
+      <div class="glass feat">
+        <div style="font-size:22px;">🔒</div>
+        <div class="feat-title">SecureDrop</div>
+        <div class="feat-desc">Freedom of Press Foundation의 내부 고발자 보호 플랫폼. 취재원 보호 보안 설계 원칙 적용.</div>
+        <div style="margin-top:8px;"><span class="tag tag-red">취재원 보호 보안</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 16: 향후 계획 ══════════════ -->
+  <div class="slide" id="s16">
+    <div class="slide-number">16 / 18</div>
+    <h2 class="title">향후 계획</h2>
+    <h3 class="subtitle">시스템 발전 로드맵</h3>
+    <div class="grid-3" style="flex:1;gap:18px;">
+      <div class="glass" style="border-color:rgba(74,124,192,0.3);">
+        <div style="font-size:13px;font-weight:700;color:var(--blue-light);margin-bottom:12px;">📱 단기 (3개월)</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);">
+          <div>□ 모바일 PWA 최적화</div>
+          <div>□ 명함 OCR 고도화</div>
+          <div>□ Slack 팔로업 알림 연동</div>
+          <div>□ 중복 취재원 자동 감지</div>
+          <div>□ 취재원 일괄 엑셀 가져오기</div>
+        </div>
+      </div>
+      <div class="glass" style="border-color:rgba(61,158,106,0.3);">
+        <div style="font-size:13px;font-weight:700;color:#5EC88A;margin-bottom:12px;">🤖 중기 (6개월)</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);">
+          <div>□ AI 취재원 추천 엔진</div>
+          <div>□ 뉴스 기반 자동 정보 업데이트</div>
+          <div>□ 취재원 이직 자동 감지 크롤러</div>
+          <div>□ 연합 취재 공유 채널</div>
+        </div>
+      </div>
+      <div class="glass" style="border-color:rgba(155,107,230,0.3);">
+        <div style="font-size:13px;font-weight:700;color:#C09AFF;margin-bottom:12px;">🚀 장기 (1년)</div>
+        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--muted);">
+          <div>□ 자연어 검색 (AI)</div>
+          <div>□ 취재원 감도 예측 모델</div>
+          <div>□ 타 언론사 오픈 API</div>
+          <div>□ 취재원 자발 프로필 업데이트 포털</div>
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:18px;padding:14px 20px;background:rgba(74,124,192,0.07);border:1px solid rgba(74,124,192,0.2);border-radius:10px;text-align:center;">
+      <span style="font-size:14px;color:var(--blue-light);">궁극 목표</span>
+      <span style="font-size:14px;color:var(--muted);margin-left:12px;">"기자의 직감과 경험을 AI가 증폭시키는 취재 인텔리전스 플랫폼"</span>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 17: Q&A ══════════════ -->
+  <div class="slide" id="s17">
+    <div class="slide-number">17 / 18</div>
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:center;flex:1;gap:24px;text-align:center;">
+      <div style="font-size:64px;">💬</div>
+      <h2 style="font-size:42px;font-weight:800;color:var(--text);">Q &amp; A</h2>
+      <p style="font-size:18px;color:var(--muted);max-width:500px;line-height:1.7;">
+        질문이 있으시면 말씀해 주세요.
+      </p>
+      <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center;">
+        <span class="badge" style="background:rgba(74,124,192,0.12);color:var(--blue-light);border:1px solid rgba(74,124,192,0.3);">기술 구현</span>
+        <span class="badge" style="background:rgba(61,158,106,0.12);color:#5EC88A;border:1px solid rgba(61,158,106,0.3);">보안 설계</span>
+        <span class="badge" style="background:rgba(168,114,40,0.12);color:#D4963A;border:1px solid rgba(168,114,40,0.3);">업무 적용</span>
+        <span class="badge" style="background:rgba(155,107,230,0.12);color:#C09AFF;border:1px solid rgba(155,107,230,0.3);">향후 계획</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════════ SLIDE 18: End ══════════════ -->
+  <div class="slide" id="s18">
+    <div class="glow-circle" style="width:500px;height:500px;background:var(--blue);bottom:-200px;right:-100px;"></div>
+    <div style="display:flex;flex-direction:column;justify-content:center;align-items:flex-start;flex:1;gap:20px;max-width:640px;">
+      <span class="tag tag-blue">감사합니다</span>
+      <h1 style="font-size:46px;font-weight:800;color:var(--text);line-height:1.2;">
+        취재원 관리 시스템<br>
+        <span style="color:var(--blue-light);">세계일보</span>
+      </h1>
+      <p style="font-size:16px;color:var(--muted);line-height:1.7;">
+        기자의 인맥을 조직의 자산으로.<br>
+        민감 정보는 더 안전하게.<br>
+        협업은 더 스마트하게.
+      </p>
+      <div style="margin-top:8px;padding-top:24px;border-top:1px solid var(--border);width:100%;">
+        <p style="font-size:13px;color:var(--dim);">Next.js 16 · Supabase · TypeScript · Vercel</p>
+        <p style="font-size:13px;color:var(--dim);margin-top:4px;">2026년 5월 — 세계일보 과제 제출</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── Navigation ── -->
+<div class="nav">
+  <button onclick="go(-1)">&#8592;</button>
+  <span class="count" id="count">1 / 18</span>
+  <button onclick="go(1)">&#8594;</button>
+</div>
+
+<script>
+  const TOTAL = 18;
+  let cur = 1;
+
+  function show(n) {
+    n = Math.max(1, Math.min(TOTAL, n));
+    document.querySelectorAll('.slide').forEach((s, i) => {
+      s.classList.toggle('active', i + 1 === n);
+    });
+    document.getElementById('count').textContent = n + ' / ' + TOTAL;
+    document.getElementById('progress').style.width = ((n / TOTAL) * 100) + '%';
+    cur = n;
+  }
+
+  function go(d) { show(cur + d); }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === 'Space') { e.preventDefault(); go(1); }
+    if (e.key === 'ArrowLeft'  || e.key === 'ArrowUp')  { e.preventDefault(); go(-1); }
+    if (e.key === 'Home') show(1);
+    if (e.key === 'End')  show(TOTAL);
+  });
+
+  // Touch swipe
+  let ts = 0;
+  document.addEventListener('touchstart', e => { ts = e.touches[0].clientX; });
+  document.addEventListener('touchend',   e => {
+    const dx = ts - e.changedTouches[0].clientX;
+    if (Math.abs(dx) > 40) go(dx > 0 ? 1 : -1);
+  });
+
+  show(1);
+</script>
+</body>
+</html>

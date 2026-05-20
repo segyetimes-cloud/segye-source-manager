@@ -8,6 +8,7 @@ export default async function DashboardPage() {
   if (!user) return null
 
   type SourceRow = { id: string; full_name: string; current_organization: string | null; current_position: string | null; created_at: string; completeness_score: number; visibility: string; sensitivity: string }
+  type RecentViewRow = { id: string; full_name: string; current_organization: string | null; current_position: string | null; completeness_score: number }
   type PointsSummary = { total_points: number }
   type LeaderboardRow = { user_id: string; total_points: number; profiles: { full_name: string; department: string | null } | null }
   type HelpRow = { id: string; title: string; reward_points: number; created_at: string }
@@ -25,6 +26,7 @@ export default async function DashboardPage() {
     { data: allSharedSourcesRaw },
     { data: myReportsRaw },
     { data: followupRaw },
+    { data: recentViewLogsRaw },
   ] = await Promise.all([
     supabase.from('sources').select('*', { count: 'exact', head: true })
       .eq('owner_id', user.id).eq('is_deleted', false),
@@ -61,6 +63,14 @@ export default async function DashboardPage() {
       .eq('user_id', user.id)
       .order('next_followup_at', { ascending: true })
       .limit(8),
+    // 최근 열람 로그 (view / view_private)
+    supabase.from('audit_logs' as any)
+      .select('resource_id, created_at')
+      .eq('user_id', user.id)
+      .eq('resource_type', 'source')
+      .in('action', ['view', 'view_private'])
+      .order('created_at', { ascending: false })
+      .limit(30),
   ])
 
   const myPoints = myPointsRaw as PointsSummary | null
@@ -69,6 +79,27 @@ export default async function DashboardPage() {
   const openHelp = openHelpRaw as HelpRow[] | null
   const totalPoints = myPoints?.total_points ?? 0
   const followups = (followupRaw ?? []) as FollowupRow[]
+
+  // 최근 열람: 중복 제거 후 최신 5개 source_id 추출
+  const seenViewIds = new Set<string>()
+  const recentViewIds: string[] = []
+  for (const v of ((recentViewLogsRaw ?? []) as { resource_id: string | null }[])) {
+    if (v.resource_id && !seenViewIds.has(v.resource_id)) {
+      seenViewIds.add(v.resource_id)
+      recentViewIds.push(v.resource_id)
+      if (recentViewIds.length >= 5) break
+    }
+  }
+  let recentViewSources: RecentViewRow[] = []
+  if (recentViewIds.length > 0) {
+    const { data: rvData } = await supabase
+      .from('sources')
+      .select('id, full_name, current_organization, current_position, completeness_score')
+      .in('id', recentViewIds)
+      .eq('is_deleted', false)
+    const sourceMap = new Map(((rvData ?? []) as RecentViewRow[]).map(s => [s.id, s]))
+    recentViewSources = recentViewIds.map(sid => sourceMap.get(sid)).filter(Boolean) as RecentViewRow[]
+  }
 
   // ── 차트 데이터 계산 ──────────────────────────────────────
   const mySourcesForChart = (mySourcesForChartRaw ?? []) as { created_at: string; completeness_score: number; current_organization: string | null }[]
@@ -206,6 +237,45 @@ export default async function DashboardPage() {
 
       {/* 통계 차트 섹션 */}
       <DashboardCharts data={chartData} />
+
+      {/* 최근 열람 취재원 */}
+      {recentViewSources.length > 0 && (
+        <div className="glass-card p-4">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="font-semibold text-sm" style={{ color: '#CDD5E0' }}>🕐 최근 열람한 취재원</h2>
+            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {recentViewSources.map(s => (
+              <Link
+                key={s.id}
+                href={`/sources/${s.id}`}
+                style={{ textDecoration: 'none' }}>
+                <div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors"
+                  style={{ background: '#182035', border: '1px solid #1A2838' }}
+                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#4A7CC0')}
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#1A2838')}>
+                  <div style={{
+                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
+                    fontSize: 11, fontWeight: 700,
+                  }}>
+                    {s.full_name[0]}
+                  </div>
+                  <div>
+                    <p style={{ color: '#CDD5E0', fontSize: 13, fontWeight: 600, margin: 0 }}>{s.full_name}</p>
+                    <p style={{ color: '#687898', fontSize: 11, margin: 0 }}>
+                      {s.current_organization ?? '—'}
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 메인 콘텐츠 */}
       <div className="dashboard-main-grid">

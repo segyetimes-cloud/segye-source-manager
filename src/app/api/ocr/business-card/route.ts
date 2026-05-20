@@ -2,6 +2,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+/** 실제 파일 헤더(magic bytes)로 이미지 여부 검증 — MIME 스푸핑 방어 */
+async function isValidImageBytes(file: File): Promise<boolean> {
+  const header = Buffer.from(await file.slice(0, 12).arrayBuffer())
+  // JPEG: FF D8 FF
+  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) return true
+  // PNG:  89 50 4E 47 0D 0A 1A 0A
+  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) return true
+  // GIF:  47 49 46 38
+  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) return true
+  // WebP: 52 49 46 46 ?? ?? ?? ?? 57 45 42 50
+  if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46
+    && header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) return true
+  return false
+}
+
 // POST /api/ocr/business-card
 // body: FormData { image: File }
 export async function POST(request: NextRequest) {
@@ -21,6 +36,10 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData()
     const file = formData.get('image') as File | null
     if (!file) return NextResponse.json({ error: '이미지가 없습니다.' }, { status: 400 })
+
+    if (!file.type.startsWith('image/') || !await isValidImageBytes(file)) {
+      return NextResponse.json({ error: '이미지 파일이 아닙니다. (JPEG, PNG, GIF, WebP만 지원)' }, { status: 400 })
+    }
 
     // 파일 → base64
     const arrayBuffer = await file.arrayBuffer()

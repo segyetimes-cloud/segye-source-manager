@@ -61,6 +61,16 @@ export async function POST(
     description: '도움 응답 작성',
   })
 
+  // 요청자에게 알림 발송 (fire-and-forget)
+  if (helpReq.requester_id !== user.id) {
+    void (serviceClient as any).from('notifications').insert({
+      user_id: helpReq.requester_id,
+      type: 'help_response',
+      title: `💬 도움 요청에 새 응답이 달렸습니다`,
+      link_path: `/help/${requestId}`,
+    })
+  }
+
   return NextResponse.json(newResponse, { status: 201 })
 }
 
@@ -118,6 +128,15 @@ export async function PATCH(
     related_request_id: requestId,
     related_user_id: user.id,
     description: `도움 응답 채택 (${helpReq.reward_points}pt 리워드)`,
+  })
+
+  // 응답자에게 채택 알림 발송 (fire-and-forget)
+  void (serviceClient as any).from('notifications').insert({
+    user_id: response.responder_id,
+    type: 'help_accepted',
+    title: '⭐ 내 응답이 채택되었습니다',
+    body: `${helpReq.reward_points}pt 포인트가 지급되었습니다`,
+    link_path: `/help/${requestId}`,
   })
 
   return NextResponse.json({ ok: true, response_id, reward_points: helpReq.reward_points })

@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import { calcCompletenessScore, INCREMENTAL_POINT_FIELDS } from '@/lib/points'
 import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE, CAN_DELETE_SOURCE } from '@/lib/permissions'
+import { encryptNullable, decryptNullable } from '@/lib/crypto'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -67,6 +68,13 @@ export async function GET(request: NextRequest, { params }: Params) {
       source.personal_notes = null
     }
   }
+
+  // ── 암호화 필드 복호화 (열람 권한이 있는 경우에만) ────────────────────────────
+  source.phone_primary   = decryptNullable(source.phone_primary)
+  source.phone_secondary = decryptNullable(source.phone_secondary)
+  if (source.personal_notes !== null) {
+    source.personal_notes = decryptNullable(source.personal_notes)
+  }
   // ── public_notes: 모든 인증 사용자 열람 가능 (마스킹 없음) ──────────────────
 
   // 평균 유용성 점수 계산
@@ -111,6 +119,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   const updateFields: Record<string, unknown> = {}
   const editHistory: { field_name: string; old_value: string | null; new_value: string | null }[] = []
 
+  // 암호화 대상 필드: DB에는 암호화 값 저장, 이력은 원문 비교
+  const ENCRYPTED_FIELDS = new Set(['personal_notes', 'phone_primary', 'phone_secondary'])
+
   const trackableFields = [
     'full_name', 'current_organization', 'current_position', 'current_department',
     'phone_primary', 'phone_secondary', 'email_primary', 'email_secondary',
@@ -121,14 +132,20 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   for (const field of trackableFields) {
     if (body[field] !== undefined) {
-      const oldVal = (existing as Record<string, unknown>)[field]
+      // 기존 값: 암호화 필드는 복호화 후 비교
+      const rawOld = (existing as Record<string, unknown>)[field]
+      const oldVal = ENCRYPTED_FIELDS.has(field) ? decryptNullable(rawOld as string | null) : rawOld
       const newVal = body[field]
+
       if (String(oldVal ?? '') !== String(newVal ?? '')) {
-        updateFields[field] = newVal || null
+        // DB에 저장할 값: 암호화 필드는 암호화
+        updateFields[field] = ENCRYPTED_FIELDS.has(field)
+          ? encryptNullable(newVal || null)
+          : (newVal || null)
         editHistory.push({
           field_name: field,
           old_value: oldVal ? String(oldVal) : null,
-          new_value: newVal ? String(newVal) : null,
+          new_value: newVal ? String(newVal) : null,  // 이력에는 원문 저장 (접근 제어로 보호)
         })
       }
     }

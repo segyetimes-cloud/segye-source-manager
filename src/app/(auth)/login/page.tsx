@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
@@ -10,6 +10,13 @@ type Tab = 'login' | 'signup'
 export default function LoginPage() {
   const router = useRouter()
   const [tab, setTab] = useState<Tab>('login')
+  const [idleMessage, setIdleMessage] = useState(false)
+
+  useEffect(() => {
+    // window.location은 클라이언트에서만 접근 가능하므로 useEffect 내에서 처리
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('reason') === 'idle') setIdleMessage(true)
+  }, [])
 
   // 로그인 상태
   const [loginEmail, setLoginEmail] = useState('')
@@ -31,6 +38,26 @@ export default function LoginPage() {
     setLoginLoading(true)
     setLoginError('')
 
+    // ── ① 잠금 여부 선확인 ───────────────────────────────────────────────────
+    try {
+      const lockRes = await fetch(
+        `/api/auth/check-lockout?email=${encodeURIComponent(loginEmail)}`,
+        { credentials: 'same-origin' }
+      )
+      const lockData = await lockRes.json()
+      if (lockData.locked) {
+        const until = lockData.until
+          ? new Date(lockData.until).toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+          : ''
+        setLoginError(`로그인 시도가 너무 많습니다.\n${until ? until + ' 이후에 다시 시도하세요.' : '잠시 후 다시 시도하세요.'}`)
+        setLoginLoading(false)
+        return
+      }
+    } catch {
+      // 잠금 체크 실패는 무시하고 계속
+    }
+
+    // ── ② Supabase 인증 ──────────────────────────────────────────────────────
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
@@ -48,9 +75,31 @@ export default function LoginPage() {
               ? '이메일 인증이 필요합니다. 이메일을 확인해주세요.'
               : `로그인 중 오류가 발생했습니다. (${error.message})`
       )
+      // 로그인 실패 감사 기록 (fire-and-forget)
+      void fetch('/api/auth/login-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login_failed', email: loginEmail }),
+        credentials: 'same-origin',
+      })
       setLoginLoading(false)
       return
     }
+
+    // ── ③ 로그인 성공 처리 ──────────────────────────────────────────────────
+    // 감사 기록 + 이전 세션 무효화 (동시 접속 방지) — 병렬 실행
+    void Promise.all([
+      fetch('/api/auth/login-audit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'login', email: loginEmail }),
+        credentials: 'same-origin',
+      }),
+      fetch('/api/auth/session-control', {
+        method: 'POST',
+        credentials: 'same-origin',
+      }),
+    ])
 
     router.push('/dashboard')
     router.refresh()
@@ -113,343 +162,492 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex items-center justify-center px-4"
+      className="min-h-screen flex"
       style={{
-        background: 'linear-gradient(160deg, #060E1E 0%, #0D1520 40%, #0D1F3C 100%)',
+        background: 'linear-gradient(160deg, #060E1E 0%, #0D1520 50%, #0A1828 100%)',
       }}
     >
-      {/* 배경 글로우 */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* ── 왼쪽 패널 (60%) — 히어로 콘텐츠 ── */}
+      <div
+        className="hidden md:flex flex-col justify-between relative overflow-hidden"
+        style={{ width: '60%', padding: '48px 56px' }}
+      >
+        {/* 배경 글로우 */}
         <div
-          className="absolute rounded-full"
+          className="absolute rounded-full pointer-events-none"
           style={{
-            top: '15%', left: '20%',
-            width: '40vw', height: '40vw',
-            background: 'radial-gradient(circle, rgba(30,144,255,0.07) 0%, transparent 70%)',
+            top: '10%', left: '20%',
+            width: '50vw', height: '50vw',
+            background: 'radial-gradient(circle, rgba(30,144,255,0.06) 0%, transparent 70%)',
           }}
         />
         <div
-          className="absolute rounded-full"
+          className="absolute rounded-full pointer-events-none"
           style={{
-            bottom: '10%', right: '15%',
+            bottom: '15%', right: '30%',
             width: '30vw', height: '30vw',
-            background: 'radial-gradient(circle, rgba(0,212,255,0.05) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(0,212,255,0.04) 0%, transparent 70%)',
           }}
         />
-      </div>
 
-      <div className="relative w-full max-w-md">
-        {/* ── 로고 영역 ── */}
-        <div className="text-center mb-8">
-          {/* 로고 이미지 — 흰색 처리 */}
-          <div className="flex justify-center mb-4">
-            <div
+        {/* 1. 로고 영역 */}
+        <div className="flex items-center gap-3 relative z-10">
+          <div
+            style={{
+              width: '48px',
+              height: '48px',
+              borderRadius: '12px',
+              background: 'rgba(30,144,255,0.2)',
+              border: '1px solid rgba(30,144,255,0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '20px',
+            }}
+          >
+            📰
+          </div>
+          <span
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '3px',
+              color: '#4A7CC0',
+            }}
+          >
+            SEGYE ILBO
+          </span>
+        </div>
+
+        {/* 2. 메인 헤딩 */}
+        <div className="relative z-10" style={{ marginTop: 'auto', marginBottom: 'auto' }}>
+          <h1 style={{ fontSize: '64px', fontWeight: 700, lineHeight: 1.15, marginBottom: '24px' }}>
+            <span
               style={{
-                width: '90px',
-                height: '90px',
-                borderRadius: '22px',
-                background: 'linear-gradient(145deg, rgba(30,144,255,0.15) 0%, rgba(0,212,255,0.08) 100%)',
-                border: '1px solid rgba(30,144,255,0.25)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                backdropFilter: 'blur(8px)',
-                boxShadow: '0 8px 32px rgba(30,144,255,0.15)',
+                background: 'linear-gradient(135deg, #4A9EFF, #00D4FF)',
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
               }}
             >
-              <Image
-                src="/segye-logo.png"
-                alt="세계일보 로고"
-                width={60}
-                height={60}
-                style={{
-                  filter: 'brightness(0) invert(1)',
-                  opacity: 0.92,
-                }}
-              />
-            </div>
-          </div>
-
-          <h1 className="text-2xl font-bold tracking-tight" style={{ color: '#CDD5E0' }}>
-            세계일보
+              AI 취재원
+            </span>
+            <br />
+            <span style={{ color: '#FFFFFF' }}>관리 시스템</span>
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#5A7099' }}>
-            AI기반 취재원 관리시스템
+          <p
+            style={{
+              fontSize: '14px',
+              color: 'rgba(180,200,230,0.7)',
+              lineHeight: 1.7,
+              maxWidth: '380px',
+            }}
+          >
+            기자들이 보유한 취재원 정보를 안전하게 관리하고,{'\n'}
+            조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼
           </p>
         </div>
 
-        {/* ── 카드 ── */}
-        <div
-          style={{
-            background: 'rgba(12, 28, 56, 0.85)',
-            border: '1px solid rgba(30,80,160,0.35)',
-            borderRadius: '16px',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 20px 60px rgba(0,0,0,0.4)',
-          }}
-        >
-          {/* 탭 */}
+        {/* 3. 기능 카드 3개 */}
+        <div className="flex gap-3 relative z-10">
+          {/* 카드 1: 취재원 관리 */}
           <div
-            className="flex"
-            style={{ borderBottom: '1px solid rgba(30,80,160,0.3)' }}
+            style={{
+              flex: 1,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '12px',
+              padding: '16px',
+              transition: 'background 0.2s',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
           >
-            {(['login', 'signup'] as Tab[]).map(t => (
-              <button
-                key={t}
-                onClick={() => setTab(t)}
-                type="button"
-                style={{
-                  flex: 1,
-                  padding: '14px',
-                  fontSize: '14px',
-                  fontWeight: tab === t ? 600 : 400,
-                  color: tab === t ? '#4A7CC0' : '#485870',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  borderBottom: tab === t ? '2px solid #4A7CC0' : '2px solid transparent',
-                  transition: 'all 0.2s',
-                  marginBottom: '-1px',
-                }}
-              >
-                {t === 'login' ? '로그인' : '회원가입'}
-              </button>
-            ))}
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(30,144,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                marginBottom: '10px',
+              }}
+            >
+              👤
+            </div>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>취재원 관리</p>
+            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
           </div>
 
-          <div className="p-8">
-            {/* ───── 로그인 탭 ───── */}
-            {tab === 'login' && (
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                    이메일
-                  </label>
-                  <input
-                    type="email"
-                    value={loginEmail}
-                    onChange={e => setLoginEmail(e.target.value)}
-                    placeholder="name@segye.com"
-                    required
-                    style={inputStyle}
-                    onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                    onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                  />
-                </div>
+          {/* 카드 2: 정보보고 관리 (active) */}
+          <div
+            style={{
+              flex: 1,
+              background: 'rgba(30,144,255,0.1)',
+              border: '1px solid rgba(30,144,255,0.5)',
+              borderRadius: '12px',
+              padding: '16px',
+              transition: 'background 0.2s',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.15)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.1)')}
+          >
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(30,144,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                marginBottom: '10px',
+              }}
+            >
+              📋
+            </div>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>정보보고 관리</p>
+            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
+          </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                    비밀번호
-                  </label>
-                  <input
-                    type="password"
-                    value={loginPassword}
-                    onChange={e => setLoginPassword(e.target.value)}
-                    placeholder="비밀번호 입력"
-                    required
-                    style={inputStyle}
-                    onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                    onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                  />
-                </div>
-
-                {loginError && (
-                  <div
-                    className="rounded-lg p-3 text-sm"
-                    style={{
-                      background: loginError.includes('승인 대기')
-                        ? 'rgba(255,153,0,0.1)'
-                        : 'rgba(255,68,68,0.1)',
-                      color: loginError.includes('승인 대기') ? '#A87228' : '#BC5050',
-                      border: `1px solid ${loginError.includes('승인 대기') ? 'rgba(255,153,0,0.25)' : 'rgba(255,68,68,0.2)'}`,
-                      whiteSpace: 'pre-line',
-                      lineHeight: '1.6',
-                    }}
-                  >
-                    {loginError.includes('승인 대기') && <span style={{ marginRight: '6px' }}>⏳</span>}
-                    {loginError}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={loginLoading}
-                  style={{
-                    width: '100%',
-                    padding: '11px',
-                    borderRadius: '8px',
-                    fontWeight: 600,
-                    fontSize: '14px',
-                    border: 'none',
-                    cursor: loginLoading ? 'not-allowed' : 'pointer',
-                    background: loginLoading
-                      ? 'rgba(30,144,255,0.35)'
-                      : 'linear-gradient(135deg, #4A7CC0 0%, #0055CC 100%)',
-                    color: 'white',
-                    transition: 'opacity 0.2s',
-                    boxShadow: loginLoading ? 'none' : '0 4px 16px rgba(30,144,255,0.3)',
-                  }}
-                >
-                  {loginLoading ? '로그인 중...' : '로그인'}
-                </button>
-
-                <p className="text-center text-xs pt-2" style={{ color: '#384860' }}>
-                  계정 문의:{' '}
-                  <span style={{ color: '#4A7CC0' }}>관리자에게 연락하세요</span>
-                </p>
-              </form>
-            )}
-
-            {/* ───── 회원가입 탭 ───── */}
-            {tab === 'signup' && (
-              <>
-                {signupDone ? (
-                  <div className="text-center py-6 space-y-4">
-                    <div
-                      className="mx-auto w-14 h-14 rounded-full flex items-center justify-center"
-                      style={{ background: 'rgba(0,204,102,0.15)', border: '1px solid rgba(0,204,102,0.3)' }}
-                    >
-                      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
-                        <path d="M6 14l5 5 11-11" stroke="#3D9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"/>
-                      </svg>
-                    </div>
-                    <div>
-                      <p className="font-semibold" style={{ color: '#CDD5E0' }}>가입 신청 완료!</p>
-                      <p className="text-sm mt-2" style={{ color: '#687898' }}>
-                        관리자 승인 후 이메일로 안내가 발송됩니다.
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: '#485870' }}>
-                        승인까지 최대 1영업일이 소요될 수 있습니다.
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => { setSignupDone(false); setTab('login') }}
-                      style={{
-                        marginTop: '8px',
-                        padding: '9px 24px',
-                        borderRadius: '8px',
-                        fontSize: '14px',
-                        border: '1px solid #1A2838',
-                        background: 'none',
-                        color: '#4A7CC0',
-                        cursor: 'pointer',
-                      }}
-                    >
-                      로그인 화면으로
-                    </button>
-                  </div>
-                ) : (
-                  <form onSubmit={handleSignup} className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                        이름
-                      </label>
-                      <input
-                        type="text"
-                        value={signupName}
-                        onChange={e => setSignupName(e.target.value)}
-                        placeholder="홍길동"
-                        required
-                        style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                        이메일
-                      </label>
-                      <input
-                        type="email"
-                        value={signupEmail}
-                        onChange={e => setSignupEmail(e.target.value)}
-                        placeholder="name@segye.com"
-                        required
-                        style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                        비밀번호 <span style={{ color: '#384860', fontWeight: 400 }}>(8자 이상)</span>
-                      </label>
-                      <input
-                        type="password"
-                        value={signupPassword}
-                        onChange={e => setSignupPassword(e.target.value)}
-                        placeholder="비밀번호 설정"
-                        required
-                        style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
-                        비밀번호 확인
-                      </label>
-                      <input
-                        type="password"
-                        value={signupPassword2}
-                        onChange={e => setSignupPassword2(e.target.value)}
-                        placeholder="비밀번호 재입력"
-                        required
-                        style={inputStyle}
-                        onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
-                        onBlur={e => (e.target.style.borderColor = '#1A2838')}
-                      />
-                    </div>
-
-                    {signupError && (
-                      <div
-                        className="rounded-lg p-3 text-sm"
-                        style={{
-                          background: 'rgba(255,68,68,0.1)',
-                          color: '#BC5050',
-                          border: '1px solid rgba(255,68,68,0.2)',
-                        }}
-                      >
-                        {signupError}
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={signupLoading}
-                      style={{
-                        width: '100%',
-                        padding: '11px',
-                        borderRadius: '8px',
-                        fontWeight: 600,
-                        fontSize: '14px',
-                        border: 'none',
-                        cursor: signupLoading ? 'not-allowed' : 'pointer',
-                        background: signupLoading
-                          ? 'rgba(0,204,102,0.3)'
-                          : 'linear-gradient(135deg, #00AA55 0%, #008844 100%)',
-                        color: 'white',
-                        boxShadow: signupLoading ? 'none' : '0 4px 16px rgba(0,170,85,0.25)',
-                      }}
-                    >
-                      {signupLoading ? '처리 중...' : '가입 신청'}
-                    </button>
-
-                    <p className="text-center text-xs pt-1" style={{ color: '#384860' }}>
-                      가입 후 관리자 승인이 완료되어야 로그인 가능합니다
-                    </p>
-                  </form>
-                )}
-              </>
-            )}
+          {/* 카드 3: 관계망 시각화 */}
+          <div
+            style={{
+              flex: 1,
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
+              borderRadius: '12px',
+              padding: '16px',
+              transition: 'background 0.2s',
+              cursor: 'default',
+            }}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+          >
+            <div
+              style={{
+                width: '32px',
+                height: '32px',
+                borderRadius: '8px',
+                background: 'rgba(30,144,255,0.15)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                marginBottom: '10px',
+              }}
+            >
+              🕸️
+            </div>
+            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>관계망 시각화</p>
+            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
           </div>
         </div>
+      </div>
 
-        <p className="text-center text-xs mt-5" style={{ color: '#2A3A50' }}>
-          본 시스템은 사내 VPN 접속 환경에서만 이용 가능합니다
+      {/* ── 오른쪽 패널 (40%) — 폼 영역 ── */}
+      <div
+        className="w-full md:w-2/5 flex flex-col justify-center"
+        style={{
+          background: 'rgba(6,14,30,0.95)',
+          borderLeft: '1px solid rgba(30,80,160,0.2)',
+          padding: '48px 40px',
+        }}
+      >
+        {/* 브랜드 헤더 */}
+        <div className="mb-8">
+          <p style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+            세계일보{' '}
+            <span style={{ fontSize: '12px', fontWeight: 400, color: '#5A7099' }}>
+              취재원 관리시스템
+            </span>
+          </p>
+        </div>
+
+        {/* 자동 로그아웃 알림 */}
+        {idleMessage && (
+          <div style={{
+            marginBottom: '20px', padding: '12px 16px', borderRadius: '10px',
+            background: 'rgba(255,153,0,0.08)', border: '1px solid rgba(255,153,0,0.25)',
+            display: 'flex', alignItems: 'center', gap: '10px',
+          }}>
+            <span style={{ fontSize: '18px' }}>⏰</span>
+            <p style={{ fontSize: '13px', color: '#A87228', margin: 0, lineHeight: 1.5 }}>
+              장시간 활동이 없어 자동 로그아웃되었습니다.<br />
+              <span style={{ color: '#687898' }}>다시 로그인하면 계속 사용할 수 있습니다.</span>
+            </p>
+          </div>
+        )}
+
+        {/* 탭 */}
+        <div
+          className="flex"
+          style={{ borderBottom: '1px solid rgba(30,80,160,0.3)', marginBottom: '0' }}
+        >
+          {(['login', 'signup'] as Tab[]).map(t => (
+            <button
+              key={t}
+              onClick={() => setTab(t)}
+              type="button"
+              style={{
+                flex: 1,
+                padding: '14px',
+                fontSize: '14px',
+                fontWeight: tab === t ? 600 : 400,
+                color: tab === t ? '#4A7CC0' : '#485870',
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                borderBottom: tab === t ? '2px solid #4A7CC0' : '2px solid transparent',
+                transition: 'all 0.2s',
+                marginBottom: '-1px',
+              }}
+            >
+              {t === 'login' ? '로그인' : '회원가입'}
+            </button>
+          ))}
+        </div>
+
+        {/* 폼 영역 */}
+        <div style={{ paddingTop: '32px' }}>
+          {/* ───── 로그인 탭 ───── */}
+          {tab === 'login' && (
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                  이메일
+                </label>
+                <input
+                  type="email"
+                  value={loginEmail}
+                  onChange={e => setLoginEmail(e.target.value)}
+                  placeholder="name@segye.com"
+                  required
+                  style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                  onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                  비밀번호
+                </label>
+                <input
+                  type="password"
+                  value={loginPassword}
+                  onChange={e => setLoginPassword(e.target.value)}
+                  placeholder="비밀번호 입력"
+                  required
+                  style={inputStyle}
+                  onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                  onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                />
+              </div>
+
+              {loginError && (
+                <div
+                  className="rounded-lg p-3 text-sm"
+                  style={{
+                    background: loginError.includes('승인 대기')
+                      ? 'rgba(255,153,0,0.1)'
+                      : 'rgba(255,68,68,0.1)',
+                    color: loginError.includes('승인 대기') ? '#A87228' : '#BC5050',
+                    border: `1px solid ${loginError.includes('승인 대기') ? 'rgba(255,153,0,0.25)' : 'rgba(255,68,68,0.2)'}`,
+                    whiteSpace: 'pre-line',
+                    lineHeight: '1.6',
+                  }}
+                >
+                  {loginError.includes('승인 대기') && <span style={{ marginRight: '6px' }}>⏳</span>}
+                  {loginError}
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loginLoading}
+                style={{
+                  width: '100%',
+                  padding: '11px',
+                  borderRadius: '8px',
+                  fontWeight: 600,
+                  fontSize: '14px',
+                  border: 'none',
+                  cursor: loginLoading ? 'not-allowed' : 'pointer',
+                  background: loginLoading
+                    ? 'rgba(30,144,255,0.35)'
+                    : 'linear-gradient(135deg, #4A7CC0 0%, #0055CC 100%)',
+                  color: 'white',
+                  transition: 'opacity 0.2s',
+                  boxShadow: loginLoading ? 'none' : '0 4px 16px rgba(30,144,255,0.3)',
+                }}
+              >
+                {loginLoading ? '로그인 중...' : '로그인'}
+              </button>
+
+              <p className="text-center text-xs pt-2" style={{ color: '#384860' }}>
+                계정 문의:{' '}
+                <span style={{ color: '#4A7CC0' }}>관리자에게 연락하세요</span>
+              </p>
+            </form>
+          )}
+
+          {/* ───── 회원가입 탭 ───── */}
+          {tab === 'signup' && (
+            <>
+              {signupDone ? (
+                <div className="text-center py-6 space-y-4">
+                  <div
+                    className="mx-auto w-14 h-14 rounded-full flex items-center justify-center"
+                    style={{ background: 'rgba(0,204,102,0.15)', border: '1px solid rgba(0,204,102,0.3)' }}
+                  >
+                    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+                      <path d="M6 14l5 5 11-11" stroke="#3D9E6A" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                  </div>
+                  <div>
+                    <p className="font-semibold" style={{ color: '#CDD5E0' }}>가입 신청 완료!</p>
+                    <p className="text-sm mt-2" style={{ color: '#687898' }}>
+                      관리자 승인 후 이메일로 안내가 발송됩니다.
+                    </p>
+                    <p className="text-xs mt-1" style={{ color: '#485870' }}>
+                      승인까지 최대 1영업일이 소요될 수 있습니다.
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => { setSignupDone(false); setTab('login') }}
+                    style={{
+                      marginTop: '8px',
+                      padding: '9px 24px',
+                      borderRadius: '8px',
+                      fontSize: '14px',
+                      border: '1px solid #1A2838',
+                      background: 'none',
+                      color: '#4A7CC0',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    로그인 화면으로
+                  </button>
+                </div>
+              ) : (
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                      이름
+                    </label>
+                    <input
+                      type="text"
+                      value={signupName}
+                      onChange={e => setSignupName(e.target.value)}
+                      placeholder="홍길동"
+                      required
+                      style={inputStyle}
+                      onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                      onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                      이메일
+                    </label>
+                    <input
+                      type="email"
+                      value={signupEmail}
+                      onChange={e => setSignupEmail(e.target.value)}
+                      placeholder="name@segye.com"
+                      required
+                      style={inputStyle}
+                      onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                      onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                      비밀번호 <span style={{ color: '#384860', fontWeight: 400 }}>(8자 이상)</span>
+                    </label>
+                    <input
+                      type="password"
+                      value={signupPassword}
+                      onChange={e => setSignupPassword(e.target.value)}
+                      placeholder="비밀번호 설정"
+                      required
+                      style={inputStyle}
+                      onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                      onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                      비밀번호 확인
+                    </label>
+                    <input
+                      type="password"
+                      value={signupPassword2}
+                      onChange={e => setSignupPassword2(e.target.value)}
+                      placeholder="비밀번호 재입력"
+                      required
+                      style={inputStyle}
+                      onFocus={e => (e.target.style.borderColor = '#4A7CC0')}
+                      onBlur={e => (e.target.style.borderColor = '#1A2838')}
+                    />
+                  </div>
+
+                  {signupError && (
+                    <div
+                      className="rounded-lg p-3 text-sm"
+                      style={{
+                        background: 'rgba(255,68,68,0.1)',
+                        color: '#BC5050',
+                        border: '1px solid rgba(255,68,68,0.2)',
+                      }}
+                    >
+                      {signupError}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={signupLoading}
+                    style={{
+                      width: '100%',
+                      padding: '11px',
+                      borderRadius: '8px',
+                      fontWeight: 600,
+                      fontSize: '14px',
+                      border: 'none',
+                      cursor: signupLoading ? 'not-allowed' : 'pointer',
+                      background: signupLoading
+                        ? 'rgba(0,204,102,0.3)'
+                        : 'linear-gradient(135deg, #00AA55 0%, #008844 100%)',
+                      color: 'white',
+                      boxShadow: signupLoading ? 'none' : '0 4px 16px rgba(0,170,85,0.25)',
+                    }}
+                  >
+                    {signupLoading ? '처리 중...' : '가입 신청'}
+                  </button>
+
+                  <p className="text-center text-xs pt-1" style={{ color: '#384860' }}>
+                    가입 후 관리자 승인이 완료되어야 로그인 가능합니다
+                  </p>
+                </form>
+              )}
+            </>
+          )}
+        </div>
+
+        {/* 하단 안내 */}
+        <p className="text-center text-xs mt-auto pt-10" style={{ color: '#2A3A50' }}>
+          본 시스템은 사내 VPN 환경에서만 이용 가능합니다
         </p>
       </div>
     </div>
