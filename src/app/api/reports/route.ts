@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
   let query = supabaseAny
     .from('information_reports')
     .select(`
-      id, title, content, tags, visibility, author_id, created_at, updated_at,
+      id, title, content, tags, visibility, status, author_id, created_at, updated_at,
       profiles!author_id(full_name, department),
       report_sources(source_id, sources!source_id(id, full_name, current_organization))
     `, { count: 'exact' })
@@ -36,15 +36,18 @@ export async function GET(request: NextRequest) {
     query = query.eq('author_id', user.id)
   } else if (!isDesk) {
     // 일반 기자·차장: team 보고서는 같은 부서만 열람
-    // author_only는 자기 것만, desk_above는 제외, team은 같은 부서, all은 전체
+    // 비작성자에게는 status='approved' 인 보고서만 노출, 자기 것은 모든 status 표시
     if (myDept) {
       query = query.or(
-        `visibility.in.(all),` +
-        `and(visibility.eq.team,author_department.eq.${myDept}),` +
-        `author_id.eq.${user.id}`
+        `and(author_id.eq.${user.id}),` +
+        `and(status.eq.approved,visibility.in.(all)),` +
+        `and(status.eq.approved,visibility.eq.team,author_department.eq.${myDept})`
       )
     } else {
-      query = query.or(`visibility.eq.all,author_id.eq.${user.id}`)
+      query = query.or(
+        `author_id.eq.${user.id},` +
+        `and(status.eq.approved,visibility.eq.all)`
+      )
     }
   }
 

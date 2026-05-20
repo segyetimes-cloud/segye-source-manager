@@ -8,6 +8,7 @@ import ReportContentViewer from '@/components/reports/ReportContentViewer'
 import ReportCopyLogs from '@/components/reports/ReportCopyLogs'
 import ReportAllowedUsers from '@/components/reports/ReportAllowedUsers'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
+import ReportReviewActions from '@/components/reports/ReportReviewActions'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -31,7 +32,7 @@ export default async function ReportDetailPage({ params }: Params) {
   // 현재 사용자 프로필 (role 확인)
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role, full_name, department').eq('id', user.id).single()
-  const isDesk = ['admin', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
 
   // 보고서 + 수정이력 병렬 조회
   const [{ data: report }, { data: revisionsRaw }] = await Promise.all([
@@ -70,6 +71,21 @@ export default async function ReportDetailPage({ params }: Params) {
   const linkedSources = sourcesRaw.map((rs: any) => rs.sources).filter(Boolean)
   const revisions: any[] = revisionsRaw ?? []
 
+  const reportStatus = (report.status ?? 'approved') as 'draft' | 'submitted' | 'approved' | 'rejected'
+
+  const STATUS_LABEL: Record<string, string> = {
+    draft: '임시저장',
+    submitted: '검토 중',
+    approved: '승인됨',
+    rejected: '반려됨',
+  }
+  const STATUS_COLOR: Record<string, { bg: string; color: string; border: string }> = {
+    draft:     { bg: 'rgba(104,120,152,0.12)', color: '#687898', border: 'rgba(104,120,152,0.3)' },
+    submitted: { bg: 'rgba(74,124,192,0.12)',  color: '#4A7CC0', border: 'rgba(74,124,192,0.3)'  },
+    approved:  { bg: 'rgba(61,158,106,0.12)',  color: '#3D9E6A', border: 'rgba(61,158,106,0.3)'  },
+    rejected:  { bg: 'rgba(192,64,64,0.12)',   color: '#C04040', border: 'rgba(192,64,64,0.3)'   },
+  }
+
   // 수정이력이 2개 이상이면 이력 표시 (1개는 최초 작성본으로 본문에 표시)
   const hasRevisions = revisions.length > 1
 
@@ -100,7 +116,20 @@ export default async function ReportDetailPage({ params }: Params) {
               </span>
             )}
           </h1>
-          <VisibilityBadge visibility={report.visibility as ReportVisibility} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+            {/* 승인 상태 뱃지 */}
+            <span style={{
+              fontSize: '11px', fontWeight: 600,
+              background: STATUS_COLOR[reportStatus].bg,
+              color: STATUS_COLOR[reportStatus].color,
+              border: `1px solid ${STATUS_COLOR[reportStatus].border}`,
+              borderRadius: '5px', padding: '2px 8px',
+              whiteSpace: 'nowrap',
+            }}>
+              {STATUS_LABEL[reportStatus]}
+            </span>
+            <VisibilityBadge visibility={report.visibility as ReportVisibility} />
+          </div>
         </div>
 
         {/* 작성자 + 날짜 메타 */}
@@ -254,6 +283,22 @@ export default async function ReportDetailPage({ params }: Params) {
 
       {/* ── 복사 이력 추적 (데스크만 표시) ── */}
       {isDesk && <ReportCopyLogs reportId={id} />}
+
+      {/* ── 검토 요청 / 승인 / 반려 ── */}
+      {(isAuthor || isDesk) && (
+        <div className="glass-card p-4">
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '12px' }}>
+            보고서 검토
+          </h2>
+          <ReportReviewActions
+            reportId={id}
+            status={reportStatus}
+            isAuthor={isAuthor}
+            isDesk={isDesk}
+            reviewNote={report.review_note ?? null}
+          />
+        </div>
+      )}
 
       {/* 액션 버튼 (작성자 or 데스크) */}
       {canEdit && (

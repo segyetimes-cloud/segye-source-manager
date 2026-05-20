@@ -124,7 +124,7 @@ export async function GET(request: NextRequest) {
     watermark_id: watermarkId,
   })
 
-  await (supabase as any).from('audit_logs').insert({
+  void (supabase as any).from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: 'export',

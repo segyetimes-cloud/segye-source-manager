@@ -61,8 +61,8 @@ export async function GET(request: NextRequest, { params }: Params) {
     ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
     : null
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: source.sensitivity === 'private' ? 'view_private' : 'view',
@@ -148,8 +148,8 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     )
   }
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: 'update',

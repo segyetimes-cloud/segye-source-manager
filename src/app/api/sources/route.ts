@@ -70,8 +70,8 @@ export async function GET(request: NextRequest) {
   const { data, count, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: 'view',
@@ -149,8 +149,8 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: 'create',

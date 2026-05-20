@@ -91,56 +91,60 @@ export default function NewReportPage() {
     setTags(prev => prev.filter(x => x !== t))
   }
 
-  const DRAFT_KEY = 'report_draft_new'
-
-  const saveDraft = useCallback(() => {
+  const saveDraft = useCallback(async () => {
     if (!title && !content) return
     setIsSaving(true)
-    const draft = {
-      title, content, category,
-      tags, visibility,
-      savedAt: new Date().toISOString(),
-    }
     try {
-      localStorage.setItem(DRAFT_KEY, JSON.stringify(draft))
+      await fetch('/api/reports/draft', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, content, category, tags, visibility }),
+      })
       setLastSaved(new Date())
     } catch {}
     setIsSaving(false)
   }, [title, content, category, tags, visibility])
 
-  function restoreDraft() {
-    const raw = localStorage.getItem(DRAFT_KEY)
-    if (!raw) return
+  async function restoreDraft() {
     try {
-      const draft = JSON.parse(raw)
+      const res = await fetch('/api/reports/draft')
+      if (!res.ok) return
+      const data = await res.json()
+      const draft = data.draft
+      if (!draft) return
       if (draft.title !== undefined) setTitle(draft.title)
       if (draft.content !== undefined) setContent(draft.content)
       if (draft.category !== undefined) setCategory(draft.category)
       if (draft.tags !== undefined) setTags(draft.tags)
       if (draft.visibility !== undefined) setVisibility(draft.visibility)
-      setHasDraft(false)
-      setDraftInfo(null)
     } catch {}
-  }
-
-  function dismissDraft() {
-    localStorage.removeItem(DRAFT_KEY)
     setHasDraft(false)
     setDraftInfo(null)
   }
 
-  // 마운트 시 draft 확인
+  async function dismissDraft() {
+    try {
+      await fetch('/api/reports/draft', { method: 'DELETE' })
+    } catch {}
+    setHasDraft(false)
+    setDraftInfo(null)
+  }
+
+  // 마운트 시 서버 드래프트 확인
   useEffect(() => {
-    const raw = localStorage.getItem(DRAFT_KEY)
-    if (raw) {
+    async function checkDraft() {
       try {
-        const draft = JSON.parse(raw)
-        if (draft.savedAt) {
+        const res = await fetch('/api/reports/draft')
+        if (!res.ok) return
+        const data = await res.json()
+        const draft = data.draft
+        if (draft?.updated_at) {
           setHasDraft(true)
-          setDraftInfo({ savedAt: draft.savedAt })
+          setDraftInfo({ savedAt: draft.updated_at })
         }
       } catch {}
     }
+    checkDraft()
   }, [])
 
   // 내용 변경 시 2초 후 자동저장
@@ -180,7 +184,7 @@ export default function NewReportPage() {
       return
     }
 
-    localStorage.removeItem(DRAFT_KEY)
+    await fetch('/api/reports/draft', { method: 'DELETE' })
     router.push(`/reports/${data.id}`)
   }
 

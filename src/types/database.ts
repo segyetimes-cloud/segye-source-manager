@@ -296,6 +296,10 @@ export interface Database {
           content: string
           tags: string[]
           visibility: ReportVisibility
+          status: 'draft' | 'submitted' | 'approved' | 'rejected'
+          reviewer_id: string | null
+          reviewed_at: string | null
+          review_note: string | null
           is_deleted: boolean
           created_at: string
           updated_at: string

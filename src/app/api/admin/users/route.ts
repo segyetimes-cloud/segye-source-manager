@@ -78,8 +78,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: profileError.message }, { status: 500 })
   }
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     user_role: callerRole,
@@ -266,8 +266,8 @@ export async function PATCH(request: NextRequest) {
     await serviceClient.auth.admin.updateUserById(target_user_id, { ban_duration: 'none' })
   }
 
-  // 감사 로그
-  await supabase.from('audit_logs').insert({
+  // 감사 로그 (fire-and-forget)
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     user_role: (profile as any).role,

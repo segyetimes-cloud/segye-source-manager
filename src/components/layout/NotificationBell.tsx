@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
 
 interface Notification {
   id: string
@@ -28,20 +29,33 @@ export default function NotificationBell() {
   const [loading, setLoading] = useState(false)
   const panelRef = useRef<HTMLDivElement>(null)
 
-  // 30초마다 미읽은 수 폴링
-  useEffect(() => {
-    async function fetchUnread() {
-      const res = await fetch('/api/notifications')
-      if (res.ok) {
-        const data = await res.json()
-        setUnread(data.unread ?? 0)
-        setNotifications(data.notifications ?? [])
-      }
+  const fetchNotifications = useCallback(async () => {
+    const res = await fetch('/api/notifications')
+    if (res.ok) {
+      const data = await res.json()
+      setUnread(data.unread ?? 0)
+      setNotifications(data.notifications ?? [])
     }
-    fetchUnread()
-    const timer = setInterval(fetchUnread, 30_000)
-    return () => clearInterval(timer)
   }, [])
+
+  // Realtime 구독
+  useEffect(() => {
+    fetchNotifications()
+
+    const supabase = createClient()
+    const channel = supabase
+      .channel('notifications')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'notifications' },
+        () => {
+          fetchNotifications()
+        }
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchNotifications])
 
   // 패널 외부 클릭 시 닫기
   useEffect(() => {
