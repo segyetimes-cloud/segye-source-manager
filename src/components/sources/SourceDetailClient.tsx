@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
 import SecureContentViewer from '@/components/common/SecureContentViewer'
+import ProtectedText from '@/components/common/ProtectedText'
 import SourceCopyLogs from '@/components/sources/SourceCopyLogs'
 import ContactLogs from '@/components/sources/ContactLogs'
+import { extractEducationFields } from '@/components/sources/QuickFill'
 
 interface SourceNote {
   id: string
@@ -47,13 +49,20 @@ interface Props {
   relatedReports?: RelatedReport[]
 }
 
+const AUTO_FIELD_KO: Record<string, string> = {
+  exam_batch: '고시기수', university: '대학', university_major: '전공',
+  graduate_school: '대학원', high_school: '고교',
+  birthday: '생년월일', hometown_province: '출신(광역)', hometown_city: '출신(시군구)',
+  current_organization: '소속', current_position: '직책',
+}
+
 const FIELD_LABELS: Record<string, string> = {
   full_name: '이름', current_organization: '소속', current_position: '직책',
   current_department: '부서', phone_primary: '전화(주)', phone_secondary: '전화(보조)',
   email_primary: '이메일(주)', email_secondary: '이메일(보조)', birthday: '생년월일',
   university: '대학', high_school: '고교', exam_batch: '고시기수',
   hometown_province: '출신지역', visibility: '공개범위', sensitivity: '민감도',
-  personal_notes: '정보',
+  on_record_status: '취재 동의', public_notes: '공개 정보', personal_notes: '민감 정보',
 }
 
 function ScoreBadge({ score }: { score: number }) {
@@ -220,6 +229,8 @@ export default function SourceDetailClient({
   const [posForm, setPosForm] = useState(EMPTY_POS)
   const [posSubmitting, setPosSubmitting] = useState(false)
   const [notes, setNotes] = useState<SourceNote[]>(initialNotes)
+  const [extractApplied, setExtractApplied] = useState(false)
+  const [extracting, setExtracting] = useState(false)
   const [noteContent, setNoteContent] = useState('')
   const [noteSensitive, setNoteSensitive] = useState(false)
   const [noteSubmitting, setNoteSubmitting] = useState(false)
@@ -229,6 +240,46 @@ export default function SourceDetailClient({
 
   const canEdit = isOwner || isAdmin
   const showPrivate = hasPrivateAccess || isOwner
+
+  // 정보(source_notes)와 notes 필드에서 구조화 가능한 항목 자동 감지
+  const autoExtractFields = useMemo(() => {
+    if (!canEdit || extractApplied) return null
+    const s = source as any
+    const texts: string[] = []
+    if (s.personal_notes) texts.push(s.personal_notes)
+    if (s.public_notes) texts.push(s.public_notes)
+    for (const note of initialNotes) texts.push(note.content)
+    const combined = texts.join('\n')
+    if (combined.length < 15) return null
+    const ex = extractEducationFields(combined)
+    const fillable: Record<string, string> = {}
+    if (ex.exam_batch            && !s.exam_batch)            fillable.exam_batch            = ex.exam_batch
+    if (ex.university            && !s.university)            fillable.university            = ex.university
+    if (ex.university_major      && !s.university_major)      fillable.university_major      = ex.university_major
+    if (ex.graduate_school       && !s.graduate_school)       fillable.graduate_school       = ex.graduate_school
+    if (ex.high_school           && !s.high_school)           fillable.high_school           = ex.high_school
+    if (ex.birthday              && !s.birthday)              fillable.birthday              = ex.birthday
+    if (ex.hometown_province     && !s.hometown_province)     fillable.hometown_province     = ex.hometown_province
+    if (ex.hometown_city         && !s.hometown_city)         fillable.hometown_city         = ex.hometown_city
+    if (ex.current_organization  && !s.current_organization)  fillable.current_organization  = ex.current_organization
+    if (ex.current_position      && !s.current_position)      fillable.current_position      = ex.current_position
+    return Object.keys(fillable).length > 0 ? fillable : null
+  }, [source, initialNotes, canEdit, extractApplied]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleAutoExtract() {
+    if (!autoExtractFields) return
+    setExtracting(true)
+    const res = await fetch(`/api/sources/${source.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(autoExtractFields),
+    })
+    if (res.ok) {
+      setExtractApplied(true)
+      router.refresh()
+    }
+    setExtracting(false)
+  }
 
   async function handleAddPosition(e: React.FormEvent) {
     e.preventDefault()
@@ -355,11 +406,7 @@ export default function SourceDetailClient({
       <div className="flex flex-col gap-1">
         <span className="text-xs" style={{ color: '#485870' }}>{icon} {label}</span>
         {href ? (
-          <a href={href} style={{ color: '#4A7CC0', fontSize: '14px', fontWeight: 500, textDecoration: 'none' }}
-            onMouseEnter={e => (e.currentTarget.style.textDecoration = 'underline')}
-            onMouseLeave={e => (e.currentTarget.style.textDecoration = 'none')}>
-            {value}
-          </a>
+          <ProtectedText text={value} href={href} fontSize={14} fontWeight={500} color="#4A7CC0" />
         ) : (
           <span className="text-sm font-medium" style={{ color: '#CDD5E0' }}>{value}</span>
         )}
@@ -471,6 +518,22 @@ export default function SourceDetailClient({
               )}
 
               <ScoreBadge score={source.completeness_score} />
+              {(source as any).on_record_status && (() => {
+                const s = (source as any).on_record_status as string
+                const cfg = s === 'on_record'
+                  ? { icon: '✅', label: '온더레코드', bg: 'rgba(61,158,106,0.12)', color: '#3D9E6A', border: 'rgba(61,158,106,0.3)' }
+                  : s === 'background_only'
+                  ? { icon: '🟡', label: '백그라운드', bg: 'rgba(184,148,40,0.12)', color: '#A87228', border: 'rgba(184,148,40,0.3)' }
+                  : { icon: '🔴', label: '오프더레코드', bg: 'rgba(192,64,64,0.12)', color: '#C04040', border: 'rgba(192,64,64,0.3)' }
+                return (
+                  <span style={{
+                    fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                    background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
+                  }}>
+                    {cfg.icon} {cfg.label}
+                  </span>
+                )
+              })()}
             </div>
           </div>
         </div>
@@ -498,6 +561,39 @@ export default function SourceDetailClient({
           )}
         </div>
       </div>
+
+      {/* 정보에서 구조화 가능한 항목 자동 감지 배너 */}
+      {canEdit && autoExtractFields && (
+        <div style={{
+          padding: '12px 16px', borderRadius: '10px',
+          background: 'rgba(61,158,106,0.07)', border: '1px solid rgba(61,158,106,0.3)',
+          display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap',
+        }}>
+          <span style={{ fontSize: '14px', color: '#3D9E6A' }}>✦</span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <p style={{ fontSize: '12px', fontWeight: 600, color: '#3D9E6A', margin: 0 }}>
+              정보란에서 학력·소속 등 구조화 가능한 항목이 발견됐습니다
+            </p>
+            <p style={{ fontSize: '11px', color: '#485870', marginTop: '2px' }}>
+              {Object.entries(autoExtractFields)
+                .map(([k, v]) => `${AUTO_FIELD_KO[k] ?? k}: ${v}`)
+                .join(' · ')}
+            </p>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+            <button type="button" onClick={handleAutoExtract} disabled={extracting}
+              style={{ fontSize: '12px', fontWeight: 600, padding: '6px 14px', borderRadius: '6px',
+                background: extracting ? '#2A5A3A' : '#3D9E6A', color: '#fff', border: 'none', cursor: 'pointer' }}>
+              {extracting ? '적용 중...' : '해당 필드에 적용'}
+            </button>
+            <button type="button" onClick={() => setExtractApplied(true)}
+              style={{ fontSize: '12px', padding: '6px 10px', borderRadius: '6px',
+                background: 'none', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
+              무시
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* 민감정보 접근 안내 (공유 목록이고 민감정보이고 권한 없을 때) */}
       {source.visibility === 'shared' && source.sensitivity === 'private' && !showPrivate && (
@@ -534,7 +630,7 @@ export default function SourceDetailClient({
       {/* 기본 정보 */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>👤 기본 정보 · 연락처</h2>
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
           {infoCard('전화번호', source.phone_primary, '📞')}
           {infoCard('이메일', source.email_primary, '📧')}
           {infoCard('보조전화', source.phone_secondary, '📞')}
@@ -560,7 +656,7 @@ export default function SourceDetailClient({
       {/* 학력 */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력 / 이력</h2>
-        <div className="grid grid-cols-3 gap-5">
+        <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
           {infoCard('고교', source.high_school, '🏫')}
           {infoCard('대학', source.university, '🎓')}
           {infoCard('전공', source.university_major, '📚')}
@@ -698,30 +794,48 @@ export default function SourceDetailClient({
         )}
       </div>
 
-      {/* 정보 섹션 (민감 정보 포함 — 공유 취재원) */}
+      {/* ── 공개 정보 섹션 (모든 사용자) ─────────────────────────────────────── */}
+      <div className="glass-card p-5">
+        <h2 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
+          📝 공개 정보
+          <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
+        </h2>
+        {(source as any).public_notes ? (
+          <SecureContentViewer
+            apiPath={`/api/sources/${source.id}/copy-log`}
+            content={(source as any).public_notes}
+            userId={userId}
+            userFullName={userFullName}
+            userDepartment={userDepartment ?? null}
+          />
+        ) : (
+          <p className="text-sm" style={{ color: '#485870' }}>
+            등록된 공개 정보가 없습니다.
+            {canEdit && <span> <a href={`/sources/${source.id}/edit`} style={{ color: '#4A7CC0' }}>수정</a>에서 추가하세요.</span>}
+          </p>
+        )}
+      </div>
+
+      {/* ── 정보 섹션 (민감 정보 포함 — 공유 취재원) ──────────────────────────── */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
-              📝 정보
-              {source.visibility === 'shared' && (
-                <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>
-                  여러 기자가 추가한 정보 · 작성자 확인 가능
-                </span>
-              )}
+              🔒 민감 정보
+              <span className="text-xs ml-2 font-normal" style={{ color: '#A87228' }}>차장 이상 열람 · 기자는 승인 필요</span>
             </h2>
           </div>
         </div>
 
-        {/* personal_notes — 소유자/차장이상: 항상 표시, 기자: 승인 필요 */}
+        {/* personal_notes(민감 정보) — 차장이상/승인된 기자: 표시 */}
         {canSeePersonalNotes && source.personal_notes && (
           <div className="mb-4 p-4 rounded-lg"
             style={{
-              background: isOwner ? 'rgba(255,215,0,0.05)' : 'rgba(0,212,255,0.04)',
-              border: `1px solid ${isOwner ? 'rgba(255,215,0,0.15)' : 'rgba(0,212,255,0.15)'}`,
+              background: 'rgba(255,153,0,0.04)',
+              border: '1px solid rgba(255,153,0,0.2)',
             }}>
-            <p className="text-xs font-semibold mb-2" style={{ color: isOwner ? '#7E6E48' : '#3A90A8' }}>
-              {isOwner ? '📌 내 정보 (등록자 본인)' : '📌 정보'}
+            <p className="text-xs font-semibold mb-2" style={{ color: '#A87228' }}>
+              {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
             </p>
             <SecureContentViewer
               apiPath={`/api/sources/${source.id}/copy-log`}
@@ -733,22 +847,30 @@ export default function SourceDetailClient({
           </div>
         )}
 
-        {/* 기자가 정보란 열람 권한 없을 때 — 신청 유도 */}
-        {!isOwner && !canSeePersonalNotes && userRole === 'reporter' && (
+        {/* 차장 이상이지만 민감 정보 없을 때 */}
+        {canSeePersonalNotes && !source.personal_notes && (
+          <p className="text-sm mb-4" style={{ color: '#485870' }}>
+            등록된 민감 정보가 없습니다.
+            {canEdit && <span> <a href={`/sources/${source.id}/edit`} style={{ color: '#A87228' }}>수정</a>에서 추가하세요.</span>}
+          </p>
+        )}
+
+        {/* 기자가 민감 정보 열람 권한 없을 때 — 신청 유도 */}
+        {!isOwner && !canSeePersonalNotes && (
           <div className="mb-4 p-4 rounded-lg flex items-start gap-3"
-            style={{ background: 'rgba(30,144,255,0.04)', border: '1px solid rgba(30,144,255,0.15)' }}>
+            style={{ background: 'rgba(255,153,0,0.04)', border: '1px solid rgba(255,153,0,0.2)' }}>
             <span style={{ fontSize: '18px' }}>🔒</span>
             <div className="flex-1">
-              <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>정보란은 차장/데스크 이상만 열람 가능합니다</p>
+              <p className="text-xs font-semibold" style={{ color: '#A87228' }}>민감 정보는 차장/데스크 이상만 열람 가능합니다</p>
               <p className="text-xs mt-1" style={{ color: '#687898' }}>
-                데스크 또는 슈퍼관리자의 승인을 받으면 열람할 수 있습니다.
+                데스크 승인을 받으면 열람할 수 있습니다.
               </p>
               {!showApprovalForm ? (
                 <button
                   onClick={() => setShowApprovalForm(true)}
                   className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: 'rgba(30,144,255,0.12)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.3)', cursor: 'pointer' }}>
-                  정보란 열람 신청
+                  style={{ background: 'rgba(255,153,0,0.12)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                  민감 정보 열람 신청
                 </button>
               ) : (
                 <div className="mt-2 space-y-2">
@@ -759,7 +881,7 @@ export default function SourceDetailClient({
                   <div className="flex gap-2">
                     <button onClick={handleApprovalRequest}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ background: '#4A7CC0', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
+                      style={{ background: '#A87228', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
                     <button onClick={() => setShowApprovalForm(false)}
                       className="px-3 py-1.5 rounded-lg text-xs"
                       style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>취소</button>
@@ -770,7 +892,16 @@ export default function SourceDetailClient({
           </div>
         )}
 
-        {/* 잠긴 민감 정보 알림 */}
+      </div>
+
+      {/* ── 정보 노트 섹션 (복수 작성자) ─────────────────────────────────────── */}
+      <div className="glass-card p-5">
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>
+          📝 정보 노트
+          <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>여러 기자가 추가한 정보 · 공개/민감 구분</span>
+        </h2>
+
+        {/* 잠긴 민감 노트 알림 */}
         {lockedNotesCount > 0 && !showPrivate && (
           <div className="mb-3 p-3 rounded-lg flex items-center gap-3"
             style={{ background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.2)' }}>
@@ -795,8 +926,8 @@ export default function SourceDetailClient({
         )}
 
         {/* ── 통합 정보 (중복 제거) — 최상단 표시 ─────────────────────────── */}
-        {notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove).length > 1 && (() => {
-          const visibleNotes = notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove)
+        {notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove || n.profiles?.id === userId).length > 1 && (() => {
+          const visibleNotes = notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove || n.profiles?.id === userId)
           const unified = buildUnifiedNotes(visibleNotes)
           if (!unified) return null
           const authorMap = new Map<string, { name: string; dept: string | null; count: number }>()
@@ -840,9 +971,9 @@ export default function SourceDetailClient({
         })()}
 
         {/* ── 개별 정보 카드 (작성자별) ─────────────────────────────────── */}
-        {notes.length > 0 ? (
+        {notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove || n.profiles?.id === userId).length > 0 ? (
           <div className="space-y-3">
-            {notes.map(note => (
+            {notes.filter(n => !n.is_sensitive || isAdmin || isDeputyOrAbove || n.profiles?.id === userId).map(note => (
               <NoteItem
                 key={note.id}
                 note={note}
@@ -857,82 +988,78 @@ export default function SourceDetailClient({
           </div>
         ) : (
           <p className="text-sm" style={{ color: '#485870' }}>
-            아직 입력된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.
+            아직 추가된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.
           </p>
         )}
 
         {/* ── 정보 추가 폼 ───────────────────────────────────────────────── */}
-        {source.visibility === 'shared' && (
-          <form onSubmit={handleAddNote} className="mt-4 pt-4 space-y-2" style={{ borderTop: '1px solid #1A2838' }}>
+        <form onSubmit={handleAddNote} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A2838' }}>
+          <div className="flex items-center justify-between">
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>
               + 정보 추가 <span style={{ color: '#7E6E48' }}>+10pt</span>
             </p>
-            <textarea
-              value={noteContent}
-              onChange={e => setNoteContent(e.target.value)}
-              placeholder="친분 관계, 성격, 인터뷰 팁, 가족 관계, 학연 등..."
-              rows={3}
-              style={{ width: '100%', background: '#182035', border: '1px solid #1A2838',
-                color: '#CDD5E0', borderRadius: '8px', padding: '10px 12px',
-                fontSize: '14px', resize: 'vertical', outline: 'none' }}
-            />
-            <div className="flex items-center justify-between">
-              <label className="flex items-center gap-2 text-xs cursor-pointer" style={{ color: '#687898' }}>
-                <input type="checkbox" checked={noteSensitive} onChange={e => setNoteSensitive(e.target.checked)}
-                  style={{ accentColor: '#A87228' }} />
-                <span>⚠️ 민감 정보로 표시</span>
-              </label>
-              <button type="submit" disabled={noteSubmitting || !noteContent.trim()}
-                className="px-4 py-1.5 rounded-lg text-xs font-semibold"
+            {/* 공개/민감 토글 */}
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+              <button
+                type="button"
+                onClick={() => setNoteSensitive(false)}
+                className="px-3 py-1 text-xs font-medium transition-all"
                 style={{
-                  background: (noteSubmitting || !noteContent.trim()) ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
-                  color: 'white', border: 'none',
-                  cursor: (noteSubmitting || !noteContent.trim()) ? 'not-allowed' : 'pointer',
+                  background: !noteSensitive ? 'rgba(61,158,106,0.15)' : 'transparent',
+                  color: !noteSensitive ? '#3D9E6A' : '#485870',
+                  border: 'none', cursor: 'pointer',
                 }}>
-                {noteSubmitting ? '저장 중...' : '등록 (+10pt)'}
+                📢 공개
+              </button>
+              <div style={{ width: '1px', background: '#1A2838' }} />
+              <button
+                type="button"
+                onClick={() => setNoteSensitive(true)}
+                className="px-3 py-1 text-xs font-medium transition-all"
+                style={{
+                  background: noteSensitive ? 'rgba(255,153,0,0.15)' : 'transparent',
+                  color: noteSensitive ? '#A87228' : '#485870',
+                  border: 'none', cursor: 'pointer',
+                }}>
+                🔒 민감
               </button>
             </div>
-          </form>
-        )}
-      </div>
-
-      {/* 개인 목록의 정보 (소유자 또는 차장 이상만) */}
-      {source.visibility === 'personal' && canSeePersonalNotes && (
-        <div className="glass-card p-5"
-          style={{ border: `1px solid ${isOwner ? 'rgba(255,215,0,0.15)' : 'rgba(0,212,255,0.15)'}` }}>
-          <h2 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
-            📝 정보
-            <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>
-              {isOwner ? '나에게만 보임' : '차장 이상 열람 가능'}
-            </span>
-          </h2>
-          {source.personal_notes ? (
-            <SecureContentViewer
-              apiPath={`/api/sources/${source.id}/copy-log`}
-              content={source.personal_notes}
-              userId={userId}
-              userFullName={userFullName}
-              userDepartment={userDepartment ?? null}
-            />
-          ) : (
-            <p className="text-sm" style={{ color: '#485870' }}>
-              {isOwner ? '정보 없음 — 수정 버튼을 눌러 추가하세요' : '등록된 정보가 없습니다'}
-            </p>
-          )}
-        </div>
-      )}
-      {/* 기자가 개인 목록 취재원의 정보를 보려고 할 때 */}
-      {source.visibility === 'personal' && !canSeePersonalNotes && userRole === 'reporter' && (
-        <div className="glass-card p-5" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
-          <h2 className="text-sm font-semibold mb-2" style={{ color: '#CDD5E0' }}>📝 정보</h2>
-          <div className="flex items-center gap-2 p-3 rounded-lg" style={{ background: 'rgba(30,144,255,0.05)' }}>
-            <span>🔒</span>
-            <p className="text-xs" style={{ color: '#687898' }}>
-              정보란은 차장 이상만 열람 가능합니다. 데스크 승인 후 열람할 수 있습니다.
-            </p>
           </div>
-        </div>
-      )}
+          <p className="text-xs" style={{ color: '#485870', marginTop: '-4px' }}>
+            {noteSensitive
+              ? '🔒 민감 정보 — 차장 이상과 본인만 열람 가능합니다'
+              : '📢 공개 정보 — 편집국 전원이 열람할 수 있습니다'}
+          </p>
+          <textarea
+            value={noteContent}
+            onChange={e => setNoteContent(e.target.value)}
+            placeholder={noteSensitive
+              ? '차장 이상만 볼 수 있는 내용 (친분 관계, 개인 성향, 가족 정보 등)...'
+              : '편집국 전체와 공유할 내용 (전문 분야, 인터뷰 팁, 최근 동향 등)...'}
+            rows={3}
+            style={{
+              width: '100%', resize: 'vertical', outline: 'none', fontSize: '14px',
+              padding: '10px 12px', borderRadius: '8px', color: '#CDD5E0',
+              background: '#182035',
+              border: `1px solid ${noteSensitive ? 'rgba(255,153,0,0.3)' : '#1A2838'}`,
+            }}
+          />
+          <div className="flex justify-end">
+            <button type="submit" disabled={noteSubmitting || !noteContent.trim()}
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold"
+              style={{
+                background: (noteSubmitting || !noteContent.trim()) ? '#1A2838'
+                  : noteSensitive ? 'rgba(255,153,0,0.2)' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+                color: (noteSubmitting || !noteContent.trim()) ? '#485870'
+                  : noteSensitive ? '#A87228' : 'white',
+                border: noteSensitive ? '1px solid rgba(255,153,0,0.4)' : 'none',
+                cursor: (noteSubmitting || !noteContent.trim()) ? 'not-allowed' : 'pointer',
+              }}>
+              {noteSubmitting ? '저장 중...' : `${noteSensitive ? '🔒 민감 정보' : '📢 공개 정보'} 등록 (+10pt)`}
+            </button>
+          </div>
+        </form>
+      </div>
 
       {/* 유용성 평가 */}
       {!isOwner && (
@@ -1023,7 +1150,7 @@ export default function SourceDetailClient({
       )}
 
       {/* 연락 이력 타임라인 */}
-      <ContactLogs sourceId={source.id} currentUserId={userId} />
+      <ContactLogs sourceId={source.id} currentUserId={userId} userRole={userRole} />
 
       {/* 등록자 정보 */}
       <div className="flex items-center gap-2 text-xs" style={{ color: '#485870' }}>

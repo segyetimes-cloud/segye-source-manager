@@ -13,12 +13,24 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data } = await supabaseAny
+  // 역할 확인 — 차장 이상은 모든 민감 노트 열람 가능
+  const { data: profile } = await supabaseAny
+    .from('profiles').select('role').eq('id', user.id).single()
+  const isDeputyOrAbove = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin']
+    .includes(profile?.role ?? '')
+
+  let query = supabaseAny
     .from('source_notes')
     .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
     .eq('source_id', id)
     .order('created_at', { ascending: true })
 
+  // 차장 미만: 공개 노트 + 자신이 직접 작성한 민감 노트만 반환
+  if (!isDeputyOrAbove) {
+    query = query.or(`is_sensitive.eq.false,author_id.eq.${user.id}`)
+  }
+
+  const { data } = await query
   return NextResponse.json(data ?? [])
 }
 

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import type { Profile } from '@/types/database'
+import NotificationBell from './NotificationBell'
 
 const navItems = [
   {
@@ -217,8 +218,14 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         )}
       </nav>
 
-      {/* 하단: 로그아웃 */}
+      {/* 하단: 알림 + 로그아웃 */}
       <div className="px-3 py-2" style={{ borderTop: '1px solid #1A2838' }}>
+        {/* 알림 벨 (데스크탑) */}
+        <div className="flex items-center gap-2 px-3 py-1.5 mb-1 rounded-lg"
+          style={{ color: '#687898' }}>
+          <NotificationBell />
+          <span style={{ fontSize: '13px', color: '#687898' }}>알림</span>
+        </div>
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm w-full transition-all"

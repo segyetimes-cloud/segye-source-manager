@@ -17,6 +17,14 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
   const supabaseAny = supabase as any
 
+  // 현재 사용자 역할·부서 조회
+  const { data: myProfile } = await supabaseAny
+    .from('profiles').select('role, department').eq('id', user.id).single()
+  const myDept: string | null = myProfile?.department ?? null
+  const myRole: string = myProfile?.role ?? 'reporter'
+  const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(myRole)
+  const isAdminRole = myRole === 'admin'
+
   const pageSize = 20
   const pageNum = parseInt(page)
 
@@ -33,6 +41,35 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
   if (tab === 'mine') {
     query = query.eq('author_id', user.id)
+  } else if (isAboveAdmin) {
+    // 부국장 이상: 필터 없음 — 전체 열람
+  } else if (isAdminRole) {
+    // 부장: 내 보고서 + 전체공개 + 소속 부서 보고서
+    if (myDept) {
+      const safeDept = `"${myDept.replace(/"/g, '')}"`
+      query = query.or(
+        `author_id.eq.${user.id},` +
+        `visibility.eq.all,` +
+        `and(visibility.in.(desk_above,team),author_department.eq.${safeDept})`
+      )
+    } else {
+      query = query.or(`author_id.eq.${user.id},visibility.eq.all`)
+    }
+  } else {
+    // 기자·차장: 승인된 보고서 + 소속 부서 팀공개 + 내 보고서
+    if (myDept) {
+      const safeDept = `"${myDept.replace(/"/g, '')}"`
+      query = query.or(
+        `author_id.eq.${user.id},` +
+        `and(status.eq.approved,visibility.eq.all),` +
+        `and(status.eq.approved,visibility.eq.team,author_department.eq.${safeDept})`
+      )
+    } else {
+      query = query.or(
+        `author_id.eq.${user.id},` +
+        `and(status.eq.approved,visibility.eq.all)`
+      )
+    }
   }
 
   if (q) {

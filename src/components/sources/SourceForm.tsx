@@ -1,65 +1,22 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Source } from '@/types/database'
-import QuickFill from '@/components/sources/QuickFill'
+import QuickFill, { extractEducationFields, type FillData } from '@/components/sources/QuickFill'
+import { calcCompletenessScore, calcRegistrationPoints, calcNoteScore, calcTotalScore } from '@/lib/points'
 
 interface SourceFormProps {
   mode: 'create' | 'edit'
   initialData?: Partial<Source>
 }
 
-// ── 완성도 점수 계산 (새 기준) ────────────────────────────────────────────────
-// 기본정보 20점 + 연락처 20점 + 학력 20점 = 최대 60점 (등록 시)
-// 정보(source_notes) 40점은 등록 후 별도 반영
-//
-// [기본정보 20점]  이름 5 · 소속 8 · 직책 5 · 생년월일 2
-// [연락처  20점]  전화(주) 13 · 이메일(주) 7
-// [학력    20점]  대학 8 · 고교 6 · 전공 3 · 대학원 2 · 고시기수 1
-export function calcBaseScore(data: Partial<Record<string, unknown>>): number {
-  let s = 0
-  // 기본정보
-  if (data.full_name)             s += 5
-  if (data.current_organization)  s += 8
-  if (data.current_position)      s += 5
-  if (data.birthday)              s += 2
-  // 연락처
-  if (data.phone_primary)         s += 13
-  if (data.email_primary)         s += 7
-  // 학력
-  if (data.university)            s += 8
-  if (data.high_school)           s += 6
-  if (data.university_major)      s += 3
-  if (data.graduate_school)       s += 2
-  if (data.exam_batch)            s += 1
-  return s   // 최대 60
-}
+// lib/points.ts 에서 가져온 함수를 하위 호환 이름으로 재export
+export { calcCompletenessScore as calcBaseScore, calcNoteScore, calcTotalScore }
 
-// 정보 점수: 작성자 수 기준 (별도 계산 필요)
-// authors: 정보를 입력한 고유 작성자 수
-export function calcNoteScore(authorCount: number): number {
-  if (authorCount >= 2) return 40
-  if (authorCount === 1) return 20
-  return 0
-}
-
-export function calcTotalScore(data: Partial<Record<string, unknown>>, authorCount = 0): number {
-  return calcBaseScore(data) + calcNoteScore(authorCount)
-}
-
-// 폼 전용 별칭 (하위 호환)
-function calcScore(data: Partial<Record<string, unknown>>): number {
-  return calcBaseScore(data)
-}
-
-// 포인트 계산 (등록 보상용)
-function calcFieldPoints(data: Partial<Record<string, unknown>>): number {
-  const s = calcBaseScore(data)
-  if (s >= 55) return 30
-  if (s >= 35) return 15
-  return 5
-}
+// 폼 내부 별칭
+const calcScore = calcCompletenessScore
+const calcFieldPoints = calcRegistrationPoints
 
 const PROVINCES = [
   '서울', '부산', '대구', '인천', '광주', '대전', '울산', '세종',
@@ -74,7 +31,7 @@ const FIELD_LABELS: Record<string, string> = {
   hometown_province: '고향(광역)', hometown_city: '고향(시군구)',
   high_school: '고등학교', university: '대학', university_major: '전공',
   graduate_school: '대학원', exam_batch: '시험/기수', tags: '태그',
-  visibility: '공개 범위', sensitivity: '민감도', personal_notes: '정보(내 메모)',
+  visibility: '공개 범위', sensitivity: '민감도', on_record_status: '취재 동의', public_notes: '공개 정보', personal_notes: '민감 정보',
   sns_twitter: 'SNS(트위터)', sns_facebook: 'SNS(페이스북)',
 }
 
@@ -106,6 +63,53 @@ function formatVal(key: string, val: unknown): string {
   return String(val)
 }
 
+const FIELD_KO: Record<string, string> = {
+  exam_batch: '고시/기수', university: '대학', university_major: '전공',
+  graduate_school: '대학원', high_school: '고교',
+  birthday: '생년월일', hometown_province: '출신(광역)', hometown_city: '출신(시군구)',
+  current_organization: '소속', current_position: '직책',
+}
+
+function NotesExtractBanner({
+  hint, onApply, onDismiss,
+}: {
+  hint: Record<string, string | undefined> | null
+  onApply: () => void
+  onDismiss: () => void
+}) {
+  if (!hint || Object.keys(hint).filter(k => hint[k]).length === 0) return null
+  return (
+    <div style={{
+      marginTop: '8px', padding: '10px 12px', borderRadius: '8px',
+      background: 'rgba(61,158,106,0.08)', border: '1px solid rgba(61,158,106,0.3)',
+      display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap',
+    }}>
+      <span style={{ fontSize: '13px' }}>✦</span>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: '#3D9E6A' }}>학력·기수 감지 — 학력 필드에 채울까요?&nbsp;</span>
+        <span style={{ fontSize: '11px', color: '#485870' }}>
+          {Object.entries(hint)
+            .filter(([, v]) => v)
+            .map(([k, v]) => `${FIELD_KO[k] ?? k}: ${v}`)
+            .join(' · ')}
+        </span>
+      </div>
+      <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+        <button type="button" onClick={onApply}
+          style={{ fontSize: '12px', padding: '4px 10px', borderRadius: '6px',
+            background: '#3D9E6A', color: '#fff', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+          적용
+        </button>
+        <button type="button" onClick={onDismiss}
+          style={{ fontSize: '12px', padding: '4px 8px', borderRadius: '6px',
+            background: 'none', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
+          무시
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
@@ -114,6 +118,12 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingPayload, setPendingPayload] = useState<Record<string, unknown> | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
+
+  // 정보 창 붙여넣기 감지 상태
+  const [notesHint, setNotesHint] = useState<{
+    fields: Partial<ReturnType<typeof extractEducationFields>>
+    source: 'public_notes' | 'personal_notes'
+  } | null>(null)
 
   const [form, setForm] = useState({
     full_name: initialData?.full_name ?? '',
@@ -135,6 +145,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     tags: initialData?.tags ?? [] as string[],
     visibility: 'shared' as 'personal' | 'shared',
     sensitivity: initialData?.sensitivity ?? 'public' as 'public' | 'private',
+    on_record_status: (initialData as any)?.on_record_status ?? '' as '' | 'on_record' | 'background_only' | 'anonymous',
+    public_notes: (initialData as any)?.public_notes ?? '',
     personal_notes: initialData?.personal_notes ?? '',
     sns_twitter: (initialData?.sns_links as Record<string, string> | undefined)?.twitter ?? '',
     sns_facebook: (initialData?.sns_links as Record<string, string> | undefined)?.facebook ?? '',
@@ -144,6 +156,34 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const pts = calcFieldPoints(form)
   const scoreColor = score >= 55 ? '#3D9E6A' : score >= 35 ? '#A87228' : '#C04040'
   const isPersonal = false
+
+  // 편집 모드 진입 시 기존 notes에서 학력·기수 필드 감지
+  useEffect(() => {
+    if (mode !== 'edit') return
+    const sources: Array<{ text: string; source: 'public_notes' | 'personal_notes' }> = [
+      { text: form.public_notes,   source: 'public_notes' },
+      { text: form.personal_notes, source: 'personal_notes' },
+    ]
+    for (const { text, source } of sources) {
+      if (!text || text.length < 15) continue
+      const extracted = extractEducationFields(text)
+      const newFields: Partial<ReturnType<typeof extractEducationFields>> = {}
+      if (extracted.exam_batch            && !form.exam_batch)            newFields.exam_batch            = extracted.exam_batch
+      if (extracted.university            && !form.university)            newFields.university            = extracted.university
+      if (extracted.university_major      && !form.university_major)      newFields.university_major      = extracted.university_major
+      if (extracted.graduate_school       && !form.graduate_school)       newFields.graduate_school       = extracted.graduate_school
+      if (extracted.high_school           && !form.high_school)           newFields.high_school           = extracted.high_school
+      if (extracted.birthday              && !form.birthday)              newFields.birthday              = extracted.birthday
+      if (extracted.hometown_province     && !form.hometown_province)     newFields.hometown_province     = extracted.hometown_province
+      if (extracted.hometown_city         && !form.hometown_city)         newFields.hometown_city         = extracted.hometown_city
+      if (extracted.current_organization  && !form.current_organization)  newFields.current_organization  = extracted.current_organization
+      if (extracted.current_position      && !form.current_position)      newFields.current_position      = extracted.current_position
+      if (Object.keys(newFields).length > 0) {
+        setNotesHint({ fields: newFields, source })
+        break
+      }
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   function set(field: string, value: unknown) {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -163,16 +203,69 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     }))
   }
 
-  // QuickFill 전용 (이름·소속·직책·전화·이메일)
-  function handleQuickFill(data: { full_name?: string; current_organization?: string; current_position?: string; phone?: string; email?: string }) {
+  // QuickFill 전용
+  function handleQuickFill(data: FillData) {
     setForm(prev => ({
       ...prev,
       full_name:            data.full_name            ?? prev.full_name,
       current_organization: data.current_organization ?? prev.current_organization,
       current_position:     data.current_position     ?? prev.current_position,
+      current_department:   data.current_department   ?? prev.current_department,
       phone_primary:        data.phone                ?? prev.phone_primary,
+      phone_secondary:      data.phone_secondary      ?? prev.phone_secondary,
       email_primary:        data.email                ?? prev.email_primary,
+      email_secondary:      data.email_secondary      ?? prev.email_secondary,
+      exam_batch:           data.exam_batch           ?? prev.exam_batch,
+      university:           data.university           ?? prev.university,
+      university_major:     data.university_major     ?? prev.university_major,
+      graduate_school:      data.graduate_school      ?? prev.graduate_school,
+      high_school:          data.high_school          ?? prev.high_school,
+      birthday:             data.birthday             ?? prev.birthday,
+      hometown_province:    data.hometown_province    ?? prev.hometown_province,
+      personal_notes:       data.personal_notes
+                              ? (prev.personal_notes ? prev.personal_notes + '\n' + data.personal_notes : data.personal_notes)
+                              : prev.personal_notes,
     }))
+  }
+
+  // 정보 창에 붙여넣을 때 교육/배경 필드 감지
+  function handleNotesPaste(
+    e: React.ClipboardEvent<HTMLTextAreaElement>,
+    source: 'public_notes' | 'personal_notes'
+  ) {
+    const pasted = e.clipboardData.getData('text')
+    if (!pasted || pasted.length < 15) return
+    const extracted = extractEducationFields(pasted)
+    const newFields: Partial<ReturnType<typeof extractEducationFields>> = {}
+    if (extracted.exam_batch            && !form.exam_batch)            newFields.exam_batch            = extracted.exam_batch
+    if (extracted.university            && !form.university)            newFields.university            = extracted.university
+    if (extracted.university_major      && !form.university_major)      newFields.university_major      = extracted.university_major
+    if (extracted.graduate_school       && !form.graduate_school)       newFields.graduate_school       = extracted.graduate_school
+    if (extracted.high_school           && !form.high_school)           newFields.high_school           = extracted.high_school
+    if (extracted.birthday              && !form.birthday)              newFields.birthday              = extracted.birthday
+    if (extracted.hometown_province     && !form.hometown_province)     newFields.hometown_province     = extracted.hometown_province
+    if (extracted.hometown_city         && !form.hometown_city)         newFields.hometown_city         = extracted.hometown_city
+    if (extracted.current_organization  && !form.current_organization)  newFields.current_organization  = extracted.current_organization
+    if (extracted.current_position      && !form.current_position)      newFields.current_position      = extracted.current_position
+    if (Object.keys(newFields).length > 0) setNotesHint({ fields: newFields, source })
+  }
+
+  function applyNotesHint() {
+    if (!notesHint) return
+    setForm(prev => ({
+      ...prev,
+      exam_batch:           notesHint.fields.exam_batch           ?? prev.exam_batch,
+      university:           notesHint.fields.university           ?? prev.university,
+      university_major:     notesHint.fields.university_major     ?? prev.university_major,
+      graduate_school:      notesHint.fields.graduate_school      ?? prev.graduate_school,
+      high_school:          notesHint.fields.high_school          ?? prev.high_school,
+      birthday:             notesHint.fields.birthday             ?? prev.birthday,
+      hometown_province:    notesHint.fields.hometown_province    ?? prev.hometown_province,
+      hometown_city:        notesHint.fields.hometown_city        ?? prev.hometown_city,
+      current_organization: notesHint.fields.current_organization ?? prev.current_organization,
+      current_position:     notesHint.fields.current_position     ?? prev.current_position,
+    }))
+    setNotesHint(null)
   }
 
   function addTag(tag: string) {
@@ -187,6 +280,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     const payload: Record<string, unknown> = {
       ...form,
       visibility: 'shared',
+      on_record_status: form.on_record_status || null,
+      public_notes: form.public_notes || null,
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
@@ -281,7 +376,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       'phone_primary', 'phone_secondary', 'email_primary', 'email_secondary',
       'birthday', 'hometown_province', 'hometown_city',
       'high_school', 'university', 'university_major', 'graduate_school',
-      'exam_batch', 'visibility', 'sensitivity', 'personal_notes',
+      'exam_batch', 'visibility', 'sensitivity', 'on_record_status', 'public_notes', 'personal_notes',
       'sns_twitter', 'sns_facebook', 'tags',
     ]
     for (const key of checkKeys) {
@@ -317,15 +412,16 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
 
-      {/* 빠른 입력 */}
-      {mode === 'create' && (
-        <div>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '8px' }}>
-            ⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#485870' }}>(선택)</span>
-          </p>
-          <QuickFill onFill={handleQuickFill} />
-        </div>
-      )}
+      {/* 빠른 입력 / 정보 보충 */}
+      <div>
+        <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '8px' }}>
+          {mode === 'create'
+            ? <>⚡ 빠른 입력 <span style={{ fontWeight: 400, color: '#485870' }}>(선택)</span></>
+            : <>📋 정보 보충 <span style={{ fontWeight: 400, color: '#485870' }}>— 뉴스·네이버·연락처 복사 후 붙여넣으면 빈 항목을 자동으로 채워드립니다</span></>
+          }
+        </p>
+        <QuickFill onFill={handleQuickFill} />
+      </div>
 
       {/* 완성도 게이지 */}
       <div className="glass-card px-4 py-2.5">
@@ -414,6 +510,16 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
             <label style={labelStyle}>출신 시군구</label>
             <input value={form.hometown_city} onChange={e => set('hometown_city', e.target.value)}
               placeholder="강남구" style={inputStyle} />
+          </div>
+          <div>
+            <label style={labelStyle}>취재 동의 (온더레코드)</label>
+            <select value={form.on_record_status} onChange={e => set('on_record_status', e.target.value)}
+              style={inputStyle}>
+              <option value="">미지정</option>
+              <option value="on_record">✅ 온더레코드 (실명 인용 가능)</option>
+              <option value="background_only">🟡 백그라운드 (익명 인용만)</option>
+              <option value="anonymous">🔴 오프더레코드 (인용 불가)</option>
+            </select>
           </div>
         </div>
       </div>
@@ -526,21 +632,51 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         )}
       </div>
 
-      {/* 정보 (개인 메모) */}
+      {/* 공개 정보 */}
       <div className="glass-card p-5">
         <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
-          📝 정보
-          {!isPersonal && <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>나에게만 보이는 메모</span>}
+          📝 공개 정보
+          <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
         </h3>
         <p className="text-xs mb-3" style={{ color: '#485870' }}>
-          친분 관계, 성격, 인터뷰 팁 등 — 상세한 정보를 추가하면 취재원 상세 페이지에서 +10pt
+          현직, 전문 분야, 기자와의 관계 등 — 뉴스·네이버 경력 텍스트를 붙여넣으면 학력·기수를 자동 추출합니다
+        </p>
+        <textarea
+          value={form.public_notes}
+          onChange={e => set('public_notes', e.target.value)}
+          onPaste={e => handleNotesPaste(e, 'public_notes')}
+          rows={3}
+          placeholder="예: 경제부 출입 담당자, 예산 전문가, 인터뷰 협조적..."
+          style={{ ...inputStyle, resize: 'vertical' }}
+        />
+        <NotesExtractBanner
+          hint={notesHint?.source === 'public_notes' ? notesHint.fields : null}
+          onApply={applyNotesHint}
+          onDismiss={() => setNotesHint(null)}
+        />
+      </div>
+
+      {/* 민감 정보 */}
+      <div className="glass-card p-5" style={{ border: '1px solid rgba(255,153,0,0.2)' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
+          🔒 민감 정보
+          <span className="text-xs ml-2 font-normal" style={{ color: '#A87228' }}>차장 이상만 열람 · 기자는 승인 필요</span>
+        </h3>
+        <p className="text-xs mb-3" style={{ color: '#485870' }}>
+          친분 관계, 개인 성향, 가족 정보 등 — 뉴스·네이버 경력 텍스트를 붙여넣으면 학력·기수를 자동 추출합니다
         </p>
         <textarea
           value={form.personal_notes}
           onChange={e => set('personal_notes', e.target.value)}
-          rows={4}
+          onPaste={e => handleNotesPaste(e, 'personal_notes')}
+          rows={3}
           placeholder="예: 커피 좋아함, 오후 인터뷰 선호, 딸 2명 아들 1명, 홍○○과 대학 동기..."
-          style={{ ...inputStyle, resize: 'vertical' }}
+          style={{ ...inputStyle, resize: 'vertical', borderColor: 'rgba(255,153,0,0.3)' }}
+        />
+        <NotesExtractBanner
+          hint={notesHint?.source === 'personal_notes' ? notesHint.fields : null}
+          onApply={applyNotesHint}
+          onDismiss={() => setNotesHint(null)}
         />
       </div>
 

@@ -125,8 +125,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Search ────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchDepth, setSearchDepth] = useState<1 | 2>(1)
   const [searchMatchCount, setSearchMatchCount] = useState<number | null>(null)
   const searchMatchIdsRef = useRef<Set<string> | null>(null)
+
+  // ── Focus mode ────────────────────────────────────────────────────────────
+  const [focusModeLabel, setFocusModeLabel] = useState<string | null>(null)
+  const [focusSearch, setFocusSearch] = useState('')
+  const [focusResults, setFocusResults] = useState<Node[]>([])
+  const focusMatchIdsRef = useRef<Set<string> | null>(null)
 
   // ── Filter & display ──────────────────────────────────────────────────────
   const [activeTypes, setActiveTypes] = useState<Set<string>>(new Set(Object.keys(LINK_COLORS)))
@@ -166,6 +173,31 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Sync refs ─────────────────────────────────────────────────────────────
   useEffect(() => { colorModeRef.current = colorMode }, [colorMode])
 
+  // ── Adjacency map (built once per links change) ────────────────────────────
+  const adjacencyMap = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const l of links) {
+      const src = typeof l.source === 'string' ? l.source : (l.source as any)?.id ?? l.source
+      const tgt = typeof l.target === 'string' ? l.target : (l.target as any)?.id ?? l.target
+      if (!map.has(src)) map.set(src, new Set())
+      if (!map.has(tgt)) map.set(tgt, new Set())
+      map.get(src)!.add(tgt)
+      map.get(tgt)!.add(src)
+    }
+    return map
+  }, [links])
+
+  // ── Focus search: compute results as user types ───────────────────────────
+  useEffect(() => {
+    if (!focusSearch.trim()) { setFocusResults([]); return }
+    const q = focusSearch.toLowerCase()
+    setFocusResults(
+      nodes.filter(n =>
+        n.label.toLowerCase().includes(q) || n.org?.toLowerCase().includes(q)
+      ).slice(0, 6)
+    )
+  }, [focusSearch, nodes])
+
   // ── Search: update match IDs ref + state for count display ────────────────
   useEffect(() => {
     if (!searchQuery.trim()) {
@@ -174,15 +206,25 @@ export default function NetworkGraph({ nodes, links }: Props) {
       return
     }
     const q = searchQuery.toLowerCase()
-    const matched = nodes.filter(n =>
+    const directMatches = nodes.filter(n =>
       n.label.toLowerCase().includes(q) ||
       n.org?.toLowerCase().includes(q) ||
       n.position?.toLowerCase().includes(q) ||
       n.tags?.some(t => t.toLowerCase().includes(q))
     )
-    searchMatchIdsRef.current = new Set(matched.map(n => n.id))
-    setSearchMatchCount(matched.length)
-  }, [searchQuery, nodes])
+    const matchSet = new Set(directMatches.map(n => n.id))
+
+    if (searchDepth === 2) {
+      // extend to 1-hop neighbors of matched nodes
+      for (const id of [...matchSet]) {
+        const neighbors = adjacencyMap.get(id)
+        if (neighbors) for (const nid of neighbors) matchSet.add(nid)
+      }
+    }
+
+    searchMatchIdsRef.current = matchSet
+    setSearchMatchCount(searchDepth === 2 ? directMatches.length : matchSet.size)
+  }, [searchQuery, searchDepth, nodes, adjacencyMap])
 
   // ── Filtered links ────────────────────────────────────────────────────────
   const filteredLinks = useMemo(
@@ -222,6 +264,54 @@ export default function NetworkGraph({ nodes, links }: Props) {
     try { fgRef.current?.zoomToFit(400, 60) } catch {}
   }, [])
 
+  // ── Focus helpers ─────────────────────────────────────────────────────────
+  const applyFocus = useCallback((node: Node) => {
+    const focusSet = new Set<string>([node.id])
+    const n1 = adjacencyMap.get(node.id)
+    if (n1) for (const id of n1) {
+      focusSet.add(id)
+      const n2 = adjacencyMap.get(id)
+      if (n2) for (const id2 of n2) focusSet.add(id2)
+    }
+    focusMatchIdsRef.current = focusSet
+    setFocusModeLabel(node.label)
+    setFocusSearch('')
+    setFocusResults([])
+    setTimeout(() => {
+      try {
+        const gn = fgRef.current?.graphData()?.nodes?.find((n: any) => n.id === node.id)
+        if (gn?.x !== undefined) {
+          fgRef.current?.centerAt(gn.x, gn.y, 600)
+          fgRef.current?.zoom(3, 600)
+        }
+      } catch {}
+    }, 80)
+  }, [adjacencyMap])
+
+  const applyMyFocus = useCallback(() => {
+    const ownerIds = nodes.filter(n => n.isOwner).map(n => n.id)
+    if (ownerIds.length === 0) return
+    const focusSet = new Set<string>(ownerIds)
+    for (const id of ownerIds) {
+      const neighbors = adjacencyMap.get(id)
+      if (neighbors) for (const nid of neighbors) focusSet.add(nid)
+    }
+    focusMatchIdsRef.current = focusSet
+    setFocusModeLabel(`내 취재원 (${ownerIds.length}명)`)
+    setFocusSearch('')
+    setFocusResults([])
+    setTimeout(() => {
+      try { fgRef.current?.zoomToFit(500, 80, (n: any) => focusSet.has(n.id)) } catch {}
+    }, 80)
+  }, [nodes, adjacencyMap])
+
+  const clearFocus = useCallback(() => {
+    focusMatchIdsRef.current = null
+    setFocusModeLabel(null)
+    setFocusSearch('')
+    setFocusResults([])
+  }, [])
+
   // ── Hover handler — updates refs (for canvas) + state (for overlay) ───────
   const handleNodeHover = useCallback((node: unknown) => {
     const n = node as (Node & { x?: number; y?: number }) | null
@@ -257,9 +347,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const isHighlighted = highlightIdsRef.current.has(n.id)
     const isFadedByHover = hasHoverActive && !isHighlighted
 
-    const searchIds = searchMatchIdsRef.current
-    const isSearchMatch = searchIds?.has(n.id) ?? false
-    const isFadedBySearch = searchIds !== null && !isSearchMatch
+    const activeIds = focusMatchIdsRef.current ?? searchMatchIdsRef.current
+    const isSearchMatch = activeIds?.has(n.id) ?? false
+    const isFadedBySearch = activeIds !== null && !isSearchMatch
 
     const isFaded = isFadedByHover || isFadedBySearch
     const rDraw = isHovered ? r * 1.3 : r
@@ -360,9 +450,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const both = highlightIdsRef.current.has(srcId) && highlightIdsRef.current.has(tgtId)
     const isFadedByHover = hasHover && !both
 
-    const searchIds = searchMatchIdsRef.current
-    const either = searchIds?.has(srcId) || searchIds?.has(tgtId)
-    const isFadedBySearch = searchIds !== null && !either
+    const activeIds = focusMatchIdsRef.current ?? searchMatchIdsRef.current
+    const either = activeIds?.has(srcId) || activeIds?.has(tgtId)
+    const isFadedBySearch = activeIds !== null && !either
 
     const color = LINK_COLORS[l.type] ?? '#485870'
     if (isFadedByHover || isFadedBySearch) return color + '0C'
@@ -529,8 +619,107 @@ export default function NetworkGraph({ nodes, links }: Props) {
               </div>
               {searchMatchCount !== null && (
                 <p style={{ fontSize: '11px', color: '#4A7CC0', marginTop: '5px' }}>
-                  {searchMatchCount > 0 ? `${searchMatchCount}명 일치` : '일치하는 취재원 없음'}
+                  {searchMatchCount > 0
+                    ? searchDepth === 2
+                      ? `직접 일치 ${searchMatchCount}명 + 연결 취재원 포함 강조`
+                      : `${searchMatchCount}명 일치`
+                    : '일치하는 취재원 없음'}
                 </p>
+              )}
+              {searchQuery.trim() && (
+                <div style={{ display: 'flex', gap: '5px', marginTop: '6px' }}>
+                  {([1, 2] as const).map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSearchDepth(d)}
+                      style={{
+                        flex: 1, padding: '4px 0', borderRadius: '5px',
+                        fontSize: '10px', cursor: 'pointer',
+                        background: searchDepth === d ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.03)',
+                        color: searchDepth === d ? '#88B8E8' : '#485870',
+                        border: searchDepth === d ? '1px solid rgba(74,124,192,0.5)' : '1px solid #1A2838',
+                      }}>
+                      {d === 1 ? '1촌만' : '2촌 포함'}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Divider />
+
+            {/* ── 중심 보기 ── */}
+            <div style={{ padding: '10px 14px' }}>
+              <p style={sectionLabel}>중심 보기</p>
+
+              {focusModeLabel ? (
+                <div>
+                  <div style={{
+                    fontSize: '11px', color: '#5EC88A', fontWeight: 600,
+                    padding: '5px 8px', background: 'rgba(61,158,106,0.1)',
+                    border: '1px solid rgba(61,158,106,0.25)', borderRadius: '6px',
+                    marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  }}>
+                    📍 {focusModeLabel}
+                  </div>
+                  <button
+                    type="button" onClick={clearFocus}
+                    style={{ fontSize: '10px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    포커스 해제
+                  </button>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                  <button
+                    type="button" onClick={applyMyFocus}
+                    style={{
+                      padding: '5px 0', borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
+                      background: 'rgba(56,200,184,0.1)', color: '#38C8B8',
+                      border: '1px solid rgba(56,200,184,0.3)',
+                    }}>
+                    나를 중심으로
+                  </button>
+                  <div style={{ position: 'relative' }}>
+                    <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#485870', pointerEvents: 'none' }}>📍</span>
+                    <input
+                      type="text"
+                      value={focusSearch}
+                      onChange={e => setFocusSearch(e.target.value)}
+                      placeholder="인물 포커스..."
+                      style={{
+                        width: '100%', paddingLeft: '26px', paddingRight: '8px',
+                        paddingTop: '6px', paddingBottom: '6px',
+                        background: '#101828', border: '1px solid #1A2838',
+                        borderRadius: '6px', fontSize: '12px', color: '#CDD5E0',
+                        outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                    {focusResults.length > 0 && (
+                      <div style={{
+                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                        background: 'rgba(6,12,24,0.98)', border: '1px solid #1A2838',
+                        borderRadius: '6px', marginTop: '3px', overflow: 'hidden',
+                      }}>
+                        {focusResults.map(n => (
+                          <button
+                            key={n.id} type="button" onClick={() => applyFocus(n)}
+                            style={{
+                              display: 'block', width: '100%', textAlign: 'left',
+                              padding: '6px 10px', background: 'none', border: 'none',
+                              cursor: 'pointer', borderBottom: '1px solid #0D1520',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.12)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                          >
+                            <div style={{ fontSize: '12px', color: '#CDD5E0', fontWeight: 500 }}>{n.label}</div>
+                            {n.org && <div style={{ fontSize: '10px', color: '#485870' }}>{n.org}</div>}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
 

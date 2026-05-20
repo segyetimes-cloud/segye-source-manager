@@ -41,13 +41,11 @@ export default async function SourcesPage({
     `, { count: 'exact' })
     .eq('is_deleted', false)
     .order('updated_at', { ascending: false })
-    .range((page - 1) * pageSize, page * pageSize - 1)
 
+  // ── 필터 먼저 적용 → 그 뒤에 페이지네이션 ────────────────────────────────
   if (filter === 'mine') {
-    // 내가 등록한 것 — visibility 무관하게 내 소스 전체
     sourcesQuery = sourcesQuery.eq('owner_id', user.id)
   } else {
-    // 전체: 공유 소스 + 내 개인 소스
     sourcesQuery = sourcesQuery.or(`visibility.eq.shared,owner_id.eq.${user.id}`)
     if (!canSeeSensitive) {
       sourcesQuery = sourcesQuery.neq('sensitivity', 'private')
@@ -59,6 +57,9 @@ export default async function SourcesPage({
       `full_name.ilike.%${query}%,current_organization.ilike.%${query}%,current_position.ilike.%${query}%,exam_batch.ilike.%${query}%,university.ilike.%${query}%,high_school.ilike.%${query}%`
     )
   }
+
+  // range는 모든 필터 이후 마지막에 적용
+  sourcesQuery = sourcesQuery.range((page - 1) * pageSize, page * pageSize - 1)
 
   const { data: sources, count } = await sourcesQuery
 
@@ -88,7 +89,7 @@ export default async function SourcesPage({
               <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <span className="hidden sm:inline">엑셀 가져오기</span>
+            <span>엑셀 가져오기</span>
           </Link>
         </div>
       </div>

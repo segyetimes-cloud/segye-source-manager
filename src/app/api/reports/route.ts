@@ -15,11 +15,15 @@ export async function GET(request: NextRequest) {
   const page = parseInt(sp.get('page') ?? '1')
   const pageSize = 20
 
-  // 현재 사용자 프로필 (team 열람 범위 판단용)
+  // 현재 사용자 프로필 (열람 범위 판단용)
   const { data: myProfile } = await supabaseAny
     .from('profiles').select('role, department').eq('id', user.id).single()
   const myDept = myProfile?.department ?? null
-  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
+  const myRole = myProfile?.role ?? 'reporter'
+  // 부국장 이상: 전 부서 열람 가능
+  const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(myRole)
+  // 부장: 소속 부서 + 전체공개만 열람
+  const isAdminRole = myRole === 'admin'
 
   let query = supabaseAny
     .from('information_reports')
@@ -34,10 +38,23 @@ export async function GET(request: NextRequest) {
 
   if (visibilityFilter === 'mine') {
     query = query.eq('author_id', user.id)
-  } else if (!isDesk) {
-    // 일반 기자·차장: 비작성자에게는 status='approved' 보고서만 노출
+  } else if (isAboveAdmin) {
+    // 부국장 이상: 필터 없음 — 전체 열람
+  } else if (isAdminRole) {
+    // 부장: 내 보고서 + 전체공개 + 소속 부서 보고서 (visibility=desk_above/team)
     if (myDept) {
-      // PostgREST 필터에서 특수문자 포함 부서명을 안전하게 처리하기 위해 따옴표로 감쌈
+      const safeDept = `"${myDept.replace(/"/g, '')}"`
+      query = query.or(
+        `author_id.eq.${user.id},` +
+        `visibility.eq.all,` +
+        `and(visibility.in.(desk_above,team),author_department.eq.${safeDept})`
+      )
+    } else {
+      query = query.or(`author_id.eq.${user.id},visibility.eq.all`)
+    }
+  } else {
+    // 기자·차장: 비작성자에게는 status='approved' 보고서만 노출
+    if (myDept) {
       const safeDept = `"${myDept.replace(/"/g, '')}"`
       query = query.or(
         `and(author_id.eq.${user.id}),` +

@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SidebarLayout from '@/components/layout/SidebarLayout'
 import Watermark from '@/components/layout/Watermark'
+import ScreenshotGuard from '@/components/common/ScreenshotGuard'
 
 export default async function AppLayout({
   children,
@@ -28,18 +29,20 @@ export default async function AppLayout({
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#0D1520' }}>
-      <SidebarLayout profile={profile}>
-        {children}
-      </SidebarLayout>
+    <ScreenshotGuard>
+      <div className="min-h-screen" style={{ background: '#0D1520' }}>
+        <SidebarLayout profile={profile}>
+          {children}
+        </SidebarLayout>
 
-      {/* 워터마크 오버레이 (보안) */}
-      <Watermark
-        userId={user.id}
-        userEmail={user.email ?? ''}
-        userName={profile.full_name ?? ''}
-        department={profile.department ?? ''}
-      />
-    </div>
+        {/* 워터마크 오버레이 (보안) */}
+        <Watermark
+          userId={user.id}
+          userEmail={user.email ?? ''}
+          userName={profile.full_name ?? ''}
+          department={profile.department ?? ''}
+        />
+      </div>
+    </ScreenshotGuard>
   )
 }

@@ -41,11 +41,27 @@ export default async function NewSourcePage({
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
-        <p className="text-sm mt-1" style={{ color: '#687898' }}>
-          항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
-        </p>
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
+          <p className="text-sm mt-1" style={{ color: '#687898' }}>
+            항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
+          </p>
+        </div>
+        <a
+          href="/sources/import"
+          style={{
+            display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0,
+            padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+            background: '#182035', color: '#687898', border: '1px solid #1A2838',
+            textDecoration: 'none',
+          }}>
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
+              stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          엑셀로 여러 명 가져오기
+        </a>
       </div>
 
       {helpContext && (

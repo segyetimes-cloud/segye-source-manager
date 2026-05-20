@@ -1,24 +1,7 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
-
-// 필드별 포인트 계산 (신규 기준)
-function calcFieldPoints(source: Record<string, unknown>): number {
-  let pts = 0
-  if (source.full_name) pts += 1
-  if (source.phone_primary) pts += 1
-  if (source.high_school) pts += 1
-  if (source.university) pts += 1
-  if (source.current_organization) pts += 1
-  if (source.current_position) pts += 1
-  if (source.email_primary) pts += 0.5
-  if (source.birthday) pts += 0.5
-  if (source.hometown_city || source.hometown_province) pts += 0.5
-  if (source.university_major) pts += 0.5
-  if (source.graduate_school) pts += 0.5
-  if (Array.isArray(source.tags) && source.tags.length > 0) pts += 0.5
-  return pts
-}
+import { calcCompletenessScore, calcRegistrationPoints } from '@/lib/points'
 
 // GET /api/sources — 목록 조회
 export async function GET(request: NextRequest) {
@@ -47,12 +30,11 @@ export async function GET(request: NextRequest) {
     .select('id, full_name, current_organization, current_position, phone_primary, email_primary, visibility, sensitivity, completeness_score, tags, exam_batch, updated_at, owner_id', { count: 'exact' })
     .eq('is_deleted', false)
     .order('updated_at', { ascending: false })
-    .range((page - 1) * pageSize, page * pageSize - 1)
 
+  // ── 필터 먼저 적용 → 그 뒤에 페이지네이션 ────────────────────────────────
   if (filter === 'mine') {
     query = query.eq('owner_id', user.id)
   } else {
-    // 전체: 공유 소스 + 내 개인 소스
     query = query.or(`visibility.eq.shared,owner_id.eq.${user.id}`)
     if (!canSeeSensitive) {
       query = query.neq('sensitivity', 'private')
@@ -60,12 +42,14 @@ export async function GET(request: NextRequest) {
   }
 
   if (q) {
-    // PostgREST ilike에서 %, _ 는 와일드카드이므로 이스케이프
     const escaped = q.replace(/[%_\\]/g, '\\$&')
     query = query.or(
       `full_name.ilike.%${escaped}%,current_organization.ilike.%${escaped}%,current_position.ilike.%${escaped}%,exam_batch.ilike.%${escaped}%,university.ilike.%${escaped}%,high_school.ilike.%${escaped}%`
     )
   }
+
+  // range는 모든 필터 이후 마지막에 적용
+  query = query.range((page - 1) * pageSize, page * pageSize - 1)
 
   const { data, count, error } = await query
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -117,8 +101,11 @@ export async function POST(request: NextRequest) {
     tags: body.tags ?? [],
     visibility: 'shared',
     sensitivity: body.sensitivity ?? 'public',
+    public_notes: body.public_notes || null,
     personal_notes: body.personal_notes || null,
+    on_record_status: body.on_record_status || null,
     sns_links: body.sns_links ?? {},
+    completeness_score: calcCompletenessScore(body),
   }).select().single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -138,7 +125,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 포인트 부여 (Service Role 사용 — 클라이언트 직접 INSERT 방지)
-  const points = calcFieldPoints(source as Record<string, unknown>)
+  const points = calcRegistrationPoints(source as Record<string, unknown>)
   if (points > 0) {
     await serviceClient.from('point_transactions').insert({
       user_id: user.id,

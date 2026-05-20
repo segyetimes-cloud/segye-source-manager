@@ -36,13 +36,25 @@ export async function GET(
   // 열람 권한 체크
   const { data: viewer } = await supabaseAny
     .from('profiles').select('role, department').eq('id', user.id).single()
-  const viewerIsDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(viewer?.role ?? '')
+  const viewerRole = viewer?.role ?? 'reporter'
+  const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(viewerRole)
+  const isAdminRole = viewerRole === 'admin'
   const isAuthor = data.author_id === user.id
-  if (!viewerIsDesk && !isAuthor) {
-    if (data.visibility === 'author_only') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (data.visibility === 'desk_above') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
-    if (data.visibility === 'team' && viewer?.department !== data.author_department) {
+
+  if (!isAboveAdmin && !isAuthor) {
+    if (data.visibility === 'author_only') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+    if (data.visibility === 'desk_above') {
+      // 부장: 소속 부서 보고서만 열람 가능
+      if (!isAdminRole || viewer?.department !== data.author_department) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+    }
+    if (data.visibility === 'team') {
+      if (viewer?.department !== data.author_department) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
     }
   }
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Props {
   apiPath: string        // 복사 로그 전송 엔드포인트 (예: /api/reports/xxx/copy-log)
@@ -41,14 +41,45 @@ function sendCopyLog(apiPath: string, copiedLength: number, copiedPreview: strin
     } else {
       fetch(apiPath, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body }).catch(() => {})
     }
-  } catch { /* 무시 */ }
+  } catch { /* noop */ }
+}
+
+function drawWrappedText(
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
+  lineHeight: number,
+  startY: number,
+): number {
+  const paragraphs = text.split('\n')
+  let y = startY
+  for (const para of paragraphs) {
+    if (!para.trim()) { y += lineHeight * 0.6; continue }
+    const words = para.split(' ')
+    let line = ''
+    for (const word of words) {
+      const test = line ? `${line} ${word}` : word
+      if (ctx.measureText(test).width > maxWidth && line) {
+        ctx.fillText(line, 0, y)
+        line = word
+        y += lineHeight
+      } else {
+        line = test
+      }
+    }
+    if (line) { ctx.fillText(line, 0, y); y += lineHeight }
+  }
+  return y
 }
 
 export default function SecureContentViewer({
   apiPath, content, userId, userFullName, userDepartment, minHeight,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const [canvasHeight, setCanvasHeight] = useState(80)
 
+  // copy watermark
   useEffect(() => {
     const el = containerRef.current
     if (!el) return
@@ -64,11 +95,52 @@ export default function SecureContentViewer({
     return () => el.removeEventListener('copy', onCopy)
   }, [apiPath, content, userId, userFullName])
 
+  // canvas render
+  useEffect(() => {
+    const container = containerRef.current
+    const canvas = canvasRef.current
+    if (!canvas || !container) return
+
+    const render = () => {
+      const dpr = window.devicePixelRatio || 1
+      const containerWidth = container.clientWidth || 600
+      const fontSize = 14
+      const lineHeight = 25
+      const fontStr = `${fontSize}px -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans KR', sans-serif`
+
+      // first pass: measure height via offscreen canvas
+      const offscreen = document.createElement('canvas')
+      const octx = offscreen.getContext('2d')!
+      octx.font = fontStr
+      const measuredHeight = drawWrappedText(octx, content, containerWidth, lineHeight, fontSize + 4)
+      const totalHeight = measuredHeight + 8
+
+      canvas.width = containerWidth * dpr
+      canvas.height = totalHeight * dpr
+      canvas.style.width = `${containerWidth}px`
+      canvas.style.height = `${totalHeight}px`
+      setCanvasHeight(totalHeight)
+
+      const ctx = canvas.getContext('2d')!
+      ctx.scale(dpr, dpr)
+      ctx.font = fontStr
+      ctx.fillStyle = '#D0DFF5'
+      ctx.textBaseline = 'alphabetic'
+      drawWrappedText(ctx, content, containerWidth, lineHeight, fontSize + 4)
+    }
+
+    render()
+
+    const ro = new ResizeObserver(render)
+    ro.observe(container)
+    return () => ro.disconnect()
+  }, [content])
+
   const watermarkLabel = userFullName + (userDepartment ? ` · ${userDepartment}` : '')
 
   return (
     <div ref={containerRef} style={{ position: 'relative', marginBottom: '4px', minHeight }}>
-      {/* 동적 시각 워터마크 */}
+      {/* 워터마크 오버레이 */}
       <div aria-hidden="true" style={{
         position: 'absolute', inset: 0,
         pointerEvents: 'none', userSelect: 'none',
@@ -95,14 +167,11 @@ export default function SecureContentViewer({
           </div>
         ))}
       </div>
-      {/* 실제 본문 */}
-      <div style={{
-        position: 'relative', zIndex: 2,
-        fontSize: '14px', color: '#D0DFF5',
-        lineHeight: 1.8, whiteSpace: 'pre-wrap',
-      }}>
-        {content}
-      </div>
+      {/* Canvas 본문 */}
+      <canvas
+        ref={canvasRef}
+        style={{ position: 'relative', zIndex: 2, display: 'block', userSelect: 'none' }}
+      />
     </div>
   )
 }

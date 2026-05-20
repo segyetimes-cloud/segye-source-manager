@@ -1,6 +1,7 @@
 // @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { calcCompletenessScore, INCREMENTAL_POINT_FIELDS } from '@/lib/points'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -50,10 +51,22 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: '민감 정보로 분류된 취재원입니다. 데스크 이상만 열람할 수 있습니다.' }, { status: 403 })
   }
 
-  // ── personal_notes 마스킹: 소유자 또는 admin+ 만 열람 가능 ──────────────────
-  if (!isOwner && !isAdminOrAbove) {
-    source.personal_notes = null
+  // ── personal_notes(민감 정보) 마스킹: 차장 이상 또는 승인된 기자만 열람 ──────
+  if (!isOwner && !isDeputyOrAbove) {
+    // 승인 여부 확인
+    const { data: approval } = await supabase
+      .from('source_access_approvals')
+      .select('id, expires_at')
+      .eq('source_id', id)
+      .eq('requester_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    const hasApproval = !!approval && (!(approval as any).expires_at || new Date((approval as any).expires_at) > new Date())
+    if (!hasApproval) {
+      source.personal_notes = null
+    }
   }
+  // ── public_notes: 모든 인증 사용자 열람 가능 (마스킹 없음) ──────────────────
 
   // 평균 유용성 점수 계산
   const ratings = (source.source_usefulness_ratings as { rating: number }[]) ?? []
@@ -102,7 +115,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     'phone_primary', 'phone_secondary', 'email_primary', 'email_secondary',
     'birthday', 'hometown_province', 'hometown_city',
     'high_school', 'university', 'university_major', 'graduate_school',
-    'exam_batch', 'visibility', 'sensitivity', 'personal_notes',
+    'exam_batch', 'visibility', 'sensitivity', 'on_record_status', 'public_notes', 'personal_notes',
   ]
 
   for (const field of trackableFields) {
@@ -126,6 +139,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   if (Object.keys(updateFields).length === 0) {
     return NextResponse.json({ message: 'No changes' })
   }
+
+  // 변경 후 완성도 점수 재계산 (merged)
+  updateFields.completeness_score = calcCompletenessScore({ ...existing, ...updateFields })
 
   const { data: updated, error } = await supabase
     .from('sources')
@@ -158,15 +174,9 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     metadata: { changed_fields: Object.keys(updateFields) },
   })
 
-  // 증분 포인트: 새로 채워진 필드에 대해 포인트 지급
-  const pointFields: Array<[string, number]> = [
-    ['full_name', 1], ['phone_primary', 1], ['high_school', 1],
-    ['university', 1], ['current_organization', 1], ['current_position', 1],
-    ['email_primary', 0.5], ['birthday', 0.5], ['hometown_city', 0.5],
-    ['hometown_province', 0.5], ['university_major', 0.5], ['graduate_school', 0.5],
-  ]
+  // 증분 포인트: 새로 채워진 필드에 대해 포인트 지급 (lib/points.ts 기준)
   let incrementalPts = 0
-  for (const [field, pts] of pointFields) {
+  for (const [field, pts] of INCREMENTAL_POINT_FIELDS) {
     const wasEmpty = !existing[field]
     const isChanging = body[field] !== undefined
     const nowFilled = isChanging ? !!body[field] : false

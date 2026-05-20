@@ -72,11 +72,11 @@ export default async function SourceDetailPage({ params }: Params) {
   const isOwner = source.owner_id === user.id
   const userRole = profile?.role ?? 'reporter'
   const isAdmin = ['admin', 'superadmin'].includes(userRole)
-  // 차장 이상은 정보란 무조건 열람 가능
-  const isDeputyOrAbove = ['deputy', 'admin', 'superadmin'].includes(userRole)
+  // 차장 이상은 민감 정보 무조건 열람 가능
+  const isDeputyOrAbove = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(userRole)
 
-  // personal_notes 열람 규칙:
-  //   소유자 OR 차장/데스크/슈퍼관리자 → 항상 열람
+  // personal_notes(민감 정보) 열람 규칙:
+  //   소유자 OR 차장 이상 → 항상 열람
   //   기자 → source_access_approvals 승인 있을 때만 열람
   const canSeePersonalNotes = isOwner || isDeputyOrAbove || hasPrivateAccess
   if (!canSeePersonalNotes) source.personal_notes = null
@@ -93,6 +93,7 @@ export default async function SourceDetailPage({ params }: Params) {
   let lockedNotesCount = 0
 
   if (hasPrivateAccess || isOwner || isDeputyOrAbove) {
+    // 차장 이상·소유자·승인된 사용자: 모든 민감 노트 열람
     const { data: sensitiveRaw } = await supabaseAny
       .from('source_notes')
       .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
@@ -101,12 +102,24 @@ export default async function SourceDetailPage({ params }: Params) {
       .order('created_at', { ascending: true })
     sensitiveNotes = (sensitiveRaw ?? []) as any[]
   } else {
+    // 일반 기자: 자신이 직접 작성한 민감 노트만 열람
+    const { data: ownSensitiveRaw } = await supabaseAny
+      .from('source_notes')
+      .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
+      .eq('source_id', id)
+      .eq('is_sensitive', true)
+      .eq('author_id', user.id)
+      .order('created_at', { ascending: true })
+    sensitiveNotes = (ownSensitiveRaw ?? []) as any[]
+
+    // 잠긴 민감 노트 수 = 타인이 쓴 민감 노트
     const svcClient = createServiceClient()
     const { count } = await svcClient
       .from('source_notes')
       .select('*', { count: 'exact', head: true })
       .eq('source_id', id)
       .eq('is_sensitive', true)
+      .neq('author_id', user.id)
     lockedNotesCount = count ?? 0
   }
 

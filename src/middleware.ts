@@ -17,12 +17,18 @@ function isIPInCIDR(ip: string, cidr: string): boolean {
 }
 
 function isVPNAccess(ip: string): boolean {
-  // OTP 체크 전체 비활성화 옵션 (SMS 미설정 환경)
+  // OTP 체크 명시적 비활성화 옵션 (개발·테스트 환경 한정)
   if (process.env.DISABLE_OTP_CHECK === 'true') return true
   // 개발 환경에서는 항상 통과
   if (process.env.NODE_ENV === 'development') return true
+
   const vpnRanges = (process.env.VPN_CIDR_RANGES || '').split(',').filter(Boolean)
-  if (!ip || vpnRanges.length === 0) return false
+
+  // 프로덕션에서 VPN 범위 미설정 → OTP 우회 불가 (보안 기본값)
+  // 사내 VPN 없이 사용하는 환경은 DISABLE_OTP_CHECK=true 로 명시 설정 필요
+  if (vpnRanges.length === 0) return false
+
+  if (!ip) return false
   return vpnRanges.some(cidr => isIPInCIDR(ip.trim(), cidr.trim()))
 }
 
@@ -54,8 +60,9 @@ export async function middleware(request: NextRequest) {
 
   // 비인증 사용자 → 로그인 페이지
   if (!user) {
-    const loginUrl = new URL('/login', request.url)
-    return NextResponse.redirect(loginUrl)
+    const res = NextResponse.redirect(new URL('/login', request.url))
+    supabaseResponse.cookies.getAll().forEach(c => res.cookies.set(c.name, c.value, c))
+    return res
   }
 
   // VPN 외부 접속 → OTP 인증 페이지
@@ -64,7 +71,9 @@ export async function middleware(request: NextRequest) {
     if (!otpVerified) {
       const otpUrl = new URL('/otp', request.url)
       otpUrl.searchParams.set('next', pathname)
-      return NextResponse.redirect(otpUrl)
+      const res = NextResponse.redirect(otpUrl)
+      supabaseResponse.cookies.getAll().forEach(c => res.cookies.set(c.name, c.value, c))
+      return res
     }
   }
 

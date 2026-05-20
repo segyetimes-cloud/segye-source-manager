@@ -11,7 +11,7 @@ export type SensitivityLevel = 'public' | 'private'
 export type ReportVisibility = 'author_only' | 'desk_above' | 'team' | 'all'
 export type ApprovalStatus = 'pending' | 'approved' | 'rejected'
 export type AuditAction = 'view' | 'create' | 'update' | 'delete' | 'export' | 'import' | 'view_private' | 'approve' | 'reject'
-export type PointType = 'source_created' | 'source_completed' | 'contribution_used' | 'usefulness_rating' | 'help_provided' | 'help_accepted' | 'report_award' | 'daily_login' | 'penalty_deduct'
+export type PointType = 'source_created' | 'source_completed' | 'contribution_used' | 'usefulness_rating' | 'help_provided' | 'help_accepted' | 'report_award' | 'daily_login' | 'penalty_deduct' | 'note_created'
 export type HelpStatus = 'open' | 'resolved' | 'closed'
 
 export interface Database {
@@ -63,6 +63,8 @@ export interface Database {
           current_position: string | null
           current_department: string | null
           sensitivity: SensitivityLevel
+          on_record_status: 'on_record' | 'background_only' | 'anonymous' | null
+          public_notes: string | null
           personal_notes: string | null
           tags: string[]
           exam_batch: string | null
