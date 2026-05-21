@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * POST /api/ocr/business-card/batch
  *
@@ -51,7 +50,7 @@ export async function POST(request: NextRequest) {
 
   const { checkRateLimit, getClientIp } = await import('@/lib/rateLimit')
   const ip = getClientIp(request)
-  const rl = checkRateLimit(`${user.id}:${ip}`, { prefix: 'ocr-batch', limit: 5, windowMs: 60_000 })
+  const rl = await checkRateLimit(`${user.id}:${ip}`, { prefix: 'ocr-batch', limit: 5, windowMs: 60_000 })
   if (!rl.allowed) {
     return NextResponse.json(
       { error: '요청이 너무 많습니다. 1분 후 다시 시도해 주세요.' },

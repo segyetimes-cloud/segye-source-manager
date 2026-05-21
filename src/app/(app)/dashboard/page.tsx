@@ -64,13 +64,13 @@ export default async function DashboardPage() {
       .order('next_followup_at', { ascending: true })
       .limit(8),
     // 최근 열람 로그 (view / view_private)
-    supabase.from('audit_logs' as any)
+    (supabase.from('audit_logs')
       .select('resource_id, created_at')
       .eq('user_id', user.id)
       .eq('resource_type', 'source')
-      .in('action', ['view', 'view_private'])
+      .in('action', ['view', 'view_private'] as any[])
       .order('created_at', { ascending: false })
-      .limit(30),
+      .limit(30)) as unknown as Promise<{ data: { resource_id: string | null }[] | null; error: unknown }>,
   ])
 
   const myPoints = myPointsRaw as PointsSummary | null

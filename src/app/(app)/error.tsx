@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
+import * as Sentry from '@sentry/nextjs'
 
 interface ErrorProps {
   error: Error & { digest?: string }
@@ -15,7 +16,8 @@ interface ErrorProps {
  */
 export default function AppError({ error, reset }: ErrorProps) {
   useEffect(() => {
-    // 운영 환경에서는 Sentry 등 에러 추적 서비스로 전송
+    // Sentry로 에러 전송 (DSN 미설정 시 no-op)
+    Sentry.captureException(error)
     if (process.env.NODE_ENV !== 'production') {
       console.error('[AppError]', error)
     }

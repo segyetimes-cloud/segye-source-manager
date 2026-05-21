@@ -1,26 +1,14 @@
 /**
- * 메모리 기반 Rate Limiter (Vercel Serverless 환경)
+ * Supabase 기반 분산 Rate Limiter
  *
- * Vercel 서버리스는 인스턴스가 분산되므로 완벽한 전역 제한은 불가능하지만,
- * 동일 인스턴스 내 폭발적 호출(burst) 방어 효과가 있습니다.
- * 추후 Upstash Redis 등 외부 스토어로 교체하면 완전한 분산 제한이 가능합니다.
+ * public.rate_limit_check() Postgres 함수를 통해 모든 Vercel 인스턴스가
+ * 동일한 카운터를 공유합니다. 메모리 기반 대비 완전한 분산 제한이 가능합니다.
+ *
+ * DB 호출이 실패(네트워크 오류 등)하면 failOpen=true 옵션에 따라
+ * 기본적으로 요청을 허용합니다(서비스 가용성 우선).
  */
 
-interface RateLimitEntry {
-  count: number
-  resetAt: number
-}
-
-// 인스턴스 메모리 내 카운터
-const store = new Map<string, RateLimitEntry>()
-
-// 오래된 엔트리 주기적 정리 (메모리 누수 방지)
-setInterval(() => {
-  const now = Date.now()
-  for (const [key, entry] of store.entries()) {
-    if (entry.resetAt < now) store.delete(key)
-  }
-}, 60_000)
+import { createServiceClient } from '@/lib/supabase/server'
 
 export interface RateLimitOptions {
   /** 키 접두사 (엔드포인트 식별용) */
@@ -29,6 +17,11 @@ export interface RateLimitOptions {
   limit: number
   /** 윈도우 크기 (밀리초) */
   windowMs: number
+  /**
+   * DB 오류 시 요청을 허용할지 여부 (기본: true)
+   * false로 설정 시 DB 오류가 곧 거부(deny-closed)가 됩니다.
+   */
+  failOpen?: boolean
 }
 
 export interface RateLimitResult {
@@ -38,31 +31,53 @@ export interface RateLimitResult {
 }
 
 /**
- * IP 또는 userId 기반 Rate Limit 확인
+ * Supabase DB 기반 Rate Limit 확인 (분산 환경 지원)
  *
  * @example
- * const { allowed } = checkRateLimit('ocr', ip, { prefix: 'ocr', limit: 10, windowMs: 60_000 })
- * if (!allowed) return NextResponse.json({ error: '요청이 너무 많습니다.' }, { status: 429 })
+ * const rl = await checkRateLimit(`${user.id}:${ip}`, { prefix: 'ocr-batch', limit: 5, windowMs: 60_000 })
+ * if (!rl.allowed) return NextResponse.json({ error: '요청이 너무 많습니다.' }, { status: 429 })
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   identifier: string,
   opts: RateLimitOptions,
-): RateLimitResult {
+): Promise<RateLimitResult> {
   const key = `${opts.prefix}:${identifier}`
-  const now = Date.now()
+  const failOpen = opts.failOpen !== false // default: true
 
-  let entry = store.get(key)
-  if (!entry || entry.resetAt < now) {
-    entry = { count: 0, resetAt: now + opts.windowMs }
-    store.set(key, entry)
-  }
+  try {
+    const supabase = createServiceClient()
+    const { data, error } = await supabase.rpc('rate_limit_check', {
+      p_key: key,
+      p_limit: opts.limit,
+      p_window_ms: opts.windowMs,
+    } as unknown as undefined)
 
-  entry.count += 1
+    if (error) {
+      console.error('[rateLimit] DB error:', error.message)
+      return {
+        allowed: failOpen,
+        remaining: failOpen ? opts.limit : 0,
+        resetAt: Date.now() + opts.windowMs,
+      }
+    }
 
-  return {
-    allowed: entry.count <= opts.limit,
-    remaining: Math.max(0, opts.limit - entry.count),
-    resetAt: entry.resetAt,
+    const rawData = data as Array<{ allowed: boolean; count: number; reset_at: string }> | null
+    const row = Array.isArray(rawData) ? rawData[0] : null
+    const resetMs = row?.reset_at ? new Date(row.reset_at).getTime() : Date.now() + opts.windowMs
+    const count: number = row?.count ?? 1
+
+    return {
+      allowed: row?.allowed ?? failOpen,
+      remaining: Math.max(0, opts.limit - count),
+      resetAt: resetMs,
+    }
+  } catch (err) {
+    console.error('[rateLimit] unexpected error:', err)
+    return {
+      allowed: failOpen,
+      remaining: failOpen ? opts.limit : 0,
+      resetAt: Date.now() + opts.windowMs,
+    }
   }
 }
 

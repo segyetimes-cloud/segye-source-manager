@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import AuditClient from '@/components/admin/AuditClient'
 import { CAN_VIEW_AUDIT_LOGS, can } from '@/lib/permissions'
+import type { AuditAction } from '@/types/database'
 
 interface SearchParams {
   action?: string
@@ -50,7 +51,7 @@ export default async function AdminAuditPage({
     .order('created_at', { ascending: false })
     .range((page - 1) * pageSize, page * pageSize - 1)
 
-  if (action)       query = query.eq('action', action)
+  if (action)       query = query.eq('action', action as AuditAction)
   if (userEmail)    query = query.ilike('user_email', `%${userEmail}%`)
   if (resourceType) query = query.eq('resource_type', resourceType)
   if (resourceId)   query = query.ilike('resource_id', `%${resourceId}%`)
