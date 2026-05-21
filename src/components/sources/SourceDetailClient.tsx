@@ -449,90 +449,60 @@ export default function SourceDetailClient({
               {source.current_position && ` · ${source.current_position}`}
               {source.current_department && ` · ${source.current_department}`}
             </p>
-            <div className="flex items-center gap-3 mt-2 flex-wrap">
-              {/* 공개범위 토글 (소유자/관리자만) */}
+            {/* 배지 한 줄: 공개범위 · 민감도 · 완성도 · 취재동의 */}
+            <div className="flex items-center gap-2 mt-2 flex-wrap">
+
+              {/* 공개범위 — 클릭 시 토글 (소유자/관리자) */}
               {canEdit ? (
-                <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #1A2838' }}
-                  title={visibilityChanging ? '변경 중...' : '클릭하여 공개 설정 변경'}>
-                  <button
-                    type="button"
-                    disabled={visibilityChanging}
-                    onClick={() => handleVisibilityChange('personal')}
-                    className="px-2.5 py-1 text-xs font-medium transition-all"
-                    style={{
-                      background: currentVisibility === 'personal' ? 'rgba(30,144,255,0.2)' : 'transparent',
-                      color: currentVisibility === 'personal' ? '#4A7CC0' : '#485870',
-                      cursor: visibilityChanging ? 'wait' : 'pointer',
-                      border: 'none',
-                    }}>
-                    🔒 내 목록
-                  </button>
-                  <div style={{ width: '1px', background: '#1A2838' }} />
-                  <button
-                    type="button"
-                    disabled={visibilityChanging}
-                    onClick={() => handleVisibilityChange('shared')}
-                    className="px-2.5 py-1 text-xs font-medium transition-all"
-                    style={{
-                      background: currentVisibility === 'shared' ? 'rgba(0,204,102,0.15)' : 'transparent',
-                      color: currentVisibility === 'shared' ? '#3D9E6A' : '#485870',
-                      cursor: visibilityChanging ? 'wait' : 'pointer',
-                      border: 'none',
-                    }}>
-                    🌐 편집국 공유
-                  </button>
-                </div>
-              ) : (
-                <span className="text-xs px-2 py-0.5 rounded-full"
+                <button type="button" disabled={visibilityChanging}
+                  onClick={() => handleVisibilityChange(currentVisibility === 'personal' ? 'shared' : 'personal')}
+                  title="클릭하여 공개 설정 변경"
                   style={{
-                    background: currentVisibility === 'shared' ? 'rgba(0,204,102,0.1)' : 'rgba(30,144,255,0.1)',
-                    color: currentVisibility === 'shared' ? '#3D9E6A' : '#687898',
+                    fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
+                    border: 'none', cursor: visibilityChanging ? 'wait' : 'pointer',
+                    background: currentVisibility === 'shared' ? 'rgba(61,158,106,0.12)' : 'rgba(30,144,255,0.1)',
+                    color: currentVisibility === 'shared' ? '#3D9E6A' : '#4A7CC0',
                   }}>
+                  {currentVisibility === 'shared' ? '🌐 편집국 공유' : '🔒 내 목록'}
+                </button>
+              ) : (
+                <span style={{
+                  fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
+                  background: currentVisibility === 'shared' ? 'rgba(61,158,106,0.1)' : 'rgba(30,144,255,0.08)',
+                  color: currentVisibility === 'shared' ? '#3D9E6A' : '#687898',
+                }}>
                   {currentVisibility === 'shared' ? '🌐 공유' : '🔒 개인'}
                 </span>
               )}
 
-              {/* 민감도 토글 (공유 목록이고 소유자/관리자일 때) */}
+              {/* 민감도 — 클릭 시 토글 (공유 목록 + 소유자/관리자) */}
               {currentVisibility === 'shared' && canEdit && (
-                <div className="flex rounded-md overflow-hidden" style={{ border: '1px solid #1A2838' }}>
-                  <button
-                    type="button"
-                    disabled={visibilityChanging}
-                    onClick={() => handleSensitivityChange('public')}
-                    className="px-2.5 py-1 text-xs font-medium transition-all"
-                    style={{
-                      background: currentSensitivity === 'public' ? 'rgba(0,204,102,0.15)' : 'transparent',
-                      color: currentSensitivity === 'public' ? '#3D9E6A' : '#485870',
-                      cursor: visibilityChanging ? 'wait' : 'pointer',
-                      border: 'none',
-                    }}>
-                    ✅ 공개
-                  </button>
-                  <div style={{ width: '1px', background: '#1A2838' }} />
-                  <button
-                    type="button"
-                    disabled={visibilityChanging}
-                    onClick={() => handleSensitivityChange('private')}
-                    className="px-2.5 py-1 text-xs font-medium transition-all"
-                    style={{
-                      background: currentSensitivity === 'private' ? 'rgba(255,153,0,0.15)' : 'transparent',
-                      color: currentSensitivity === 'private' ? '#A87228' : '#485870',
-                      cursor: visibilityChanging ? 'wait' : 'pointer',
-                      border: 'none',
-                    }}>
-                    ⚠️ 민감
-                  </button>
-                </div>
+                <button type="button" disabled={visibilityChanging}
+                  onClick={() => handleSensitivityChange(currentSensitivity === 'public' ? 'private' : 'public')}
+                  title="클릭하여 민감도 변경"
+                  style={{
+                    fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
+                    border: 'none', cursor: visibilityChanging ? 'wait' : 'pointer',
+                    background: currentSensitivity === 'private' ? 'rgba(255,153,0,0.12)' : 'rgba(61,158,106,0.12)',
+                    color: currentSensitivity === 'private' ? '#A87228' : '#3D9E6A',
+                  }}>
+                  {currentSensitivity === 'private' ? '⚠️ 민감' : '✅ 공개'}
+                </button>
               )}
 
-              {/* 열람 전용 뷰 (비소유자) */}
+              {/* 열람 전용 (비소유자) */}
               {currentVisibility === 'shared' && !canEdit && (
-                <span className={`text-xs px-2 py-0.5 rounded-full sensitivity-${currentSensitivity}`}>
-                  {currentSensitivity === 'private' ? '⚠️ 민감정보' : '✅ 공개정보'}
+                <span style={{
+                  fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
+                  background: currentSensitivity === 'private' ? 'rgba(255,153,0,0.1)' : 'rgba(61,158,106,0.1)',
+                  color: currentSensitivity === 'private' ? '#A87228' : '#3D9E6A',
+                }}>
+                  {currentSensitivity === 'private' ? '⚠️ 민감' : '✅ 공개'}
                 </span>
               )}
 
               <ScoreBadge score={source.completeness_score} />
+
               {(source as any).on_record_status && (() => {
                 const s = (source as any).on_record_status as string
                 const cfg = s === 'on_record'
@@ -542,7 +512,7 @@ export default function SourceDetailClient({
                   : { icon: '🔴', label: '오프더레코드', bg: 'rgba(192,64,64,0.12)', color: '#C04040', border: 'rgba(192,64,64,0.3)' }
                 return (
                   <span style={{
-                    fontSize: '11px', fontWeight: 600, padding: '2px 8px', borderRadius: '12px',
+                    fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
                     background: cfg.bg, color: cfg.color, border: `1px solid ${cfg.border}`,
                   }}>
                     {cfg.icon} {cfg.label}
@@ -553,25 +523,34 @@ export default function SourceDetailClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5">
           {canEdit && (
             <Link href={`/sources/${source.id}/edit`}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none' }}>
+              style={{
+                display: 'flex', alignItems: 'center', gap: '4px',
+                padding: '5px 11px', borderRadius: '7px', fontSize: '12px', fontWeight: 500,
+                background: '#182035', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none',
+              }}>
               ✏️ 수정
             </Link>
           )}
           <button onClick={() => setShowHistory(true)}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium"
-            style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>
-            📋 수정이력
+            style={{
+              display: 'flex', alignItems: 'center', gap: '4px',
+              padding: '5px 11px', borderRadius: '7px', fontSize: '12px',
+              background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer',
+            }}>
+            📋 이력
           </button>
           {canEdit && (
             <button onClick={handleDelete} disabled={deleting}
-              className="px-4 py-2 rounded-lg text-sm font-medium"
-              style={{ background: 'rgba(255,68,68,0.1)', color: '#C04040',
-                border: '1px solid rgba(255,68,68,0.2)', cursor: 'pointer' }}>
-              삭제
+              title="취재원 삭제"
+              style={{
+                padding: '5px 9px', borderRadius: '7px', fontSize: '13px',
+                background: 'rgba(255,68,68,0.08)', color: '#C04040',
+                border: '1px solid rgba(255,68,68,0.18)', cursor: 'pointer',
+              }}>
+              🗑️
             </button>
           )}
         </div>
