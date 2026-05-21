@@ -111,7 +111,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   const totalPages = Math.ceil((count ?? 0) / pageSize)
 
   return (
-    <div className="max-w-4xl mx-auto space-y-5" style={{ padding: '0 0 2rem' }}>
+    <div className="space-y-5" style={{ padding: '0 0 2rem' }}>
 
       {/* 헤더 */}
       <div className="flex items-center justify-between">
@@ -245,31 +245,42 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
                     <VisibilityBadge visibility={report.visibility as ReportVisibility} />
                   </div>
 
-                  {/* 미리보기 */}
+                  {/* 미리보기 — 2줄 말줄임 */}
                   <p style={{
                     fontSize: '12px', color: '#5A7099', margin: '0 0 7px',
-                    overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                    lineHeight: 1.5,
                   }}>
                     {preview}{(report.content as string).length > 100 ? '…' : ''}
                   </p>
 
-                  {/* 태그 + 취재원 + 메타 한 줄 */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    {(report.tags as string[]).slice(0, 4).map((tag, i) => (
-                      <span key={i} style={{
-                        fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
-                        background: 'rgba(30,144,255,0.08)', color: '#4A7CC0',
-                      }}>#{tag}</span>
-                    ))}
-                    {sourceNames.slice(0, 3).map((name: string, i: number) => (
-                      <span key={i} style={{
-                        fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
-                        background: 'rgba(0,212,255,0.06)', color: '#3A90A8',
-                      }}>👤 {name}</span>
-                    ))}
-                    <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#485870', flexShrink: 0, whiteSpace: 'nowrap' }}>
-                      {author?.full_name ?? '—'}{author?.department ? ` · ${author.department}` : ''} · {dateStr}
+                  {/* 태그 + 취재원 */}
+                  {((report.tags as string[]).length > 0 || sourceNames.length > 0) && (
+                    <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap', marginBottom: '6px' }}>
+                      {(report.tags as string[]).slice(0, 4).map((tag, i) => (
+                        <span key={i} style={{
+                          fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
+                          background: 'rgba(30,144,255,0.08)', color: '#4A7CC0',
+                        }}>#{tag}</span>
+                      ))}
+                      {sourceNames.slice(0, 3).map((name: string, i: number) => (
+                        <span key={i} style={{
+                          fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
+                          background: 'rgba(0,212,255,0.06)', color: '#3A90A8',
+                        }}>👤 {name}</span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 작성자 · 날짜 */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '11px', color: '#5A7099' }}>
+                      {author?.full_name ?? '—'}{author?.department ? ` · ${author.department}` : ''}
                     </span>
+                    <span style={{ fontSize: '11px', color: '#485870' }}>{dateStr}</span>
                   </div>
                 </div>
               </Link>
