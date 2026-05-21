@@ -1,6 +1,7 @@
 import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServiceClient } from '@/lib/supabase/server'
+import type { Profile } from '@/types/database'
 import SidebarLayout from '@/components/layout/SidebarLayout'
 import Watermark from '@/components/layout/Watermark'
 import ScreenshotGuard from '@/components/common/ScreenshotGuard'
@@ -27,6 +28,7 @@ export default async function AppLayout({
   }
 
   // ── ② 프로필 조회: 서비스 클라이언트로 RLS 없이 직접 조회
+  //     createServiceClient()는 동기 함수 — await 불필요
   //     getSession() / getUser() 네트워크 호출 완전 제거
   //     세션 쿠키 상태와 무관하게 동작 → redirect race 구조적 불가
   const supabase = createServiceClient()
@@ -36,11 +38,11 @@ export default async function AppLayout({
     .eq('id', userId)
     .single()
 
-  const profile = profileData as import('@/types/database').Profile | null
+  const profile = profileData as Profile | null
 
   console.log('[PROFILE]', { found: !!profile, active: profile?.is_active, err: profileError?.message })
 
-  if (!profile || !profile.is_active) {
+  if (profileError || !profile || !profile.is_active) {
     // signOut 제거: 서버 컴포넌트에서는 쿠키 설정 불가 → 효과 없음
     redirect('/login?error=inactive')
   }

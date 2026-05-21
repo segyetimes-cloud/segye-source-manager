@@ -221,10 +221,13 @@ export async function proxy(request: NextRequest) {
 
   // x-nonce 를 request headers에 심어야 서버 컴포넌트가 headers()로 읽을 수 있음
   const modifiedRequestHeaders = new Headers(request.headers)
-  modifiedRequestHeaders.set('x-nonce', nonce)
 
-  // ── proxy가 검증한 userId/email을 layout으로 전달 (layout의 getUser() 제거 목적)
-  // 클라이언트가 x-user-id를 스푸핑해도 set()이 덮어씀 → 안전
+  // ── 클라이언트가 주입 가능한 신뢰 헤더를 먼저 삭제 후, 인증 성공 시 재설정
+  // set()도 덮어쓰지만 delete→set 명시적 패턴으로 스푸핑 경로 완전 차단
+  modifiedRequestHeaders.delete('x-user-id')
+  modifiedRequestHeaders.delete('x-user-email')
+
+  modifiedRequestHeaders.set('x-nonce',      nonce)
   modifiedRequestHeaders.set('x-user-id',    user.id)
   modifiedRequestHeaders.set('x-user-email', user.email ?? '')
 
