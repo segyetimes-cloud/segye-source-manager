@@ -130,31 +130,7 @@ export default function SourceListClient({
     <div className="space-y-4">
       {/* 필터 + 검색 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div className="flex rounded-lg p-1" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
-            {[
-              { value: 'all', label: '전체' },
-              { value: 'mine', label: '내가 등록' },
-            ].map(t => (
-              <button
-                key={t.value}
-                onClick={() => navigate({ filter: t.value, q: currentQuery, page: '1' })}
-                className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-                style={{
-                  background: currentFilter === t.value ? '#4A7CC0' : 'transparent',
-                  color: currentFilter === t.value ? 'white' : '#687898',
-                  border: 'none',
-                  cursor: 'pointer',
-                }}>
-                {t.label}
-              </button>
-            ))}
-          </div>
-          <span className="text-sm flex-shrink-0" style={{ color: '#485870' }}>
-            총 {totalCount.toLocaleString()}명
-          </span>
-        </div>
-
+        {/* 검색폼 — 탭보다 위 */}
         <form onSubmit={handleSearch} style={{ display: 'flex', gap: 8 }}>
           <input
             type="text"
@@ -167,25 +143,65 @@ export default function SourceListClient({
               border: '1px solid #1A2838',
               color: '#CDD5E0',
               borderRadius: '8px',
-              padding: '8px 12px',
+              padding: '9px 12px',
               fontSize: '14px',
               outline: 'none',
             }}
           />
           <button
             type="submit"
-            style={{ background: '#4A7CC0', color: 'white', border: 'none', borderRadius: 8, padding: '8px 14px', fontSize: 14, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
+            style={{ background: '#4A7CC0', color: 'white', border: 'none', borderRadius: 8, padding: '9px 14px', fontSize: 14, fontWeight: 500, cursor: 'pointer', flexShrink: 0 }}>
             검색
           </button>
           {currentQuery && (
             <button
               type="button"
               onClick={() => { setSearchInput(''); navigate({ filter: currentFilter, page: '1' }) }}
-              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', borderRadius: 8, padding: '8px 12px', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
+              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
               초기화
             </button>
           )}
         </form>
+
+        {/* 탭 + 총 명수 + 등록 버튼 한 줄 */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            <div className="flex rounded-lg p-1" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
+              {[
+                { value: 'all', label: '전체' },
+                { value: 'mine', label: '내가 등록' },
+              ].map(t => (
+                <button
+                  key={t.value}
+                  onClick={() => navigate({ filter: t.value, q: currentQuery, page: '1' })}
+                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                  style={{
+                    background: currentFilter === t.value ? '#4A7CC0' : 'transparent',
+                    color: currentFilter === t.value ? 'white' : '#687898',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}>
+                  {t.label}
+                </button>
+              ))}
+            </div>
+            <span className="text-sm flex-shrink-0" style={{ color: '#485870' }}>
+              총 {totalCount.toLocaleString()}명
+            </span>
+          </div>
+          <Link
+            href="/sources/new"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '5px 12px', borderRadius: '7px',
+              background: 'linear-gradient(135deg,#4A7CC0,#0066CC)',
+              color: '#fff', fontSize: '12px', fontWeight: 600,
+              textDecoration: 'none', flexShrink: 0,
+            }}>
+            + 등록
+          </Link>
+        </div>
+
         {currentTag && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
             <span style={{ fontSize: 12, color: '#485870' }}>태그 필터:</span>
