@@ -3,22 +3,22 @@ import { headers } from 'next/headers'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: '세계일보 취재원 관리시스템',
-  description: 'AI기반 취재원 관리 및 공유 플랫폼',
+  title: 'THE SEGYE TIMES — AI 취재원 관리 시스템',
+  description: '기자들이 보유한 취재원 정보를 안전하게 관리하고, 조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼',
   robots: { index: false, follow: false },
   openGraph: {
-    title: '세계일보 취재원 관리시스템',
-    description: 'AI기반 취재원 관리 및 공유 플랫폼',
-    siteName: '세계일보',
+    title: 'THE SEGYE TIMES — AI 취재원 관리 시스템',
+    description: '기자들이 보유한 취재원 정보를 안전하게 관리하고, 조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼',
+    siteName: 'THE SEGYE TIMES',
     locale: 'ko_KR',
     type: 'website',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: '세계일보 취재원 관리시스템' }],
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: 'THE SEGYE TIMES AI 취재원 관리 시스템' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '세계일보 취재원 관리시스템',
-    description: 'AI기반 취재원 관리 및 공유 플랫폼',
-    images: ['/og-image.jpg'],
+    title: 'THE SEGYE TIMES — AI 취재원 관리 시스템',
+    description: '기자들이 보유한 취재원 정보를 안전하게 관리하고, 조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼',
+    images: ['/og-image.png'],
   },
 }
 
