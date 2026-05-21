@@ -219,15 +219,12 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
               <Link
                 key={report.id}
                 href={`/reports/${report.id}`}
-                style={{ textDecoration: 'none', display: 'block' }}>
-                <div style={{
-                  padding: '13px 18px',
+                className="report-list-row"
+                style={{
+                  textDecoration: 'none', display: 'block',
                   borderBottom: idx < (reports as any[]).length - 1 ? '1px solid #1A2838' : 'none',
-                  transition: 'background 0.12s',
-                }}
-                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.04)')}
-                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                >
+                }}>
+                <div style={{ padding: '13px 18px' }}>
                   {/* 제목 줄 */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
                     {catCfg && (

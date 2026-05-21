@@ -362,7 +362,12 @@ p, span, div, li, td, th, label, a, button {
 .sensitivity-public { background: rgba(61, 158, 106, 0.15); color: #3D9E6A; }
 .sensitivity-private { background: rgba(168, 114, 40, 0.15); color: #A87228; }
 
-/* ── 정보보고 카드 그리드 ── */
+/* ── 정보보고 리스트 행 hover ── */
+.report-list-row:hover > div {
+  background: rgba(30,144,255,0.04);
+}
+
+/* ── 정보보고 카드 그리드 (구버전 호환) ── */
 .report-card-grid {
   display: grid;
   grid-template-columns: 1fr;
