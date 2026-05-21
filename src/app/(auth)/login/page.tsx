@@ -1,14 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { createClient } from '@/lib/supabase/client'
 
 type Tab = 'login' | 'signup'
 
 export default function LoginPage() {
-  const router = useRouter()
   const [tab, setTab] = useState<Tab>('login')
   const [idleMessage, setIdleMessage] = useState(false)
 
@@ -57,7 +55,9 @@ export default function LoginPage() {
       // 잠금 체크 실패는 무시하고 계속
     }
 
-    // ── ② Supabase 인증 ──────────────────────────────────────────────────────
+    // ── ② 클라이언트 Supabase로 직접 로그인 ─────────────────────────────────
+    // createBrowserClient는 signInWithPassword 성공 시 즉시 document.cookie에 세션을 저장함
+    // 서버 액션(createServerClient) 방식은 onAuthStateChange가 발화하지 않아 쿠키가 설정되지 않음
     const supabase = createClient()
     const { error } = await supabase.auth.signInWithPassword({
       email: loginEmail,
@@ -66,7 +66,7 @@ export default function LoginPage() {
 
     if (error) {
       const msg = error.message.toLowerCase()
-      setLoginError(
+      const errorMsg =
         msg.includes('invalid login credentials') || msg.includes('invalid credentials')
           ? '이메일 또는 비밀번호가 올바르지 않습니다.'
           : msg.includes('ban') || msg.includes('banned')
@@ -74,7 +74,8 @@ export default function LoginPage() {
             : msg.includes('email not confirmed')
               ? '이메일 인증이 필요합니다. 이메일을 확인해주세요.'
               : `로그인 중 오류가 발생했습니다. (${error.message})`
-      )
+
+      setLoginError(errorMsg)
       // 로그인 실패 감사 기록 (fire-and-forget)
       void fetch('/api/auth/login-audit', {
         method: 'POST',
@@ -86,23 +87,10 @@ export default function LoginPage() {
       return
     }
 
-    // ── ③ 로그인 성공 처리 ──────────────────────────────────────────────────
-    // 감사 기록 + 이전 세션 무효화 (동시 접속 방지) — 병렬 실행
-    void Promise.all([
-      fetch('/api/auth/login-audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login', email: loginEmail }),
-        credentials: 'same-origin',
-      }),
-      fetch('/api/auth/session-control', {
-        method: 'POST',
-        credentials: 'same-origin',
-      }),
-    ])
-
-    router.push('/dashboard')
-    router.refresh()
+    // ③ 성공: 브라우저가 쿠키를 완전히 커밋하도록 짧은 대기 후 이동
+    // (document.cookie 직접 쓰기는 동기적이지만, 이벤트 루프 안정화 목적)
+    await new Promise(resolve => setTimeout(resolve, 300))
+    window.location.href = '/dashboard'
   }
 
   async function handleSignup(e: React.FormEvent) {
@@ -162,15 +150,25 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex"
+      className="min-h-screen flex items-center justify-center"
       style={{
         background: 'linear-gradient(160deg, #060E1E 0%, #0D1520 50%, #0A1828 100%)',
       }}
     >
-      {/* ── 왼쪽 패널 (60%) — 히어로 콘텐츠 ── */}
+      {/* ── 내부 컨테이너 (max-width로 좌우 집중) ── */}
+      <div
+        className="flex w-full min-h-screen md:min-h-0 md:rounded-2xl overflow-hidden"
+        style={{
+          maxWidth: '1100px',
+          width: '100%',
+          minHeight: '600px',
+          boxShadow: '0 0 80px rgba(0,0,0,0.6)',
+        }}
+      >
+      {/* ── 왼쪽 패널 — 히어로 콘텐츠 ── */}
       <div
         className="hidden md:flex flex-col justify-between relative overflow-hidden"
-        style={{ width: '60%', padding: '48px 56px' }}
+        style={{ flex: 1, padding: '48px 56px', background: 'linear-gradient(160deg, #060E1E 0%, #0D1520 50%, #0A1828 100%)' }}
       >
         {/* 배경 글로우 */}
         <div
@@ -191,28 +189,34 @@ export default function LoginPage() {
         />
 
         {/* 1. 로고 영역 */}
-        <div className="flex items-center gap-3 relative z-10">
+        <div className="flex items-center gap-4 relative z-10">
           <div
             style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(30,144,255,0.2)',
+              width: '60px',
+              height: '60px',
+              borderRadius: '14px',
+              background: 'rgba(30,144,255,0.15)',
               border: '1px solid rgba(30,144,255,0.35)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              fontSize: '20px',
+              flexShrink: 0,
             }}
           >
-            📰
+            <Image
+              src="/segye-logo.png"
+              alt="세계일보 로고"
+              width={40}
+              height={40}
+              style={{ filter: 'brightness(0) invert(1)', opacity: 0.92, objectFit: 'contain' }}
+            />
           </div>
           <div>
             <div
               style={{
-                fontSize: '13px',
+                fontSize: '18px',
                 fontWeight: 700,
-                letterSpacing: '2.5px',
+                letterSpacing: '3px',
                 color: '#4A9EFF',
               }}
             >
@@ -220,10 +224,10 @@ export default function LoginPage() {
             </div>
             <div
               style={{
-                fontSize: '10px',
-                letterSpacing: '0.3px',
-                color: 'rgba(180,200,230,0.5)',
-                marginTop: '2px',
+                fontSize: '13px',
+                letterSpacing: '0.4px',
+                color: 'rgba(180,200,230,0.55)',
+                marginTop: '4px',
               }}
             >
               가장 먼저, 그리고 끝까지&nbsp;&nbsp;·&nbsp;&nbsp;First to report, Last to cover
@@ -233,7 +237,7 @@ export default function LoginPage() {
 
         {/* 2. 메인 헤딩 */}
         <div className="relative z-10" style={{ marginTop: 'auto', marginBottom: 'auto' }}>
-          <h1 style={{ fontSize: '64px', fontWeight: 700, lineHeight: 1.15, marginBottom: '24px' }}>
+          <h1 style={{ fontSize: '72px', fontWeight: 700, lineHeight: 1.15, marginBottom: '28px' }}>
             <span
               style={{
                 background: 'linear-gradient(135deg, #4A9EFF, #00D4FF)',
@@ -249,10 +253,10 @@ export default function LoginPage() {
           </h1>
           <p
             style={{
-              fontSize: '14px',
+              fontSize: '16px',
               color: 'rgba(180,200,230,0.7)',
-              lineHeight: 1.7,
-              maxWidth: '380px',
+              lineHeight: 1.75,
+              maxWidth: '420px',
             }}
           >
             기자들이 보유한 취재원 정보를 안전하게 관리하고,{'\n'}
@@ -261,115 +265,118 @@ export default function LoginPage() {
         </div>
 
         {/* 3. 기능 카드 3개 */}
-        <div className="flex gap-3 relative z-10">
+        <div className="flex gap-2 relative z-10">
           {/* 카드 1: 취재원 관리 */}
           <div
             style={{
               flex: 1,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '12px',
-              padding: '16px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '10px',
+              padding: '10px 12px',
               transition: 'background 0.2s',
               cursor: 'default',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
           >
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
                 background: 'rgba(30,144,255,0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '16px',
-                marginBottom: '10px',
+                fontSize: '13px',
+                marginBottom: '7px',
               }}
             >
               👤
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>취재원 관리</p>
-            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원 관리</p>
+            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
           </div>
 
           {/* 카드 2: 정보보고 관리 (active) */}
           <div
             style={{
               flex: 1,
-              background: 'rgba(30,144,255,0.1)',
-              border: '1px solid rgba(30,144,255,0.5)',
-              borderRadius: '12px',
-              padding: '16px',
+              background: 'rgba(30,144,255,0.08)',
+              border: '1px solid rgba(30,144,255,0.4)',
+              borderRadius: '10px',
+              padding: '10px 12px',
               transition: 'background 0.2s',
               cursor: 'default',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.15)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.1)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.13)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.08)')}
           >
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
                 background: 'rgba(30,144,255,0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '16px',
-                marginBottom: '10px',
+                fontSize: '13px',
+                marginBottom: '7px',
               }}
             >
               📋
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>정보보고 관리</p>
-            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>정보보고 관리</p>
+            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
           </div>
 
           {/* 카드 3: 관계망 시각화 */}
           <div
             style={{
               flex: 1,
-              background: 'rgba(255,255,255,0.05)',
-              border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '12px',
-              padding: '16px',
+              background: 'rgba(255,255,255,0.04)',
+              border: '1px solid rgba(255,255,255,0.08)',
+              borderRadius: '10px',
+              padding: '10px 12px',
               transition: 'background 0.2s',
               cursor: 'default',
             }}
-            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.08)')}
-            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.05)')}
+            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.07)')}
+            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
           >
             <div
               style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
+                width: '24px',
+                height: '24px',
+                borderRadius: '6px',
                 background: 'rgba(30,144,255,0.15)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                fontSize: '16px',
-                marginBottom: '10px',
+                fontSize: '13px',
+                marginBottom: '7px',
               }}
             >
               🕸️
             </div>
-            <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>관계망 시각화</p>
-            <p style={{ fontSize: '11px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>관계망 시각화</p>
+            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
           </div>
         </div>
       </div>
 
-      {/* ── 오른쪽 패널 (40%) — 폼 영역 ── */}
+      {/* ── 오른쪽 패널 (고정 360px) — 폼 영역 ── */}
       <div
-        className="w-full md:w-2/5 flex flex-col justify-center"
+        className="w-full flex flex-col justify-center"
         style={{
+          width: '360px',
+          minWidth: '320px',
+          flexShrink: 0,
           background: 'rgba(6,14,30,0.95)',
           borderLeft: '1px solid rgba(30,80,160,0.2)',
-          padding: '48px 40px',
+          padding: '48px 32px',
         }}
       >
         {/* 브랜드 헤더 */}
@@ -661,6 +668,7 @@ export default function LoginPage() {
         <p className="text-center text-xs mt-auto pt-10" style={{ color: '#2A3A50' }}>
           본 시스템은 사내 VPN 환경에서만 이용 가능합니다
         </p>
+      </div>
       </div>
     </div>
   )

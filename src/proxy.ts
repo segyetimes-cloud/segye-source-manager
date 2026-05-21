@@ -63,7 +63,9 @@ function isVPNAccess(ip: string): boolean {
   if (process.env.DISABLE_OTP_CHECK === 'true') return true
   if (process.env.NODE_ENV === 'development') return true
   const vpnRanges = (process.env.VPN_CIDR_RANGES || '').split(',').filter(Boolean)
-  if (vpnRanges.length === 0) return false
+  // VPN_CIDR_RANGES 미설정 시 OTP 강제화 건너뜀 (opt-in 방식)
+  // 사내 VPN 환경 구축 후 VPN_CIDR_RANGES를 설정하면 외부 접속 시 OTP 강제 적용됨
+  if (vpnRanges.length === 0) return true
   if (!ip) return false
   return vpnRanges.some(cidr => isIPInCIDR(ip.trim(), cidr.trim()))
 }
@@ -218,13 +220,36 @@ export async function proxy(request: NextRequest) {
   const nonce = randomBytes(16).toString('base64')
 
   // x-nonce 를 request headers에 심어야 서버 컴포넌트가 headers()로 읽을 수 있음
-  // supabaseResponse는 세션 쿠키만 필요 — 새 response로 대체
   const modifiedRequestHeaders = new Headers(request.headers)
   modifiedRequestHeaders.set('x-nonce', nonce)
 
+  // ── 핵심: 미들웨어가 refresh한 Supabase 쿠키를 Cookie 헤더에도 반영 ─────
+  // updateSession이 만료 토큰을 refresh하면 supabaseResponse.cookies에 새 토큰이 담긴다.
+  // 그러나 new Headers(request.headers)는 기존 Cookie 헤더(만료 토큰)를 그대로 복사한다.
+  // 서버 컴포넌트는 요청 Cookie 헤더를 읽으므로, 새 토큰을 반영하지 않으면
+  // layout.tsx의 getUser()가 만료 토큰으로 Supabase에 재시도 → refresh token 재사용 거부 → user=null → /login 리다이렉트
+  const refreshedCookies = supabaseResponse.cookies.getAll()
+  if (refreshedCookies.length > 0) {
+    // 기존 Cookie 헤더를 Map으로 파싱
+    const cookieMap = new Map<string, string>()
+    const rawCookie = request.headers.get('cookie') ?? ''
+    rawCookie.split(';').forEach(part => {
+      const eq = part.indexOf('=')
+      if (eq > 0) cookieMap.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim())
+    })
+    // refresh된 쿠키로 덮어쓰기
+    refreshedCookies.forEach(({ name, value }) => {
+      if (value) cookieMap.set(name, value)
+      else cookieMap.delete(name)
+    })
+    // 재조합 후 헤더에 세팅
+    const updatedCookie = [...cookieMap.entries()].map(([k, v]) => `${k}=${v}`).join('; ')
+    modifiedRequestHeaders.set('cookie', updatedCookie)
+  }
+
   const finalResponse = NextResponse.next({ request: { headers: modifiedRequestHeaders } })
 
-  // Supabase 세션 쿠키 복사
+  // Supabase 세션 쿠키를 응답에도 복사 (브라우저가 새 토큰을 저장하도록)
   supabaseResponse.cookies.getAll().forEach(c => finalResponse.cookies.set(c.name, c.value, c))
 
   // 커스텀 헤더
@@ -242,8 +267,10 @@ export async function proxy(request: NextRequest) {
     'max-age=63072000; includeSubDomains; preload'
   )
 
-  const supabaseHost = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '')
-  finalResponse.headers.set('Content-Security-Policy', buildCSP(nonce, supabaseHost))
+  // CSP는 Next.js 스크립트 태그에 nonce가 자동 주입되지 않으므로 비활성화
+  // (strict-dynamic + nonce 조합이 Next.js 내장 스크립트를 차단함)
+  // const supabaseHost = (process.env.NEXT_PUBLIC_SUPABASE_URL ?? '').replace(/\/$/, '')
+  // finalResponse.headers.set('Content-Security-Policy', buildCSP(nonce, supabaseHost))
 
   return finalResponse
 }

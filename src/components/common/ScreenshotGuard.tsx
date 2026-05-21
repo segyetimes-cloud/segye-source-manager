@@ -9,11 +9,18 @@ export default function ScreenshotGuard({ children }: { children: React.ReactNod
 
   useEffect(() => {
     // ── ① 창 포커스 이탈 (Alt+Tab, 다른 앱 전환) ─────────────────────────
+    // 페이지 전환(window.location.href) 중 브라우저가 blur를 발생시키는 경우 방지:
+    // 마운트 직후 1초는 blur 감지를 비활성화 (네비게이션 잔여 이벤트 무시)
+    let blurEnabled = false
+    const enableTimer = setTimeout(() => { blurEnabled = true }, 1000)
+
     const onVisibility = () => {
+      if (!blurEnabled) return
       if (document.visibilityState === 'hidden') lock()
       else unlock()
     }
-    window.addEventListener('blur', lock)
+    const guardedLock = () => { if (blurEnabled) lock() }
+    window.addEventListener('blur', guardedLock)
     window.addEventListener('focus', unlock)
     document.addEventListener('visibilitychange', onVisibility)
 
@@ -50,7 +57,8 @@ export default function ScreenshotGuard({ children }: { children: React.ReactNod
     window.addEventListener('afterprint',    onAfterPrint)
 
     return () => {
-      window.removeEventListener('blur',          lock)
+      clearTimeout(enableTimer)
+      window.removeEventListener('blur',          guardedLock)
       window.removeEventListener('focus',         unlock)
       document.removeEventListener('visibilitychange', onVisibility)
       document.removeEventListener('keydown',     onKeyDown,      true)
