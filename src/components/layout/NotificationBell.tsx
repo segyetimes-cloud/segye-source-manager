@@ -43,14 +43,15 @@ export default function NotificationBell() {
     fetchNotifications()
 
     const supabase = createClient()
+    // createBrowserClient는 싱글톤 — 동일 이름 채널이 남아있으면 subscribe 후 .on() 재호출 불가
+    // 매번 고유한 채널명을 사용해 충돌 방지
+    const channelName = `notifications_${Date.now()}_${Math.random().toString(36).slice(2)}`
     const channel = supabase
-      .channel('notifications')
+      .channel(channelName)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'notifications' },
-        () => {
-          fetchNotifications()
-        }
+        () => { fetchNotifications() }
       )
       .subscribe()
 
