@@ -350,182 +350,139 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
       {/* ── 활성 계정 탭 ── */}
       {tab === 'active' && (
-        <div className="space-y-2">
+        <div className="space-y-1">
           {filteredActive.map(u => (
-            <div key={u.id} className="glass-card p-4"
+            <div key={u.id} className="glass-card"
               style={{
+                padding: '7px 12px',
                 border: u.id === currentUserId ? '1px solid rgba(30,144,255,0.3)' : '1px solid #1A2838',
               }}>
-              <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-4 flex-1 min-w-0">
-                  <div className="w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold flex-shrink-0"
-                    style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)' }}>
-                    {u.full_name[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{u.full_name}</span>
-                      {u.id === currentUserId && (
-                        <span className="text-xs px-1.5 py-0.5 rounded" style={{ background: 'rgba(30,144,255,0.1)', color: '#4A7CC0' }}>나</span>
-                      )}
+              <div className="flex items-center justify-between gap-3">
+                {/* 아바타 */}
+                <div className="w-7 h-7 rounded flex items-center justify-center text-xs font-bold flex-shrink-0"
+                  style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)' }}>
+                  {u.full_name[0]}
+                </div>
 
-                      {/* 역할 배지 / 편집 — 선택 즉시 저장 */}
-                      {editingUser === u.id ? (
-                        <select
-                          value={editRole}
-                          autoFocus
-                          disabled={processing === u.id}
-                          onChange={e => {
-                            const newRole = e.target.value
-                            setEditRole(newRole)
-                            changeRole(u.id, newRole)
-                          }}
-                          onBlur={() => { if (processing !== u.id) setEditingUser(null) }}
+                {/* 이름 + 배지들 + 이메일 — 한 줄 */}
+                <div className="flex items-center gap-2 flex-1 min-w-0 flex-wrap">
+                  <span className="text-sm font-semibold flex-shrink-0" style={{ color: '#CDD5E0' }}>{u.full_name}</span>
+                  {u.id === currentUserId && (
+                    <span className="text-xs px-1.5 rounded flex-shrink-0" style={{ background: 'rgba(30,144,255,0.1)', color: '#4A7CC0' }}>나</span>
+                  )}
+
+                  {/* 역할 배지 */}
+                  {editingUser === u.id ? (
+                    <select
+                      value={editRole} autoFocus disabled={processing === u.id}
+                      onChange={e => { setEditRole(e.target.value); changeRole(u.id, e.target.value) }}
+                      onBlur={() => { if (processing !== u.id) setEditingUser(null) }}
+                      style={{
+                        background: '#182035', border: '1px solid #4A7CC0',
+                        color: '#CDD5E0', borderRadius: '6px', padding: '1px 6px',
+                        fontSize: '11px', cursor: 'pointer', fontWeight: 600,
+                        opacity: processing === u.id ? 0.5 : 1,
+                      }}>
+                      <option value="reporter">기자</option>
+                      <option value="deputy">차장</option>
+                      <option value="admin">부장</option>
+                      {isSuperadmin && <option value="section_editor">부국장</option>}
+                      {isSuperadmin && <option value="editor">국장</option>}
+                      {isSuperadmin && <option value="publisher">편집인</option>}
+                      {isSuperadmin && <option value="superadmin">슈퍼관리자</option>}
+                    </select>
+                  ) : (
+                    (() => {
+                      const canEdit = u.id !== currentUserId && (isSuperadmin || isAdmin)
+                      const isHovering = hoveringRole === u.id
+                      return (
+                        <button
+                          onClick={() => { if (canEdit) { setEditingUser(u.id); setEditRole(u.role) } }}
+                          onMouseEnter={() => canEdit && setHoveringRole(u.id)}
+                          onMouseLeave={() => setHoveringRole(null)}
+                          title={canEdit ? '클릭하여 역할 변경' : ''}
+                          className={`text-xs px-1.5 rounded flex-shrink-0 ${ROLE_LABEL[u.role]?.className ?? ''}`}
                           style={{
-                            background: '#182035', border: '1px solid #4A7CC0',
-                            color: '#CDD5E0', borderRadius: '6px', padding: '3px 8px',
-                            fontSize: '12px', cursor: 'pointer', fontWeight: 600,
-                            opacity: processing === u.id ? 0.5 : 1,
+                            cursor: canEdit ? 'pointer' : 'default', fontWeight: 600,
+                            display: 'inline-flex', alignItems: 'center', gap: '2px',
+                            opacity: isHovering ? 0.8 : 1,
+                            outline: isHovering ? '1px dashed currentColor' : 'none',
+                            outlineOffset: '1px',
                           }}>
-                          <option value="reporter">기자</option>
-                          <option value="deputy">차장</option>
-                          <option value="admin">부장</option>
-                          {isSuperadmin && <option value="section_editor">부국장</option>}
-                          {isSuperadmin && <option value="editor">국장</option>}
-                          {isSuperadmin && <option value="publisher">편집인</option>}
-                          {isSuperadmin && <option value="superadmin">슈퍼관리자</option>}
-                        </select>
-                      ) : (
-                        (() => {
-                          const canEdit = u.id !== currentUserId && (isSuperadmin || isAdmin)
-                          const isHovering = hoveringRole === u.id
-                          return (
-                            <button
-                              onClick={() => {
-                                if (canEdit) {
-                                  setEditingUser(u.id)
-                                  setEditRole(u.role)
-                                }
-                              }}
-                              onMouseEnter={() => canEdit && setHoveringRole(u.id)}
-                              onMouseLeave={() => setHoveringRole(null)}
-                              title={canEdit ? '클릭하여 역할 변경' : ''}
-                              className={`text-xs px-2 py-0.5 rounded ${ROLE_LABEL[u.role]?.className ?? ''}`}
-                              style={{
-                                cursor: canEdit ? 'pointer' : 'default',
-                                fontWeight: 600,
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '3px',
-                                transition: 'opacity 0.15s',
-                                opacity: isHovering ? 0.8 : 1,
-                                outline: isHovering ? '1px dashed currentColor' : 'none',
-                                outlineOffset: '1px',
-                              }}>
-                              {processing === u.id ? (
-                                '변경 중...'
-                              ) : (
-                                <>
-                                  {ROLE_LABEL[u.role]?.label ?? u.role}
-                                  {canEdit && (
-                                    <span style={{ fontSize: '10px', opacity: isHovering ? 1 : 0.4 }}>✏️</span>
-                                  )}
-                                </>
-                              )}
-                            </button>
-                          )
-                        })()
-                      )}
-                    </div>
-                    {/* 직급 배지 */}
-                    {editingRankUser === u.id ? (
+                          {processing === u.id ? '변경 중...' : (
+                            <>{ROLE_LABEL[u.role]?.label ?? u.role}{canEdit && <span style={{ fontSize: '9px', opacity: isHovering ? 1 : 0.4 }}>✏️</span>}</>
+                          )}
+                        </button>
+                      )
+                    })()
+                  )}
+
+                  {/* 직급 배지 — 인라인 */}
+                  {u.id !== currentUserId && (
+                    editingRankUser === u.id ? (
                       <select
-                        value={editRank}
-                        autoFocus
-                        disabled={processing === u.id + '_rank'}
-                        onChange={e => {
-                          const r = e.target.value
-                          setEditRank(r)
-                          changeRank(u.id, r)
-                        }}
+                        value={editRank} autoFocus disabled={processing === u.id + '_rank'}
+                        onChange={e => { setEditRank(e.target.value); changeRank(u.id, e.target.value) }}
                         onBlur={() => { if (processing !== u.id + '_rank') setEditingRankUser(null) }}
                         style={{
                           background: '#182035', border: '1px solid #FFB800',
-                          color: '#CDD5E0', borderRadius: '6px', padding: '2px 8px',
-                          fontSize: '12px', cursor: 'pointer', fontWeight: 600,
+                          color: '#CDD5E0', borderRadius: '6px', padding: '1px 6px',
+                          fontSize: '11px', cursor: 'pointer', fontWeight: 600,
                           opacity: processing === u.id + '_rank' ? 0.5 : 1,
                         }}>
                         <option value="">미설정</option>
                         {RANK_OPTIONS.map(r => <option key={r} value={r}>{r}</option>)}
                       </select>
                     ) : (
-                      u.id !== currentUserId && (
-                        <button
-                          type="button"
-                          title="직급 변경"
-                          onClick={() => { setEditingRankUser(u.id); setEditRank(u.rank ?? '') }}
-                          style={{
-                            fontSize: '11px', fontWeight: 600,
-                            color: u.rank ? (RANK_COLOR[u.rank] ?? '#687898') : '#485870',
-                            background: u.rank ? 'rgba(255,255,255,0.06)' : 'transparent',
-                            border: `1px solid ${u.rank ? ((RANK_COLOR[u.rank] ?? '#485870') + '44') : '#1A2838'}`,
-                            borderRadius: '4px', padding: '1px 7px', cursor: 'pointer',
-                          }}>
-                          {u.rank ?? '직급 미설정'} ✏️
-                        </button>
-                      )
-                    )}
+                      <button type="button" title="직급 변경"
+                        onClick={() => { setEditingRankUser(u.id); setEditRank(u.rank ?? '') }}
+                        style={{
+                          fontSize: '11px', fontWeight: 600,
+                          color: u.rank ? (RANK_COLOR[u.rank] ?? '#687898') : '#485870',
+                          background: 'transparent', border: 'none',
+                          padding: '0 2px', cursor: 'pointer', flexShrink: 0,
+                        }}>
+                        {u.rank ?? '직급 미설정'} ✏️
+                      </button>
+                    )
+                  )}
 
-                    <div className="text-xs mt-0.5 truncate" style={{ color: '#485870' }}>
-                      {u.email}
-                      {u.department && ` · ${u.department}`}
-                      {u.desk_name && ` · ${u.desk_name}`}
-                      {u.employee_id && ` · ${u.employee_id}`}
-                    </div>
-                    {u.last_login_at && (
-                      <div className="text-xs mt-0.5" style={{ color: '#485870' }}>
-                        최근 로그인: {new Date(u.last_login_at).toLocaleString('ko-KR')}
-                      </div>
-                    )}
-                  </div>
+                  {/* 이메일 · 부서 — 같은 줄, 공간 남으면 표시 */}
+                  <span className="text-xs truncate" style={{ color: '#485870', minWidth: 0 }}>
+                    {u.email}
+                    {u.department && ` · ${u.department}`}
+                    {u.last_login_at && ` · ${new Date(u.last_login_at).toLocaleDateString('ko-KR')}`}
+                  </span>
                 </div>
 
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {/* 승인 버튼 — 메인 액션 */}
+                {/* 버튼 영역 */}
+                <div className="flex items-center gap-1.5 flex-shrink-0">
                   {u.id !== currentUserId && (
-                    <button
-                      onClick={() => activateUser(u.id)}
-                      disabled={processing === u.id + '_activate'}
-                      className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                    <button onClick={() => activateUser(u.id)} disabled={processing === u.id + '_activate'}
+                      className="text-xs px-2.5 py-1 rounded font-medium"
                       style={{
                         background: 'rgba(0,204,102,0.1)', color: '#3D9E6A',
                         border: '1px solid rgba(0,204,102,0.25)',
                         cursor: processing === u.id + '_activate' ? 'not-allowed' : 'pointer',
                         opacity: processing === u.id + '_activate' ? 0.5 : 1,
                       }}>
-                      {processing === u.id + '_activate' ? '처리 중...' : '✓ 승인'}
+                      {processing === u.id + '_activate' ? '...' : '✓ 승인'}
                     </button>
                   )}
-                  {/* 비밀번호 재설정 — 문제 발생 시 보조 수단 */}
                   {u.id !== currentUserId && (
-                    <button
-                      onClick={() => sendResetEmail(u.id)}
-                      disabled={processing === u.id + '_reset'}
-                      title="로그인 문제 발생 시 사용"
-                      className="text-xs px-2 py-1.5 rounded-lg"
+                    <button onClick={() => sendResetEmail(u.id)} disabled={processing === u.id + '_reset'}
+                      title="비밀번호 재설정" className="text-xs px-2 py-1 rounded"
                       style={{
-                        background: 'transparent', color: '#485870',
-                        border: '1px solid #1A2838',
+                        background: 'transparent', color: '#485870', border: '1px solid #1A2838',
                         cursor: processing === u.id + '_reset' ? 'not-allowed' : 'pointer',
                         opacity: processing === u.id + '_reset' ? 0.5 : 1,
                       }}>
-                      {processing === u.id + '_reset' ? '발송 중...' : '🔑'}
+                      {processing === u.id + '_reset' ? '...' : '🔑'}
                     </button>
                   )}
-                  <button
-                    onClick={() => toggleActive(u.id, u.is_active)}
+                  <button onClick={() => toggleActive(u.id, u.is_active)}
                     disabled={processing === u.id || u.id === currentUserId}
-                    className="text-xs px-3 py-1.5 rounded-lg font-medium"
+                    className="text-xs px-2.5 py-1 rounded font-medium"
                     style={{
                       background: 'rgba(255,68,68,0.1)', color: '#C04040',
                       border: '1px solid rgba(255,68,68,0.2)',
