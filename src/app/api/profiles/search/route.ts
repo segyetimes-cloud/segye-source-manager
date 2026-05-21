@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/profiles/search?q=이름&limit=15
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -15,7 +14,7 @@ export async function GET(request: NextRequest) {
 
   if (!q.trim()) return NextResponse.json({ users: [] })
 
-  const { data, error } = await supabaseAny
+  const { data, error } = await supabase
     .from('profiles')
     .select('id, full_name, department, rank')
     .or(`full_name.ilike.*${q}*,department.ilike.*${q}*`)

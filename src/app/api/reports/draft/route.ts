@@ -5,11 +5,10 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/reports/draft — 내 드래프트 불러오기
 export async function GET() {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabaseAny
+  const { data, error } = await supabase
     .from('report_drafts')
     .select('id, title, content, category, tags, visibility, source_ids, allowed_user_ids, updated_at')
     .eq('author_id', user.id)
@@ -25,14 +24,13 @@ export async function GET() {
 // PUT /api/reports/draft — 드래프트 저장 (upsert)
 export async function PUT(request: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
   const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
 
-  const { data, error } = await supabaseAny
+  const { data, error } = await supabase
     .from('report_drafts')
     .upsert(
       {
@@ -58,11 +56,10 @@ export async function PUT(request: NextRequest) {
 // DELETE /api/reports/draft — 드래프트 삭제
 export async function DELETE() {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { error } = await supabaseAny
+  const { error } = await supabase
     .from('report_drafts')
     .delete()
     .eq('author_id', user.id)

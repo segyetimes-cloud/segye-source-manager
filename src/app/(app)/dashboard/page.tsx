@@ -55,7 +55,7 @@ export default async function DashboardPage() {
       .select('category')
       .eq('author_id', user.id).eq('is_deleted', false),
     // Followup 쿼리 추가: 7일 이내 next_followup_at 있는 내 연락 이력
-    (supabase as any)
+    supabase
       .from('contact_logs')
       .select('id, next_followup_at, summary, source_id, sources!source_id(id, full_name, current_organization)')
       .not('next_followup_at', 'is', null)

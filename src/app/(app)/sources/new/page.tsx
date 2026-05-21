@@ -8,13 +8,12 @@ export default async function NewSourcePage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   let initialData: Record<string, unknown> = {}
   let helpContext: { title: string; body: string | null; target_name: string | null; target_org: string | null; acceptedBody: string | null } | null = null
 
   if (params.from_help) {
-    const { data: helpReq } = await supabaseAny
+    const { data: helpReqRaw } = await supabase
       .from('help_requests')
       .select(`
         title, body, target_name, target_org,
@@ -22,6 +21,11 @@ export default async function NewSourcePage({
       `)
       .eq('id', params.from_help)
       .single()
+    const helpReq = helpReqRaw as {
+      id: string; title: string; body: string | null;
+      target_name: string | null; target_org: string | null;
+      help_responses: Array<{ body: string | null; is_accepted: boolean }>;
+    } | null
 
     if (helpReq) {
       const acceptedResp = (helpReq.help_responses as any[])?.find((r: any) => r.is_accepted)

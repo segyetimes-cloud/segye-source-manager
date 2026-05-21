@@ -7,7 +7,7 @@ export default async function HelpPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-  const { data: requests } = await (supabase as any)
+  const { data: requests } = await supabase
     .from('help_requests')
     .select(`
       id, title, body, request_type, target_name, target_org,
@@ -18,7 +18,7 @@ export default async function HelpPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
-  const { data: myResponses } = await (supabase as any)
+  const { data: myResponses } = await supabase
     .from('help_responses')
     .select('request_id')
     .eq('responder_id', user.id)

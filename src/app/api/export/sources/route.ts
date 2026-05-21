@@ -56,16 +56,19 @@ export async function GET(request: NextRequest) {
 
   // ── 원자적 내보내기 한도 확인 + 로그 기록 (TOCTOU 방지) ─────────────────
   // DB 함수가 트랜잭션 내에서 SELECT FOR UPDATE + INSERT를 수행
-  const { data: exportCheck, error: exportErr } = await (supabase as any).rpc(
-    'try_log_export',
+  // supabase-js v2 rpc() 타입 추론 한계로 함수명에 캐스팅 적용
+  type ExportCheckResult = { today_count: number; allowed: boolean }
+  const { data: exportCheckRaw, error: exportErr } = await supabase.rpc(
+    'try_log_export' as 'try_log_export',
     {
       p_user_id:       user.id,
       p_daily_limit:   dailyLimit,
       p_row_count:     sources?.length ?? 0,
-      p_filter_params: { filter, q },
+      p_filter_params: { filter, q } as Record<string, unknown>,
       p_watermark_id:  watermarkId,
-    }
+    } as unknown as undefined
   )
+  const exportCheck = exportCheckRaw as ExportCheckResult | null
 
   if (exportErr) {
     console.error('[export] try_log_export error:', exportErr.message)
@@ -129,7 +132,9 @@ export async function GET(request: NextRequest) {
 
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
-  void (supabase as any).from('audit_logs').insert({
+  // audit_logs insert — supabase-js Insert 타입 추론 한계로 데이터만 캐스팅
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     action: 'export',
@@ -137,7 +142,7 @@ export async function GET(request: NextRequest) {
     export_row_count: sources?.length ?? 0,
     watermark_token: watermarkId,
     metadata: { filter, query: q, role, daily_count: todayCount, ip: exportIP },
-  })
+  } as any)
 
   const filename = `취재원목록_${new Date().toLocaleDateString('ko-KR').replace(/\./g, '').replace(/ /g, '')}.xlsx`
 

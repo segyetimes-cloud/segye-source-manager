@@ -1,0 +1,34 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "🎱 LOTTO BALL DROP" [level=1] [ref=e3]
+    - generic [ref=e7]:
+      - generic [ref=e8]: 📊 실시간 순위
+      - generic [ref=e23]:
+        - generic [ref=e24]: 🥇
+        - generic [ref=e25]: A
+        - generic [ref=e26]: →2번
+      - generic [ref=e27]:
+        - generic [ref=e28]: 🥈
+        - generic [ref=e29]: F
+        - generic [ref=e30]: →7번
+      - generic [ref=e31]:
+        - generic [ref=e32]: 🥉
+        - generic [ref=e33]: J
+        - generic [ref=e34]: →10번
+      - generic [ref=e35]:
+        - generic [ref=e36]: "4."
+        - generic [ref=e37]: H
+        - generic [ref=e38]: →8번
+      - generic [ref=e39]:
+        - generic [ref=e40]: "5."
+        - generic [ref=e41]: I
+        - generic [ref=e42]: →10번
+      - generic [ref=e43]:
+        - generic [ref=e44]: "6."
+        - generic [ref=e45]: G
+        - generic [ref=e46]: →6번
+    - button "⏳ 진행 중..." [disabled] [ref=e22]
+    - generic [ref=e11]: ★ BUMPER(주황) 충돌 시 공이 튕겨나감 | RED TRAP — 닫히면 공이 막힘 | 먼저 도착 순으로 등수 결정
+  - button "Open Next.js Dev Tools" [ref=e17] [cursor=pointer]:
+    - img [ref=e18]
+  - alert [ref=e21]

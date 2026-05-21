@@ -4,12 +4,11 @@ import UsersClient from '@/components/admin/UsersClient'
 
 export default async function AdminUsersPage() {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileRaw } = await supabaseAny
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -24,7 +23,7 @@ export default async function AdminUsersPage() {
   // 슈퍼관리자·편집인·국장·부국장은 전체 역할 변경 권한
   const isSuperadmin = ['superadmin', 'publisher', 'editor', 'section_editor'].includes(profile?.role ?? '')
 
-  const { data: usersRaw } = await supabaseAny
+  const { data: usersRaw } = await supabase
     .from('profiles')
     .select(`
       id, email, full_name, role, rank, department, desk_name,

@@ -33,7 +33,7 @@ export default async function SourcesPage({
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
   const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
 
-  let sourcesQuery = (supabase as any)
+  let sourcesQuery = supabase
     .from('sources')
     .select(`
       id, full_name, current_organization, current_position,

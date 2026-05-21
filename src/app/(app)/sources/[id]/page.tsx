@@ -1,180 +1,106 @@
-import { createClient, createServiceClient } from '@/lib/supabase/server'
-import { redirect, notFound } from 'next/navigation'
-import Link from 'next/link'
-import SourceDetailClient from '@/components/sources/SourceDetailClient'
-import BookmarkButton from '@/components/sources/BookmarkButton'
-import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE } from '@/lib/permissions'
+import { createClient } from '@/lib/supabase/server'
+import SourceForm from '@/components/sources/SourceForm'
 
-interface Params {
-  params: Promise<{ id: string }>
-}
-
-export default async function SourceDetailPage({ params }: Params) {
-  const { id } = await params
+export default async function NewSourcePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ from_help?: string }>
+}) {
+  const params = await searchParams
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
 
-  const supabaseAny = supabase as any
+  let initialData: Record<string, unknown> = {}
+  let helpContext: { title: string; body: string | null; target_name: string | null; target_org: string | null; acceptedBody: string | null } | null = null
 
-  const { data: sourceRaw } = await supabaseAny
-    .from('sources')
-    .select(`
-      *,
-      profiles!owner_id(full_name, email, department),
-      source_positions(id, organization, department, position, rank, started_at, ended_at, is_current, change_source, change_note),
-      source_edit_history(id, editor_name, field_name, old_value, new_value, edited_at),
-      source_usefulness_ratings(rating, rater_id)
-    `)
-    .eq('id', id)
-    .eq('is_deleted', false)
-    .single()
+  if (params.from_help) {
+    const { data: helpReqRaw } = await supabase
+      .from('help_requests')
+      .select(`
+        title, body, target_name, target_org,
+        help_responses!request_id(body, is_accepted)
+      `)
+      .eq('id', params.from_help)
+      .single()
+    const helpReq = helpReqRaw as {
+      id: string; title: string; body: string | null;
+      target_name: string | null; target_org: string | null;
+      help_responses: Array<{ body: string | null; is_accepted: boolean }>;
+    } | null
 
-  const source = sourceRaw as any
-  if (!source) notFound()
+    if (helpReq) {
+      const acceptedResp = (helpReq.help_responses as any[])?.find((r: any) => r.is_accepted)
+      helpContext = {
+        title: helpReq.title,
+        body: helpReq.body,
+        target_name: helpReq.target_name,
+        target_org: helpReq.target_org,
+        acceptedBody: acceptedResp?.body ?? null,
+      }
 
-  // 접근 권한 확인
-  if (source.visibility === 'personal' && source.owner_id !== user.id) {
-    const { data: profileRaw } = await supabaseAny.from('profiles').select('role').eq('id', user.id).single()
-    const profile = profileRaw as { role: string } | null
-    if (!can(profile?.role, CAN_EDIT_ANY_SOURCE)) {
-      redirect('/sources?error=forbidden')
+      // 가능한 필드 자동 매핑
+      if (helpReq.target_name) initialData.full_name = helpReq.target_name
+      if (helpReq.target_org) initialData.current_organization = helpReq.target_org
     }
   }
 
-  // 민감정보 열람 권한 확인
-  let hasPrivateAccess = source.owner_id === user.id
-  if (!hasPrivateAccess && source.sensitivity === 'private') {
-    const { data: approval } = await supabaseAny
-      .from('source_access_approvals')
-      .select('id, expires_at')
-      .eq('source_id', id)
-      .eq('requester_id', user.id)
-      .eq('status', 'approved')
-      .maybeSingle()
-    const approvalTyped = approval as { id: string; expires_at: string | null } | null
-    hasPrivateAccess = !!approvalTyped && (!approvalTyped.expires_at || new Date(approvalTyped.expires_at) > new Date())
-  }
-
-  // personal_notes는 소유자만
-  if (source.owner_id !== user.id) source.personal_notes = null
-
-  // 내 기존 평가
-  const myRating = (source.source_usefulness_ratings as { rater_id: string; rating: number }[])
-    ?.find((r: { rater_id: string; rating: number }) => r.rater_id === user.id)?.rating ?? null
-
-  // 평균 평점
-  const ratings = (source.source_usefulness_ratings as { rating: number }[]) ?? []
-  const avgRating = ratings.length > 0
-    ? ratings.reduce((s: number, r: { rating: number }) => s + r.rating, 0) / ratings.length
-    : null
-
-  const { data: profileRaw2 } = await supabaseAny.from('profiles').select('role, full_name, department').eq('id', user.id).single()
-  const profile = profileRaw2 as { role: string; full_name: string | null; department: string | null } | null
-  const isOwner = source.owner_id === user.id
-  const userRole = profile?.role ?? 'reporter'
-  const isAdmin = can(userRole, CAN_EDIT_ANY_SOURCE)
-  // 차장 이상은 민감 정보 무조건 열람 가능
-  const isDeputyOrAbove = can(userRole, CAN_VIEW_PERSONAL_NOTES)
-
-  // personal_notes(민감 정보) 열람 규칙:
-  //   소유자 OR 차장 이상 → 항상 열람
-  //   기자 → source_access_approvals 승인 있을 때만 열람
-  const canSeePersonalNotes = isOwner || isDeputyOrAbove || hasPrivateAccess
-  if (!canSeePersonalNotes) source.personal_notes = null
-
-  // source_notes 조회 (RLS 적용 — 민감 정보는 승인된 경우에만)
-  const { data: publicNotesRaw } = await supabaseAny
-    .from('source_notes')
-    .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
-    .eq('source_id', id)
-    .eq('is_sensitive', false)
-    .order('created_at', { ascending: true })
-
-  let sensitiveNotes: any[] = []
-  let lockedNotesCount = 0
-
-  if (hasPrivateAccess || isOwner || isDeputyOrAbove) {
-    // 차장 이상·소유자·승인된 사용자: 모든 민감 노트 열람
-    const { data: sensitiveRaw } = await supabaseAny
-      .from('source_notes')
-      .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
-      .eq('source_id', id)
-      .eq('is_sensitive', true)
-      .order('created_at', { ascending: true })
-    sensitiveNotes = (sensitiveRaw ?? []) as any[]
-  } else {
-    // 일반 기자: 자신이 직접 작성한 민감 노트만 열람
-    const { data: ownSensitiveRaw } = await supabaseAny
-      .from('source_notes')
-      .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
-      .eq('source_id', id)
-      .eq('is_sensitive', true)
-      .eq('author_id', user.id)
-      .order('created_at', { ascending: true })
-    sensitiveNotes = (ownSensitiveRaw ?? []) as any[]
-
-    // 잠긴 민감 노트 수 = 타인이 쓴 민감 노트
-    const svcClient = createServiceClient()
-    const { count } = await svcClient
-      .from('source_notes')
-      .select('*', { count: 'exact', head: true })
-      .eq('source_id', id)
-      .eq('is_sensitive', true)
-      .neq('author_id', user.id)
-    lockedNotesCount = count ?? 0
-  }
-
-  const initialNotes = [
-    ...(publicNotesRaw ?? []),
-    ...sensitiveNotes,
-  ].sort((a: any, b: any) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()) as any[]
-
-  // 즐겨찾기 여부 조회
-  const { data: bookmarkRaw } = await supabaseAny
-    .from('source_bookmarks')
-    .select('id')
-    .eq('user_id', user.id)
-    .eq('source_id', id)
-    .maybeSingle()
-  const isBookmarked = !!bookmarkRaw
-
-  // 관련 정보보고 조회
-  const { data: relatedReportsRaw } = await supabaseAny
-    .from('report_sources')
-    .select('report_id, information_reports!report_id(id, title, created_at, is_deleted, profiles!author_id(full_name))')
-    .eq('source_id', id)
-
-  const relatedReports = ((relatedReportsRaw ?? []) as any[])
-    .map((rs: any) => rs.information_reports)
-    .filter((r: any) => r && !r.is_deleted)
-    .sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-
   return (
-    <>
-      {/* 즐겨찾기 버튼 — 오른쪽 상단 */}
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 8 }}>
-        <BookmarkButton sourceId={id} initialBookmarked={isBookmarked} />
+    <div className="max-w-3xl mx-auto space-y-6">
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
+          <p className="text-sm mt-1" style={{ color: '#687898' }}>
+            항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
+          </p>
+        </div>
+        {/* 가져오기 단축 버튼 묶음 */}
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
+          {/* 명함 일괄 등록 — 신규 */}
+          <a
+            href="/sources/import-cards"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+              border: '1px solid rgba(30,144,255,0.3)', textDecoration: 'none',
+            }}>
+            📇 명함 여러 장 일괄 등록
+          </a>
+          {/* 엑셀 가져오기 */}
+          <a
+            href="/sources/import"
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+              background: '#182035', color: '#687898', border: '1px solid #1A2838',
+              textDecoration: 'none',
+            }}>
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+              <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
+                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            엑셀 가져오기
+          </a>
+        </div>
       </div>
-      <SourceDetailClient
-        source={source as any}
-        positions={(source.source_positions as any[]) ?? []}
-        editHistory={(source.source_edit_history as any[]) ?? []}
-        avgRating={avgRating}
-        myRating={myRating}
-        hasPrivateAccess={hasPrivateAccess}
-        isOwner={isOwner}
-        isAdmin={isAdmin}
-        isDeputyOrAbove={isDeputyOrAbove}
-        userRole={userRole}
-        userId={user.id}
-        userFullName={profile?.full_name ?? '—'}
-        userDepartment={profile?.department ?? null}
-        initialNotes={initialNotes}
-        lockedNotesCount={lockedNotesCount}
-        canSeePersonalNotes={canSeePersonalNotes}
-        relatedReports={relatedReports}
-      />
-    </>
+
+      {helpContext && (
+        <div className="glass-card p-4" style={{ border: '1px solid rgba(0,204,102,0.2)', background: 'rgba(0,204,102,0.03)' }}>
+          <p className="text-xs font-semibold mb-2" style={{ color: '#3D9E6A' }}>📋 도움 게시판에서 가져온 정보</p>
+          <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>{helpContext.title}</p>
+          {helpContext.target_name && (
+            <p className="text-xs" style={{ color: '#687898' }}>대상: {helpContext.target_name} {helpContext.target_org && `(${helpContext.target_org})`}</p>
+          )}
+          {helpContext.acceptedBody && (
+            <details className="mt-2">
+              <summary className="text-xs cursor-pointer" style={{ color: '#485870' }}>채택된 응답 보기</summary>
+              <p className="text-xs mt-1 whitespace-pre-wrap leading-relaxed" style={{ color: '#687898' }}>{helpContext.acceptedBody}</p>
+            </details>
+          )}
+          <p className="text-xs mt-2" style={{ color: '#485870' }}>아래 양식에 정보를 입력한 후 저장하세요</p>
+        </div>
+      )}
+
+      <SourceForm mode="create" initialData={initialData as any} />
+    </div>
   )
 }

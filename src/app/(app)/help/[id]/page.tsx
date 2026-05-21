@@ -10,13 +10,12 @@ interface Params {
 export default async function HelpDetailPage({ params }: Params) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const [{ data: helpRaw }, { data: responsesRaw }, { data: profileRaw }] = await Promise.all([
-    supabaseAny
+    supabase
       .from('help_requests')
       .select(`
         *,
@@ -24,7 +23,7 @@ export default async function HelpDetailPage({ params }: Params) {
       `)
       .eq('id', id)
       .single(),
-    supabaseAny
+    supabase
       .from('help_responses')
       .select(`
         *,
@@ -34,7 +33,7 @@ export default async function HelpDetailPage({ params }: Params) {
       .order('is_accepted', { ascending: false })
       .order('upvotes', { ascending: false })
       .order('created_at', { ascending: true }),
-    supabaseAny
+    supabase
       .from('profiles')
       .select('role')
       .eq('id', user.id)

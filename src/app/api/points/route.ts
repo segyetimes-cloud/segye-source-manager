@@ -7,19 +7,18 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const supabaseAny = supabase as any
   const [
     { data: summaryRaw },
     { data: transactions },
     { data: leaderboard },
   ] = await Promise.all([
-    supabaseAny.from('user_points_summary').select('*').eq('user_id', user.id).single(),
-    supabaseAny.from('point_transactions')
+    supabase.from('user_points_summary').select('*').eq('user_id', user.id).single(),
+    supabase.from('point_transactions')
       .select('id, point_type, points, description, created_at, related_source_id')
       .eq('user_id', user.id)
       .order('created_at', { ascending: false })
       .limit(20),
-    supabaseAny.from('user_points_summary')
+    supabase.from('user_points_summary')
       .select('user_id, total_points, profiles(full_name, department)')
       .order('total_points', { ascending: false })
       .limit(10),
@@ -28,7 +27,7 @@ export async function GET(request: NextRequest) {
   const summary = summaryRaw as { total_points: number } | null
 
   // 내 순위 계산
-  const { count: higherRank } = await supabaseAny
+  const { count: higherRank } = await supabase
     .from('user_points_summary')
     .select('*', { count: 'exact', head: true })
     .gt('total_points', summary?.total_points ?? 0)

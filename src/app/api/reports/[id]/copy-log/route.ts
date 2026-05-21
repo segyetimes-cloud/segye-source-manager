@@ -2,55 +2,68 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
-// POST /api/reports/[id]/copy-log — 복사 행위 로그 (beacon)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
+// GET /api/reports/draft — 내 드래프트 불러오기
+export async function GET() {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ ok: false }, { status: 401 })
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json().catch(() => ({}))
-  const { copied_length, copied_preview } = body
+  const { data, error } = await supabase
+    .from('report_drafts')
+    .select('id, title, content, category, tags, visibility, source_ids, allowed_user_ids, updated_at')
+    .eq('author_id', user.id)
+    .single()
 
-  await supabaseAny.from('report_copy_logs').insert({
-    report_id: id,
-    user_id: user.id,
-    copied_length: copied_length ?? 0,
-    copied_preview: (copied_preview ?? '').slice(0, 100),
-    user_agent: request.headers.get('user-agent') ?? null,
-  })
-
-  // 로그 실패해도 OK 반환 (클라이언트 측 에러 처리 불필요)
-  return NextResponse.json({ ok: true })
-}
-
-// GET /api/reports/[id]/copy-log — 데스크용 복사 이력 조회
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params
-  const supabase = await createClient()
-  const supabaseAny = supabase as any
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json({ logs: [] }, { status: 401 })
-
-  const { data: myProfile } = await supabaseAny
-    .from('profiles').select('role').eq('id', user.id).single()
-  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')) {
-    return NextResponse.json({ logs: [] }, { status: 403 })
+  if (error && error.code !== 'PGRST116') {
+    return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  const { data: logs } = await supabaseAny
-    .from('report_copy_logs')
-    .select('id, user_id, copied_length, copied_preview, user_agent, created_at, profiles!user_id(full_name, department)')
-    .eq('report_id', id)
-    .order('created_at', { ascending: false })
-    .limit(50)
+  return NextResponse.json({ draft: data ?? null })
+}
 
-  return NextResponse.json({ logs: logs ?? [] })
+// PUT /api/reports/draft — 드래프트 저장 (upsert)
+export async function PUT(request: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const body = await request.json()
+  const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
+
+  const { data, error } = await supabase
+    .from('report_drafts')
+    .upsert(
+      {
+        author_id: user.id,
+        title: title ?? '',
+        content: content ?? '',
+        category: category ?? '일반',
+        tags: tags ?? [],
+        visibility: visibility ?? 'author_only',
+        source_ids: source_ids ?? [],
+        allowed_user_ids: allowed_user_ids ?? [],
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: 'author_id' }
+    )
+    .select()
+    .single()
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ draft: data })
+}
+
+// DELETE /api/reports/draft — 드래프트 삭제
+export async function DELETE() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { error } = await supabase
+    .from('report_drafts')
+    .delete()
+    .eq('author_id', user.id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ success: true })
 }

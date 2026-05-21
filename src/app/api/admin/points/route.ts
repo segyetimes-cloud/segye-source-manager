@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // admin 이상만 허용
-  const { data: profile } = await (supabase as any)
+  const { data: profile } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)

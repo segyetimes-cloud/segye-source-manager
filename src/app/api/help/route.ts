@@ -37,7 +37,6 @@ export async function GET(request: NextRequest) {
 // POST /api/help — 도움 요청 생성 (포인트 에스크로)
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -52,7 +51,7 @@ export async function POST(request: NextRequest) {
   const points = Math.min(Math.max(Number(reward_points) || 10, 5), 100)
 
   // 포인트 잔액 확인
-  const { data: summary } = await supabaseAny
+  const { data: summary } = await supabase
     .from('user_points_summary')
     .select('total_points')
     .eq('user_id', user.id)
@@ -66,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   // 요청 생성
-  const { data: newRequest, error } = await supabaseAny
+  const { data: newRequest, error } = await supabase
     .from('help_requests')
     .insert({
       requester_id: user.id,

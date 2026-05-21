@@ -1,0 +1,24 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - img "세계일보 로고" [ref=e7]
+      - heading "세계일보" [level=1] [ref=e8]
+      - paragraph [ref=e9]: AI기반 취재원 관리시스템
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - button "로그인" [ref=e12] [cursor=pointer]
+        - button "회원가입" [ref=e13] [cursor=pointer]
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - generic [ref=e17]: 이메일
+          - textbox "name@segye.com" [ref=e18]: segyetimes@gmail.com
+        - generic [ref=e19]:
+          - generic [ref=e20]: 비밀번호
+          - textbox "비밀번호 입력" [ref=e21]: admin1234
+        - generic [ref=e35]: 이메일 또는 비밀번호가 올바르지 않습니다.
+        - button "로그인" [ref=e22] [cursor=pointer]
+        - paragraph [ref=e23]: "계정 문의: 관리자에게 연락하세요"
+    - paragraph [ref=e24]: 본 시스템은 사내 VPN 접속 환경에서만 이용 가능합니다
+  - button "Open Next.js Dev Tools" [ref=e30] [cursor=pointer]:
+    - img [ref=e31]
+  - alert [ref=e34]

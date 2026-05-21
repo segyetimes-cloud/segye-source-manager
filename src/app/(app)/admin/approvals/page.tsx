@@ -15,12 +15,11 @@ interface PageProps {
 
 export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileRaw } = await supabaseAny
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('role, department')
     .eq('id', user.id)
@@ -43,7 +42,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   // 부장(admin): 자기 부서 요청자 ID 먼저 수집
   let deptUserIds: string[] | null = null
   if (!isCrossDept && myDept) {
-    const { data: deptUsers } = await supabaseAny
+    const { data: deptUsers } = await supabase
       .from('profiles')
       .select('id')
       .eq('department', myDept)
@@ -51,7 +50,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   }
 
   // ── 취재원 열람 승인 데이터 ──────────────────────────────────────────────────
-  let pendingQuery = supabaseAny
+  let pendingQuery = supabase
     .from('source_access_approvals')
     .select(`
       id, source_id, requester_id, reason, status, requested_at, decided_at, expires_at, reject_reason,
@@ -69,7 +68,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
     }
   }
 
-  let recentQuery = supabaseAny
+  let recentQuery = supabase
     .from('source_access_approvals')
     .select(`
       id, source_id, requester_id, reason, status, requested_at, decided_at, expires_at, reject_reason,
@@ -89,7 +88,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   }
 
   // ── 정보보고 검토 데이터 ──────────────────────────────────────────────────────
-  let reportQuery = supabaseAny
+  let reportQuery = supabase
     .from('information_reports')
     .select(`
       id, title, author_id, status, created_at, updated_at,

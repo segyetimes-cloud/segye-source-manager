@@ -294,8 +294,10 @@ export interface Database {
         Row: {
           id: string
           author_id: string
+          author_department: string | null
           title: string
           content: string
+          category: string
           tags: string[]
           visibility: ReportVisibility
           status: 'draft' | 'submitted' | 'approved' | 'rejected'
@@ -319,6 +321,58 @@ export interface Database {
         Insert: Omit<Database['public']['Tables']['report_sources']['Row'], 'id' | 'created_at'>
         Update: never
       }
+      report_revisions: {
+        Row: {
+          id: string
+          report_id: string
+          author_id: string
+          content: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['report_revisions']['Row'], 'id' | 'created_at'>
+        Update: never
+      }
+      notifications: {
+        Row: {
+          id: string
+          user_id: string
+          type: string
+          title: string
+          body: string | null
+          link_path: string | null
+          is_read: boolean
+          related_id: string | null
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['notifications']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['notifications']['Insert']>
+      }
+      contact_logs: {
+        Row: {
+          id: string
+          source_id: string
+          user_id: string
+          method: string
+          summary: string
+          result: string | null
+          contacted_at: string
+          next_followup_at: string | null
+          is_sensitive: boolean
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['contact_logs']['Row'], 'id' | 'created_at'>
+        Update: Partial<Database['public']['Tables']['contact_logs']['Insert']>
+      }
+      report_allowed_users: {
+        Row: {
+          id: string
+          report_id: string
+          user_id: string
+          created_at: string
+        }
+        Insert: Omit<Database['public']['Tables']['report_allowed_users']['Row'], 'id' | 'created_at'>
+        Update: never
+      }
     }
     Views: Record<string, never>
     Functions: {
@@ -326,6 +380,16 @@ export interface Database {
       is_admin: { Args: Record<string, never>; Returns: boolean }
       is_active_user: { Args: Record<string, never>; Returns: boolean }
       has_approved_access: { Args: { p_source_id: string }; Returns: boolean }
+      try_log_export: {
+        Args: {
+          p_user_id: string
+          p_daily_limit: number
+          p_row_count: number
+          p_filter_params: Record<string, unknown>
+          p_watermark_id: string
+        }
+        Returns: { today_count: number; allowed: boolean }
+      }
     }
     Enums: {
       user_role: UserRole

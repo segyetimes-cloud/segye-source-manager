@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    await (supabase as any).from('audit_logs').insert({
+    await supabase.from('audit_logs').insert({
       user_id:       user?.id   ?? null,
       user_email:    user?.email ?? email ?? null,
       action,

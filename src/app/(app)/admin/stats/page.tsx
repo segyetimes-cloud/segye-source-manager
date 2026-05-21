@@ -7,7 +7,7 @@ export default async function AdminStatsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileRaw } = await (supabase as any)
+  const { data: profileRaw } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
   const role = (profileRaw as any)?.role
   if (!['admin', 'superadmin'].includes(role)) redirect('/dashboard')

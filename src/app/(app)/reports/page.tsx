@@ -15,11 +15,11 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const supabaseAny = supabase as any
 
   // 현재 사용자 역할·부서 조회
-  const { data: myProfile } = await supabaseAny
+  const { data: myProfileRaw } = await supabase
     .from('profiles').select('role, department').eq('id', user.id).single()
+  const myProfile = myProfileRaw as { role: string; department: string | null } | null
   const myDept: string | null = myProfile?.department ?? null
   const myRole: string = myProfile?.role ?? 'reporter'
   const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(myRole)
@@ -28,7 +28,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   const pageSize = 20
   const pageNum = parseInt(page)
 
-  let query = supabaseAny
+  let query = supabase
     .from('information_reports')
     .select(`
       id, title, content, category, tags, visibility, author_id, created_at,
@@ -74,7 +74,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
   if (q) {
     // 취재원 이름으로도 검색: sources.full_name → report_sources → report id 추출
-    const { data: matchingSources } = await supabaseAny
+    const { data: matchingSources } = await supabase
       .from('sources')
       .select('id')
       .ilike('full_name', `%${q}%`)
@@ -85,7 +85,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
     let matchingReportIds: string[] = []
 
     if (matchingSourceIds.length > 0) {
-      const { data: links } = await supabaseAny
+      const { data: links } = await supabase
         .from('report_sources')
         .select('report_id')
         .in('source_id', matchingSourceIds)
@@ -93,7 +93,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
     }
 
     // SQL injection 방지: or() 인터폴레이션 대신 별도 쿼리로 분리
-    const { data: textMatches } = await supabaseAny
+    const { data: textMatches } = await supabase
       .from('information_reports')
       .select('id')
       .eq('is_deleted', false)

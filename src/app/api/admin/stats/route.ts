@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await (supabase as any).from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes((profile as any)?.role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
@@ -18,17 +18,16 @@ export async function GET(request: NextRequest) {
   const from = searchParams.get('from') // YYYY-MM-DD
   const to = searchParams.get('to')     // YYYY-MM-DD
 
-  const supabaseAny = supabase as any
 
   // 1. 모든 활성 사용자 목록
-  const { data: profiles } = await supabaseAny
+  const { data: profiles } = await supabase
     .from('profiles')
     .select('id, full_name, department, desk_name, role, email')
     .eq('is_active', true)
     .order('full_name')
 
   // 2. 기간 내 취재원 등록 수 (owner_id별)
-  let sourcesQuery = supabaseAny
+  let sourcesQuery = supabase
     .from('sources')
     .select('owner_id, created_at, completeness_score')
     .eq('is_deleted', false)
@@ -37,7 +36,7 @@ export async function GET(request: NextRequest) {
   const { data: sources } = await sourcesQuery
 
   // 3. 기간 내 포인트 트랜잭션 (user_id별)
-  let pointsQuery = supabaseAny
+  let pointsQuery = supabase
     .from('point_transactions')
     .select('user_id, points, point_type, created_at')
   if (from) pointsQuery = pointsQuery.gte('created_at', from + 'T00:00:00')
@@ -45,7 +44,7 @@ export async function GET(request: NextRequest) {
   const { data: pointTxns } = await pointsQuery
 
   // 4. 기간 내 수정 이력 (editor_id별)
-  let editsQuery = supabaseAny
+  let editsQuery = supabase
     .from('source_edit_history')
     .select('editor_id, edited_at')
   if (from) editsQuery = editsQuery.gte('edited_at', from + 'T00:00:00')
@@ -53,7 +52,7 @@ export async function GET(request: NextRequest) {
   const { data: edits } = await editsQuery
 
   // 5. 도움 요청 응답 수 (responder_id별)
-  let helpQuery = supabaseAny
+  let helpQuery = supabase
     .from('help_responses')
     .select('responder_id, created_at')
   if (from) helpQuery = helpQuery.gte('created_at', from + 'T00:00:00')

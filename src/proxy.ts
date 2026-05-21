@@ -95,7 +95,8 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
     pathname === '/login' ||
-    pathname === '/otp'
+    pathname === '/otp' ||
+    pathname === '/lottery'
   ) {
     return NextResponse.next()
   }

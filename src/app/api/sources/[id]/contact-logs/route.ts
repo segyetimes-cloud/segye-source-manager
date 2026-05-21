@@ -9,12 +9,12 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: profile } = await supabaseAny
+  const { data: profileRaw } = await supabase
     .from('profiles').select('role, department').eq('id', user.id).single()
+  const profile = profileRaw as { role: string; department: string | null } | null
   const role = profile?.role ?? ''
   const department = profile?.department ?? null
 
@@ -22,7 +22,7 @@ export async function GET(
   const isAdmin = role === 'admin'
   const isDeputy = role === 'deputy'
 
-  let query = supabaseAny
+  let query = supabase
     .from('contact_logs')
     .select('id, method, summary, result, contacted_at, next_followup_at, is_sensitive, user_id, profiles!user_id(full_name)')
     .eq('source_id', id)
@@ -32,7 +32,7 @@ export async function GET(
   if (!isSectionEditorOrAbove) {
     if ((isAdmin || isDeputy) && department) {
       // 부장·차장: 같은 부서 구성원의 민감 연락 열람
-      const { data: deptUsers } = await supabaseAny
+      const { data: deptUsers } = await supabase
         .from('profiles').select('id').eq('department', department)
       const deptIds: string[] = (deptUsers ?? []).map((u: any) => u.id as string)
       if (!deptIds.includes(user.id)) deptIds.push(user.id)
@@ -55,7 +55,6 @@ export async function POST(
 ) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -65,8 +64,7 @@ export async function POST(
 
   const VALID_METHODS = ['call', 'message', 'email', 'meet', 'other']
 
-  const { data, error } = await supabaseAny
-    .from('contact_logs')
+  const { data, error } = await (supabase.from('contact_logs') as any)
     .insert({
       source_id: id,
       user_id: user.id,
@@ -91,14 +89,13 @@ export async function DELETE(
 ) {
   await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const logId = req.nextUrl.searchParams.get('log_id')
   if (!logId) return NextResponse.json({ error: 'log_id required' }, { status: 400 })
 
-  const { error } = await supabaseAny
+  const { error } = await supabase
     .from('contact_logs')
     .delete()
     .eq('id', logId)

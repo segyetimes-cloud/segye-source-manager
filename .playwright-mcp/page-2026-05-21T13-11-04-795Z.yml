@@ -1,0 +1,10 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - heading "🎱 LOTTO BALL DROP" [level=1] [ref=e3]
+    - generic [ref=e7]:
+      - generic [ref=e8]: 📊 실시간 순위
+      - generic [ref=e9]: 게임을 시작하세요
+    - button "▶ 게임 시작" [ref=e10] [cursor=pointer]
+    - generic [ref=e11]: ★ BUMPER(주황) 충돌 시 공이 튕겨나감 | RED TRAP — 닫히면 공이 막힘 | 먼저 도착 순으로 등수 결정
+  - button "Open Next.js Dev Tools" [ref=e17] [cursor=pointer]:
+    - img [ref=e18]

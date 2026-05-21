@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       (request.headers.get('x-forwarded-for') ?? '').split(',').pop()?.trim() || 'unknown'
 
     // 기존 기기 조회
-    const { data: existing } = await (supabase as any)
+    const { data: existing } = await supabase
       .from('user_devices')
       .select('id, last_seen_at')
       .eq('user_id', user.id)
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // 마지막 접속 시각 갱신
-      await (supabase as any)
+      await supabase
         .from('user_devices')
         .update({ last_seen_at: new Date().toISOString(), ip_address: clientIP })
         .eq('id', existing.id)
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 새 기기 — 등록 + 감사 기록
-    await (supabase as any).from('user_devices').insert({
+    await supabase.from('user_devices').insert({
       user_id:          user.id,
       fingerprint_hash: fingerprint,
       device_label:     deviceLabel ?? 'Unknown Device',
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     })
 
     // 새 기기 접속 감사 로그
-    await (supabase as any).from('audit_logs').insert({
+    await supabase.from('audit_logs').insert({
       user_id:       user.id,
       user_email:    user.email,
       action:        'new_device_login',

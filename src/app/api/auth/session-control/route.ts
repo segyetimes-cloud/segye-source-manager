@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 감사 기록
-    await (supabase as any).from('audit_logs').insert({
+    await supabase.from('audit_logs').insert({
       user_id:       user.id,
       user_email:    user.email,
       action:        'session_invalidate_others',

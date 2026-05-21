@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "slides",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["serve", "-s", "docs", "-p", "5500"],
+      "port": 5500
+    },
+    {
+      "name": "nextjs",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3000
+    }
+  ]
+}

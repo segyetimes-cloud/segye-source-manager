@@ -4,11 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/notifications — 내 알림 목록 (최근 30개)
 export async function GET(_req: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data, error } = await supabaseAny
+  const { data, error } = await supabase
     .from('notifications')
     .select('id, type, title, body, link_path, is_read, related_id, created_at')
     .eq('user_id', user.id)
@@ -24,15 +23,13 @@ export async function GET(_req: NextRequest) {
 // PATCH /api/notifications — 읽음 처리 (body: { id? } — 없으면 전체)
 export async function PATCH(req: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await req.json().catch(() => ({}))
   const { id } = body as { id?: string }
 
-  let q = supabaseAny
-    .from('notifications')
+  let q = (supabase.from('notifications') as any)
     .update({ is_read: true })
     .eq('user_id', user.id)
 

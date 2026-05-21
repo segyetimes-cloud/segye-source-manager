@@ -4,23 +4,23 @@ import HelpRewardsClient from '@/components/admin/HelpRewardsClient'
 
 export default async function HelpRewardsPage() {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabaseAny
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
     .single()
+  const profile = profileRaw as { role: string } | null
 
   if (!['admin', 'superadmin'].includes(profile?.role ?? '')) {
     redirect('/dashboard')
   }
 
   // resolved 된 도움 요청 목록 (최근 50개)
-  const { data: helpRequests } = await supabaseAny
+  const { data: helpRequests } = await supabase
     .from('help_requests')
     .select(`
       id, title, request_type, target_name, reward_points, created_at, requester_id,

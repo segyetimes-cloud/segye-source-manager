@@ -9,14 +9,13 @@ export async function POST(
 ) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ ok: false }, { status: 401 })
 
   const body = await request.json().catch(() => ({}))
   const { copied_length, copied_preview } = body
 
-  await supabaseAny.from('source_copy_logs').insert({
+  await supabase.from('source_copy_logs').insert({
     source_id: id,
     user_id: user.id,
     copied_length: copied_length ?? 0,
@@ -34,17 +33,16 @@ export async function GET(
 ) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ logs: [] }, { status: 401 })
 
-  const { data: myProfile } = await supabaseAny
+  const { data: myProfile } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
   if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')) {
     return NextResponse.json({ logs: [] }, { status: 403 })
   }
 
-  const { data: logs } = await supabaseAny
+  const { data: logs } = await supabase
     .from('source_copy_logs')
     .select('id, user_id, copied_length, copied_preview, user_agent, created_at, profiles!user_id(full_name, department)')
     .eq('source_id', id)

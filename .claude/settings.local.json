@@ -10,7 +10,15 @@
       "Grep(*)",
       "mcp__supabase__*",
       "mcp__Claude_in_Chrome__*",
-      "mcp__playwright__*"
+      "mcp__playwright__*",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.niemanlab.org)",
+      "WebFetch(domain:www.superdesk.org)",
+      "Bash(mkdir -p \"C:\\\\Users\\\\admin\\\\Desktop\\\\segye-source-manager\\\\.claude\")",
+      "mcp__Claude_Preview__preview_start",
+      "Skill(anthropic-skills:pdf)",
+      "Skill(anthropic-skills:pdf:*)"
     ]
   }
 }

@@ -8,18 +8,17 @@ interface Params { params: Promise<{ id: string }> }
 export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   // 역할 확인 — 차장 이상은 모든 민감 노트 열람 가능
-  const { data: profile } = await supabaseAny
+  const { data: profile } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
   const isDeputyOrAbove = ['deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin']
     .includes(profile?.role ?? '')
 
-  let query = supabaseAny
+  let query = supabase
     .from('source_notes')
     .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
     .eq('source_id', id)
@@ -31,7 +30,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 
   const { data } = await query
-  void (supabase as any).from('audit_logs').insert({
+  void supabase.from('audit_logs').insert({
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_view',
@@ -46,7 +45,6 @@ export async function GET(request: NextRequest, { params }: Params) {
 export async function POST(request: NextRequest, { params }: Params) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -59,11 +57,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   }
 
   // 취재원 존재 확인
-  const { data: source } = await supabaseAny
+  const { data: source } = await supabase
     .from('sources').select('id').eq('id', id).eq('is_deleted', false).single()
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const { data: note, error } = await supabaseAny
+  const { data: note, error } = await supabase
     .from('source_notes')
     .insert({
       source_id: id,
@@ -76,7 +74,7 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  void (supabase as any).from('audit_logs').insert({
+  void supabase.from('audit_logs').insert({
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_create',
@@ -102,7 +100,6 @@ export async function POST(request: NextRequest, { params }: Params) {
 export async function DELETE(request: NextRequest, { params }: Params) {
   const { id } = await params
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -110,18 +107,18 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const noteId = request.nextUrl.searchParams.get('note_id')
   if (!noteId) return NextResponse.json({ error: 'note_id required' }, { status: 400 })
 
-  const { data: note } = await supabaseAny
+  const { data: note } = await supabase
     .from('source_notes').select('author_id').eq('id', noteId).eq('source_id', id).single()
   if (!note) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-  const { data: profile } = await supabaseAny.from('profiles').select('role').eq('id', user.id).single()
+  const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   if (note.author_id !== user.id && !isAdmin) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  await supabaseAny.from('source_notes').delete().eq('id', noteId)
-  void (supabase as any).from('audit_logs').insert({
+  await supabase.from('source_notes').delete().eq('id', noteId)
+  void supabase.from('audit_logs').insert({
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_delete',

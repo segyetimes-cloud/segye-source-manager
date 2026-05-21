@@ -27,16 +27,16 @@ export default async function ReportDetailPage({ params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const supabaseAny = supabase as any
 
   // 현재 사용자 프로필 (role 확인)
-  const { data: myProfile } = await supabaseAny
+  const { data: myProfileRaw } = await supabase
     .from('profiles').select('role, full_name, department').eq('id', user.id).single()
+  const myProfile = myProfileRaw as { role: string; full_name: string; department: string | null } | null
   const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
 
   // 보고서 + 수정이력 병렬 조회
-  const [{ data: report }, { data: revisionsRaw }] = await Promise.all([
-    supabaseAny
+  const [reportResult, revisionsResult] = await Promise.all([
+    supabase
       .from('information_reports')
       .select(`
         *,
@@ -46,12 +46,25 @@ export default async function ReportDetailPage({ params }: Params) {
       .eq('id', id)
       .eq('is_deleted', false)
       .single(),
-    supabaseAny
+    supabase
       .from('report_revisions')
       .select('id, author_id, content, created_at, profiles!author_id(full_name, department)')
       .eq('report_id', id)
       .order('created_at', { ascending: true }),
   ])
+  const report = reportResult.data as ({
+    id: string; author_id: string; author_department: string | null;
+    title: string; content: string; category: string; tags: string[];
+    visibility: string; status: string; reviewer_id: string | null;
+    reviewed_at: string | null; review_note: string | null;
+    created_at: string; updated_at: string;
+    profiles: { full_name: string; department: string | null } | null;
+    report_sources: Array<{ source_id: string; sources: { id: string; full_name: string; current_organization: string | null } | null }>;
+  }) | null
+  const revisionsRaw = revisionsResult.data as Array<{
+    id: string; author_id: string; content: string; created_at: string;
+    profiles: { full_name: string; department: string | null } | null;
+  }> | null
 
   if (!report) notFound()
 

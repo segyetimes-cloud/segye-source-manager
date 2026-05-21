@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
   const dateFrom     = sp.get('date_from') ?? ''
   const dateTo       = sp.get('date_to') ?? ''
 
-  let query = (supabase as any)
+  let query = supabase
     .from('audit_logs')
     .select('id, created_at, user_email, user_role, action, resource_type, resource_id, ip_address, is_vpn_access, export_row_count, watermark_token, metadata')
     .order('created_at', { ascending: false })
@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
   // 이 export 자체도 감사 로그에 기록 (fire-and-forget)
-  void (supabase as any).from('audit_logs').insert({
+  void supabase.from('audit_logs').insert({
     user_id: user.id,
     user_email: user.email,
     user_role: profile?.role,

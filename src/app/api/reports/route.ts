@@ -5,7 +5,6 @@ import { createClient } from '@/lib/supabase/server'
 // GET /api/reports — 목록 조회
 export async function GET(request: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -16,7 +15,7 @@ export async function GET(request: NextRequest) {
   const pageSize = 20
 
   // 현재 사용자 프로필 (열람 범위 판단용)
-  const { data: myProfile } = await supabaseAny
+  const { data: myProfile } = await supabase
     .from('profiles').select('role, department').eq('id', user.id).single()
   const myDept = myProfile?.department ?? null
   const myRole = myProfile?.role ?? 'reporter'
@@ -25,7 +24,7 @@ export async function GET(request: NextRequest) {
   // 부장: 소속 부서 + 전체공개만 열람
   const isAdminRole = myRole === 'admin'
 
-  let query = supabaseAny
+  let query = supabase
     .from('information_reports')
     .select(`
       id, title, content, tags, visibility, status, author_id, created_at, updated_at,
@@ -71,7 +70,7 @@ export async function GET(request: NextRequest) {
 
   if (q) {
     // 취재원 이름으로도 검색 — 파라미터화된 ilike 사용 (SQL injection 방지)
-    const { data: matchingSources } = await supabaseAny
+    const { data: matchingSources } = await supabase
       .from('sources')
       .select('id')
       .ilike('full_name', `%${q}%`)
@@ -82,7 +81,7 @@ export async function GET(request: NextRequest) {
     let matchingReportIds: string[] = []
 
     if (matchingSourceIds.length > 0) {
-      const { data: links } = await supabaseAny
+      const { data: links } = await supabase
         .from('report_sources')
         .select('report_id')
         .in('source_id', matchingSourceIds)
@@ -90,7 +89,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 텍스트 검색을 별도 쿼리로 분리하여 interpolation 위험 제거
-    const textQuery = supabaseAny
+    const textQuery = supabase
       .from('information_reports')
       .select('id')
       .eq('is_deleted', false)
@@ -116,7 +115,6 @@ export async function GET(request: NextRequest) {
 // POST /api/reports — 보고서 생성
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
-  const supabaseAny = supabase as any
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
@@ -127,12 +125,12 @@ export async function POST(request: NextRequest) {
   if (!content?.trim()) return NextResponse.json({ error: '본문을 입력해 주세요.' }, { status: 400 })
 
   // 작성자의 소속 부서를 스냅샷으로 저장 (라인 격벽용)
-  const { data: authorProfile } = await supabaseAny
+  const { data: authorProfile } = await supabase
     .from('profiles').select('department').eq('id', user.id).single()
   const authorDepartment = authorProfile?.department ?? null
 
   const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
-  const { data: report, error } = await supabaseAny
+  const { data: report, error } = await supabase
     .from('information_reports')
     .insert({
       author_id: user.id,
@@ -151,12 +149,12 @@ export async function POST(request: NextRequest) {
   // 연결 취재원 등록
   if (Array.isArray(source_ids) && source_ids.length > 0) {
     const rows = source_ids.map((sid: string) => ({ report_id: report.id, source_id: sid }))
-    const { error: sourceErr } = await supabaseAny.from('report_sources').insert(rows)
+    const { error: sourceErr } = await supabase.from('report_sources').insert(rows)
     if (sourceErr) return NextResponse.json({ error: '취재원 연결에 실패했습니다.' }, { status: 500 })
   }
 
   // 최초 작성 revision 기록
-  await supabaseAny.from('report_revisions').insert({
+  await supabase.from('report_revisions').insert({
     report_id: report.id,
     author_id: user.id,
     content: report.content,
@@ -169,11 +167,11 @@ export async function POST(request: NextRequest) {
       user_id: uid,
       granted_by: user.id,
     }))
-    const { error: allowedErr } = await supabaseAny.from('report_allowed_users').insert(rows)
+    const { error: allowedErr } = await supabase.from('report_allowed_users').insert(rows)
     if (allowedErr) return NextResponse.json({ error: '열람자 등록에 실패했습니다.' }, { status: 500 })
   }
 
-  void (supabase as any).from('audit_logs').insert({
+  void supabase.from('audit_logs').insert({
     user_id:       user.id,
     user_email:    user.email,
     action:        'report_create',

@@ -20,12 +20,11 @@ export default async function AdminAuditPage({
 }) {
   const params = await searchParams
   const supabase = await createClient()
-  const supabaseAny = supabase as any
 
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profileRaw } = await supabaseAny
+  const { data: profileRaw } = await supabase
     .from('profiles')
     .select('role')
     .eq('id', user.id)
@@ -45,7 +44,7 @@ export default async function AdminAuditPage({
   const dateFrom     = params.date_from    ?? ''
   const dateTo       = params.date_to      ?? ''
 
-  let query = supabaseAny
+  let query = supabase
     .from('audit_logs')
     .select('*', { count: 'exact' })
     .order('created_at', { ascending: false })

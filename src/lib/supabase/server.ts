@@ -1,11 +1,13 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
+import type { Database } from '@/types/database'
 
 // 서버 컴포넌트 / API Route용 Supabase 클라이언트
 export async function createClient() {
   const cookieStore = await cookies()
 
-  return createServerClient(
+  return createServerClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
@@ -29,9 +31,7 @@ export async function createClient() {
 
 // 포인트 부여 등 Service Role이 필요한 경우 (API Route 전용)
 export function createServiceClient() {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const { createClient } = require('@supabase/supabase-js')
-  return createClient(
+  return createSupabaseClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
