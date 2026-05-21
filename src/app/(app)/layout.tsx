@@ -1,3 +1,4 @@
+import { headers } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import SidebarLayout from '@/components/layout/SidebarLayout'
@@ -12,19 +13,42 @@ export default async function AppLayout({
 }: {
   children: React.ReactNode
 }) {
+  // ── ① proxy가 getUser()로 검증한 userId/email을 헤더에서 읽는다 (네트워크 없음)
+  const reqHeaders = await headers()
+  const userId    = reqHeaders.get('x-user-id')
+  const userEmail = reqHeaders.get('x-user-email') ?? ''
+
+  console.log('[LAYOUT] proxy header →', { userId, userEmail })
+
+  if (!userId) {
+    // proxy를 거치지 않은 직접 접근 — 로그인으로
+    redirect('/login')
+  }
+
+  // ── ② 세션에서 user 객체 읽기 (쿠키 읽기, 네트워크 없음)
+  //     getUser() 대신 getSession() 사용 → Supabase API 호출 없음
+  //     proxy가 이미 유효성 검사를 완료했으므로 안전
   const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  const user = session?.user ?? null
 
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) redirect('/login')
+  console.log('[LAYOUT] session →', { hasSession: !!session, hasUser: !!user, uid: user?.id })
 
-  // 프로필 조회
+  if (!user) {
+    // 세션 쿠키가 없는 edge case (거의 발생 안 함)
+    redirect('/login')
+  }
+
+  // ── ③ 프로필 조회 (proxy 헤더의 userId 기준)
   const { data: profileData } = await supabase
     .from('profiles')
     .select('*')
-    .eq('id', user.id)
+    .eq('id', userId)
     .single()
 
   const profile = profileData as import('@/types/database').Profile | null
+
+  console.log('[PROFILE]', { found: !!profile, active: profile?.is_active })
 
   if (!profile || !profile.is_active) {
     await supabase.auth.signOut()

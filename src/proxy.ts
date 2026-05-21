@@ -223,6 +223,11 @@ export async function proxy(request: NextRequest) {
   const modifiedRequestHeaders = new Headers(request.headers)
   modifiedRequestHeaders.set('x-nonce', nonce)
 
+  // ── proxy가 검증한 userId/email을 layout으로 전달 (layout의 getUser() 제거 목적)
+  // 클라이언트가 x-user-id를 스푸핑해도 set()이 덮어씀 → 안전
+  modifiedRequestHeaders.set('x-user-id',    user.id)
+  modifiedRequestHeaders.set('x-user-email', user.email ?? '')
+
   // ── 핵심: 미들웨어가 refresh한 Supabase 쿠키를 Cookie 헤더에도 반영 ─────
   // updateSession이 만료 토큰을 refresh하면 supabaseResponse.cookies에 새 토큰이 담긴다.
   // 그러나 new Headers(request.headers)는 기존 Cookie 헤더(만료 토큰)를 그대로 복사한다.
