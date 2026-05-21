@@ -4,15 +4,15 @@ import { useEffect, useState, useCallback } from 'react'
 export default function ScreenshotGuard({ children }: { children: React.ReactNode }) {
   const [locked, setLocked] = useState(false)
 
-  const lock   = useCallback(() => setLocked(true),  [])
+  const lock   = useCallback(() => { console.log('[ScreenshotGuard] LOCKED'); setLocked(true) },  [])
   const unlock = useCallback(() => setLocked(false), [])
 
   useEffect(() => {
     // ── ① 창 포커스 이탈 (Alt+Tab, 다른 앱 전환) ─────────────────────────
     // 페이지 전환(window.location.href) 중 브라우저가 blur를 발생시키는 경우 방지:
-    // 마운트 직후 1초는 blur 감지를 비활성화 (네비게이션 잔여 이벤트 무시)
+    // 마운트 직후 5초는 blur 감지를 비활성화 (로그인→대시보드 전환 시 네비게이션 잔여 이벤트 충분히 무시)
     let blurEnabled = false
-    const enableTimer = setTimeout(() => { blurEnabled = true }, 1000)
+    const enableTimer = setTimeout(() => { blurEnabled = true }, 5000)
 
     const onVisibility = () => {
       if (!blurEnabled) return
