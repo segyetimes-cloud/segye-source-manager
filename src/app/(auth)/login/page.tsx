@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { createClient } from '@/lib/supabase/client'
+import { loginAction } from '@/app/actions/auth'
 
 type Tab = 'login' | 'signup'
 
@@ -55,42 +55,16 @@ export default function LoginPage() {
       // 잠금 체크 실패는 무시하고 계속
     }
 
-    // ── ② 클라이언트 Supabase로 직접 로그인 ─────────────────────────────────
-    // createBrowserClient는 signInWithPassword 성공 시 즉시 document.cookie에 세션을 저장함
-    // 서버 액션(createServerClient) 방식은 onAuthStateChange가 발화하지 않아 쿠키가 설정되지 않음
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({
-      email: loginEmail,
-      password: loginPassword,
-    })
+    // ── ② 서버 액션으로 로그인 ───────────────────────────────────────────────
+    // loginAction: 서버에서 signInWithPassword → Set-Cookie 헤더로 세션 저장 → redirect('/dashboard')
+    // 브라우저 클라이언트(document.cookie) 방식의 타이밍 경쟁 및 Uncaught Promise 에러 원천 제거
+    const result = await loginAction(loginEmail, loginPassword)
 
-    if (error) {
-      const msg = error.message.toLowerCase()
-      const errorMsg =
-        msg.includes('invalid login credentials') || msg.includes('invalid credentials')
-          ? '이메일 또는 비밀번호가 올바르지 않습니다.'
-          : msg.includes('ban') || msg.includes('banned')
-            ? '가입 신청이 관리자 승인 대기 중입니다.\n승인 완료 후 로그인할 수 있습니다.'
-            : msg.includes('email not confirmed')
-              ? '이메일 인증이 필요합니다. 이메일을 확인해주세요.'
-              : `로그인 중 오류가 발생했습니다. (${error.message})`
-
-      setLoginError(errorMsg)
-      // 로그인 실패 감사 기록 (fire-and-forget)
-      void fetch('/api/auth/login-audit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'login_failed', email: loginEmail }),
-        credentials: 'same-origin',
-      })
+    // result가 있으면 에러 (성공 시 서버에서 redirect하므로 여기 도달하지 않음)
+    if (result?.error) {
+      setLoginError(result.error)
       setLoginLoading(false)
-      return
     }
-
-    // ③ 성공: 브라우저가 쿠키를 완전히 커밋하도록 짧은 대기 후 이동
-    // (document.cookie 직접 쓰기는 동기적이지만, 이벤트 루프 안정화 목적)
-    await new Promise(resolve => setTimeout(resolve, 300))
-    window.location.href = '/dashboard'
   }
 
   async function handleSignup(e: React.FormEvent) {
