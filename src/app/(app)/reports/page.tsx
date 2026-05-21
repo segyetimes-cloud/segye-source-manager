@@ -132,52 +132,56 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
         </Link>
       </div>
 
-      {/* 탭 + 검색 */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        {/* 탭 */}
-        <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838', flexShrink: 0 }}>
-          {[
-            { value: 'all',  label: '전체 공개' },
-            { value: 'mine', label: '내 보고서' },
-          ].map(t => (
-            <Link
-              key={t.value}
-              href={`/reports?tab=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
-              style={{
-                padding: '7px 18px',
-                fontSize: '13px', fontWeight: 500,
-                textDecoration: 'none',
-                background: tab === t.value ? 'rgba(30,144,255,0.15)' : 'transparent',
-                color: tab === t.value ? '#4A7CC0' : '#687898',
-                borderRight: t.value === 'all' ? '1px solid #1A2838' : 'none',
-              }}>
-              {t.label}
-            </Link>
-          ))}
-        </div>
-
-        {/* 검색 */}
-        <form method="GET" action="/reports" style={{ display: 'flex', gap: '6px', flex: 1, maxWidth: '360px' }}>
+      {/* 검색 + 탭 */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        {/* 검색 먼저 */}
+        <form method="GET" action="/reports" style={{ display: 'flex', gap: '6px' }}>
           <input type="hidden" name="tab" value={tab} />
           <input
             type="text"
             name="q"
             defaultValue={q}
-            placeholder="제목·내용 검색"
+            placeholder="제목 내용 검색"
             style={{
-              flex: 1, background: '#182035',
+              flex: 1, background: '#131C2C',
               border: '1px solid #1A2838', color: '#CDD5E0',
-              borderRadius: '8px', padding: '7px 12px', fontSize: '13px',
+              borderRadius: '8px', padding: '9px 12px', fontSize: '14px', outline: 'none',
             }}
           />
           <button type="submit" style={{
             background: '#4A7CC0', color: 'white',
             border: 'none', borderRadius: '8px',
-            padding: '7px 14px', fontSize: '13px', cursor: 'pointer',
+            padding: '9px 14px', fontSize: '14px', fontWeight: 500, cursor: 'pointer', flexShrink: 0,
           }}>
             검색
           </button>
         </form>
+
+        {/* 탭 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+            {[
+              { value: 'all',  label: '전체 공개' },
+              { value: 'mine', label: '내 보고서' },
+            ].map(t => (
+              <Link
+                key={t.value}
+                href={`/reports?tab=${t.value}${q ? `&q=${encodeURIComponent(q)}` : ''}`}
+                style={{
+                  padding: '6px 16px', fontSize: '13px', fontWeight: 500,
+                  textDecoration: 'none',
+                  background: tab === t.value ? 'rgba(30,144,255,0.15)' : 'transparent',
+                  color: tab === t.value ? '#4A7CC0' : '#687898',
+                  borderRight: t.value === 'all' ? '1px solid #1A2838' : 'none',
+                }}>
+                {t.label}
+              </Link>
+            ))}
+          </div>
+          {count != null && (
+            <span style={{ fontSize: '12px', color: '#485870' }}>총 {count}건</span>
+          )}
+        </div>
       </div>
 
       {/* 목록 */}
@@ -188,8 +192,8 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
           </p>
         </div>
       ) : (
-        <div className="report-card-grid">
-          {(reports as any[]).map(report => {
+        <div className="glass-card" style={{ overflow: 'hidden' }}>
+          {(reports as any[]).map((report, idx) => {
             const author = report.profiles as { full_name: string; department: string | null } | null
             const sourcesRaw = (report.report_sources as any[]) ?? []
             const sourceNames = sourcesRaw
@@ -198,109 +202,77 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
             const preview = (report.content as string)
               .replace(/\n/g, ' ')
-              .slice(0, 120)
+              .slice(0, 100)
 
             const dateStr = new Date(report.created_at).toLocaleDateString('ko-KR', {
-              year: 'numeric', month: '2-digit', day: '2-digit',
+              month: '2-digit', day: '2-digit',
             })
+
+            const catCfg = report.category && report.category !== '일반' ? {
+              bg: report.category === '단독' ? 'rgba(192,64,64,0.15)' :
+                  report.category === '인터뷰' ? 'rgba(61,158,106,0.15)' : 'rgba(74,124,192,0.15)',
+              color: report.category === '단독' ? '#C04040' :
+                     report.category === '인터뷰' ? '#3D9E6A' : '#4A7CC0',
+            } : null
 
             return (
               <Link
                 key={report.id}
                 href={`/reports/${report.id}`}
-                style={{ textDecoration: 'none' }}>
-                <div
-                  className="glass-card p-4"
-                  style={{ cursor: 'pointer', transition: 'border-color 0.15s' }}
-                  onMouseEnter={undefined}>
-                  {/* 상단: 제목 + 배지 */}
-                  <div className="flex items-start justify-between gap-2 mb-2">
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div className="flex items-center gap-2 mb-1">
-                        {report.category && report.category !== '일반' && (
-                          <span style={{
-                            fontSize: '10px', fontWeight: 600, padding: '2px 7px',
-                            borderRadius: '4px', flexShrink: 0,
-                            background: report.category === '단독' ? 'rgba(192,64,64,0.15)' :
-                                        report.category === '인터뷰' ? 'rgba(61,158,106,0.15)' :
-                                        'rgba(74,124,192,0.15)',
-                            color: report.category === '단독' ? '#C04040' :
-                                   report.category === '인터뷰' ? '#3D9E6A' : '#4A7CC0',
-                            border: `1px solid ${report.category === '단독' ? 'rgba(192,64,64,0.3)' :
-                                     report.category === '인터뷰' ? 'rgba(61,158,106,0.3)' :
-                                     'rgba(74,124,192,0.3)'}`,
-                          }}>
-                            {report.category}
-                          </span>
-                        )}
-                      </div>
-                      <h2 style={{
-                        fontSize: '15px', fontWeight: 600,
-                        color: '#CDD5E0', lineHeight: 1.3,
+                style={{ textDecoration: 'none', display: 'block' }}>
+                <div style={{
+                  padding: '13px 18px',
+                  borderBottom: idx < (reports as any[]).length - 1 ? '1px solid #1A2838' : 'none',
+                  transition: 'background 0.12s',
+                }}
+                  onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.04)')}
+                  onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                >
+                  {/* 제목 줄 */}
+                  <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
+                    {catCfg && (
+                      <span style={{
+                        fontSize: '10px', fontWeight: 700, padding: '2px 6px',
+                        borderRadius: '4px', flexShrink: 0, marginTop: '2px',
+                        background: catCfg.bg, color: catCfg.color,
                       }}>
-                        {report.title}
-                      </h2>
-                    </div>
+                        {report.category}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: '14px', fontWeight: 600, color: '#CDD5E0',
+                      lineHeight: 1.35, flex: 1, minWidth: 0,
+                    }}>
+                      {report.title}
+                    </span>
                     <VisibilityBadge visibility={report.visibility as ReportVisibility} />
                   </div>
 
-                  {/* 본문 미리보기 */}
+                  {/* 미리보기 */}
                   <p style={{
-                    fontSize: '13px', color: '#687898',
-                    display: '-webkit-box',
-                    WebkitLineClamp: 2,
-                    WebkitBoxOrient: 'vertical',
-                    overflow: 'hidden',
-                    lineHeight: 1.5,
-                    marginBottom: '10px',
+                    fontSize: '12px', color: '#5A7099', margin: '0 0 7px',
+                    overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis',
                   }}>
-                    {preview}{(report.content as string).length > 120 ? '…' : ''}
+                    {preview}{(report.content as string).length > 100 ? '…' : ''}
                   </p>
 
-                  {/* 태그 */}
-                  {(report.tags as string[]).length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {(report.tags as string[]).slice(0, 5).map((tag, i) => (
-                        <span key={i} style={{
-                          background: 'rgba(30,144,255,0.1)',
-                          color: '#4A7CC0',
-                          border: '1px solid rgba(30,144,255,0.2)',
-                          borderRadius: '4px', padding: '1px 7px',
-                          fontSize: '11px',
-                        }}>
-                          #{tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-
-                  {/* 연결 취재원 */}
-                  {sourceNames.length > 0 && (
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {sourceNames.slice(0, 4).map((name: string, i: number) => (
-                        <span key={i} style={{
-                          background: 'rgba(0,212,255,0.08)',
-                          color: '#3A90A8',
-                          border: '1px solid rgba(0,212,255,0.2)',
-                          borderRadius: '4px', padding: '1px 7px',
-                          fontSize: '11px',
-                        }}>
-                          👤 {name}
-                        </span>
-                      ))}
-                      {sourceNames.length > 4 && (
-                        <span style={{ fontSize: '11px', color: '#485870' }}>+{sourceNames.length - 4}명</span>
-                      )}
-                    </div>
-                  )}
-
-                  {/* 하단 메타 */}
-                  <div className="flex items-center justify-between mt-1">
-                    <span style={{ fontSize: '12px', color: '#5A7099' }}>
-                      {author?.full_name ?? '—'}
-                      {author?.department ? ` · ${author.department}` : ''}
+                  {/* 태그 + 취재원 + 메타 한 줄 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    {(report.tags as string[]).slice(0, 4).map((tag, i) => (
+                      <span key={i} style={{
+                        fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
+                        background: 'rgba(30,144,255,0.08)', color: '#4A7CC0',
+                      }}>#{tag}</span>
+                    ))}
+                    {sourceNames.slice(0, 3).map((name: string, i: number) => (
+                      <span key={i} style={{
+                        fontSize: '11px', padding: '1px 6px', borderRadius: '4px',
+                        background: 'rgba(0,212,255,0.06)', color: '#3A90A8',
+                      }}>👤 {name}</span>
+                    ))}
+                    <span style={{ marginLeft: 'auto', fontSize: '11px', color: '#485870', flexShrink: 0, whiteSpace: 'nowrap' }}>
+                      {author?.full_name ?? '—'}{author?.department ? ` · ${author.department}` : ''} · {dateStr}
                     </span>
-                    <span style={{ fontSize: '12px', color: '#485870' }}>{dateStr}</span>
                   </div>
                 </div>
               </Link>
