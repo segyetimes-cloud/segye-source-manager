@@ -2,7 +2,7 @@
 /**
  * POST /api/ocr/business-card/batch
  *
- * 명함 여러 장 동시 OCR 처리
+ * 명함 여러 장 동시 OCR — Claude Vision API 사용
  * body: FormData { images: File[] }  (최대 20장)
  *
  * 응답: { results: Array<{ index, filename, data, error }> }
@@ -10,34 +10,48 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import Anthropic from '@anthropic-ai/sdk'
 
-/** 실제 파일 헤더(magic bytes)로 이미지 여부 검증 — MIME 스푸핑 방어 */
+/** 실제 파일 헤더(magic bytes)로 이미지 여부 검증 */
 async function isValidImageBytes(file: File): Promise<boolean> {
   const header = Buffer.from(await file.slice(0, 12).arrayBuffer())
-  // JPEG: FF D8 FF
-  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) return true
-  // PNG:  89 50 4E 47 0D 0A 1A 0A
-  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) return true
-  // GIF:  47 49 46 38
-  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) return true
-  // WebP: 52 49 46 46 ?? ?? ?? ?? 57 45 42 50
+  if (header[0] === 0xFF && header[1] === 0xD8 && header[2] === 0xFF) return true  // JPEG
+  if (header[0] === 0x89 && header[1] === 0x50 && header[2] === 0x4E && header[3] === 0x47) return true  // PNG
+  if (header[0] === 0x47 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x38) return true  // GIF
   if (header[0] === 0x52 && header[1] === 0x49 && header[2] === 0x46 && header[3] === 0x46
-    && header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) return true
+    && header[8] === 0x57 && header[9] === 0x45 && header[10] === 0x42 && header[11] === 0x50) return true  // WebP
   return false
 }
 
 const MAX_CARDS   = 20
-const CONCURRENCY = 5   // Vision API 동시 호출 한도
+const CONCURRENCY = 3  // Claude API 동시 호출 한도 (rate limit 고려)
+
+const EXTRACT_PROMPT = `이 명함 이미지에서 정보를 추출해 JSON으로만 응답하세요. 설명 없이 JSON만 출력하세요.
+
+추출 필드:
+- full_name: 한국어 이름 (2~5자 한글)
+- name_en: 영문 이름
+- current_organization: 소속 회사/기관명
+- current_position: 직책/직위
+- department: 부서명
+- phone_primary: 휴대폰 번호 (010으로 시작)
+- phone_secondary: 사무실/기타 전화번호
+- email_primary: 이메일 주소
+- address: 주소
+- website: 웹사이트 URL
+
+없는 항목은 null로 설정하세요.
+응답 형식: {"full_name":"...","name_en":"...","current_organization":"...",...}`
 
 export async function POST(request: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const apiKey = process.env.GOOGLE_VISION_API_KEY
+  const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {
     return NextResponse.json(
-      { error: 'Google Vision API 키가 설정되지 않았습니다.' },
+      { error: 'Anthropic API 키가 설정되지 않았습니다.' },
       { status: 500 },
     )
   }
@@ -60,8 +74,14 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // ── 병렬 OCR (concurrency 제한) ────────────────────────────────────────────
-  type OcrResult = { index: number; filename: string; data: ReturnType<typeof parseBusinessCard> | null; error: string | null }
+  const anthropic = new Anthropic({ apiKey })
+
+  type OcrResult = {
+    index: number
+    filename: string
+    data: ReturnType<typeof parseBusinessCard> | null
+    error: string | null
+  }
 
   async function processOne(file: File, index: number): Promise<OcrResult> {
     try {
@@ -72,36 +92,51 @@ export async function POST(request: NextRequest) {
       const arrayBuffer = await file.arrayBuffer()
       const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-      const visionRes = await fetch(
-        `https://vision.googleapis.com/v1/images:annotate?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            requests: [{
-              image: { content: base64 },
-              features: [{ type: 'DOCUMENT_TEXT_DETECTION', maxResults: 1 }],
-              imageContext: { languageHints: ['ko', 'en'] },
-            }],
-          }),
-        },
-      )
-
-      if (!visionRes.ok) {
-        const err = await visionRes.json().catch(() => ({}))
-        return { index, filename: file.name, data: null, error: `Vision API 오류: ${err?.error?.message ?? visionRes.statusText}` }
+      // MIME 타입 정규화
+      const mimeMap: Record<string, string> = {
+        'image/jpeg': 'image/jpeg',
+        'image/jpg':  'image/jpeg',
+        'image/png':  'image/png',
+        'image/gif':  'image/gif',
+        'image/webp': 'image/webp',
       }
+      const mediaType = (mimeMap[file.type] ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
 
-      const visionData = await visionRes.json()
-      const fullText: string = visionData.responses?.[0]?.fullTextAnnotation?.text ?? ''
+      const message = await anthropic.messages.create({
+        model: 'claude-haiku-4-5',   // 빠르고 저렴한 모델로 OCR
+        max_tokens: 512,
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64 } },
+            { type: 'text', text: EXTRACT_PROMPT },
+          ],
+        }],
+      })
 
-      if (!fullText.trim()) {
+      const raw = message.content[0]?.type === 'text' ? message.content[0].text.trim() : ''
+      if (!raw) {
         return { index, filename: file.name, data: null, error: '텍스트를 찾지 못했습니다. 더 밝고 선명하게 찍어주세요.' }
       }
 
-      return { index, filename: file.name, data: parseBusinessCard(fullText), error: null }
+      // JSON 파싱 — 코드블록 감싸여 있을 경우 제거
+      const jsonStr = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/, '').trim()
+      let parsed: Record<string, string | null>
+      try {
+        parsed = JSON.parse(jsonStr)
+      } catch {
+        // JSON 파싱 실패 시 텍스트 기반 파싱으로 폴백
+        parsed = parseBusinessCard(raw)
+      }
+
+      return { index, filename: file.name, data: parsed as any, error: null }
     } catch (e: any) {
-      return { index, filename: file.name, data: null, error: e?.message ?? '처리 오류' }
+      const msg = e?.message ?? '처리 오류'
+      // rate limit 안내
+      if (msg.includes('rate') || e?.status === 429) {
+        return { index, filename: file.name, data: null, error: '요청이 너무 많습니다. 잠시 후 다시 시도해주세요.' }
+      }
+      return { index, filename: file.name, data: null, error: msg }
     }
   }
 
@@ -116,9 +151,9 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({ results })
 }
 
-// ── 명함 텍스트 파싱 (단일 카드와 동일 로직) ────────────────────────────────
+// ── 텍스트 기반 파싱 폴백 (JSON 파싱 실패 시) ───────────────────────────────
 
-function parseBusinessCard(text: string) {
+function parseBusinessCard(text: string): Record<string, string | null> {
   const lines = text.split('\n').map(l => l.trim()).filter(Boolean)
 
   const emailMatch = text.match(/[\w.+\-]+@[\w\-]+\.[\w.]{2,}/i)

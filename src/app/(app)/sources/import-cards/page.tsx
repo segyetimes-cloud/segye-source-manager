@@ -29,28 +29,6 @@ export default function ImportCardsPage() {
         </a>
       </div>
 
-      {/* 안내 배너 */}
-      <div style={{
-        padding: '12px 16px', borderRadius: '10px',
-        background: 'rgba(30,144,255,0.04)', border: '1px solid rgba(30,144,255,0.15)',
-        display: 'flex', flexWrap: 'wrap', gap: '20px',
-      }}>
-        {[
-          { icon: '📷', title: '촬영',  desc: '카메라로 명함을 한 장씩 연속 촬영' },
-          { icon: '🖼️', title: '선택',  desc: '갤러리에서 여러 장을 한꺼번에 선택' },
-          { icon: '🔍', title: '분석',  desc: 'AI가 이름·소속·전화번호 자동 추출' },
-          { icon: '✅', title: '확인',  desc: '내용 수정 후 한꺼번에 등록' },
-        ].map(step => (
-          <div key={step.title} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span style={{ fontSize: '20px' }}>{step.icon}</span>
-            <div>
-              <p style={{ fontSize: '12px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{step.title}</p>
-              <p style={{ fontSize: '11px', color: '#485870', margin: 0 }}>{step.desc}</p>
-            </div>
-          </div>
-        ))}
-      </div>
-
       {/* 배치 스캐너 */}
       <BusinessCardBatchScanner />
 
