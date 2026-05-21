@@ -138,12 +138,18 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // ── ① Rate Limiting ────────────────────────────────────────────────────────
+  // ── ① modifiedRequestHeaders 초기화 (updateSession 이전)
+  //     클라이언트가 보낸 신뢰 헤더를 즉시 제거 — 이후 인증 성공 시에만 재설정
+  const modifiedRequestHeaders = new Headers(request.headers)
+  modifiedRequestHeaders.delete('x-user-id')
+  modifiedRequestHeaders.delete('x-user-email')
+
+  // ── ② Rate Limiting ────────────────────────────────────────────────────────
   // /api/auth 는 Rate Limit 제외 (Supabase Auth 자체 제한에 위임)
   if (pathname.startsWith('/api') && !pathname.startsWith('/api/auth')) {
     const clientIP = getClientIP(request)
-    // 사용자 ID or IP를 식별자로 사용 (인증 전 요청은 IP 기반)
-    const identifier = request.headers.get('x-user-id') ?? clientIP
+    // 인증 전 단계이므로 항상 IP 기반 식별 (x-user-id 스푸핑 방지)
+    const identifier = clientIP
 
     const activeLimiters = getLimiters()
     if (activeLimiters) {
@@ -177,7 +183,7 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── ② Supabase 세션 갱신 + 인증 ───────────────────────────────────────────
+  // ── ③ Supabase 세션 갱신 + 인증 ───────────────────────────────────────────
   const { supabaseResponse, user } = await updateSession(request)
   const clientIP = getClientIP(request)
   const isVPN    = isVPNAccess(clientIP)
@@ -188,9 +194,9 @@ export async function proxy(request: NextRequest) {
     return res
   }
 
+  // ── ④ OTP 검증 ────────────────────────────────────────────────────────────
   if (!isVPN && pathname !== '/otp') {
     const otpCookie = request.cookies.get('otp_verified')?.value
-    // 쿠키 값이 현재 사용자 ID 기반 HMAC인지 검증
     let otpVerified = false
     if (otpCookie) {
       const secret = process.env.OTP_COOKIE_SECRET
@@ -211,63 +217,48 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  // ── ③ 보안 헤더 + 워터마크 + Nonce ───────────────────────────────────────
-  const watermarkToken = Buffer.from(
-    `${user.id}:${user.email}:${Date.now()}`
-  ).toString('base64')
-
-  // 요청별 CSP nonce 생성 — script-src 'unsafe-inline' 제거
+  // ── ⑤ 인증 성공 후 신뢰 헤더 주입 + Nonce ────────────────────────────────
+  //     delete는 ①에서 이미 완료 → 여기서 set만 수행
   const nonce = randomBytes(16).toString('base64')
-
-  // x-nonce 를 request headers에 심어야 서버 컴포넌트가 headers()로 읽을 수 있음
-  const modifiedRequestHeaders = new Headers(request.headers)
-
-  // ── 클라이언트가 주입 가능한 신뢰 헤더를 먼저 삭제 후, 인증 성공 시 재설정
-  // set()도 덮어쓰지만 delete→set 명시적 패턴으로 스푸핑 경로 완전 차단
-  modifiedRequestHeaders.delete('x-user-id')
-  modifiedRequestHeaders.delete('x-user-email')
-
   modifiedRequestHeaders.set('x-nonce',      nonce)
   modifiedRequestHeaders.set('x-user-id',    user.id)
   modifiedRequestHeaders.set('x-user-email', user.email ?? '')
 
-  // ── 핵심: 미들웨어가 refresh한 Supabase 쿠키를 Cookie 헤더에도 반영 ─────
-  // updateSession이 만료 토큰을 refresh하면 supabaseResponse.cookies에 새 토큰이 담긴다.
-  // 그러나 new Headers(request.headers)는 기존 Cookie 헤더(만료 토큰)를 그대로 복사한다.
-  // 서버 컴포넌트는 요청 Cookie 헤더를 읽으므로, 새 토큰을 반영하지 않으면
-  // layout.tsx의 getUser()가 만료 토큰으로 Supabase에 재시도 → refresh token 재사용 거부 → user=null → /login 리다이렉트
-  const refreshedCookies = supabaseResponse.cookies.getAll()
-  if (refreshedCookies.length > 0) {
-    // 기존 Cookie 헤더를 Map으로 파싱
-    const cookieMap = new Map<string, string>()
-    const rawCookie = request.headers.get('cookie') ?? ''
-    rawCookie.split(';').forEach(part => {
-      const eq = part.indexOf('=')
-      if (eq > 0) cookieMap.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim())
-    })
-    // refresh된 쿠키로 덮어쓰기
-    refreshedCookies.forEach(({ name, value }) => {
-      if (value) cookieMap.set(name, value)
-      else cookieMap.delete(name)
-    })
-    // 재조합 후 헤더에 세팅
-    const updatedCookie = [...cookieMap.entries()].map(([k, v]) => `${k}=${v}`).join('; ')
-    modifiedRequestHeaders.set('cookie', updatedCookie)
-  }
+  // ── ⑥ refresh된 Supabase 쿠키를 Cookie 요청 헤더에 항상 반영 ─────────────
+  //     조건(if refreshed.length > 0) 제거 — 항상 cookieMap 재구성으로 일관성 확보
+  //     updateSession이 토큰 갱신 시 supabaseResponse.cookies에 새 토큰이 담김
+  //     서버 컴포넌트(layout)는 Cookie 요청 헤더를 읽으므로 여기서 병합 필수
+  const cookieMap = new Map<string, string>()
+  const rawCookie = request.headers.get('cookie') ?? ''
+  rawCookie.split(';').forEach(part => {
+    const eq = part.indexOf('=')
+    if (eq > 0) cookieMap.set(part.slice(0, eq).trim(), part.slice(eq + 1).trim())
+  })
+  supabaseResponse.cookies.getAll().forEach(({ name, value }) => {
+    if (value) cookieMap.set(name, value)
+    else        cookieMap.delete(name)
+  })
+  modifiedRequestHeaders.set(
+    'cookie',
+    [...cookieMap.entries()].map(([k, v]) => `${k}=${v}`).join('; ')
+  )
 
+  // ── ⑦ finalResponse: 수정된 요청 헤더로 생성 ─────────────────────────────
   const finalResponse = NextResponse.next({ request: { headers: modifiedRequestHeaders } })
 
   // Supabase 세션 쿠키를 응답에도 복사 (브라우저가 새 토큰을 저장하도록)
   supabaseResponse.cookies.getAll().forEach(c => finalResponse.cookies.set(c.name, c.value, c))
 
-  // 커스텀 헤더
-  finalResponse.headers.set('X-Watermark-Token', watermarkToken)
-  finalResponse.headers.set('X-Client-IP',       clientIP)
-  finalResponse.headers.set('X-Is-VPN',          isVPN ? 'true' : 'false')
+  // ── ⑧ 응답 헤더 (워터마크 + 보안) ────────────────────────────────────────
+  const watermarkToken = Buffer.from(
+    `${user.id}:${user.email}:${Date.now()}`
+  ).toString('base64')
 
-  // 보안 응답 헤더
+  finalResponse.headers.set('X-Watermark-Token',        watermarkToken)
+  finalResponse.headers.set('X-Client-IP',              clientIP)
+  finalResponse.headers.set('X-Is-VPN',                 isVPN ? 'true' : 'false')
   finalResponse.headers.set('X-Frame-Options',           'DENY')
-  finalResponse.headers.set('X-Content-Type-Options',    'nosniff')
+  finalResponse.headers.set('X-Content-Type-Options',   'nosniff')
   finalResponse.headers.set('Referrer-Policy',           'strict-origin-when-cross-origin')
   finalResponse.headers.set('Permissions-Policy',        'camera=(), microphone=(), geolocation=()')
   finalResponse.headers.set(
