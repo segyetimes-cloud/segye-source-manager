@@ -86,6 +86,35 @@ function dataUrlToFile(dataUrl: string, filename: string): File {
   return new File([arr], filename, { type: mime })
 }
 
+/**
+ * 업로드 전 이미지 압축 — 최대 1200px, JPEG 0.82
+ * Vercel 4.5 MB body 제한 초과 방지
+ */
+function compressImage(file: File, maxWidth = 1200, quality = 0.82): Promise<File> {
+  return new Promise(resolve => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      let { width, height } = img
+      if (width > maxWidth) {
+        height = Math.round(height * maxWidth / width)
+        width  = maxWidth
+      }
+      const canvas = document.createElement('canvas')
+      canvas.width  = width
+      canvas.height = height
+      canvas.getContext('2d')!.drawImage(img, 0, 0, width, height)
+      canvas.toBlob(
+        blob => resolve(blob ? new File([blob], file.name.replace(/\.\w+$/, '.jpg'), { type: 'image/jpeg' }) : file),
+        'image/jpeg', quality
+      )
+    }
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file) }
+    img.src = url
+  })
+}
+
 // ── 메인 컴포넌트 ────────────────────────────────────────────────────────────
 
 export default function BusinessCardBatchScanner() {
@@ -226,12 +255,31 @@ export default function BusinessCardBatchScanner() {
         : item
     ))
 
+    // 압축 후 FormData 구성
+    const compressed = await Promise.all(targets.map(item => compressImage(item.file)))
     const form = new FormData()
-    targets.forEach(item => form.append('images', item.file))
+    compressed.forEach(f => form.append('images', f))
 
     try {
-      const res = await fetch('/api/ocr/business-card/batch', { method: 'POST', body: form })
-      const json = await res.json()
+      const res  = await fetch('/api/ocr/business-card/batch', { method: 'POST', body: form })
+      const text = await res.text()
+
+      // Vercel 413 등 비-JSON 응답 안전 처리
+      let json: any
+      try {
+        json = JSON.parse(text)
+      } catch {
+        const msg = res.status === 413
+          ? '이미지가 너무 큽니다 (총 4.5MB 제한). 한 번에 더 적은 장수로 시도해주세요.'
+          : `서버 오류 (${res.status}) — 잠시 후 다시 시도해주세요.`
+        setGlobalError(msg)
+        setQueue(prev => prev.map(item =>
+          item.state.phase === 'analyzing'
+            ? { ...item, state: { phase: 'pending' } }
+            : item
+        ))
+        return
+      }
 
       if (!res.ok) {
         setGlobalError(json.error ?? 'OCR 오류')
