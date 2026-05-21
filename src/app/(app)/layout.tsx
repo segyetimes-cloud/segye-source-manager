@@ -17,7 +17,9 @@ export default async function AppLayout({
   //     proxy.ts가 updateSession으로 토큰 갱신 + 쿠키 전파를 처리한 뒤
   //     여기서 갱신된 쿠키로 getUser를 호출 → race condition 없음
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+
+  console.log('[LAYOUT getUser]', { user: !!user, error: authError?.message })
 
   if (!user) {
     redirect('/login')
@@ -31,6 +33,8 @@ export default async function AppLayout({
     .single()
 
   const profile = profileData as Profile | null
+
+  console.log('[LAYOUT profile]', { found: !!profile, active: profile?.is_active, error: profileError?.message })
 
   if (profileError || !profile || !profile.is_active) {
     redirect('/login?error=inactive')
