@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import SourceListClient from '@/components/sources/SourceListClient'
+import { can, CAN_VIEW_SENSITIVE_SOURCE } from '@/lib/permissions'
 
 interface SearchParams {
   filter?: 'all' | 'mine'
@@ -31,7 +32,7 @@ export default async function SourcesPage({
     .eq('id', user.id)
     .single()
   const callerRole = (callerProfile as any)?.role ?? 'reporter'
-  const canSeeSensitive = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
+  const canSeeSensitive = can(callerRole, CAN_VIEW_SENSITIVE_SOURCE)
 
   let sourcesQuery = supabase
     .from('sources')

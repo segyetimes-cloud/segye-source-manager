@@ -3,11 +3,8 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ApprovalsClient from '@/components/admin/ApprovalsClient'
 import ReportApprovalsClient from '@/components/admin/ReportApprovalsClient'
-
-// 승인 권한이 있는 역할
-const APPROVER_ROLES = ['superadmin', 'publisher', 'editor', 'section_editor', 'admin'] as const
-// 전 부서 승인 가능 역할 (나머지 admin 은 소속 부서만)
-const CROSS_DEPT_ROLES = ['superadmin', 'publisher', 'editor', 'section_editor'] as const
+import { can, CAN_APPROVE_ACCESS } from '@/lib/permissions'
+import { isCrossDept } from '@/lib/roles'
 
 interface PageProps {
   searchParams: Promise<{ tab?: string }>
@@ -29,11 +26,11 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   const myRole = profile?.role ?? ''
   const myDept = profile?.department ?? null
 
-  if (!(APPROVER_ROLES as readonly string[]).includes(myRole)) {
+  if (!can(myRole, CAN_APPROVE_ACCESS)) {
     redirect('/dashboard')
   }
 
-  const isCrossDept = (CROSS_DEPT_ROLES as readonly string[]).includes(myRole)
+  const crossDept = isCrossDept(myRole)
 
   // 현재 탭 (searchParams는 Promise)
   const sp = await searchParams
@@ -41,7 +38,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
 
   // 부장(admin): 자기 부서 요청자 ID 먼저 수집
   let deptUserIds: string[] | null = null
-  if (!isCrossDept && myDept) {
+  if (!crossDept && myDept) {
     const { data: deptUsers } = await supabase
       .from('profiles')
       .select('id')
@@ -154,7 +151,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
       <div>
         <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#CDD5E0', marginBottom: '4px' }}>승인 관리</h1>
         <p style={{ fontSize: '13px', color: '#687898', marginBottom: '6px' }}>
-          {isCrossDept
+          {crossDept
             ? '전 부서 승인 요청을 검토합니다'
             : `${myDept ?? '소속'} 승인 요청을 검토합니다`}
         </p>

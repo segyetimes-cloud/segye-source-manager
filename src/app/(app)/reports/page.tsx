@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
+import { can, CAN_APPROVE_REPORT } from '@/lib/permissions'
 
 interface SearchParams {
   searchParams: Promise<{ tab?: string; q?: string; page?: string }>
@@ -22,7 +23,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   const myProfile = myProfileRaw as { role: string; department: string | null } | null
   const myDept: string | null = myProfile?.department ?? null
   const myRole: string = myProfile?.role ?? 'reporter'
-  const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(myRole)
+  const isAboveAdmin = can(myRole, CAN_APPROVE_REPORT)
   const isAdminRole = myRole === 'admin'
 
   const pageSize = 20

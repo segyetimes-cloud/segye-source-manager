@@ -44,9 +44,23 @@ const EXTRACT_PROMPT = `이 명함 이미지에서 정보를 추출해 JSON으�
 응답 형식: {"full_name":"...","name_en":"...","current_organization":"...",...}`
 
 export async function POST(request: NextRequest) {
+  // Rate Limit: 사용자당 1분 5회 (Anthropic API 비용 방어)
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  const { checkRateLimit, getClientIp } = await import('@/lib/rateLimit')
+  const ip = getClientIp(request)
+  const rl = checkRateLimit(`${user.id}:${ip}`, { prefix: 'ocr-batch', limit: 5, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: '요청이 너무 많습니다. 1분 후 다시 시도해 주세요.' },
+      {
+        status: 429,
+        headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) },
+      }
+    )
+  }
 
   const apiKey = process.env.ANTHROPIC_API_KEY
   if (!apiKey) {

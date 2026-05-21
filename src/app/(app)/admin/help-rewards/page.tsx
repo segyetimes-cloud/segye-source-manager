@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HelpRewardsClient from '@/components/admin/HelpRewardsClient'
+import { can, CAN_MANAGE_HELP_REWARDS } from '@/lib/permissions'
 
 export default async function HelpRewardsPage() {
   const supabase = await createClient()
@@ -15,7 +16,7 @@ export default async function HelpRewardsPage() {
     .single()
   const profile = profileRaw as { role: string } | null
 
-  if (!['admin', 'superadmin'].includes(profile?.role ?? '')) {
+  if (!can(profile?.role, CAN_MANAGE_HELP_REWARDS)) {
     redirect('/dashboard')
   }
 

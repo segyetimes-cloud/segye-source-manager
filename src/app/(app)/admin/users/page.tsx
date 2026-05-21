@@ -1,6 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import UsersClient from '@/components/admin/UsersClient'
+import { can, CAN_APPROVE_ACCESS } from '@/lib/permissions'
+import { isCrossDept } from '@/lib/roles'
 
 export default async function AdminUsersPage() {
   const supabase = await createClient()
@@ -15,13 +17,12 @@ export default async function AdminUsersPage() {
     .single()
 
   const profile = profileRaw as { role: string } | null
-  const ADMIN_ROLES = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin']
-  if (!ADMIN_ROLES.includes(profile?.role ?? '')) {
+  if (!can(profile?.role, CAN_APPROVE_ACCESS)) {
     redirect('/dashboard')
   }
 
   // 슈퍼관리자·편집인·국장·부국장은 전체 역할 변경 권한
-  const isSuperadmin = ['superadmin', 'publisher', 'editor', 'section_editor'].includes(profile?.role ?? '')
+  const isSuperadmin = isCrossDept(profile?.role)
 
   const { data: usersRaw } = await supabase
     .from('profiles')

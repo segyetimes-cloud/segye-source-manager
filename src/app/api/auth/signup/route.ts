@@ -5,6 +5,17 @@ import { createServiceClient } from '@/lib/supabase/server'
 // - Service Role로 Auth 계정 생성
 // - profiles.is_active = false (관리자 승인 대기)
 export async function POST(request: NextRequest) {
+  // Rate Limit: IP당 1시간 5회 (계정 생성 남용 방어)
+  const { checkRateLimit, getClientIp } = await import('@/lib/rateLimit')
+  const ip = getClientIp(request)
+  const rl = checkRateLimit(ip, { prefix: 'signup', limit: 5, windowMs: 60 * 60_000 })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: '회원가입 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
+      { status: 429 }
+    )
+  }
+
   try {
     const body = await request.json()
     const { email, password, full_name } = body

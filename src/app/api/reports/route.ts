@@ -118,6 +118,17 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Rate Limit: 사용자당 1분 10회 (대량 생성 방어)
+  const { checkRateLimit, getClientIp } = await import('@/lib/rateLimit')
+  const ip = getClientIp(request)
+  const rl = checkRateLimit(`${user.id}:${ip}`, { prefix: 'report-create', limit: 10, windowMs: 60_000 })
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: '보고서 생성 요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.' },
+      { status: 429 }
+    )
+  }
+
   const body = await request.json()
   const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
 

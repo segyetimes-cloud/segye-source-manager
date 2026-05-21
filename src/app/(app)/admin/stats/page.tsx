@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import StatsClient from '@/components/admin/StatsClient'
+import { can, CAN_VIEW_AUDIT_LOGS } from '@/lib/permissions'
 
 export default async function AdminStatsPage() {
   const supabase = await createClient()
@@ -10,7 +11,7 @@ export default async function AdminStatsPage() {
   const { data: profileRaw } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
   const role = (profileRaw as any)?.role
-  if (!['admin', 'superadmin'].includes(role)) redirect('/dashboard')
+  if (!can(role, CAN_VIEW_AUDIT_LOGS)) redirect('/dashboard')
 
   return (
     <div className="space-y-6">

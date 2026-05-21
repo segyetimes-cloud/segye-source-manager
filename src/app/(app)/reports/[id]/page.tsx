@@ -9,6 +9,7 @@ import ReportCopyLogs from '@/components/reports/ReportCopyLogs'
 import ReportAllowedUsers from '@/components/reports/ReportAllowedUsers'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
 import ReportReviewActions from '@/components/reports/ReportReviewActions'
+import { isDesk as isDeskRole } from '@/lib/roles'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -32,7 +33,7 @@ export default async function ReportDetailPage({ params }: Params) {
   const { data: myProfileRaw } = await supabase
     .from('profiles').select('role, full_name, department').eq('id', user.id).single()
   const myProfile = myProfileRaw as { role: string; full_name: string; department: string | null } | null
-  const isDesk = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(myProfile?.role ?? '')
+  const isDesk = isDeskRole(myProfile?.role)
 
   // 보고서 + 수정이력 병렬 조회
   const [reportResult, revisionsResult] = await Promise.all([
