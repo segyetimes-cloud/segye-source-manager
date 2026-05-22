@@ -163,43 +163,30 @@ export default function SourceListClient({
           )}
         </form>
 
-        {/* 탭 + 총 명수 + 등록 버튼 한 줄 */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div className="flex rounded-lg p-1" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
-              {[
-                { value: 'all', label: '전체' },
-                { value: 'mine', label: '내가 등록' },
-              ].map(t => (
-                <button
-                  key={t.value}
-                  onClick={() => navigate({ filter: t.value, q: currentQuery, page: '1' })}
-                  className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
-                  style={{
-                    background: currentFilter === t.value ? '#4A7CC0' : 'transparent',
-                    color: currentFilter === t.value ? 'white' : '#687898',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}>
-                  {t.label}
-                </button>
-              ))}
-            </div>
-            <span className="text-sm flex-shrink-0" style={{ color: '#485870' }}>
-              총 {totalCount.toLocaleString()}명
-            </span>
+        {/* 탭 + 총 명수 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div className="flex rounded-lg p-1" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
+            {[
+              { value: 'all', label: '전체' },
+              { value: 'mine', label: '내가 등록' },
+            ].map(t => (
+              <button
+                key={t.value}
+                onClick={() => navigate({ filter: t.value, q: currentQuery, page: '1' })}
+                className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
+                style={{
+                  background: currentFilter === t.value ? '#4A7CC0' : 'transparent',
+                  color: currentFilter === t.value ? 'white' : '#687898',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}>
+                {t.label}
+              </button>
+            ))}
           </div>
-          <Link
-            href="/sources/new"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '5px',
-              padding: '5px 12px', borderRadius: '7px',
-              background: 'linear-gradient(135deg,#4A7CC0,#0066CC)',
-              color: '#fff', fontSize: '12px', fontWeight: 600,
-              textDecoration: 'none', flexShrink: 0,
-            }}>
-            + 등록
-          </Link>
+          <span className="text-sm flex-shrink-0" style={{ color: '#485870' }}>
+            총 {totalCount.toLocaleString()}명
+          </span>
         </div>
 
         {currentTag && (

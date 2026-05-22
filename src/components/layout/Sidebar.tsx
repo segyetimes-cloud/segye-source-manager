@@ -92,7 +92,18 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
   }
 
   const isActive = (href: string) => {
-    if (href === '/sources' || href === '/reports') return pathname.startsWith(href)
+    if (href === '/sources') {
+      // 목록 페이지만 활성화 — /sources/new·/sources/[id]/edit 는 제외
+      if (pathname === '/sources') return true
+      if (pathname.startsWith('/sources/')) {
+        const rest = pathname.slice('/sources/'.length)
+        // "new" 이거나 "[id]/edit" 형태면 비활성
+        if (rest === 'new' || rest.endsWith('/edit')) return false
+        return true
+      }
+      return false
+    }
+    if (href === '/reports') return pathname.startsWith(href)
     return pathname === href
   }
 
