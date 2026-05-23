@@ -325,6 +325,19 @@ export default function NetworkGraph({ nodes, links }: Props) {
     }, 80)
   }, [nodes])
 
+  const applyExamFocus = useCallback((exam: string) => {
+    const ids = examGroupMap.get(exam)
+    if (!ids || ids.size === 0) return
+    const focusSet = new Set(ids)
+    focusMatchIdsRef.current = focusSet
+    setFocusModeLabel(`${exam} (${focusSet.size}명)`)
+    setFocusSearch('')
+    setFocusResults([])
+    setTimeout(() => {
+      try { fgRef.current?.zoomToFit(500, 60, (n: any) => focusSet.has(n.id)) } catch {}
+    }, 80)
+  }, [examGroupMap])
+
   // ── Hover handler — updates refs (for canvas) + state (for overlay) ───────
   const handleNodeHover = useCallback((node: unknown) => {
     const n = node as (Node & { x?: number; y?: number }) | null
@@ -514,6 +527,26 @@ export default function NetworkGraph({ nodes, links }: Props) {
     () => [...new Set(nodes.map(n => n.org).filter(Boolean))] as string[],
     [nodes]
   )
+
+  // Build exam_batch → nodeId set, derived from same_exam typed links
+  const examGroupMap = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const l of links) {
+      if (!(l.types ?? [l.type]).includes('same_exam')) continue
+      // label format: "동기 (행시 24기)" — extract the part inside parens
+      const match = l.label?.match(/동기\s*\((.+?)\)/)
+      if (!match) continue
+      const exam = match[1].trim()
+      if (!map.has(exam)) map.set(exam, new Set())
+      const srcId = typeof l.source === 'string' ? l.source : (l.source as any).id
+      const tgtId = typeof l.target === 'string' ? l.target : (l.target as any).id
+      map.get(exam)!.add(srcId)
+      map.get(exam)!.add(tgtId)
+    }
+    return map
+  }, [links])
+
+  const uniqueExams = useMemo(() => [...examGroupMap.keys()].sort(), [examGroupMap])
 
   // Build stable org→color map: each org gets the next palette slot in order
   useEffect(() => {
@@ -818,6 +851,45 @@ export default function NetworkGraph({ nodes, links }: Props) {
                     {uniqueOrgs.length > 12 && (
                       <p style={{ fontSize: '10px', color: '#7A8A9E', marginTop: '2px' }}>외 {uniqueOrgs.length - 12}개</p>
                     )}
+                  </div>
+                </div>
+              </>
+            )}
+
+            {/* ── 시험 기수 ── */}
+            {uniqueExams.length > 0 && (
+              <>
+                <Divider />
+                <div style={{ padding: '10px 14px 12px' }}>
+                  <p style={sectionLabel}>시험·기수 보기</p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '110px', overflowY: 'auto' }}>
+                    {uniqueExams.map(exam => (
+                      <button
+                        key={exam}
+                        type="button"
+                        onClick={() => applyExamFocus(exam)}
+                        title={`${exam} 기수만 보기`}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          padding: '2px 4px', borderRadius: '4px', width: '100%',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(184,148,40,0.10)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                      >
+                        <span style={{
+                          width: '8px', height: '8px', borderRadius: '2px', flexShrink: 0,
+                          background: LINK_COLORS['same_exam'] ?? '#B09048',
+                        }} />
+                        <span style={{ fontSize: '11px', color: '#526070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {exam}
+                        </span>
+                        <span style={{ fontSize: '10px', color: '#A0AEC0', marginLeft: 'auto', flexShrink: 0 }}>
+                          {examGroupMap.get(exam)?.size ?? 0}명
+                        </span>
+                      </button>
+                    ))}
                   </div>
                 </div>
               </>
