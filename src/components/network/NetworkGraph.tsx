@@ -120,6 +120,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
   const hoveredIdRef = useRef<string | null>(null)
+  const hoverCenterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const highlightIdsRef = useRef<Set<string>>(new Set())
   const [hoveredInfo, setHoveredInfo] = useState<Node | null>(null)
 
@@ -177,8 +178,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const adjacencyMap = useMemo(() => {
     const map = new Map<string, Set<string>>()
     for (const l of links) {
-      const src = typeof l.source === 'string' ? l.source : (l.source as any)?.id ?? l.source
-      const tgt = typeof l.target === 'string' ? l.target : (l.target as any)?.id ?? l.target
+      const src = typeof l.source === 'string' ? l.source : (l.source as Node).id
+      const tgt = typeof l.target === 'string' ? l.target : (l.target as Node).id
       if (!map.has(src)) map.set(src, new Set())
       if (!map.has(tgt)) map.set(tgt, new Set())
       map.get(src)!.add(tgt)
@@ -244,8 +245,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
       try {
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')?.distance((link: any) => {
-          const srcR = nodeRadius((link.source as any)?.degree ?? 1)
-          const tgtR = nodeRadius((link.target as any)?.degree ?? 1)
+          const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
+          const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
           return Math.max(srcR + tgtR + 55, linkDistance)
         }).iterations(5)
         fg.d3Force('collide', forceCollide((n: any) => {
@@ -312,6 +313,18 @@ export default function NetworkGraph({ nodes, links }: Props) {
     setFocusResults([])
   }, [])
 
+  const applyOrgFocus = useCallback((org: string) => {
+    const orgNodes = nodes.filter(n => n.org === org)
+    const focusSet = new Set<string>(orgNodes.map(n => n.id))
+    focusMatchIdsRef.current = focusSet
+    setFocusModeLabel(`${org} (${orgNodes.length}명)`)
+    setFocusSearch('')
+    setFocusResults([])
+    setTimeout(() => {
+      try { fgRef.current?.zoomToFit(500, 60, (n: any) => focusSet.has(n.id)) } catch {}
+    }, 80)
+  }, [nodes])
+
   // ── Hover handler — updates refs (for canvas) + state (for overlay) ───────
   const handleNodeHover = useCallback((node: unknown) => {
     const n = node as (Node & { x?: number; y?: number }) | null
@@ -332,6 +345,17 @@ export default function NetworkGraph({ nodes, links }: Props) {
     }
     highlightIdsRef.current = ids
     setHoveredInfo(n ? (n as unknown as Node) : null)
+
+    // Debounced center-on-hover (280ms delay, no zoom change)
+    if (hoverCenterTimerRef.current) clearTimeout(hoverCenterTimerRef.current)
+    if (n) {
+      hoverCenterTimerRef.current = setTimeout(() => {
+        try {
+          const gn = fgRef.current?.graphData()?.nodes?.find((nn: any) => nn.id === n.id)
+          if (gn?.x !== undefined) fgRef.current?.centerAt(gn.x, gn.y, 500)
+        } catch {}
+      }, 280)
+    }
   }, [])
 
   // ── Node canvas renderer ──────────────────────────────────────────────────
@@ -590,11 +614,11 @@ export default function NetworkGraph({ nodes, links }: Props) {
         {panelOpen && (
           <div style={{
             width: isMobile ? 'min(260px, calc(100vw - 80px))' : '228px',
-            background: 'rgba(6,12,24,0.97)',
-            border: '1px solid #1A2838',
+            background: 'rgba(255,255,255,0.97)',
+            border: '1px solid #DDE5EF',
             borderRadius: '12px',
             backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.12)',
             overflow: 'hidden',
           }}>
 
@@ -611,8 +635,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
                   style={{
                     width: '100%', paddingLeft: '26px', paddingRight: '8px',
                     paddingTop: '6px', paddingBottom: '6px',
-                    background: '#101828', border: '1px solid #1A2838',
-                    borderRadius: '6px', fontSize: '12px', color: '#CDD5E0',
+                    background: '#F0F3F7', border: '1px solid #DDE5EF',
+                    borderRadius: '6px', fontSize: '12px', color: '#1C2B3A',
                     outline: 'none', boxSizing: 'border-box',
                   }}
                 />
@@ -636,9 +660,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
                       style={{
                         flex: 1, padding: '4px 0', borderRadius: '5px',
                         fontSize: '10px', cursor: 'pointer',
-                        background: searchDepth === d ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.03)',
-                        color: searchDepth === d ? '#88B8E8' : '#485870',
-                        border: searchDepth === d ? '1px solid rgba(74,124,192,0.5)' : '1px solid #1A2838',
+                        background: searchDepth === d ? 'rgba(74,124,192,0.25)' : '#F0F3F7',
+                        color: searchDepth === d ? '#88B8E8' : '#7A8A9E',
+                        border: searchDepth === d ? '1px solid rgba(74,124,192,0.5)' : '1px solid #DDE5EF',
                       }}>
                       {d === 1 ? '1촌만' : '2촌 포함'}
                     </button>
@@ -665,7 +689,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                   </div>
                   <button
                     type="button" onClick={clearFocus}
-                    style={{ fontSize: '10px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                    style={{ fontSize: '10px', color: '#7A8A9E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
                     포커스 해제
                   </button>
                 </div>
@@ -690,15 +714,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
                       style={{
                         width: '100%', paddingLeft: '26px', paddingRight: '8px',
                         paddingTop: '6px', paddingBottom: '6px',
-                        background: '#101828', border: '1px solid #1A2838',
-                        borderRadius: '6px', fontSize: '12px', color: '#CDD5E0',
+                        background: '#F0F3F7', border: '1px solid #DDE5EF',
+                        borderRadius: '6px', fontSize: '12px', color: '#1C2B3A',
                         outline: 'none', boxSizing: 'border-box',
                       }}
                     />
                     {focusResults.length > 0 && (
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                        background: 'rgba(6,12,24,0.98)', border: '1px solid #1A2838',
+                        background: 'rgba(255,255,255,0.98)', border: '1px solid #DDE5EF',
                         borderRadius: '6px', marginTop: '3px', overflow: 'hidden',
                       }}>
                         {focusResults.map(n => (
@@ -707,13 +731,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
                             style={{
                               display: 'block', width: '100%', textAlign: 'left',
                               padding: '6px 10px', background: 'none', border: 'none',
-                              cursor: 'pointer', borderBottom: '1px solid #0D1520',
+                              cursor: 'pointer', borderBottom: '1px solid #EEF2F7',
                             }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.12)')}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.08)')}
                             onMouseLeave={e => (e.currentTarget.style.background = 'none')}
                           >
-                            <div style={{ fontSize: '12px', color: '#CDD5E0', fontWeight: 500 }}>{n.label}</div>
-                            {n.org && <div style={{ fontSize: '10px', color: '#485870' }}>{n.org}</div>}
+                            <div style={{ fontSize: '12px', color: '#1C2B3A', fontWeight: 500 }}>{n.label}</div>
+                            {n.org && <div style={{ fontSize: '10px', color: '#7A8A9E' }}>{n.org}</div>}
                           </button>
                         ))}
                       </div>
@@ -740,9 +764,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
                     style={{
                       flex: 1, padding: '5px 0', borderRadius: '6px',
                       fontSize: '11px', cursor: 'pointer', transition: 'all 0.15s',
-                      background: colorMode === m.value ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.03)',
-                      color: colorMode === m.value ? '#88B8E8' : '#485870',
-                      border: colorMode === m.value ? '1px solid rgba(74,124,192,0.5)' : '1px solid #1A2838',
+                      background: colorMode === m.value ? 'rgba(74,124,192,0.25)' : '#F0F3F7',
+                      color: colorMode === m.value ? '#88B8E8' : '#7A8A9E',
+                      border: colorMode === m.value ? '1px solid rgba(74,124,192,0.5)' : '1px solid #DDE5EF',
                     }}>
                     {m.label}
                   </button>
@@ -758,19 +782,32 @@ export default function NetworkGraph({ nodes, links }: Props) {
                   <p style={sectionLabel}>소속 색상</p>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', maxHeight: '120px', overflowY: 'auto' }}>
                     {uniqueOrgs.slice(0, 12).map(org => (
-                      <div key={org} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        key={org}
+                        type="button"
+                        onClick={() => applyOrgFocus(org)}
+                        title={`${org} 소속 노드만 보기`}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          background: 'none', border: 'none', cursor: 'pointer',
+                          padding: '2px 4px', borderRadius: '4px', width: '100%',
+                          transition: 'background 0.15s',
+                        }}
+                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.08)')}
+                        onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                      >
                         <span style={{
                           width: '8px', height: '8px', borderRadius: '50%',
                           background: orgColor(org), flexShrink: 0,
                           boxShadow: `0 0 5px ${orgColor(org)}80`,
                         }} />
-                        <span style={{ fontSize: '11px', color: '#687898', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <span style={{ fontSize: '11px', color: '#526070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {org.length > 14 ? org.slice(0, 14) + '…' : org}
                         </span>
-                      </div>
+                      </button>
                     ))}
                     {uniqueOrgs.length > 12 && (
-                      <p style={{ fontSize: '10px', color: '#384860', marginTop: '2px' }}>외 {uniqueOrgs.length - 12}개</p>
+                      <p style={{ fontSize: '10px', color: '#7A8A9E', marginTop: '2px' }}>외 {uniqueOrgs.length - 12}개</p>
                     )}
                   </div>
                 </div>
@@ -817,7 +854,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                           transition: 'opacity 0.15s',
                         }}>
                         <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#687898', flexShrink: 0 }} />
-                        <span style={{ fontSize: '11px', color: '#CDD5E0', textAlign: 'left' }}>
+                        <span style={{ fontSize: '11px', color: '#1C2B3A', textAlign: 'left' }}>
                           {LINK_LABELS[type] ?? type}
                         </span>
                       </button>
@@ -832,11 +869,11 @@ export default function NetworkGraph({ nodes, links }: Props) {
             <div style={{ padding: '8px 14px 10px', display: 'flex', gap: '12px', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#38C8B8', boxShadow: '0 0 4px #38C8B870', display: 'inline-block' }} />
-                <span style={{ fontSize: '10px', color: '#485870' }}>내 취재원</span>
+                <span style={{ fontSize: '10px', color: '#7A8A9E' }}>내 취재원</span>
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#E8A030', border: '1px dashed rgba(255,165,50,0.7)', display: 'inline-block' }} />
-                <span style={{ fontSize: '10px', color: '#485870' }}>중복</span>
+                <span style={{ fontSize: '10px', color: '#7A8A9E' }}>중복</span>
               </div>
             </div>
           </div>
@@ -848,9 +885,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
         <div style={{
           position: 'absolute', top: '16px', right: '16px', zIndex: 20,
           padding: '12px 14px', borderRadius: '10px', maxWidth: '210px',
-          background: 'rgba(6,12,24,0.97)', border: '1px solid #1A2838',
+          background: 'rgba(255,255,255,0.97)', border: '1px solid #DDE5EF',
           backdropFilter: 'blur(16px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.12)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
             <span style={{
@@ -864,25 +901,25 @@ export default function NetworkGraph({ nodes, links }: Props) {
                 colorMode === 'org' ? orgColor(hoveredInfo.org) + '88' : '#4A90D988'
               }`,
             }} />
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B3A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {hoveredInfo.label}
             </p>
           </div>
           {hoveredInfo.org && (
-            <p style={{ fontSize: '11px', color: '#687898', margin: '2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            <p style={{ fontSize: '11px', color: '#526070', margin: '2px 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               🏢 {hoveredInfo.org}
             </p>
           )}
           {hoveredInfo.position && (
-            <p style={{ fontSize: '11px', color: '#485870', margin: '2px 0' }}>
+            <p style={{ fontSize: '11px', color: '#7A8A9E', margin: '2px 0' }}>
               {hoveredInfo.position}
             </p>
           )}
-          <div style={{ marginTop: '8px', paddingTop: '7px', borderTop: '1px solid #1A2838', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '10px', color: '#485870' }}>연결강도</span>
+          <div style={{ marginTop: '8px', paddingTop: '7px', borderTop: '1px solid #DDE5EF', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#7A8A9E' }}>연결강도</span>
             <span style={{ fontSize: '12px', color: '#7E6E48', fontWeight: 700 }}>{hoveredInfo.degree}</span>
           </div>
-          <p style={{ fontSize: '10px', color: '#2A3848', marginTop: '5px', textAlign: 'center' }}>
+          <p style={{ fontSize: '10px', color: '#A0AEC0', marginTop: '5px', textAlign: 'center' }}>
             클릭하면 상세 페이지로 이동
           </p>
         </div>
@@ -920,13 +957,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
 // ── Shared micro-components ────────────────────────────────────────────────────
 function Divider() {
-  return <div style={{ height: '1px', background: '#131C2C' }} />
+  return <div style={{ height: '1px', background: '#DDE5EF' }} />
 }
 
 const sectionLabel: React.CSSProperties = {
   fontSize: '9px',
   fontWeight: 700,
-  color: '#3A5070',
+  color: '#94A3B8',
   textTransform: 'uppercase',
   letterSpacing: '0.1em',
   margin: 0,
