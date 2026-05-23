@@ -119,32 +119,15 @@ async function SourceDetailContent({ params }: Params) {
     notFound()
   }
 
-  // ── personal_notes 열람 승인 확인 ─────────────────────────────────────────
-  // 차장+ 또는 소유자는 항상 열람 가능; 기자는 데스크 승인 필요
-  let hasApproval = false
-  if (!isOwner && !isDeputyOrAboveF) {
-    const { data: approval } = await supabase
-      .from('source_access_approvals')
-      .select('id, expires_at')
-      .eq('source_id', id)
-      .eq('requester_id', user.id)
-      .eq('status', 'approved')
-      .maybeSingle()
-    hasApproval = !!approval &&
-      (!approval.expires_at || new Date(approval.expires_at) > new Date())
-  }
-
-  const canSeePersonalNotes = isOwner || isDeputyOrAboveF || hasApproval
-  const hasPrivateAccess    = canSeePersonalNotes
+  // ── personal_notes 열람 승인 폐지 ────────────────────────────────────────
+  // 열람 승인 기능 제거 — 모든 인증 사용자가 personal_notes 직접 열람 가능
+  const canSeePersonalNotes = true
+  const hasPrivateAccess    = true
 
   // ── 암호화 필드 복호화 ──────────────────────────────────────────────────────
   source.phone_primary   = decryptNullable(source.phone_primary)
   source.phone_secondary = decryptNullable(source.phone_secondary)
-  if (!canSeePersonalNotes) {
-    source.personal_notes = null
-  } else {
-    source.personal_notes = decryptNullable(source.personal_notes)
-  }
+  source.personal_notes = decryptNullable(source.personal_notes)
 
   // ── 직책 이력 + 편집 이력 ──────────────────────────────────────────────────
   const positions    = (source.source_positions    ?? []) as SourcePosition[]

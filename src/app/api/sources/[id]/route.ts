@@ -1,9 +1,10 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 import { calcCompletenessScore, INCREMENTAL_POINT_FIELDS } from '@/lib/points'
 import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE, CAN_DELETE_SOURCE } from '@/lib/permissions'
 import { encryptNullable, decryptNullable } from '@/lib/crypto'
+import { auditLog } from '@/lib/audit'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     .select('role')
     .eq('id', user.id)
     .single()
-  const callerRole = (callerProfile as any)?.role ?? 'reporter'
+  const callerRole = callerProfile?.role ?? 'reporter'
   // 부국장·국장·편집인·superadmin·부장 모두 admin급 이상으로 취급
   const isAdminOrAbove   = can(callerRole, CAN_VIEW_SENSITIVE_SOURCE)
   const isDeputyOrAbove  = can(callerRole, CAN_VIEW_PERSONAL_NOTES)
@@ -53,28 +54,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: '민감 정보로 분류된 취재원입니다. 데스크 이상만 열람할 수 있습니다.' }, { status: 403 })
   }
 
-  // ── personal_notes(민감 정보) 마스킹: 차장 이상 또는 승인된 기자만 열람 ──────
-  if (!isOwner && !isDeputyOrAbove) {
-    // 승인 여부 확인
-    const { data: approval } = await supabase
-      .from('source_access_approvals')
-      .select('id, expires_at')
-      .eq('source_id', id)
-      .eq('requester_id', user.id)
-      .eq('status', 'approved')
-      .maybeSingle()
-    const hasApproval = !!approval && (!(approval as any).expires_at || new Date((approval as any).expires_at) > new Date())
-    if (!hasApproval) {
-      source.personal_notes = null
-    }
-  }
-
-  // ── 암호화 필드 복호화 (열람 권한이 있는 경우에만) ────────────────────────────
+  // ── 열람 승인 폐지: 모든 인증 사용자가 personal_notes 직접 열람 가능 ──────────
+  // ── 암호화 필드 복호화 ────────────────────────────────────────────────────
   source.phone_primary   = decryptNullable(source.phone_primary)
   source.phone_secondary = decryptNullable(source.phone_secondary)
-  if (source.personal_notes !== null) {
-    source.personal_notes = decryptNullable(source.personal_notes)
-  }
+  source.personal_notes = decryptNullable(source.personal_notes)
   // ── public_notes: 모든 인증 사용자 열람 가능 (마스킹 없음) ──────────────────
 
   // 평균 유용성 점수 계산
@@ -84,12 +68,14 @@ export async function GET(request: NextRequest, { params }: Params) {
     : null
 
   // 감사 로그 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
-    user_id: user.id,
-    user_email: user.email,
-    action: source.sensitivity === 'private' ? 'view_private' : 'view',
+  void auditLog(supabase, {
+    user_id:       user.id,
+    user_email:    user.email ?? null,
+    user_role:     callerRole,
+    action:        source.sensitivity === 'private' ? 'view_private' : 'view',
     resource_type: 'source',
-    resource_id: id,
+    resource_id:   id,
+    ip_address:    request.headers.get('x-forwarded-for') ?? null,
   })
 
   return NextResponse.json({ ...source, avg_rating: avgRating })
@@ -163,7 +149,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
 
   const { data: updated, error } = await supabase
     .from('sources')
-    .update(updateFields)
+    .update(updateFields as any)
     .eq('id', id)
     .select()
     .single()
@@ -183,19 +169,21 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   // 감사 로그 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
-    user_id: user.id,
-    user_email: user.email,
-    action: 'update',
+  void auditLog(supabase, {
+    user_id:       user.id,
+    user_email:    user.email ?? null,
+    user_role:     profile?.role ?? null,
+    action:        'update',
     resource_type: 'source',
-    resource_id: id,
-    metadata: { changed_fields: Object.keys(updateFields) },
+    resource_id:   id,
+    ip_address:    request.headers.get('x-forwarded-for') ?? null,
+    metadata:      { changed_fields: Object.keys(updateFields) },
   })
 
   // 증분 포인트: 새로 채워진 필드에 대해 포인트 지급 (lib/points.ts 기준)
   let incrementalPts = 0
   for (const [field, pts] of INCREMENTAL_POINT_FIELDS) {
-    const wasEmpty = !existing[field]
+    const wasEmpty = !(existing as Record<string, unknown>)[field]
     const isChanging = body[field] !== undefined
     const nowFilled = isChanging ? !!body[field] : false
     if (wasEmpty && isChanging && nowFilled) incrementalPts += pts
@@ -208,8 +196,7 @@ export async function PATCH(request: NextRequest, { params }: Params) {
   }
 
   if (incrementalPts > 0) {
-    const serviceClient2 = createServiceClient()
-    await serviceClient2.from('point_transactions').insert({
+    await supabase.from('point_transactions').insert({
       user_id: user.id,
       point_type: 'source_created',
       points: incrementalPts,
@@ -261,18 +248,21 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
   const isAdmin = profile && can(profile.role, CAN_DELETE_SOURCE)
 
-  if (source.owner_id !== user.id && !isAdmin) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  // B안: 부장+(CAN_DELETE_SOURCE)만 직접 삭제 가능 — 소유자도 삭제 요청만 가능
+  if (!isAdmin) {
+    return NextResponse.json({ error: '삭제는 부장 이상만 가능합니다. 삭제 요청 버튼을 이용하세요.' }, { status: 403 })
   }
 
   await supabase.from('sources').update({ is_deleted: true }).eq('id', id)
 
-  await supabase.from('audit_logs').insert({
-    user_id: user.id,
-    user_email: user.email,
-    action: 'delete',
+  await auditLog(supabase, {
+    user_id:       user.id,
+    user_email:    user.email ?? null,
+    user_role:     profile?.role ?? null,
+    action:        'delete',
     resource_type: 'source',
-    resource_id: id,
+    resource_id:   id,
+    ip_address:    request.headers.get('x-forwarded-for') ?? null,
   })
 
   return NextResponse.json({ success: true })

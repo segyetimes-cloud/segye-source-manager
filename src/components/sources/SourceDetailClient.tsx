@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
@@ -217,7 +217,7 @@ export default function SourceDetailClient({
   source, positions: initialPositions, editHistory,
   avgRating, myRating, hasPrivateAccess,
   isOwner, isAdmin, isDeputyOrAbove = false, userRole = 'reporter',
-  canSeePersonalNotes = false,
+  canSeePersonalNotes = true,
   userId, userFullName, userDepartment,
   initialNotes, lockedNotesCount,
   relatedReports = [],
@@ -238,9 +238,16 @@ export default function SourceDetailClient({
   const [noteContent, setNoteContent] = useState('')
   const [noteSensitive, setNoteSensitive] = useState(false)
   const [noteSubmitting, setNoteSubmitting] = useState(false)
+  const [noteError, setNoteError] = useState('')
   const [currentVisibility, setCurrentVisibility] = useState<'personal' | 'shared'>(source.visibility as 'personal' | 'shared')
   const [currentSensitivity, setCurrentSensitivity] = useState<'public' | 'private'>(source.sensitivity as 'public' | 'private')
   const [visibilityChanging, setVisibilityChanging] = useState(false)
+  const [editingField, setEditingField] = useState<string | null>(null)
+  const [editingValue, setEditingValue] = useState('')
+  const [fieldSaving, setFieldSaving] = useState(false)
+  const [fieldSaveError, setFieldSaveError] = useState('')
+
+  const noteFormRef = useRef<HTMLFormElement>(null)
 
   const canEdit = isOwner || isAdmin
   const showPrivate = hasPrivateAccess || isOwner
@@ -248,25 +255,24 @@ export default function SourceDetailClient({
   // 정보(source_notes)와 notes 필드에서 구조화 가능한 항목 자동 감지
   const autoExtractFields = useMemo(() => {
     if (!canEdit || extractApplied) return null
-    const s = source as any
     const texts: string[] = []
-    if (s.personal_notes) texts.push(s.personal_notes)
-    if (s.public_notes) texts.push(s.public_notes)
+    if (source.personal_notes) texts.push(source.personal_notes)
+    if (source.public_notes) texts.push(source.public_notes)
     for (const note of initialNotes) texts.push(note.content)
     const combined = texts.join('\n')
     if (combined.length < 15) return null
     const ex = extractEducationFields(combined)
     const fillable: Record<string, string> = {}
-    if (ex.exam_batch            && !s.exam_batch)            fillable.exam_batch            = ex.exam_batch
-    if (ex.university            && !s.university)            fillable.university            = ex.university
-    if (ex.university_major      && !s.university_major)      fillable.university_major      = ex.university_major
-    if (ex.graduate_school       && !s.graduate_school)       fillable.graduate_school       = ex.graduate_school
-    if (ex.high_school           && !s.high_school)           fillable.high_school           = ex.high_school
-    if (ex.birthday              && !s.birthday)              fillable.birthday              = ex.birthday
-    if (ex.hometown_province     && !s.hometown_province)     fillable.hometown_province     = ex.hometown_province
-    if (ex.hometown_city         && !s.hometown_city)         fillable.hometown_city         = ex.hometown_city
-    if (ex.current_organization  && !s.current_organization)  fillable.current_organization  = ex.current_organization
-    if (ex.current_position      && !s.current_position)      fillable.current_position      = ex.current_position
+    if (ex.exam_batch            && !source.exam_batch)            fillable.exam_batch            = ex.exam_batch
+    if (ex.university            && !source.university)            fillable.university            = ex.university
+    if (ex.university_major      && !source.university_major)      fillable.university_major      = ex.university_major
+    if (ex.graduate_school       && !source.graduate_school)       fillable.graduate_school       = ex.graduate_school
+    if (ex.high_school           && !source.high_school)           fillable.high_school           = ex.high_school
+    if (ex.birthday              && !source.birthday)              fillable.birthday              = ex.birthday
+    if (ex.hometown_province     && !source.hometown_province)     fillable.hometown_province     = ex.hometown_province
+    if (ex.hometown_city         && !source.hometown_city)         fillable.hometown_city         = ex.hometown_city
+    if (ex.current_organization  && !source.current_organization)  fillable.current_organization  = ex.current_organization
+    if (ex.current_position      && !source.current_position)      fillable.current_position      = ex.current_position
     return Object.keys(fillable).length > 0 ? fillable : null
   }, [source, initialNotes, canEdit, extractApplied]) // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -283,6 +289,28 @@ export default function SourceDetailClient({
       router.refresh()
     }
     setExtracting(false)
+  }
+
+  async function handleFieldSave(field: string) {
+    if (!editingValue.trim()) { setEditingField(null); return }
+    setFieldSaving(true)
+    setFieldSaveError('')
+    try {
+      const res = await fetch(`/api/sources/${source.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: editingValue.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setFieldSaveError(data.error ?? '저장 실패'); return }
+      setEditingField(null)
+      setEditingValue('')
+      router.refresh()
+    } catch {
+      setFieldSaveError('오류가 발생했습니다.')
+    } finally {
+      setFieldSaving(false)
+    }
   }
 
   async function handleAddPosition(e: React.FormEvent) {
@@ -331,11 +359,26 @@ export default function SourceDetailClient({
     }
   }
 
+  // 부장+: 직접 삭제
   async function handleDelete() {
-    if (!confirm(`"${source.full_name}" 취재원을 삭제하시겠습니까?`)) return
+    if (!confirm(`"${source.full_name}" 취재원을 삭제하시겠습니까?\n삭제 후 복구가 불가능합니다.`)) return
     setDeleting(true)
     await fetch(`/api/sources/${source.id}`, { method: 'DELETE' })
     router.push('/sources')
+  }
+
+  // 기자·차장: 삭제 요청 — 부장 전원에게 알림 발송
+  async function handleDeletionRequest() {
+    if (!confirm(`"${source.full_name}" 취재원 삭제를 부장에게 요청하시겠습니까?`)) return
+    setDeleting(true)
+    const res = await fetch(`/api/sources/${source.id}/deletion-request`, { method: 'POST' })
+    if (res.ok) {
+      alert('삭제 요청이 접수됐습니다. 부장 확인 후 처리됩니다.')
+    } else {
+      const data = await res.json().catch(() => ({}))
+      alert(data.error ?? '요청 중 오류가 발생했습니다.')
+    }
+    setDeleting(false)
   }
 
   async function handleVisibilityChange(newVisibility: 'personal' | 'shared') {
@@ -379,18 +422,26 @@ export default function SourceDetailClient({
     e.preventDefault()
     if (!noteContent.trim()) return
     setNoteSubmitting(true)
-    const res = await fetch(`/api/sources/${source.id}/notes`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ content: noteContent.trim(), is_sensitive: noteSensitive }),
-    })
-    if (res.ok) {
-      const newNote = await res.json()
-      setNotes(prev => [...prev, newNote])
+    setNoteError('')
+    try {
+      const res = await fetch(`/api/sources/${source.id}/notes`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: noteContent.trim(), is_sensitive: noteSensitive }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setNoteError(data.error ?? '저장에 실패했습니다.')
+        return
+      }
+      setNotes(prev => [...prev, data])
       setNoteContent('')
       setNoteSensitive(false)
+    } catch {
+      setNoteError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    } finally {
+      setNoteSubmitting(false)
     }
-    setNoteSubmitting(false)
   }
 
   async function handleDeleteNote(noteId: string) {
@@ -503,8 +554,8 @@ export default function SourceDetailClient({
 
               <ScoreBadge score={source.completeness_score} />
 
-              {(source as any).on_record_status && (() => {
-                const s = (source as any).on_record_status as string
+              {source.on_record_status && (() => {
+                const s = source.on_record_status
                 const cfg = s === 'on_record'
                   ? { icon: '✅', label: '온더레코드', bg: 'rgba(61,158,106,0.12)', color: '#3D9E6A', border: 'rgba(61,158,106,0.3)' }
                   : s === 'background_only'
@@ -542,15 +593,26 @@ export default function SourceDetailClient({
             }}>
             📋 이력
           </button>
-          {canEdit && (
+          {/* B안 삭제: 부장+는 직접 삭제, 기자·차장은 삭제 요청 */}
+          {isAdmin ? (
             <button onClick={handleDelete} disabled={deleting}
-              title="취재원 삭제"
+              title="취재원 삭제 (부장 권한)"
               style={{
                 padding: '5px 9px', borderRadius: '7px', fontSize: '13px',
                 background: 'rgba(255,68,68,0.08)', color: '#C04040',
                 border: '1px solid rgba(255,68,68,0.18)', cursor: 'pointer',
               }}>
               🗑️
+            </button>
+          ) : (
+            <button onClick={handleDeletionRequest} disabled={deleting}
+              title="삭제 요청 (부장 승인 필요)"
+              style={{
+                padding: '5px 9px', borderRadius: '7px', fontSize: '12px',
+                background: 'rgba(255,153,0,0.08)', color: '#A87228',
+                border: '1px solid rgba(255,153,0,0.2)', cursor: 'pointer',
+              }}>
+              🗑️ 요청
             </button>
           )}
         </div>
@@ -589,41 +651,33 @@ export default function SourceDetailClient({
         </div>
       )}
 
-      {/* 민감정보 접근 안내 (공유 목록이고 민감정보이고 권한 없을 때) */}
+      {/* 민감정보 안내 (공유+민감 취재원, 열람 승인 폐지로 안내만 표시) */}
       {source.visibility === 'shared' && source.sensitivity === 'private' && !showPrivate && (
         <div className="glass-card p-4" style={{ border: '1px solid rgba(255,153,0,0.3)', background: 'rgba(255,153,0,0.05)' }}>
           <p className="text-sm font-medium" style={{ color: '#A87228' }}>⚠️ 이 취재원은 민감 정보로 분류되어 있습니다</p>
-          <p className="text-xs mt-1" style={{ color: '#687898' }}>데스크 승인 후 세부 정보를 확인할 수 있습니다.</p>
-          {!showApprovalForm ? (
-            <button onClick={() => setShowApprovalForm(true)}
-              className="mt-3 px-4 py-2 rounded-lg text-xs font-medium"
-              style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228',
-                border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
-              열람 신청하기
-            </button>
-          ) : (
-            <div className="mt-3 space-y-2">
-              <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
-                placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
-                rows={2}
-                style={{ width: '100%', background: '#182035', border: '1px solid #1A2838',
-                  color: '#CDD5E0', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
-              <div className="flex gap-2">
-                <button onClick={handleApprovalRequest}
-                  className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: '#A87228', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
-                <button onClick={() => setShowApprovalForm(false)}
-                  className="px-3 py-1.5 rounded-lg text-xs"
-                  style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>취소</button>
-              </div>
-            </div>
-          )}
+          <p className="text-xs mt-1" style={{ color: '#687898' }}>민감도 표시가 있는 취재원입니다. 내용은 아래에서 확인하세요.</p>
         </div>
       )}
 
       {/* 기본 정보 */}
       <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>👤 기본 정보 · 연락처</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>👤 기본 정보 · 연락처</h2>
+          <button
+            type="button"
+            onClick={() => {
+              setNoteSensitive(true)
+              noteFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              setTimeout(() => noteFormRef.current?.querySelector('textarea')?.focus(), 400)
+            }}
+            style={{
+              fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '6px',
+              background: 'rgba(255,153,0,0.1)', color: '#A87228',
+              border: '1px solid rgba(255,153,0,0.25)', cursor: 'pointer',
+            }}>
+            📝 내 정보 메모
+          </button>
+        </div>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5">
           {infoCard('전화번호', source.phone_primary, '📞')}
           {infoCard('이메일', source.email_primary, '📧')}
@@ -632,11 +686,84 @@ export default function SourceDetailClient({
           {infoCard('생년월일', source.birthday, '🎂')}
           {infoCard('출신지역', [source.hometown_province, source.hometown_city].filter(Boolean).join(' '), '📍')}
         </div>
-        {(source as any).tags?.length > 0 && (
+        {canEdit && (
+          <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #1A2838' }}>
+            {editingField && editingField !== 'personal_notes' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <p style={{ fontSize: '12px', color: '#4A7CC0', fontWeight: 600 }}>
+                  {FIELD_LABELS[editingField] ?? editingField} 입력
+                </p>
+                <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={editingValue}
+                    onChange={e => setEditingValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') handleFieldSave(editingField); if (e.key === 'Escape') { setEditingField(null); setEditingValue('') } }}
+                    placeholder={`${FIELD_LABELS[editingField] ?? editingField} 입력...`}
+                    style={{
+                      flex: 1, padding: '7px 10px', background: '#182035',
+                      border: '1px solid rgba(74,124,192,0.4)', borderRadius: '7px',
+                      color: '#CDD5E0', fontSize: '13px',
+                    }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleFieldSave(editingField)}
+                    disabled={fieldSaving || !editingValue.trim()}
+                    style={{
+                      padding: '7px 14px', background: fieldSaving || !editingValue.trim() ? '#1A2838' : '#4A7CC0',
+                      color: fieldSaving || !editingValue.trim() ? '#485870' : 'white',
+                      border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                    }}>
+                    {fieldSaving ? '저장 중' : '저장'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { setEditingField(null); setEditingValue('') }}
+                    style={{ padding: '7px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>
+                    취소
+                  </button>
+                </div>
+                {fieldSaveError && (
+                  <p style={{ fontSize: '12px', color: '#C04040' }}>{fieldSaveError}</p>
+                )}
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                <p style={{ fontSize: '11px', color: '#485870', width: '100%', marginBottom: '2px' }}>빈 항목 채우기</p>
+                {[
+                  { field: 'phone_primary', label: '📞 전화번호', empty: !source.phone_primary },
+                  { field: 'phone_secondary', label: '📞 보조전화', empty: !source.phone_secondary },
+                  { field: 'email_primary', label: '📧 이메일', empty: !source.email_primary },
+                  { field: 'email_secondary', label: '📧 보조이메일', empty: !source.email_secondary },
+                  { field: 'birthday', label: '🎂 생년월일', empty: !source.birthday },
+                  { field: 'hometown_province', label: '📍 출신지역', empty: !source.hometown_province },
+                  { field: 'high_school', label: '🏫 고교', empty: !source.high_school },
+                  { field: 'university', label: '🎓 대학', empty: !source.university },
+                  { field: 'exam_batch', label: '📋 고시기수', empty: !source.exam_batch },
+                ].filter(f => f.empty).map(f => (
+                  <button
+                    key={f.field}
+                    type="button"
+                    onClick={() => { setEditingField(f.field); setEditingValue('') }}
+                    style={{
+                      padding: '4px 10px', background: '#182035',
+                      border: '1px solid #1A2838', color: '#5A7099',
+                      borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
+                    }}>
+                    + {f.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+        {source.tags && source.tags.length > 0 && (
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid #1A2838' }}>
             <p className="text-xs mb-2" style={{ color: '#485870' }}>🏷️ 태그</p>
             <div className="flex flex-wrap gap-2">
-              {(source as any).tags.map((tag: string) => (
+              {source.tags.map((tag) => (
                 <span key={tag} className="text-xs px-2.5 py-1 rounded-full"
                   style={{ background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)' }}>
                   {tag}
@@ -800,10 +927,10 @@ export default function SourceDetailClient({
           📝 공개 정보
           <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
         </h2>
-        {(source as any).public_notes ? (
+        {source.public_notes ? (
           <SecureContentViewer
             apiPath={`/api/sources/${source.id}/copy-log`}
-            content={(source as any).public_notes}
+            content={source.public_notes}
             userId={userId}
             userFullName={userFullName}
             userDepartment={userDepartment ?? null}
@@ -836,63 +963,100 @@ export default function SourceDetailClient({
               border: '1px solid rgba(255,153,0,0.2)',
             }}
           >
-            <p className="text-xs font-semibold mb-2" style={{ color: '#A87228', userSelect: 'text' }}>
-              {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
-            </p>
-            <SecureContentViewer
-              apiPath={`/api/sources/${source.id}/copy-log`}
-              content={source.personal_notes}
-              userId={userId}
-              userFullName={userFullName}
-              userDepartment={userDepartment ?? null}
-            />
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-semibold" style={{ color: '#A87228', userSelect: 'text' }}>
+                {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
+              </p>
+              {canEdit && editingField !== 'personal_notes' && (
+                <button
+                  type="button"
+                  onClick={() => { setEditingField('personal_notes'); setEditingValue(source.personal_notes ?? '') }}
+                  style={{ fontSize: '11px', color: '#A87228', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                  ✏️ 수정
+                </button>
+              )}
+            </div>
+            {editingField === 'personal_notes' ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <textarea
+                  autoFocus
+                  rows={3}
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
+                  style={{
+                    width: '100%', padding: '8px 10px', background: '#1A1F2E',
+                    border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
+                    color: '#CDD5E0', fontSize: '13px', resize: 'vertical',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#3A2800' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    {fieldSaving ? '저장 중...' : '저장'}
+                  </button>
+                  <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    취소
+                  </button>
+                </div>
+                {fieldSaveError && <p style={{ fontSize: '12px', color: '#C04040' }}>{fieldSaveError}</p>}
+              </div>
+            ) : (
+              <SecureContentViewer
+                apiPath={`/api/sources/${source.id}/copy-log`}
+                content={source.personal_notes}
+                userId={userId}
+                userFullName={userFullName}
+                userDepartment={userDepartment ?? null}
+              />
+            )}
           </SecureContainer>
         )}
 
         {/* 차장 이상이지만 민감 정보 없을 때 */}
         {canSeePersonalNotes && !source.personal_notes && (
-          <p className="text-sm mb-4" style={{ color: '#485870' }}>
-            등록된 민감 정보가 없습니다.
-            {canEdit && <span> <a href={`/sources/${source.id}/edit`} style={{ color: '#A87228' }}>수정</a>에서 추가하세요.</span>}
-          </p>
+          canEdit ? (
+            editingField === 'personal_notes' ? (
+              <div className="mb-4" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                <textarea
+                  autoFocus
+                  rows={3}
+                  value={editingValue}
+                  onChange={e => setEditingValue(e.target.value)}
+                  placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
+                  style={{
+                    width: '100%', padding: '8px 10px', background: '#1A1F2E',
+                    border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
+                    color: '#CDD5E0', fontSize: '13px', resize: 'vertical',
+                  }}
+                />
+                <div style={{ display: 'flex', gap: '6px' }}>
+                  <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#3A2800' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    {fieldSaving ? '저장 중...' : '저장'}
+                  </button>
+                  <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    취소
+                  </button>
+                </div>
+                {fieldSaveError && <p style={{ fontSize: '12px', color: '#C04040' }}>{fieldSaveError}</p>}
+              </div>
+            ) : (
+              <div className="mb-4">
+                <button type="button"
+                  onClick={() => { setEditingField('personal_notes'); setEditingValue('') }}
+                  style={{ fontSize: '13px', color: '#A87228', background: 'rgba(255,153,0,0.08)', border: '1px solid rgba(255,153,0,0.2)', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer' }}>
+                  + 민감 정보 입력
+                </button>
+              </div>
+            )
+          ) : (
+            <p className="text-sm mb-4" style={{ color: '#485870' }}>아직 민감 정보가 없습니다.</p>
+          )
         )}
 
-        {/* 기자가 민감 정보 열람 권한 없을 때 — 신청 유도 */}
-        {!isOwner && !canSeePersonalNotes && (
-          <div className="mb-4 p-4 rounded-lg flex items-start gap-3"
-            style={{ background: 'rgba(255,153,0,0.04)', border: '1px solid rgba(255,153,0,0.2)' }}>
-            <span style={{ fontSize: '18px' }}>🔒</span>
-            <div className="flex-1">
-              <p className="text-xs font-semibold" style={{ color: '#A87228' }}>민감 정보는 차장/데스크 이상만 열람 가능합니다</p>
-              <p className="text-xs mt-1" style={{ color: '#687898' }}>
-                데스크 승인을 받으면 열람할 수 있습니다.
-              </p>
-              {!showApprovalForm ? (
-                <button
-                  onClick={() => setShowApprovalForm(true)}
-                  className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: 'rgba(255,153,0,0.12)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
-                  민감 정보 열람 신청
-                </button>
-              ) : (
-                <div className="mt-2 space-y-2">
-                  <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
-                    placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
-                    rows={2}
-                    style={{ width: '100%', background: '#182035', border: '1px solid #1A2838', color: '#CDD5E0', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
-                  <div className="flex gap-2">
-                    <button onClick={handleApprovalRequest}
-                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
-                      style={{ background: '#A87228', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
-                    <button onClick={() => setShowApprovalForm(false)}
-                      className="px-3 py-1.5 rounded-lg text-xs"
-                      style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>취소</button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        )}
 
       </div>
 
@@ -903,27 +1067,16 @@ export default function SourceDetailClient({
           <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>여러 기자가 추가한 정보 · 공개/민감 구분</span>
         </h2>
 
-        {/* 잠긴 민감 노트 알림 */}
+        {/* 잠긴 민감 노트 알림 (차장 미만에게 표시) */}
         {lockedNotesCount > 0 && !showPrivate && (
           <div className="mb-3 p-3 rounded-lg flex items-center gap-3"
             style={{ background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.2)' }}>
             <span style={{ color: '#A87228' }}>🔒</span>
             <div>
               <p className="text-xs font-semibold" style={{ color: '#A87228' }}>
-                민감 정보 {lockedNotesCount}건이 잠겨 있습니다
-              </p>
-              <p className="text-xs" style={{ color: '#687898' }}>
-                관리자 승인 후 열람 가능합니다
+                민감 노트 {lockedNotesCount}건 — 차장 이상만 열람 가능합니다
               </p>
             </div>
-            {!showApprovalForm && (
-              <button onClick={() => setShowApprovalForm(true)}
-                className="ml-auto text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228',
-                  border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
-                열람 신청
-              </button>
-            )}
           </div>
         )}
 
@@ -995,7 +1148,7 @@ export default function SourceDetailClient({
         )}
 
         {/* ── 정보 추가 폼 ───────────────────────────────────────────────── */}
-        <form onSubmit={handleAddNote} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A2838' }}>
+        <form ref={noteFormRef} onSubmit={handleAddNote} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A2838' }}>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>
               + 정보 추가 <span style={{ color: '#7E6E48' }}>+10pt</span>
@@ -1046,6 +1199,12 @@ export default function SourceDetailClient({
               border: `1px solid ${noteSensitive ? 'rgba(255,153,0,0.3)' : '#1A2838'}`,
             }}
           />
+          {noteError && (
+            <div className="text-xs px-3 py-2 rounded-lg mb-1"
+              style={{ background: 'rgba(192,64,64,0.1)', color: '#C04040', border: '1px solid rgba(192,64,64,0.25)' }}>
+              {noteError}
+            </div>
+          )}
           <div className="flex justify-end">
             <button type="submit" disabled={noteSubmitting || !noteContent.trim()}
               className="px-4 py-1.5 rounded-lg text-xs font-semibold"
@@ -1156,7 +1315,7 @@ export default function SourceDetailClient({
 
       {/* 등록자 정보 */}
       <div className="flex items-center gap-2 text-xs" style={{ color: '#485870' }}>
-        <span>등록: {(source as any).profiles?.full_name ?? '—'}</span>
+        <span>등록: {source.profiles?.full_name ?? '—'}</span>
         <span>·</span>
         <span>최종수정: {new Date(source.updated_at).toLocaleString('ko-KR')}</span>
       </div>
