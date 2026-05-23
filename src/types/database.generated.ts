@@ -14,6 +14,44 @@ export type Database = {
   }
   public: {
     Tables: {
+      announcements: {
+        Row: {
+          id: string
+          title: string
+          body: string | null
+          is_pinned: boolean
+          created_by: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          title: string
+          body?: string | null
+          is_pinned?: boolean
+          created_by: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          title?: string
+          body?: string | null
+          is_pinned?: boolean
+          created_by?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "announcements_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       audit_logs: {
         Row: {
           action: Database["public"]["Enums"]["audit_action"]
@@ -360,6 +398,7 @@ export type Database = {
           review_note: string | null
           reviewed_at: string | null
           reviewer_id: string | null
+          sensitive_content: string | null
           status: string
           tags: string[]
           title: string
@@ -377,6 +416,7 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
+          sensitive_content?: string | null
           status?: string
           tags?: string[]
           title: string
@@ -394,6 +434,7 @@ export type Database = {
           review_note?: string | null
           reviewed_at?: string | null
           reviewer_id?: string | null
+          sensitive_content?: string | null
           status?: string
           tags?: string[]
           title?: string
@@ -773,6 +814,13 @@ export type Database = {
           report_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "report_revisions_author_id_fkey"
+            columns: ["author_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "report_revisions_report_id_fkey"
             columns: ["report_id"]
@@ -1506,6 +1554,24 @@ export type Database = {
         | "view_private"
         | "approve"
         | "reject"
+        | "note_create"
+        | "note_view"
+        | "note_delete"
+        | "copy"
+        | "points_award"
+        | "rating"
+        | "login"
+        | "login_failed"
+        | "logout"
+        | "idle_logout"
+        | "new_device_login"
+        | "session_invalidate_others"
+        | "report_create"
+        | "report_update"
+        | "report_delete"
+        | "report_submit"
+        | "report_approve"
+        | "report_reject"
       help_status: "open" | "resolved" | "closed"
       point_type:
         | "source_created"
@@ -1667,6 +1733,24 @@ export const Constants = {
         "view_private",
         "approve",
         "reject",
+        "note_create",
+        "note_view",
+        "note_delete",
+        "copy",
+        "points_award",
+        "rating",
+        "login",
+        "login_failed",
+        "logout",
+        "idle_logout",
+        "new_device_login",
+        "session_invalidate_others",
+        "report_create",
+        "report_update",
+        "report_delete",
+        "report_submit",
+        "report_approve",
+        "report_reject",
       ],
       help_status: ["open", "resolved", "closed"],
       point_type: [

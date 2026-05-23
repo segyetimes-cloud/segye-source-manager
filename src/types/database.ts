@@ -32,3 +32,7 @@ export type ImportJob = Database['public']['Tables']['import_jobs']['Row']
 // Information report types
 export type InformationReport = Database['public']['Tables']['information_reports']['Row']
 export type ReportSource = Database['public']['Tables']['report_sources']['Row']
+
+export type Notification = Database['public']['Tables']['notifications']['Row']
+export type ContactLog = Database['public']['Tables']['contact_logs']['Row']
+export type Announcement = Database['public']['Tables']['announcements']['Row']
