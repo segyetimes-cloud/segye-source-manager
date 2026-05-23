@@ -982,7 +982,7 @@ export default function SourceDetailClient({
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <textarea
                   autoFocus
-                  rows={3}
+                  rows={6}
                   value={editingValue}
                   onChange={e => setEditingValue(e.target.value)}
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
@@ -1023,7 +1023,7 @@ export default function SourceDetailClient({
               <div className="mb-4" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <textarea
                   autoFocus
-                  rows={3}
+                  rows={6}
                   value={editingValue}
                   onChange={e => setEditingValue(e.target.value)}
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."

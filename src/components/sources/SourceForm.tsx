@@ -935,7 +935,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
           value={form.public_notes}
           onChange={e => set('public_notes', e.target.value)}
           onPaste={e => handleNotesPaste(e, 'public_notes')}
-          rows={3}
+          rows={6}
           placeholder="예: 경제부 출입 담당자, 예산 전문가, 인터뷰 협조적..."
           style={{ ...inputStyle, resize: 'vertical' }}
         />
@@ -959,7 +959,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
           value={form.personal_notes}
           onChange={e => set('personal_notes', e.target.value)}
           onPaste={e => handleNotesPaste(e, 'personal_notes')}
-          rows={3}
+          rows={6}
           placeholder="예: 커피 좋아함, 오후 인터뷰 선호, 딸 2명 아들 1명, 홍○○과 대학 동기..."
           style={{ ...inputStyle, resize: 'vertical', borderColor: 'rgba(255,153,0,0.3)' }}
         />

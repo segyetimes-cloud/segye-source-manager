@@ -38,6 +38,7 @@ export default function NewReportPage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [sensitiveContent, setSensitiveContent] = useState('')
   const [category, setCategory] = useState('일반')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
@@ -166,26 +167,41 @@ export default function NewReportPage() {
     setSubmitting(true)
     setError('')
 
-    const res = await fetch('/api/reports', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title, content, category, tags,
-        visibility,
-        source_ids: selectedSources.map(s => s.id),
-        allowed_user_ids: allowedUsers.map(u => u.id),
-      }),
-    })
+    const abort = new AbortController()
+    const timer = setTimeout(() => abort.abort(), 15_000)
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? '저장에 실패했습니다.')
+    try {
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        signal: abort.signal,
+        body: JSON.stringify({
+          title, content, category, tags,
+          sensitive_content: sensitiveContent || undefined,
+          visibility,
+          source_ids: selectedSources.map(s => s.id),
+          allowed_user_ids: allowedUsers.map(u => u.id),
+        }),
+      })
+
+      clearTimeout(timer)
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? '저장에 실패했습니다.')
+        return
+      }
+
+      fetch('/api/reports/draft', { method: 'DELETE' }).catch(() => {}) // 임시저장 삭제는 비동기 처리 (탐색 차단 방지)
+      router.push(`/reports/${data.id}`)
+    } catch (err) {
+      clearTimeout(timer)
+      const isTimeout = err instanceof Error && err.name === 'AbortError'
+      setError(isTimeout
+        ? '저장 요청이 시간 초과되었습니다. 다시 시도해 주세요.'
+        : '저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    await fetch('/api/reports/draft', { method: 'DELETE' })
-    router.push(`/reports/${data.id}`)
   }
 
   return (
@@ -291,9 +307,39 @@ export default function NewReportPage() {
             value={content}
             onChange={e => setContent(e.target.value)}
             placeholder="보고서 내용을 자세히 작성하세요"
-            rows={12}
+            rows={18}
             style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             required
+          />
+        </div>
+
+        {/* 민감정보 */}
+        <div style={{
+          background: 'rgba(255,153,0,0.04)',
+          border: '1px solid rgba(255,153,0,0.25)',
+          borderRadius: '10px',
+          padding: '14px',
+        }}>
+          <label style={{ ...labelStyle, color: '#A87228', marginBottom: '4px' }}>
+            ⚠️ 민감정보{' '}
+            <span style={{ color: '#6B5020', fontWeight: 400 }}>(선택 — 작성자·데스크만 열람)</span>
+          </label>
+          <p style={{ fontSize: '11px', color: '#6B5020', marginBottom: '8px' }}>
+            공개 본문에 포함하기 어려운 민감한 취재 내용을 별도로 기록합니다. 데스크(부장 이상)와 작성자만 볼 수 있습니다.
+          </p>
+          <textarea
+            value={sensitiveContent}
+            onChange={e => setSensitiveContent(e.target.value)}
+            placeholder="공개되어선 안 되는 취재원 정보, 미확인 사실, 내부 동향 등을 입력하세요"
+            rows={8}
+            style={{
+              ...inputStyle,
+              resize: 'vertical',
+              lineHeight: 1.6,
+              background: 'rgba(30,16,4,0.6)',
+              border: '1px solid rgba(255,153,0,0.3)',
+              color: '#CDD5E0',
+            }}
           />
         </div>
 
