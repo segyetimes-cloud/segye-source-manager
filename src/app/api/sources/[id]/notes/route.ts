@@ -1,6 +1,8 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { parseBody, CreateNoteSchema } from '@/lib/schemas'
+import { auditLog } from '@/lib/audit'
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -30,7 +32,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   }
 
   const { data } = await query
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_view',
@@ -49,12 +51,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json()
-  const { content, is_sensitive = false } = body
-
-  if (!content?.trim()) {
-    return NextResponse.json({ error: '내용을 입력해주세요' }, { status: 400 })
-  }
+  const parsed = await parseBody(request, CreateNoteSchema)
+  if (!parsed.ok) return parsed.response
+  const { content, is_sensitive } = parsed.data
 
   // 취재원 존재 확인
   const { data: source } = await supabase
@@ -74,18 +73,17 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_create',
     resource_type: 'note',
     resource_id:   note?.id ?? id,
-    metadata:      { source_id: id, is_sensitive: body.is_sensitive },
+    metadata:      { source_id: id, is_sensitive },
   })
 
   // 정보 추가 포인트 +10pt
-  const serviceClient = createServiceClient()
-  await serviceClient.from('point_transactions').insert({
+  await supabase.from('point_transactions').insert({
     user_id: user.id,
     point_type: 'note_created',
     points: 10,
@@ -118,7 +116,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
   }
 
   await supabase.from('source_notes').delete().eq('id', noteId)
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email,
     action:        'note_delete',

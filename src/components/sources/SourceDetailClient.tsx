@@ -431,16 +431,22 @@ export default function SourceDetailClient({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content: noteContent.trim(), is_sensitive: noteSensitive }),
       })
-      const data = await res.json()
-      if (!res.ok) {
-        setNoteError(data.error ?? '저장에 실패했습니다.')
+      let data: Record<string, unknown> = {}
+      try {
+        data = await res.json()
+      } catch {
+        setNoteError(`서버 오류 (${res.status}). 잠시 후 다시 시도해 주세요.`)
         return
       }
-      setNotes(prev => [...prev, data])
+      if (!res.ok) {
+        setNoteError((data.error as string) ?? '저장에 실패했습니다.')
+        return
+      }
+      setNotes(prev => [...prev, data as SourceNote])
       setNoteContent('')
       setNoteSensitive(false)
     } catch {
-      setNoteError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+      setNoteError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.')
     } finally {
       setNoteSubmitting(false)
     }
