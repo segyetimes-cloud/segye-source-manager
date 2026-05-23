@@ -325,6 +325,25 @@ export default function NetworkGraph({ nodes, links }: Props) {
     }, 80)
   }, [nodes])
 
+  // ── Exam batch → nodeId map (from same_exam links) ────────────────────────
+  const examGroupMap = useMemo(() => {
+    const map = new Map<string, Set<string>>()
+    for (const l of links) {
+      if (!(l.types ?? [l.type]).includes('same_exam')) continue
+      const match = l.label?.match(/동기\s*\((.+?)\)/)
+      if (!match) continue
+      const exam = match[1].trim()
+      if (!map.has(exam)) map.set(exam, new Set())
+      const srcId = typeof l.source === 'string' ? l.source : (l.source as any).id
+      const tgtId = typeof l.target === 'string' ? l.target : (l.target as any).id
+      map.get(exam)!.add(srcId)
+      map.get(exam)!.add(tgtId)
+    }
+    return map
+  }, [links])
+
+  const uniqueExams = useMemo(() => [...examGroupMap.keys()].sort(), [examGroupMap])
+
   const applyExamFocus = useCallback((exam: string) => {
     const ids = examGroupMap.get(exam)
     if (!ids || ids.size === 0) return
@@ -527,26 +546,6 @@ export default function NetworkGraph({ nodes, links }: Props) {
     () => [...new Set(nodes.map(n => n.org).filter(Boolean))] as string[],
     [nodes]
   )
-
-  // Build exam_batch → nodeId set, derived from same_exam typed links
-  const examGroupMap = useMemo(() => {
-    const map = new Map<string, Set<string>>()
-    for (const l of links) {
-      if (!(l.types ?? [l.type]).includes('same_exam')) continue
-      // label format: "동기 (행시 24기)" — extract the part inside parens
-      const match = l.label?.match(/동기\s*\((.+?)\)/)
-      if (!match) continue
-      const exam = match[1].trim()
-      if (!map.has(exam)) map.set(exam, new Set())
-      const srcId = typeof l.source === 'string' ? l.source : (l.source as any).id
-      const tgtId = typeof l.target === 'string' ? l.target : (l.target as any).id
-      map.get(exam)!.add(srcId)
-      map.get(exam)!.add(tgtId)
-    }
-    return map
-  }, [links])
-
-  const uniqueExams = useMemo(() => [...examGroupMap.keys()].sort(), [examGroupMap])
 
   // Build stable org→color map: each org gets the next palette slot in order
   useEffect(() => {
