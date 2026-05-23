@@ -48,16 +48,6 @@ const ORG_PALETTE = [
   '#C0488C', // 매젠타 로즈
 ]
 
-function orgColor(org: string | null): string {
-  if (!org) return '#4A90D9'
-  let h = 2166136261
-  for (let i = 0; i < org.length; i++) {
-    h ^= org.charCodeAt(i)
-    h = Math.imul(h, 16777619)
-  }
-  return ORG_PALETTE[Math.abs(h) % ORG_PALETTE.length]
-}
-
 function hexToRgb(hex: string): [number, number, number] {
   if (!hex.startsWith('#')) return [74, 144, 217]
   const r = parseInt(hex.slice(1, 3), 16)
@@ -130,6 +120,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
   const hoveredIdRef = useRef<string | null>(null)
   const hoverCenterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const orgColorMapRef = useRef<Map<string, string>>(new Map())
   const highlightIdsRef = useRef<Set<string>>(new Set())
   const [hoveredInfo, setHoveredInfo] = useState<Node | null>(null)
 
@@ -394,7 +385,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
     } else if (n.isOwner) {
       baseColor = '#38C8B8'
     } else if (colorModeRef.current === 'org') {
-      baseColor = orgColor(n.org)
+      baseColor = orgColorMapRef.current.get(n.org ?? '') ?? ORG_PALETTE[0]
     } else {
       const intensity = Math.min(degree / 15, 1)
       const g = Math.round(144 + intensity * 111)
@@ -523,6 +514,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
     () => [...new Set(nodes.map(n => n.org).filter(Boolean))] as string[],
     [nodes]
   )
+
+  // Build stable org→color map: each org gets the next palette slot in order
+  useEffect(() => {
+    const map = new Map<string, string>()
+    uniqueOrgs.forEach((org, i) => {
+      map.set(org, ORG_PALETTE[i % ORG_PALETTE.length])
+    })
+    orgColorMapRef.current = map
+  }, [uniqueOrgs])
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (nodes.length === 0) {
@@ -807,8 +807,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
                       >
                         <span style={{
                           width: '8px', height: '8px', borderRadius: '50%',
-                          background: orgColor(org), flexShrink: 0,
-                          boxShadow: `0 0 5px ${orgColor(org)}80`,
+                          background: orgColorMapRef.current.get(org) ?? ORG_PALETTE[0], flexShrink: 0,
+                          boxShadow: `0 0 5px ${orgColorMapRef.current.get(org) ?? ORG_PALETTE[0]}80`,
                         }} />
                         <span style={{ fontSize: '11px', color: '#526070', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {org.length > 14 ? org.slice(0, 14) + '…' : org}
@@ -903,11 +903,11 @@ export default function NetworkGraph({ nodes, links }: Props) {
               width: '10px', height: '10px', borderRadius: '50%', flexShrink: 0,
               background: hoveredInfo.isDuplicate ? '#E8A030' :
                 hoveredInfo.isOwner ? '#38C8B8' :
-                colorMode === 'org' ? orgColor(hoveredInfo.org) : '#4A90D9',
+                colorMode === 'org' ? orgColorMapRef.current.get(hoveredInfo.org ?? '') ?? ORG_PALETTE[0] : '#4A90D9',
               boxShadow: `0 0 6px ${
                 hoveredInfo.isDuplicate ? '#E8A03088' :
                 hoveredInfo.isOwner ? '#38C8B888' :
-                colorMode === 'org' ? orgColor(hoveredInfo.org) + '88' : '#4A90D988'
+                colorMode === 'org' ? (orgColorMapRef.current.get(hoveredInfo.org ?? '') ?? ORG_PALETTE[0]) + '88' : '#4A90D988'
               }`,
             }} />
             <p style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B3A', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
