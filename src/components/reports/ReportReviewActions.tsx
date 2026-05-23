@@ -66,7 +66,7 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
           onClick={handleSubmit}
           disabled={loading}
           style={{
-            background: loading ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+            background: loading ? '#DDE5EF' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
             color: 'white', border: 'none',
             borderRadius: '8px', padding: '9px 20px',
             fontSize: '13px', fontWeight: 600,
@@ -84,7 +84,7 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
               onClick={handleApprove}
               disabled={loading}
               style={{
-                background: loading ? '#1A2838' : 'rgba(61,158,106,0.15)',
+                background: loading ? '#DDE5EF' : 'rgba(61,158,106,0.15)',
                 color: '#3D9E6A',
                 border: '1px solid rgba(61,158,106,0.3)',
                 borderRadius: '8px', padding: '9px 20px',
@@ -112,10 +112,10 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
 
           {showRejectForm && (
             <div style={{
-              background: '#182035', border: '1px solid rgba(192,64,64,0.2)',
+              background: '#EEF2F7', border: '1px solid rgba(192,64,64,0.2)',
               borderRadius: '8px', padding: '12px',
             }}>
-              <p style={{ fontSize: '12px', color: '#687898', marginBottom: '8px', fontWeight: 600 }}>반려 사유 *</p>
+              <p style={{ fontSize: '12px', color: '#526070', marginBottom: '8px', fontWeight: 600 }}>반려 사유 *</p>
               <textarea
                 value={note}
                 onChange={e => setNote(e.target.value)}
@@ -123,9 +123,9 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
                 rows={3}
                 style={{
                   width: '100%',
-                  background: '#0D1520',
+                  background: '#F0F7F3',
                   border: '1px solid rgba(192,64,64,0.3)',
-                  color: '#CDD5E0',
+                  color: '#1C2B3A',
                   borderRadius: '6px',
                   padding: '8px 10px',
                   fontSize: '13px',
@@ -152,8 +152,8 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
                   type="button"
                   onClick={() => { setShowRejectForm(false); setNote('') }}
                   style={{
-                    background: '#0D1520', border: '1px solid #1A2838',
-                    color: '#485870', borderRadius: '6px', padding: '7px 14px',
+                    background: '#F0F7F3', border: '1px solid #DDE5EF',
+                    color: '#7A8A9E', borderRadius: '6px', padding: '7px 14px',
                     fontSize: '13px', cursor: 'pointer',
                   }}>
                   취소
@@ -171,7 +171,7 @@ export default function ReportReviewActions({ reportId, status, isAuthor, isDesk
           borderRadius: '8px', padding: '10px 14px',
         }}>
           <p style={{ fontSize: '12px', color: '#C04040', fontWeight: 600, marginBottom: '4px' }}>반려 사유</p>
-          <p style={{ fontSize: '13px', color: '#CDD5E0' }}>{reviewNote}</p>
+          <p style={{ fontSize: '13px', color: '#1C2B3A' }}>{reviewNote}</p>
         </div>
       )}
     </div>

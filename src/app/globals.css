@@ -88,6 +88,31 @@ p, span, div, li, td, th, label, a, button {
   border-radius: 10px;
 }
 
+/* ── 콘텐츠 열람 페이지 — 밝은 테마 ─────────────────────────────────────────
+   정보보고·취재원 정보·공지사항 등 읽기 위주 페이지에 적용.
+   .content-page 래퍼 안의 구조 요소들을 밝은 배경으로 전환합니다.
+*/
+.content-page {
+  /* 페이지 전체 배경 */
+  background: #F0F3F7;
+  min-height: 100%;
+  border-radius: 12px;
+  padding: 4px;
+}
+
+/* 카드 → 흰색으로 전환 */
+.content-page .glass-card {
+  background: #FFFFFF !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: #DDE5EF !important;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06) !important;
+}
+
+/* 스크롤바 — 밝은 배경에 맞게 */
+.content-page ::-webkit-scrollbar-track { background: #F0F3F7; }
+.content-page ::-webkit-scrollbar-thumb { background: #C8D4E0; }
+
 /* 카드 기본 패딩 압축 */
 .glass-card.p-6 { padding: 1rem !important; }
 .glass-card.p-5 { padding: 0.875rem !important; }

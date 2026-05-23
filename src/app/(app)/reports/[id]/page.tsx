@@ -100,7 +100,7 @@ export default async function ReportDetailPage({ params }: Params) {
     rejected: '반려됨',
   }
   const STATUS_COLOR: Record<string, { bg: string; color: string; border: string }> = {
-    draft:     { bg: 'rgba(104,120,152,0.12)', color: '#687898', border: 'rgba(104,120,152,0.3)' },
+    draft:     { bg: 'rgba(104,120,152,0.12)', color: '#526070', border: 'rgba(104,120,152,0.3)' },
     submitted: { bg: 'rgba(74,124,192,0.12)',  color: '#4A7CC0', border: 'rgba(74,124,192,0.3)'  },
     approved:  { bg: 'rgba(61,158,106,0.12)',  color: '#3D9E6A', border: 'rgba(61,158,106,0.3)'  },
     rejected:  { bg: 'rgba(192,64,64,0.12)',   color: '#C04040', border: 'rgba(192,64,64,0.3)'   },
@@ -110,19 +110,19 @@ export default async function ReportDetailPage({ params }: Params) {
   const hasRevisions = revisions.length > 1
 
   return (
-    <div className="max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
+    <div className="content-page max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
 
       {/* 뒤로가기 */}
       <div className="flex items-center gap-2">
-        <Link href="/reports" style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
-        <span style={{ fontSize: '13px', color: '#485870' }}>정보보고 목록</span>
+        <Link href="/reports" style={{ color: '#7A8A9E', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+        <span style={{ fontSize: '13px', color: '#7A8A9E' }}>정보보고 목록</span>
       </div>
 
       {/* 메인 카드 */}
       <div className="glass-card p-5">
         {/* 제목 + 배지 */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#CDD5E0', lineHeight: 1.35, flex: 1 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1C2B3A', lineHeight: 1.35, flex: 1 }}>
             {report.title}
             {hasRevisions && (
               <span style={{
@@ -153,12 +153,12 @@ export default async function ReportDetailPage({ params }: Params) {
         </div>
 
         {/* 작성자 + 날짜 메타 */}
-        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #1A2838', paddingBottom: '12px' }}>
-          <span style={{ fontSize: '13px', color: '#687898' }}>
+        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #DDE5EF', paddingBottom: '12px' }}>
+          <span style={{ fontSize: '13px', color: '#526070' }}>
             ✍️ {author?.full_name ?? '—'}
             {author?.department ? ` · ${author.department}` : ''}
           </span>
-          <span style={{ fontSize: '12px', color: '#485870' }}>
+          <span style={{ fontSize: '12px', color: '#7A8A9E' }}>
             🕐 {formatDateTime(report.created_at)}
           </span>
         </div>
@@ -196,7 +196,7 @@ export default async function ReportDetailPage({ params }: Params) {
                       display: 'flex', alignItems: 'center', gap: '8px',
                       margin: '14px 0 12px',
                     }}>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #1A2838, transparent)' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #DDE5EF, transparent)' }} />
                       <span style={{
                         fontSize: '11px', color: '#4A7CC0',
                         background: 'rgba(30,144,255,0.08)',
@@ -206,7 +206,7 @@ export default async function ReportDetailPage({ params }: Params) {
                       }}>
                         수정 {idx}
                       </span>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #1A2838, transparent)' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #DDE5EF, transparent)' }} />
                     </div>
                   )}
 
@@ -217,17 +217,17 @@ export default async function ReportDetailPage({ params }: Params) {
                   }}>
                     <span style={{
                       fontSize: '11px', fontWeight: 600,
-                      color: isFirst ? '#687898' : (isSameAuthor ? '#687898' : '#3A90A8'),
+                      color: isFirst ? '#526070' : (isSameAuthor ? '#526070' : '#3A90A8'),
                     }}>
                       {isFirst ? '최초 작성' : '수정'}
                     </span>
-                    <span style={{ fontSize: '12px', color: isFirst ? '#687898' : '#3A90A8', fontWeight: 600 }}>
+                    <span style={{ fontSize: '12px', color: isFirst ? '#526070' : '#3A90A8', fontWeight: 600 }}>
                       {revAuthor?.full_name ?? '—'}
                     </span>
                     {revAuthor?.department && (
-                      <span style={{ fontSize: '11px', color: '#485870' }}>{revAuthor.department}</span>
+                      <span style={{ fontSize: '11px', color: '#7A8A9E' }}>{revAuthor.department}</span>
                     )}
-                    <span style={{ fontSize: '11px', color: '#485870', marginLeft: '2px' }}>
+                    <span style={{ fontSize: '11px', color: '#7A8A9E', marginLeft: '2px' }}>
                       · {formatDateTime(rev.created_at)}
                     </span>
                   </div>
@@ -284,11 +284,11 @@ export default async function ReportDetailPage({ params }: Params) {
             canEdit={canEdit}
           >
             {sensitiveContent ? (
-              <p style={{ fontSize: '14px', color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+              <p style={{ fontSize: '14px', color: '#1C2B3A', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
                 {sensitiveContent}
               </p>
             ) : (
-              <p style={{ fontSize: '13px', color: '#485870', fontStyle: 'italic' }}>
+              <p style={{ fontSize: '13px', color: '#7A8A9E', fontStyle: 'italic' }}>
                 민감정보 없음 — 수정 버튼으로 추가할 수 있습니다
               </p>
             )}
@@ -299,21 +299,21 @@ export default async function ReportDetailPage({ params }: Params) {
       {/* 연결된 취재원 */}
       {linkedSources.length > 0 && (
         <div className="glass-card p-4">
-          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', marginBottom: '10px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B3A', marginBottom: '10px' }}>
             👤 연결된 취재원 ({linkedSources.length}명)
           </h2>
           <div className="flex flex-wrap gap-2">
             {linkedSources.map((src: any) => (
               <Link key={src.id} href={`/sources/${src.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  background: '#182035', border: '1px solid #1A2838',
+                  background: '#EEF2F7', border: '1px solid #DDE5EF',
                   borderRadius: '8px', padding: '8px 14px', cursor: 'pointer',
                 }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = '#4A7CC0')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A2838')}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{src.full_name}</p>
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#DDE5EF')}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B3A' }}>{src.full_name}</p>
                   {src.current_organization && (
-                    <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{src.current_organization}</p>
+                    <p style={{ fontSize: '12px', color: '#6B7D92', marginTop: '2px' }}>{src.current_organization}</p>
                   )}
                 </div>
               </Link>
@@ -343,7 +343,7 @@ export default async function ReportDetailPage({ params }: Params) {
       {/* ── 검토 요청 / 승인 / 반려 ── */}
       {(isAuthor || isDesk) && (
         <div className="glass-card p-4">
-          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#687898', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#526070', marginBottom: '12px' }}>
             보고서 검토
           </h2>
           <ReportReviewActions
@@ -362,8 +362,8 @@ export default async function ReportDetailPage({ params }: Params) {
           <Link
             href={`/reports/${id}/edit`}
             style={{
-              padding: '9px 20px', background: '#182035',
-              border: '1px solid #1A2838', color: '#687898',
+              padding: '9px 20px', background: '#EEF2F7',
+              border: '1px solid #DDE5EF', color: '#526070',
               borderRadius: '8px', fontSize: '13px', textDecoration: 'none',
             }}>
             수정

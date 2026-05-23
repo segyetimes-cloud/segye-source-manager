@@ -34,18 +34,18 @@ export default function AnnouncementsClient({
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-4">
+    <div className="content-page max-w-3xl mx-auto space-y-4">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>📢 알립니다</h1>
-          <p className="text-sm mt-1" style={{ color: '#687898' }}>관리자가 작성한 공지 사항입니다</p>
+          <h1 className="text-2xl font-bold" style={{ color: '#1C2B3A' }}>알립니다</h1>
+          <p className="text-sm mt-1" style={{ color: '#526070' }}>관리자가 작성한 공지 사항입니다</p>
         </div>
         {isSuperAdmin && (
           <a href="/announcements/new"
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+              background: 'rgba(30,144,255,0.10)', color: '#4A7CC0',
               border: '1px solid rgba(30,144,255,0.3)', textDecoration: 'none',
             }}>
             + 새 공지 작성
@@ -54,7 +54,7 @@ export default function AnnouncementsClient({
       </div>
 
       {list.length === 0 && (
-        <div className="glass-card p-8 text-center" style={{ color: '#485870' }}>
+        <div className="glass-card p-8 text-center" style={{ color: '#7A8A9E' }}>
           등록된 공지가 없습니다.
         </div>
       )}
@@ -63,8 +63,9 @@ export default function AnnouncementsClient({
         <div key={a.id}
           className="glass-card p-4"
           style={{
-            border: a.is_pinned ? '1px solid rgba(255,153,0,0.35)' : '1px solid #1A2838',
+            border: a.is_pinned ? '1px solid rgba(255,153,0,0.45)' : '1px solid #DDE5EF',
             cursor: 'pointer',
+            background: a.is_pinned ? 'rgba(255,153,0,0.03)' : '#FFFFFF',
           }}
           onClick={() => setExpanded(expanded === a.id ? null : a.id)}>
 
@@ -72,8 +73,8 @@ export default function AnnouncementsClient({
             <div className="flex items-start gap-2 flex-1 min-w-0">
               {a.is_pinned && <span style={{ fontSize: '14px', flexShrink: 0, marginTop: '1px' }}>📌</span>}
               <div className="flex-1 min-w-0">
-                <p className="font-semibold text-sm" style={{ color: '#CDD5E0' }}>{a.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: '#485870' }}>
+                <p className="font-semibold text-sm" style={{ color: '#1C2B3A' }}>{a.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#7A8A9E' }}>
                   {a.profiles?.full_name ?? '관리자'} · {fmtDate(a.created_at)}
                 </p>
               </div>
@@ -85,7 +86,7 @@ export default function AnnouncementsClient({
                     style={{ fontSize: '12px', color: '#4A7CC0', padding: '4px 8px',
                       background: 'rgba(30,144,255,0.08)', borderRadius: '6px',
                       border: '1px solid rgba(30,144,255,0.2)', textDecoration: 'none' }}>
-                    ✏️ 수정
+                    수정
                   </a>
                   <button
                     onClick={() => handleDelete(a.id)}
@@ -93,27 +94,27 @@ export default function AnnouncementsClient({
                     style={{ fontSize: '12px', color: '#C04040', padding: '4px 8px',
                       background: 'rgba(192,64,64,0.08)', borderRadius: '6px',
                       border: '1px solid rgba(192,64,64,0.2)', cursor: 'pointer' }}>
-                    {deleting === a.id ? '...' : '🗑 삭제'}
+                    {deleting === a.id ? '...' : '삭제'}
                   </button>
                 </>
               )}
-              <span style={{ fontSize: '11px', color: '#485870', marginLeft: '4px' }}>
+              <span style={{ fontSize: '11px', color: '#7A8A9E', marginLeft: '4px' }}>
                 {expanded === a.id ? '▲' : '▼'}
               </span>
             </div>
           </div>
 
           {expanded === a.id && a.body && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid #1A2838' }}
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid #DDE5EF' }}
               onClick={e => e.stopPropagation()}>
-              <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#8A9EC0' }}>
+              <p className="text-sm whitespace-pre-wrap leading-relaxed" style={{ color: '#374151' }}>
                 {a.body}
               </p>
             </div>
           )}
           {expanded === a.id && !a.body && (
-            <div className="mt-3 pt-3" style={{ borderTop: '1px solid #1A2838' }}>
-              <p className="text-sm" style={{ color: '#485870' }}>(본문 없음)</p>
+            <div className="mt-3 pt-3" style={{ borderTop: '1px solid #DDE5EF' }}>
+              <p className="text-sm" style={{ color: '#7A8A9E' }}>(본문 없음)</p>
             </div>
           )}
         </div>

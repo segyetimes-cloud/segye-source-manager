@@ -33,11 +33,11 @@ export default function ReportAllowedUsers({ reportId, isAuthorOrDesk }: Props) 
 
   return (
     <div className="glass-card p-4">
-      <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', marginBottom: '10px' }}>
+      <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B3A', marginBottom: '10px' }}>
         👁 지정 열람자 ({list.length}명)
       </h2>
       {loading ? (
-        <p style={{ fontSize: '13px', color: '#485870' }}>불러오는 중...</p>
+        <p style={{ fontSize: '13px', color: '#7A8A9E' }}>불러오는 중...</p>
       ) : (
         <div className="flex flex-wrap gap-2">
           {list.map(entry => (
@@ -55,7 +55,7 @@ export default function ReportAllowedUsers({ reportId, isAuthorOrDesk }: Props) 
                 )}
               </p>
               {entry.profiles?.department && (
-                <p style={{ fontSize: '11px', color: '#5A7099', marginTop: '1px' }}>
+                <p style={{ fontSize: '11px', color: '#6B7D92', marginTop: '1px' }}>
                   {entry.profiles.department}
                 </p>
               )}

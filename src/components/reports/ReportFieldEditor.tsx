@@ -69,15 +69,15 @@ export default function ReportFieldEditor({
     <div>
       {/* 헤더: 레이블 + 편집 버튼 */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-        <span style={{ fontSize: '13px', fontWeight: 600, color: '#687898' }}>{label}</span>
+        <span style={{ fontSize: '13px', fontWeight: 600, color: '#526070' }}>{label}</span>
         {canEdit && !editing && (
           <button
             type="button"
             onClick={() => { setDraft(value ?? ''); setEditing(true) }}
             style={{
               fontSize: '12px', padding: '3px 10px', borderRadius: '6px',
-              background: '#182035', color: '#687898',
-              border: '1px solid #1A2838', cursor: 'pointer',
+              background: '#EEF2F7', color: '#526070',
+              border: '1px solid #DDE5EF', cursor: 'pointer',
             }}
           >
             ✏️ 수정
@@ -92,8 +92,8 @@ export default function ReportFieldEditor({
             onChange={e => setDraft(e.target.value)}
             rows={field === 'title' ? 2 : 8}
             style={{
-              width: '100%', background: '#182035', border: '1px solid #4A7CC0',
-              color: '#CDD5E0', borderRadius: '8px', padding: '10px 12px',
+              width: '100%', background: '#F8FAFC', border: '1px solid #4A7CC0',
+              color: '#1C2B3A', borderRadius: '8px', padding: '10px 12px',
               fontSize: '14px', lineHeight: 1.7, resize: 'vertical',
             }}
             autoFocus
@@ -118,8 +118,8 @@ export default function ReportFieldEditor({
               disabled={saving}
               style={{
                 padding: '6px 14px', borderRadius: '7px', fontSize: '13px',
-                background: '#182035', color: '#687898',
-                border: '1px solid #1A2838', cursor: 'pointer',
+                background: '#EEF2F7', color: '#526070',
+                border: '1px solid #DDE5EF', cursor: 'pointer',
               }}
             >
               취소

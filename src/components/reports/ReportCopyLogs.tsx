@@ -54,11 +54,11 @@ export default function ReportCopyLogs({ reportId }: Props) {
         }}
       >
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B3A' }}>
             🔍 복사 이력 추적
           </span>
           <span style={{
-            fontSize: '11px', color: '#485870',
+            fontSize: '11px', color: '#7A8A9E',
             background: 'rgba(255,68,68,0.08)',
             border: '1px solid rgba(255,68,68,0.2)',
             borderRadius: '4px', padding: '1px 7px',
@@ -87,7 +87,7 @@ export default function ReportCopyLogs({ reportId }: Props) {
               </span>
             </div>
           )}
-          <span style={{ fontSize: '18px', color: '#485870', lineHeight: 1 }}>
+          <span style={{ fontSize: '18px', color: '#7A8A9E', lineHeight: 1 }}>
             {expanded ? '▲' : '▼'}
           </span>
         </div>
@@ -96,13 +96,13 @@ export default function ReportCopyLogs({ reportId }: Props) {
       {expanded && (
         <div style={{ marginTop: '14px' }}>
           {loading && (
-            <p style={{ fontSize: '13px', color: '#485870', textAlign: 'center', padding: '12px' }}>
+            <p style={{ fontSize: '13px', color: '#7A8A9E', textAlign: 'center', padding: '12px' }}>
               불러오는 중...
             </p>
           )}
 
           {!loading && logs.length === 0 && (
-            <p style={{ fontSize: '13px', color: '#485870', textAlign: 'center', padding: '12px' }}>
+            <p style={{ fontSize: '13px', color: '#7A8A9E', textAlign: 'center', padding: '12px' }}>
               복사 이력이 없습니다.
             </p>
           )}
@@ -116,9 +116,9 @@ export default function ReportCopyLogs({ reportId }: Props) {
                     key={log.id}
                     style={{
                       padding: '9px 12px',
-                      background: idx % 2 === 0 ? '#131C2C' : '#0D1520',
+                      background: idx % 2 === 0 ? '#F8FAFC' : '#EEF2F7',
                       borderRadius: '7px',
-                      border: '1px solid #1A2838',
+                      border: '1px solid #DDE5EF',
                     }}
                   >
                     <div className="flex items-center justify-between gap-2">
@@ -127,19 +127,19 @@ export default function ReportCopyLogs({ reportId }: Props) {
                           {person?.full_name ?? '알 수 없음'}
                         </span>
                         {person?.department && (
-                          <span style={{ fontSize: '11px', color: '#485870' }}>
+                          <span style={{ fontSize: '11px', color: '#7A8A9E' }}>
                             {person.department}
                           </span>
                         )}
                         <span style={{
-                          fontSize: '11px', color: '#5A7099',
+                          fontSize: '11px', color: '#6B7D92',
                           background: 'rgba(30,144,255,0.08)',
                           borderRadius: '4px', padding: '1px 6px',
                         }}>
                           {log.copied_length}자
                         </span>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#485870', flexShrink: 0 }}>
+                      <span style={{ fontSize: '11px', color: '#7A8A9E', flexShrink: 0 }}>
                         {fmt(log.created_at)}
                       </span>
                     </div>
@@ -148,8 +148,8 @@ export default function ReportCopyLogs({ reportId }: Props) {
                     {log.copied_preview && (
                       <p style={{
                         marginTop: '5px',
-                        fontSize: '12px', color: '#5A7099',
-                        background: '#182035',
+                        fontSize: '12px', color: '#6B7D92',
+                        background: '#EEF2F7',
                         borderRadius: '4px', padding: '4px 8px',
                         fontFamily: 'monospace',
                         whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
@@ -167,8 +167,8 @@ export default function ReportCopyLogs({ reportId }: Props) {
             onClick={load}
             style={{
               marginTop: '10px', width: '100%',
-              padding: '7px', background: '#182035',
-              border: '1px solid #1A2838', color: '#687898',
+              padding: '7px', background: '#EEF2F7',
+              border: '1px solid #DDE5EF', color: '#526070',
               borderRadius: '7px', fontSize: '12px', cursor: 'pointer',
             }}
           >

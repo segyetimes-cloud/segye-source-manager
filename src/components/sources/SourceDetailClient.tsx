@@ -71,7 +71,7 @@ function ScoreBadge({ score }: { score: number }) {
   const color = score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
   return (
     <div className="flex items-center gap-2">
-      <div className="w-24 h-2 rounded-full" style={{ background: '#1A2838' }}>
+      <div className="w-24 h-2 rounded-full" style={{ background: '#DDE5EF' }}>
         <div className="h-full rounded-full" style={{ width: `${score}%`, background: color }} />
       </div>
       <span className="text-sm font-bold" style={{ color }}>{score}점</span>
@@ -87,7 +87,7 @@ function StarRating({ rating, onRate }: { rating: number | null; onRate: (r: num
         <button key={star} type="button" onClick={() => onRate(star)}
           onMouseEnter={() => setHover(star)} onMouseLeave={() => setHover(0)}
           style={{ fontSize: '20px', background: 'none', border: 'none', cursor: 'pointer',
-            color: star <= (hover || rating || 0) ? '#7E6E48' : '#1A2838' }}>
+            color: star <= (hover || rating || 0) ? '#7E6E48' : '#DDE5EF' }}>
           ★
         </button>
       ))}
@@ -137,11 +137,11 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
             {initial}
           </div>
           <div>
-            <span className="text-xs font-semibold" style={{ color: note.is_sensitive ? '#A87228' : '#B0C8F0' }}>
+            <span className="text-xs font-semibold" style={{ color: note.is_sensitive ? '#A87228' : '#374151' }}>
               {authorName}
             </span>
             {note.profiles?.department && (
-              <span className="text-xs ml-1.5" style={{ color: '#485870' }}>
+              <span className="text-xs ml-1.5" style={{ color: '#7A8A9E' }}>
                 {note.profiles.department}
               </span>
             )}
@@ -154,7 +154,7 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: '#485870' }}>{dateStr}</span>
+          <span className="text-xs" style={{ color: '#7A8A9E' }}>{dateStr}</span>
           {canDelete && (
             <button type="button" onClick={() => onDelete(note.id)}
               className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
@@ -472,24 +472,24 @@ export default function SourceDetailClient({
 
     return (
       <div className="flex flex-col gap-1 secure-field">
-        <span className="text-xs" style={{ color: '#485870' }}>{icon} {label}</span>
+        <span className="text-xs" style={{ color: '#7A8A9E' }}>{icon} {label}</span>
         {useCanvas ? (
           <ProtectedText
             text={value}
             href={href ?? undefined}
             fontSize={14}
             fontWeight={500}
-            color={isPhone || isEmail ? '#4A7CC0' : '#CDD5E0'}
+            color={isPhone || isEmail ? '#4A7CC0' : '#1C2B3A'}
           />
         ) : (
-          <span className="text-sm font-medium" style={{ color: '#CDD5E0' }}>{value}</span>
+          <span className="text-sm font-medium" style={{ color: '#1C2B3A' }}>{value}</span>
         )}
       </div>
     )
   }
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6">
+    <div className="content-page max-w-4xl mx-auto space-y-6">
 
       {/* 헤더 */}
       <div className="flex items-start justify-between">
@@ -500,10 +500,10 @@ export default function SourceDetailClient({
             {source.full_name[0]}
           </div>
           <div>
-            <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
+            <h1 className="text-2xl font-bold" style={{ color: '#1C2B3A' }}>
               {source.full_name}
             </h1>
-            <p className="text-sm mt-0.5" style={{ color: '#687898' }}>
+            <p className="text-sm mt-0.5" style={{ color: '#526070' }}>
               {source.current_organization}
               {source.current_position && ` · ${source.current_position}`}
               {source.current_department && ` · ${source.current_department}`}
@@ -528,7 +528,7 @@ export default function SourceDetailClient({
                 <span style={{
                   fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
                   background: currentVisibility === 'shared' ? 'rgba(61,158,106,0.1)' : 'rgba(30,144,255,0.08)',
-                  color: currentVisibility === 'shared' ? '#3D9E6A' : '#687898',
+                  color: currentVisibility === 'shared' ? '#3D9E6A' : '#526070',
                 }}>
                   {currentVisibility === 'shared' ? '🌐 공유' : '🔒 개인'}
                 </span>
@@ -588,7 +588,7 @@ export default function SourceDetailClient({
               style={{
                 display: 'flex', alignItems: 'center', gap: '4px',
                 padding: '5px 11px', borderRadius: '7px', fontSize: '12px', fontWeight: 500,
-                background: '#182035', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none',
+                background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', textDecoration: 'none',
               }}>
               ✏️ 수정
             </Link>
@@ -597,7 +597,7 @@ export default function SourceDetailClient({
             style={{
               display: 'flex', alignItems: 'center', gap: '4px',
               padding: '5px 11px', borderRadius: '7px', fontSize: '12px',
-              background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer',
+              background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer',
             }}>
             📋 이력
           </button>
@@ -638,7 +638,7 @@ export default function SourceDetailClient({
             <p style={{ fontSize: '12px', fontWeight: 600, color: '#3D9E6A', margin: 0 }}>
               정보란에서 학력·소속 등 구조화 가능한 항목이 발견됐습니다
             </p>
-            <p style={{ fontSize: '11px', color: '#485870', marginTop: '2px' }}>
+            <p style={{ fontSize: '11px', color: '#7A8A9E', marginTop: '2px' }}>
               {Object.entries(autoExtractFields)
                 .map(([k, v]) => `${AUTO_FIELD_KO[k] ?? k}: ${v}`)
                 .join(' · ')}
@@ -652,7 +652,7 @@ export default function SourceDetailClient({
             </button>
             <button type="button" onClick={() => setExtractApplied(true)}
               style={{ fontSize: '12px', padding: '6px 10px', borderRadius: '6px',
-                background: 'none', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
+                background: 'none', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
               무시
             </button>
           </div>
@@ -663,14 +663,14 @@ export default function SourceDetailClient({
       {source.visibility === 'shared' && source.sensitivity === 'private' && !showPrivate && (
         <div className="glass-card p-4" style={{ border: '1px solid rgba(255,153,0,0.3)', background: 'rgba(255,153,0,0.05)' }}>
           <p className="text-sm font-medium" style={{ color: '#A87228' }}>⚠️ 이 취재원은 민감 정보로 분류되어 있습니다</p>
-          <p className="text-xs mt-1" style={{ color: '#687898' }}>민감도 표시가 있는 취재원입니다. 내용은 아래에서 확인하세요.</p>
+          <p className="text-xs mt-1" style={{ color: '#526070' }}>민감도 표시가 있는 취재원입니다. 내용은 아래에서 확인하세요.</p>
         </div>
       )}
 
       {/* 기본 정보 */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>👤 기본 정보 · 연락처</h2>
+          <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>👤 기본 정보 · 연락처</h2>
           <button
             type="button"
             onClick={() => {
@@ -695,7 +695,7 @@ export default function SourceDetailClient({
           {infoCard('출신지역', [source.hometown_province, source.hometown_city].filter(Boolean).join(' '), '📍')}
         </div>
         {canEdit && (
-          <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #1A2838' }}>
+          <div style={{ marginTop: '12px', paddingTop: '10px', borderTop: '1px solid #DDE5EF' }}>
             {editingField && editingField !== 'personal_notes' ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <p style={{ fontSize: '12px', color: '#4A7CC0', fontWeight: 600 }}>
@@ -710,9 +710,9 @@ export default function SourceDetailClient({
                     onKeyDown={e => { if (e.key === 'Enter') handleFieldSave(editingField); if (e.key === 'Escape') { setEditingField(null); setEditingValue('') } }}
                     placeholder={`${FIELD_LABELS[editingField] ?? editingField} 입력...`}
                     style={{
-                      flex: 1, padding: '7px 10px', background: '#182035',
+                      flex: 1, padding: '7px 10px', background: '#EEF2F7',
                       border: '1px solid rgba(74,124,192,0.4)', borderRadius: '7px',
-                      color: '#CDD5E0', fontSize: '13px',
+                      color: '#1C2B3A', fontSize: '13px',
                     }}
                   />
                   <button
@@ -720,8 +720,8 @@ export default function SourceDetailClient({
                     onClick={() => handleFieldSave(editingField)}
                     disabled={fieldSaving || !editingValue.trim()}
                     style={{
-                      padding: '7px 14px', background: fieldSaving || !editingValue.trim() ? '#1A2838' : '#4A7CC0',
-                      color: fieldSaving || !editingValue.trim() ? '#485870' : 'white',
+                      padding: '7px 14px', background: fieldSaving || !editingValue.trim() ? '#DDE5EF' : '#4A7CC0',
+                      color: fieldSaving || !editingValue.trim() ? '#7A8A9E' : 'white',
                       border: 'none', borderRadius: '7px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                     }}>
                     {fieldSaving ? '저장 중' : '저장'}
@@ -729,7 +729,7 @@ export default function SourceDetailClient({
                   <button
                     type="button"
                     onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '7px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '7px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -739,7 +739,7 @@ export default function SourceDetailClient({
               </div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <p style={{ fontSize: '11px', color: '#485870', width: '100%', marginBottom: '2px' }}>빈 항목 채우기</p>
+                <p style={{ fontSize: '11px', color: '#7A8A9E', width: '100%', marginBottom: '2px' }}>빈 항목 채우기</p>
                 {[
                   { field: 'phone_primary', label: '📞 전화번호', empty: !source.phone_primary },
                   { field: 'phone_secondary', label: '📞 보조전화', empty: !source.phone_secondary },
@@ -756,8 +756,8 @@ export default function SourceDetailClient({
                     type="button"
                     onClick={() => { setEditingField(f.field); setEditingValue('') }}
                     style={{
-                      padding: '4px 10px', background: '#182035',
-                      border: '1px solid #1A2838', color: '#5A7099',
+                      padding: '4px 10px', background: '#EEF2F7',
+                      border: '1px solid #DDE5EF', color: '#6B7D92',
                       borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
                     }}>
                     + {f.label}
@@ -768,8 +768,8 @@ export default function SourceDetailClient({
           </div>
         )}
         {source.tags && source.tags.length > 0 && (
-          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #1A2838' }}>
-            <p className="text-xs mb-2" style={{ color: '#485870' }}>🏷️ 태그</p>
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid #DDE5EF' }}>
+            <p className="text-xs mb-2" style={{ color: '#7A8A9E' }}>🏷️ 태그</p>
             <div className="flex flex-wrap gap-2">
               {source.tags.map((tag) => (
                 <span key={tag} className="text-xs px-2.5 py-1 rounded-full"
@@ -784,7 +784,7 @@ export default function SourceDetailClient({
 
       {/* 학력 */}
       <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력 / 이력</h2>
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#1C2B3A' }}>🎓 학력 / 이력</h2>
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 md:gap-5 secure-field">
           {infoCard('고교', source.high_school, '🏫')}
           {infoCard('대학', source.university, '🎓')}
@@ -793,8 +793,8 @@ export default function SourceDetailClient({
           {/* 고시기수: Canvas 렌더링 (개인식별 민감정보) */}
           {source.exam_batch ? (
             <div className="flex flex-col gap-1 secure-field">
-              <span className="text-xs" style={{ color: '#485870' }}>📋 고시/기수</span>
-              <ProtectedText text={source.exam_batch} fontSize={14} fontWeight={500} color="#CDD5E0" />
+              <span className="text-xs" style={{ color: '#7A8A9E' }}>📋 고시/기수</span>
+              <ProtectedText text={source.exam_batch} fontSize={14} fontWeight={500} color="#1C2B3A" />
             </div>
           ) : null}
         </div>
@@ -804,8 +804,8 @@ export default function SourceDetailClient({
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>💼 직책 이력</h2>
-            <p className="text-xs mt-0.5" style={{ color: '#485870' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
+            <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>💼 직책 이력</h2>
+            <p className="text-xs mt-0.5" style={{ color: '#7A8A9E' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
           </div>
           {canEdit && (
             <button onClick={() => setShowPosForm(v => !v)}
@@ -820,7 +820,7 @@ export default function SourceDetailClient({
         {positions.length > 0 ? (
           <div className="relative">
             {/* 타임라인 선 */}
-            <div className="absolute left-[18px] top-4 bottom-4 w-px" style={{ background: '#1A2838' }} />
+            <div className="absolute left-[18px] top-4 bottom-4 w-px" style={{ background: '#DDE5EF' }} />
             <div className="space-y-3">
               {[...positions]
                 .sort((a, b) => {
@@ -833,29 +833,29 @@ export default function SourceDetailClient({
                     <div className="mt-1.5 flex-shrink-0 z-10">
                       <div className="w-4 h-4 rounded-full border-2 flex items-center justify-center"
                         style={{
-                          background: pos.is_current ? '#4A7CC0' : '#0D1520',
-                          borderColor: pos.is_current ? '#4A7CC0' : '#485870',
+                          background: pos.is_current ? '#4A7CC0' : '#F0F3F7',
+                          borderColor: pos.is_current ? '#4A7CC0' : '#7A8A9E',
                         }}>
                         {pos.is_current && <div className="w-1.5 h-1.5 rounded-full bg-white" />}
                       </div>
                     </div>
                     <div className="flex-1 p-3 rounded-lg"
                       style={{
-                        background: pos.is_current ? 'rgba(30,144,255,0.05)' : '#0D1520',
-                        border: `1px solid ${pos.is_current ? 'rgba(30,144,255,0.2)' : '#1A2838'}`,
+                        background: pos.is_current ? 'rgba(30,144,255,0.05)' : '#F0F3F7',
+                        border: `1px solid ${pos.is_current ? 'rgba(30,144,255,0.2)' : '#DDE5EF'}`,
                       }}>
                       <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{pos.organization}</span>
+                        <span className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>{pos.organization}</span>
                         {pos.is_current && (
                           <span className="text-xs px-1.5 py-0.5 rounded"
                             style={{ background: 'rgba(0,204,102,0.15)', color: '#3D9E6A' }}>현직</span>
                         )}
                       </div>
-                      <p className="text-sm" style={{ color: '#687898' }}>
+                      <p className="text-sm" style={{ color: '#526070' }}>
                         {pos.department && `${pos.department} · `}{pos.position}
                         {pos.rank && ` (${pos.rank})`}
                       </p>
-                      <p className="text-xs mt-1" style={{ color: '#485870' }}>
+                      <p className="text-xs mt-1" style={{ color: '#7A8A9E' }}>
                         {pos.started_at} ~ {pos.ended_at ?? '현재'}
                         {pos.change_source && ` · ${pos.change_source === 'crawl' ? '🤖 자동감지' : '✏️ 수동입력'}`}
                       </p>
@@ -865,12 +865,12 @@ export default function SourceDetailClient({
             </div>
           </div>
         ) : (
-          <p className="text-sm" style={{ color: '#485870' }}>직책 이력이 없습니다. 직책을 추가하거나 취재원 수정에서 소속/직책을 변경하면 자동으로 기록됩니다.</p>
+          <p className="text-sm" style={{ color: '#7A8A9E' }}>직책 이력이 없습니다. 직책을 추가하거나 취재원 수정에서 소속/직책을 변경하면 자동으로 기록됩니다.</p>
         )}
 
         {/* 직책 추가 폼 */}
         {showPosForm && canEdit && (
-          <form onSubmit={handleAddPosition} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A2838' }}>
+          <form onSubmit={handleAddPosition} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #DDE5EF' }}>
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>새 직책 추가</p>
             <div className="grid grid-cols-2 gap-3">
               {[
@@ -880,48 +880,48 @@ export default function SourceDetailClient({
                 { key: 'rank', label: '직급', placeholder: '1급' },
               ].map(f => (
                 <div key={f.key}>
-                  <label className="block text-xs mb-1" style={{ color: '#687898' }}>{f.label}</label>
+                  <label className="block text-xs mb-1" style={{ color: '#526070' }}>{f.label}</label>
                   <input type="text" value={(posForm as unknown as Record<string, string>)[f.key]}
                     onChange={e => setPosForm(p => ({ ...p, [f.key]: e.target.value }))}
                     placeholder={f.placeholder} required={f.required}
-                    style={{ width: '100%', background: '#182035', border: '1px solid #1A2838',
-                      color: '#CDD5E0', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+                    style={{ width: '100%', background: '#EEF2F7', border: '1px solid #DDE5EF',
+                      color: '#1C2B3A', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
                 </div>
               ))}
               <div>
-                <label className="block text-xs mb-1" style={{ color: '#687898' }}>시작일 *</label>
+                <label className="block text-xs mb-1" style={{ color: '#526070' }}>시작일 *</label>
                 <input type="date" value={posForm.started_at} required
                   onChange={e => setPosForm(p => ({ ...p, started_at: e.target.value }))}
-                  style={{ width: '100%', background: '#182035', border: '1px solid #1A2838',
-                    color: '#CDD5E0', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+                  style={{ width: '100%', background: '#EEF2F7', border: '1px solid #DDE5EF',
+                    color: '#1C2B3A', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
               </div>
               <div>
-                <label className="block text-xs mb-1" style={{ color: '#687898' }}>종료일</label>
-                <input type="date" value={posForm.ended_at}
+                <label className="block text-xs mb-1" style={{ color: '#526070' }}>종료일</label>
+<input type="date" value={posForm.ended_at}
                   onChange={e => setPosForm(p => ({ ...p, ended_at: e.target.value }))}
-                  style={{ width: '100%', background: '#182035', border: '1px solid #1A2838',
-                    color: '#CDD5E0', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
+                  style={{ width: '100%', background: '#EEF2F7', border: '1px solid #DDE5EF',
+                    color: '#1C2B3A', borderRadius: '6px', padding: '7px 10px', fontSize: '13px' }} />
               </div>
             </div>
             <div className="flex items-center gap-2">
               <input type="checkbox" id="is_current" checked={posForm.is_current}
                 onChange={e => setPosForm(p => ({ ...p, is_current: e.target.checked }))}
                 style={{ accentColor: '#4A7CC0' }} />
-              <label htmlFor="is_current" className="text-xs" style={{ color: '#687898', cursor: 'pointer' }}>
+              <label htmlFor="is_current" className="text-xs" style={{ color: '#526070', cursor: 'pointer' }}>
                 현직 (기존 현직을 이전 직책으로 자동 이동)
               </label>
             </div>
             <div className="flex gap-2">
               <button type="submit" disabled={posSubmitting}
                 className="px-4 py-1.5 rounded-lg text-xs font-semibold"
-                style={{ background: posSubmitting ? '#1A2838' : 'rgba(30,144,255,0.15)',
+                style={{ background: posSubmitting ? '#DDE5EF' : 'rgba(30,144,255,0.15)',
                   color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.3)',
                   cursor: posSubmitting ? 'not-allowed' : 'pointer' }}>
                 {posSubmitting ? '저장 중...' : '저장'}
               </button>
               <button type="button" onClick={() => { setShowPosForm(false); setPosForm(EMPTY_POS) }}
                 className="px-4 py-1.5 rounded-lg text-xs"
-                style={{ background: '#182035', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
+                style={{ background: '#EEF2F7', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
                 취소
               </button>
             </div>
@@ -931,7 +931,7 @@ export default function SourceDetailClient({
 
       {/* ── 공개 정보 섹션 (모든 사용자) ─────────────────────────────────────── */}
       <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: '#1C2B3A' }}>
           📝 공개 정보
           <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
         </h2>
@@ -944,7 +944,7 @@ export default function SourceDetailClient({
             userDepartment={userDepartment ?? null}
           />
         ) : (
-          <p className="text-sm" style={{ color: '#485870' }}>
+          <p className="text-sm" style={{ color: '#7A8A9E' }}>
             등록된 공개 정보가 없습니다.
             {canEdit && <span> <a href={`/sources/${source.id}/edit`} style={{ color: '#4A7CC0' }}>수정</a>에서 추가하세요.</span>}
           </p>
@@ -955,7 +955,7 @@ export default function SourceDetailClient({
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+            <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>
               🔒 민감 정보
               <span className="text-xs ml-2 font-normal" style={{ color: '#A87228' }}>차장 이상 열람 · 기자는 승인 필요</span>
             </h2>
@@ -993,18 +993,18 @@ export default function SourceDetailClient({
                   onChange={e => setEditingValue(e.target.value)}
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
                   style={{
-                    width: '100%', padding: '8px 10px', background: '#1A1F2E',
+                    width: '100%', padding: '8px 10px', background: '#EEF2F7',
                     border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
-                    color: '#CDD5E0', fontSize: '13px', resize: 'vertical',
+                    color: '#1C2B3A', fontSize: '13px', resize: 'vertical',
                   }}
                 />
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
-                    style={{ padding: '6px 14px', background: fieldSaving ? '#3A2800' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {fieldSaving ? '저장 중...' : '저장'}
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -1034,18 +1034,18 @@ export default function SourceDetailClient({
                   onChange={e => setEditingValue(e.target.value)}
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
                   style={{
-                    width: '100%', padding: '8px 10px', background: '#1A1F2E',
+                    width: '100%', padding: '8px 10px', background: '#EEF2F7',
                     border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
-                    color: '#CDD5E0', fontSize: '13px', resize: 'vertical',
+                    color: '#1C2B3A', fontSize: '13px', resize: 'vertical',
                   }}
                 />
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
-                    style={{ padding: '6px 14px', background: fieldSaving ? '#3A2800' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {fieldSaving ? '저장 중...' : '저장'}
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #1A2838', color: '#485870', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -1061,7 +1061,7 @@ export default function SourceDetailClient({
               </div>
             )
           ) : (
-            <p className="text-sm mb-4" style={{ color: '#485870' }}>아직 민감 정보가 없습니다.</p>
+            <p className="text-sm mb-4" style={{ color: '#7A8A9E' }}>아직 민감 정보가 없습니다.</p>
           )
         )}
 
@@ -1075,7 +1075,7 @@ export default function SourceDetailClient({
               {personalNotesPreview && (
                 <div style={{ position: 'relative', marginBottom: '10px', overflow: 'hidden', borderRadius: '8px' }}>
                   <p style={{
-                    fontSize: '13px', lineHeight: 1.7, color: '#CDD5E0',
+                    fontSize: '13px', lineHeight: 1.7, color: '#1C2B3A',
                     filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none',
                     padding: '10px 12px', background: 'rgba(255,153,0,0.04)',
                     border: '1px solid rgba(255,153,0,0.15)', borderRadius: '8px',
@@ -1084,7 +1084,7 @@ export default function SourceDetailClient({
                   </p>
                   <div style={{
                     position: 'absolute', inset: 0,
-                    background: 'linear-gradient(to bottom, transparent 40%, rgba(13,21,32,0.85))',
+                    background: 'linear-gradient(to bottom, transparent 40%, rgba(238,242,247,0.85))',
                     borderRadius: '8px',
                   }} />
                   <div style={{
@@ -1107,14 +1107,14 @@ export default function SourceDetailClient({
                   <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
                     placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
                     rows={2}
-                    style={{ width: '100%', background: '#182035', border: '1px solid #1A2838', color: '#CDD5E0', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
+                    style={{ width: '100%', background: '#EEF2F7', border: '1px solid #DDE5EF', color: '#1C2B3A', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
                   <div className="flex gap-2">
                     <button onClick={handleApprovalRequest}
                       className="px-3 py-1.5 rounded-lg text-xs font-medium"
                       style={{ background: '#A87228', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
                     <button onClick={() => setShowApprovalForm(false)}
                       className="px-3 py-1.5 rounded-lg text-xs"
-                      style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>취소</button>
+                      style={{ background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer' }}>취소</button>
                   </div>
                 </div>
               )}
@@ -1126,9 +1126,9 @@ export default function SourceDetailClient({
 
       {/* ── 정보 노트 섹션 (복수 작성자) ─────────────────────────────────────── */}
       <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>
+        <h2 className="text-sm font-semibold mb-4" style={{ color: '#1C2B3A' }}>
           📝 정보 노트
-          <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>여러 기자가 추가한 정보 · 공개/민감 구분</span>
+          <span className="text-xs ml-2 font-normal" style={{ color: '#7A8A9E' }}>여러 기자가 추가한 정보 · 공개/민감 구분</span>
         </h2>
 
         {/* 잠긴 민감 노트 알림 (차장 미만에게 표시) */}
@@ -1140,7 +1140,7 @@ export default function SourceDetailClient({
               <p className="text-xs font-semibold" style={{ color: '#A87228' }}>
                 민감 정보 {lockedNotesCount}건이 잠겨 있습니다
               </p>
-              <p className="text-xs" style={{ color: '#687898' }}>
+              <p className="text-xs" style={{ color: '#526070' }}>
                 데스크(부장+) 승인 후 열람 가능합니다
               </p>
             </div>
@@ -1175,7 +1175,7 @@ export default function SourceDetailClient({
                 style={{ background: 'rgba(0,212,255,0.07)', borderBottom: '1px solid rgba(0,212,255,0.15)' }}>
                 <span style={{ fontSize: '14px' }}>🔗</span>
                 <span className="text-xs font-bold" style={{ color: '#3A90A8' }}>통합 정보</span>
-                <span className="text-xs" style={{ color: '#485870' }}>
+                <span className="text-xs" style={{ color: '#7A8A9E' }}>
                   — {visibleNotes.length}건 중복 제거 통합
                 </span>
                 <div className="ml-auto flex items-center gap-1.5 flex-wrap">
@@ -1217,45 +1217,45 @@ export default function SourceDetailClient({
             ))}
           </div>
         ) : (
-          <p className="text-sm" style={{ color: '#485870' }}>
+          <p className="text-sm" style={{ color: '#7A8A9E' }}>
             아직 추가된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.
           </p>
         )}
 
         {/* ── 정보 추가 폼 ───────────────────────────────────────────────── */}
-        <form ref={noteFormRef} onSubmit={handleAddNote} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #1A2838' }}>
+        <form ref={noteFormRef} onSubmit={handleAddNote} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #DDE5EF' }}>
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>
               + 정보 추가 <span style={{ color: '#7E6E48' }}>+10pt</span>
             </p>
             {/* 공개/민감 토글 */}
-            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+            <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #DDE5EF' }}>
               <button
                 type="button"
                 onClick={() => setNoteSensitive(false)}
                 className="px-3 py-1 text-xs font-medium transition-all"
                 style={{
                   background: !noteSensitive ? 'rgba(61,158,106,0.15)' : 'transparent',
-                  color: !noteSensitive ? '#3D9E6A' : '#485870',
+                  color: !noteSensitive ? '#3D9E6A' : '#7A8A9E',
                   border: 'none', cursor: 'pointer',
                 }}>
                 📢 공개
               </button>
-              <div style={{ width: '1px', background: '#1A2838' }} />
+              <div style={{ width: '1px', background: '#DDE5EF' }} />
               <button
                 type="button"
                 onClick={() => setNoteSensitive(true)}
                 className="px-3 py-1 text-xs font-medium transition-all"
                 style={{
                   background: noteSensitive ? 'rgba(255,153,0,0.15)' : 'transparent',
-                  color: noteSensitive ? '#A87228' : '#485870',
+                  color: noteSensitive ? '#A87228' : '#7A8A9E',
                   border: 'none', cursor: 'pointer',
                 }}>
                 🔒 민감
               </button>
             </div>
           </div>
-          <p className="text-xs" style={{ color: '#485870', marginTop: '-4px' }}>
+          <p className="text-xs" style={{ color: '#7A8A9E', marginTop: '-4px' }}>
             {noteSensitive
               ? '🔒 민감 정보 — 차장 이상과 본인만 열람 가능합니다'
               : '📢 공개 정보 — 편집국 전원이 열람할 수 있습니다'}
@@ -1269,9 +1269,9 @@ export default function SourceDetailClient({
             rows={3}
             style={{
               width: '100%', resize: 'vertical', outline: 'none', fontSize: '14px',
-              padding: '10px 12px', borderRadius: '8px', color: '#CDD5E0',
-              background: '#182035',
-              border: `1px solid ${noteSensitive ? 'rgba(255,153,0,0.3)' : '#1A2838'}`,
+              padding: '10px 12px', borderRadius: '8px', color: '#1C2B3A',
+              background: '#EEF2F7',
+              border: `1px solid ${noteSensitive ? 'rgba(255,153,0,0.3)' : '#DDE5EF'}`,
             }}
           />
           {noteError && (
@@ -1284,9 +1284,9 @@ export default function SourceDetailClient({
             <button type="submit" disabled={noteSubmitting || !noteContent.trim()}
               className="px-4 py-1.5 rounded-lg text-xs font-semibold"
               style={{
-                background: (noteSubmitting || !noteContent.trim()) ? '#1A2838'
+                background: (noteSubmitting || !noteContent.trim()) ? '#DDE5EF'
                   : noteSensitive ? 'rgba(255,153,0,0.2)' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
-                color: (noteSubmitting || !noteContent.trim()) ? '#485870'
+                color: (noteSubmitting || !noteContent.trim()) ? '#7A8A9E'
                   : noteSensitive ? '#A87228' : 'white',
                 border: noteSensitive ? '1px solid rgba(255,153,0,0.4)' : 'none',
                 cursor: (noteSubmitting || !noteContent.trim()) ? 'not-allowed' : 'pointer',
@@ -1300,11 +1300,11 @@ export default function SourceDetailClient({
       {/* 유용성 평가 */}
       {!isOwner && (
         <div className="glass-card p-5">
-          <h2 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>⭐ 유용성 평가</h2>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: '#1C2B3A' }}>⭐ 유용성 평가</h2>
           <div className="flex items-center gap-4">
             <StarRating rating={rating} onRate={handleRate} />
             {avgRating != null && (
-              <span className="text-sm" style={{ color: '#687898' }}>평균 {avgRating.toFixed(1)}점</span>
+              <span className="text-sm" style={{ color: '#526070' }}>평균 {avgRating.toFixed(1)}점</span>
             )}
             {rating && (
               <span className="text-sm" style={{ color: '#3D9E6A' }}>내 평가: {rating}점 (+1pt)</span>
@@ -1320,22 +1320,22 @@ export default function SourceDetailClient({
           <div className="glass-card p-6 w-full max-w-lg max-h-96 overflow-y-auto"
             onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold" style={{ color: '#CDD5E0' }}>📋 수정 이력</h3>
+              <h3 className="font-semibold" style={{ color: '#1C2B3A' }}>📋 수정 이력</h3>
               <button onClick={() => setShowHistory(false)}
-                style={{ color: '#485870', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                style={{ color: '#7A8A9E', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>×</button>
             </div>
             {editHistory.length > 0 ? (
               <div className="space-y-3">
                 {editHistory.slice(0, 50).map(h => (
-                  <div key={h.id} className="p-3 rounded-lg" style={{ background: '#182035' }}>
+                  <div key={h.id} className="p-3 rounded-lg" style={{ background: '#EEF2F7' }}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>{h.editor_name}</span>
-                      <span className="text-xs" style={{ color: '#485870' }}>
+                      <span className="text-xs" style={{ color: '#7A8A9E' }}>
                         {new Date(h.edited_at).toLocaleString('ko-KR')}
                       </span>
                     </div>
-                    <p className="text-xs" style={{ color: '#687898' }}>
-                      <span style={{ color: '#CDD5E0' }}>{FIELD_LABELS[h.field_name] ?? h.field_name}</span>
+                    <p className="text-xs" style={{ color: '#526070' }}>
+                      <span style={{ color: '#1C2B3A' }}>{FIELD_LABELS[h.field_name] ?? h.field_name}</span>
                       {' '}
                       <span style={{ color: '#C04040', textDecoration: 'line-through' }}>{h.old_value ?? '(없음)'}</span>
                       {' → '}
@@ -1345,7 +1345,7 @@ export default function SourceDetailClient({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-center py-4" style={{ color: '#485870' }}>수정 이력이 없습니다.</p>
+              <p className="text-sm text-center py-4" style={{ color: '#7A8A9E' }}>수정 이력이 없습니다.</p>
             )}
           </div>
         </div>
@@ -1357,24 +1357,24 @@ export default function SourceDetailClient({
       {/* 관련 정보보고 */}
       {relatedReports.length > 0 && (
         <div className="glass-card p-5">
-          <h2 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
+          <h2 className="text-sm font-semibold mb-3" style={{ color: '#1C2B3A' }}>
             📋 관련 정보보고 ({relatedReports.length}건)
           </h2>
           <div className="space-y-2">
             {relatedReports.map(report => (
               <a key={report.id} href={`/reports/${report.id}`} style={{ textDecoration: 'none', display: 'block' }}>
                 <div className="flex items-center justify-between rounded-lg px-3 py-2"
-                  style={{ background: '#182035', border: '1px solid #1A2838', cursor: 'pointer' }}
+                  style={{ background: '#EEF2F7', border: '1px solid #DDE5EF', cursor: 'pointer' }}
                   onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#4A7CC0')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#1A2838')}>
-                  <span className="text-sm font-medium truncate" style={{ color: '#D0DFF5', flex: 1 }}>
+                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#DDE5EF')}>
+                  <span className="text-sm font-medium truncate" style={{ color: '#1C2B3A', flex: 1 }}>
                     {report.title}
                   </span>
                   <div className="flex items-center gap-3 ml-3 shrink-0">
                     {report.profiles?.full_name && (
-                      <span className="text-xs" style={{ color: '#5A7099' }}>{report.profiles.full_name}</span>
+                      <span className="text-xs" style={{ color: '#6B7D92' }}>{report.profiles.full_name}</span>
                     )}
-                    <span className="text-xs" style={{ color: '#485870' }}>
+                    <span className="text-xs" style={{ color: '#7A8A9E' }}>
                       {new Date(report.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                     </span>
                   </div>
@@ -1389,7 +1389,7 @@ export default function SourceDetailClient({
       <ContactLogs sourceId={source.id} currentUserId={userId} userRole={userRole} />
 
       {/* 등록자 정보 */}
-      <div className="flex items-center gap-2 text-xs" style={{ color: '#485870' }}>
+      <div className="flex items-center gap-2 text-xs" style={{ color: '#7A8A9E' }}>
         <span>등록: {source.profiles?.full_name ?? '—'}</span>
         <span>·</span>
         <span>최종수정: {new Date(source.updated_at).toLocaleString('ko-KR')}</span>
