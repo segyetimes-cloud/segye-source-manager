@@ -265,8 +265,8 @@ export default function SourceListClient({
                   />
                 </label>
 
-                {/* 행 콘텐츠 — Link */}
-                <Link
+                {/* 행 콘텐츠 — a 하드 네비게이션 (Next.js 클라이언트 라우팅 우회, 이전 페이지 잔상 방지) */}
+                <a
                   href={`/sources/${source.id}`}
                   className="source-list-row"
                   style={{ flex: 1, color: 'inherit', textDecoration: 'none', display: 'block' }}>
@@ -404,7 +404,7 @@ export default function SourceListClient({
                       </span>
                     </div>
                   </div>
-                </Link>
+                </a>
               </div>
             )
           })}
