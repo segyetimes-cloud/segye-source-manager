@@ -9,6 +9,7 @@ import ReportCopyLogs from '@/components/reports/ReportCopyLogs'
 import ReportAllowedUsers from '@/components/reports/ReportAllowedUsers'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
 import ReportReviewActions from '@/components/reports/ReportReviewActions'
+import ReportFieldEditor from '@/components/reports/ReportFieldEditor'
 import { isDesk as isDeskRole } from '@/lib/roles'
 
 interface Params {
@@ -56,6 +57,7 @@ export default async function ReportDetailPage({ params }: Params) {
   const report = reportResult.data as ({
     id: string; author_id: string; author_department: string | null;
     title: string; content: string; category: string; tags: string[];
+    sensitive_content: string | null;
     visibility: string; status: string; reviewer_id: string | null;
     reviewed_at: string | null; review_note: string | null;
     created_at: string; updated_at: string;
@@ -80,8 +82,12 @@ export default async function ReportDetailPage({ params }: Params) {
     if (vis === 'team' && myProfile?.department !== report.author_department) notFound()
   }
 
+  // 민감정보(sensitive_content)는 작성자 및 데스크만 열람
+  const canSeeSensitive = isAuthor || isDesk
+  const sensitiveContent = canSeeSensitive ? (report.sensitive_content ?? null) : null
+
   const author = report.profiles as { full_name: string; department: string | null } | null
-  const sourcesRaw = (report.report_sources as any[]) ?? []
+  const sourcesRaw = report.report_sources ?? []
   const linkedSources = sourcesRaw.map((rs: any) => rs.sources).filter(Boolean)
   const revisions: any[] = revisionsRaw ?? []
 
@@ -157,15 +163,22 @@ export default async function ReportDetailPage({ params }: Params) {
           </span>
         </div>
 
-        {/* ── 본문 (수정이력 없으면 단순 표시, 있으면 이력 타임라인) ── */}
+        {/* ── 본문 (공개정보) — 인라인 편집 가능 ── */}
+        <ReportFieldEditor
+          reportId={id}
+          field="content"
+          value={report.content}
+          label="공개정보"
+          canEdit={canEdit}
+        >
         {!hasRevisions ? (
           /* 이력 없음: 보안 뷰어 (워터마크 + 복사 추적) */
           <ReportContentViewer
             reportId={id}
             content={report.content}
             userId={user.id}
-            userFullName={(myProfile as any)?.full_name ?? '—'}
-            userDepartment={(myProfile as any)?.department ?? null}
+            userFullName={myProfile?.full_name ?? '—'}
+            userDepartment={myProfile?.department ?? null}
           />
         ) : (
           /* 이력 있음: 버전별 스택 + 각각 보안 뷰어 */
@@ -228,8 +241,8 @@ export default async function ReportDetailPage({ params }: Params) {
                       reportId={id}
                       content={rev.content}
                       userId={user.id}
-                      userFullName={(myProfile as any)?.full_name ?? '—'}
-                      userDepartment={(myProfile as any)?.department ?? null}
+                      userFullName={myProfile?.full_name ?? '—'}
+                      userDepartment={myProfile?.department ?? null}
                     />
                   </div>
                 </div>
@@ -237,6 +250,7 @@ export default async function ReportDetailPage({ params }: Params) {
             })}
           </div>
         )}
+        </ReportFieldEditor>
 
         {/* 태그 */}
         {(report.tags as string[]).length > 0 && (
@@ -253,6 +267,34 @@ export default async function ReportDetailPage({ params }: Params) {
           </div>
         )}
       </div>
+
+      {/* 민감정보 (작성자·데스크만 열람·편집) */}
+      {canSeeSensitive && (
+        <div style={{
+          background: 'rgba(255,153,0,0.04)',
+          border: '1px solid rgba(255,153,0,0.3)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+        }}>
+          <ReportFieldEditor
+            reportId={id}
+            field="sensitive_content"
+            value={sensitiveContent}
+            label="⚠️ 민감정보 — 작성자·데스크 전용"
+            canEdit={canEdit}
+          >
+            {sensitiveContent ? (
+              <p style={{ fontSize: '14px', color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+                {sensitiveContent}
+              </p>
+            ) : (
+              <p style={{ fontSize: '13px', color: '#485870', fontStyle: 'italic' }}>
+                민감정보 없음 — 수정 버튼으로 추가할 수 있습니다
+              </p>
+            )}
+          </ReportFieldEditor>
+        </div>
+      )}
 
       {/* 연결된 취재원 */}
       {linkedSources.length > 0 && (
