@@ -363,6 +363,11 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       visibility: 'shared',
       on_record_status: form.on_record_status || null,
       public_notes: form.public_notes || null,
+      // 빈 문자열은 null로 전송 — 서버 Zod .email()·.nullish() 충돌 방지
+      email_primary:   form.email_primary || null,
+      email_secondary: form.email_secondary || null,
+      phone_primary:   form.phone_primary || null,
+      phone_secondary: form.phone_secondary || null,
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
