@@ -4,6 +4,23 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import { useState, useTransition, useCallback, type CSSProperties } from 'react'
 
+function Highlight({ text, query }: { text: string | null; query: string }) {
+  if (!query.trim() || !text) return <>{text ?? ''}</>
+  const escaped = query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'))
+  return (
+    <>
+      {parts.map((part, i) =>
+        part.toLowerCase() === query.toLowerCase() ? (
+          <mark key={i} style={{ background: 'rgba(255,213,0,0.35)', color: '#FFD700', borderRadius: '2px', padding: '0 1px' }}>
+            {part}
+          </mark>
+        ) : part
+      )}
+    </>
+  )
+}
+
 interface Source {
   id: string
   full_name: string
@@ -49,6 +66,13 @@ export default function SourceListClient({
   const [isPending, startTransition] = useTransition()
   const [searchInput, setSearchInput] = useState(currentQuery)
 
+  // ── AI 검색 상태 ──────────────────────────────────────────────────
+  const [aiMode, setAiMode] = useState(false)
+  const [aiSearching, setAiSearching] = useState(false)
+  const [aiResults, setAiResults] = useState<typeof initialSources | null>(null)
+  const [aiIntent, setAiIntent] = useState('')
+  const [aiError, setAiError] = useState('')
+
   // ── 대량 작업 상태 ──────────────────────────────────────────────────
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const [bulkLoading, setBulkLoading] = useState(false)
@@ -69,6 +93,27 @@ export default function SourceListClient({
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()
     navigate({ filter: currentFilter, q: searchInput, page: '1' })
+  }
+
+  async function handleAiSearch() {
+    if (!currentQuery.trim()) return
+    setAiSearching(true)
+    setAiError('')
+    try {
+      const res = await fetch('/api/sources/search-ai', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query: currentQuery }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setAiError(data.error ?? '검색 오류'); return }
+      setAiResults(data.sources)
+      setAiIntent(data.intent ?? '')
+    } catch {
+      setAiError('AI 검색 중 오류가 발생했습니다.')
+    } finally {
+      setAiSearching(false)
+    }
   }
 
   // ── 체크박스 핸들러 ────────────────────────────────────────────────
@@ -161,6 +206,22 @@ export default function SourceListClient({
               초기화
             </button>
           )}
+          <button
+            type="button"
+            onClick={() => {
+              if (!aiMode) { setAiMode(true); handleAiSearch() }
+              else { setAiMode(false); setAiResults(null); setAiIntent('') }
+            }}
+            title={aiMode ? 'AI 검색 끄기' : 'AI 문맥 검색 켜기'}
+            style={{
+              padding: '7px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
+              background: aiMode ? 'rgba(147,51,234,0.15)' : '#182035',
+              color: aiMode ? '#C084FC' : '#485870',
+              border: `1px solid ${aiMode ? 'rgba(147,51,234,0.4)' : '#1A2838'}`,
+              cursor: 'pointer', whiteSpace: 'nowrap',
+            }}>
+            {aiSearching ? '…' : '✨ AI'}
+          </button>
         </form>
 
         {/* 탭 + 총 명수 */}
@@ -208,13 +269,26 @@ export default function SourceListClient({
         )}
       </div>
 
+      {/* AI 검색 배너 */}
+      {aiMode && aiIntent && (
+        <div style={{
+          padding: '10px 14px', borderRadius: '10px', marginBottom: '12px',
+          background: 'rgba(147,51,234,0.08)', border: '1px solid rgba(147,51,234,0.25)',
+        }}>
+          <p style={{ fontSize: '12px', color: '#C084FC', margin: 0 }}>
+            ✨ AI 검색: {aiIntent}
+          </p>
+          {aiError && <p style={{ fontSize: '12px', color: '#C04040', marginTop: '4px' }}>{aiError}</p>}
+        </div>
+      )}
+
       {/* 목록 */}
       {isPending ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 rounded-full border-2 animate-spin"
             style={{ borderColor: '#1A2838', borderTopColor: '#4A7CC0' }} />
         </div>
-      ) : initialSources.length > 0 ? (
+      ) : (aiMode && aiResults ? aiResults : initialSources).length > 0 ? (
         <div className="glass-card overflow-hidden">
           {/* 데스크톱 테이블 헤더 */}
           <div className="source-table-header"
@@ -238,7 +312,7 @@ export default function SourceListClient({
             <div style={{ flex: '1 1 0', textAlign: 'center' }}>민감도</div>
           </div>
 
-          {initialSources.map(source => {
+          {(aiMode && aiResults ? aiResults : initialSources).map(source => {
             const isMine = source.owner_id === userId
             const isChecked = selectedIds.has(source.id)
             return (
@@ -285,7 +359,7 @@ export default function SourceListClient({
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {source.full_name}
+                            <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
                             <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
@@ -294,7 +368,10 @@ export default function SourceListClient({
                           )}
                         </div>
                         <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {source.current_organization ?? '—'} {source.current_position ? `· ${source.current_position}` : ''}
+                          {source.current_organization
+                            ? <><Highlight text={source.current_organization} query={currentQuery} />{source.current_position ? <> · <Highlight text={source.current_position} query={currentQuery} /></> : ''}</>
+                            : <>{'—'}{source.current_position ? <> · <Highlight text={source.current_position} query={currentQuery} /></> : ''}</>
+                          }
                         </p>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 4, flexShrink: 0 }}>
@@ -343,7 +420,7 @@ export default function SourceListClient({
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
                           <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {source.full_name}
+                            <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
                             <span style={{ fontSize: 10, padding: '1px 5px', borderRadius: 4, flexShrink: 0, background: 'rgba(74,124,192,0.15)', color: '#4A7CC0', border: '1px solid rgba(74,124,192,0.25)' }}>
@@ -352,14 +429,20 @@ export default function SourceListClient({
                           )}
                         </div>
                         <p style={{ color: '#687898', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {source.current_organization ?? '—'}
+                          {source.current_organization
+                            ? <Highlight text={source.current_organization} query={currentQuery} />
+                            : '—'
+                          }
                         </p>
                       </div>
                     </div>
                     {/* 직책 */}
                     <div style={{ flex: '2 1 0', minWidth: 0 }}>
                       <p style={{ color: '#687898', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                        {source.current_position ?? '—'}
+                        {source.current_position
+                          ? <Highlight text={source.current_position} query={currentQuery} />
+                          : '—'
+                        }
                       </p>
                     </div>
                     {/* 연락처 */}
@@ -416,7 +499,9 @@ export default function SourceListClient({
             <path d="M8 44c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#485870" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           <p className="text-sm" style={{ color: '#485870' }}>
-            {currentQuery ? `"${currentQuery}" 검색 결과가 없습니다` : '등록된 취재원이 없습니다'}
+            {aiMode && aiResults
+              ? `AI 검색 결과가 없습니다`
+              : currentQuery ? `"${currentQuery}" 검색 결과가 없습니다` : '등록된 취재원이 없습니다'}
           </p>
           <Link href="/sources/new" className="mt-3 text-sm" style={{ color: '#4A7CC0' }}>
             첫 번째 취재원을 등록하세요 →

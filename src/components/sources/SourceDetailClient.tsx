@@ -48,6 +48,7 @@ interface Props {
   initialNotes: SourceNote[]
   lockedNotesCount: number
   relatedReports?: RelatedReport[]
+  personalNotesPreview?: string | null
 }
 
 const AUTO_FIELD_KO: Record<string, string> = {
@@ -221,6 +222,7 @@ export default function SourceDetailClient({
   userId, userFullName, userDepartment,
   initialNotes, lockedNotesCount,
   relatedReports = [],
+  personalNotesPreview = null,
 }: Props) {
   const router = useRouter()
   const [showHistory, setShowHistory] = useState(false)
@@ -1064,6 +1066,29 @@ export default function SourceDetailClient({
             <span style={{ fontSize: '18px' }}>🔒</span>
             <div className="flex-1">
               <p className="text-xs font-semibold" style={{ color: '#A87228' }}>민감 정보는 데스크(부장+) 승인 후 열람 가능합니다</p>
+              {personalNotesPreview && (
+                <div style={{ position: 'relative', marginBottom: '10px', overflow: 'hidden', borderRadius: '8px' }}>
+                  <p style={{
+                    fontSize: '13px', lineHeight: 1.7, color: '#CDD5E0',
+                    filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none',
+                    padding: '10px 12px', background: 'rgba(255,153,0,0.04)',
+                    border: '1px solid rgba(255,153,0,0.15)', borderRadius: '8px',
+                  }}>
+                    {personalNotesPreview}
+                  </p>
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    background: 'linear-gradient(to bottom, transparent 40%, rgba(13,21,32,0.85))',
+                    borderRadius: '8px',
+                  }} />
+                  <div style={{
+                    position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)',
+                    fontSize: '11px', color: '#A87228', fontWeight: 600, whiteSpace: 'nowrap',
+                  }}>
+                    🔒 내용 일부 — 전체 열람은 아래에서 신청하세요
+                  </div>
+                </div>
+              )}
               {!showApprovalForm ? (
                 <button
                   onClick={() => setShowApprovalForm(true)}

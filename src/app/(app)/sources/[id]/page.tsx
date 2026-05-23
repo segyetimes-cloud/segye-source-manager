@@ -140,7 +140,13 @@ async function SourceDetailContent({ params }: Params) {
   // ── 암호화 필드 복호화 ──────────────────────────────────────────────────────
   source.phone_primary   = decryptNullable(source.phone_primary)
   source.phone_secondary = decryptNullable(source.phone_secondary)
+  let personalNotesPreview: string | null = null
   if (!canSeePersonalNotes) {
+    // 권한 없을 때: 처음 100자만 미리보기용으로 복호화 후 잘라서 전달
+    const decrypted = decryptNullable(source.personal_notes)
+    if (decrypted && decrypted.trim().length > 0) {
+      personalNotesPreview = decrypted.slice(0, 100) + (decrypted.length > 100 ? '…' : '')
+    }
     source.personal_notes = null
   } else {
     source.personal_notes = decryptNullable(source.personal_notes)
@@ -229,6 +235,7 @@ async function SourceDetailContent({ params }: Params) {
       initialNotes={initialNotes}
       lockedNotesCount={lockedNotesCount}
       relatedReports={relatedReports}
+      personalNotesPreview={personalNotesPreview}
     />
   )
 }
