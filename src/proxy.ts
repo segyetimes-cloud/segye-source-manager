@@ -90,13 +90,14 @@ function getClientIP(request: NextRequest): string {
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // 정적 파일 + 인증 페이지 패스스루
+  // 정적 파일 + 인증 페이지 + 인증 API 패스스루
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/favicon') ||
     pathname === '/login' ||
     pathname === '/otp' ||
-    pathname === '/lottery'
+    pathname === '/lottery' ||
+    pathname.startsWith('/api/auth/')   // 회원가입·로그인·OTP 등 인증 API는 인증 없이 허용
   ) {
     return NextResponse.next()
   }
