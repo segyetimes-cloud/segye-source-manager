@@ -151,8 +151,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     tags: initialData?.tags ?? [] as string[],
     visibility: 'shared' as 'personal' | 'shared',
     sensitivity: initialData?.sensitivity ?? 'public' as 'public' | 'private',
-    on_record_status: (initialData as any)?.on_record_status ?? '' as '' | 'on_record' | 'background_only' | 'anonymous',
-    public_notes: (initialData as any)?.public_notes ?? '',
+    on_record_status: (initialData?.on_record_status ?? '') as '' | 'on_record' | 'background_only' | 'anonymous',
+    public_notes: initialData?.public_notes ?? '',
     personal_notes: initialData?.personal_notes ?? '',
     sns_twitter: (initialData?.sns_links as Record<string, string> | undefined)?.twitter ?? '',
     sns_facebook: (initialData?.sns_links as Record<string, string> | undefined)?.facebook ?? '',
@@ -393,24 +393,20 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       setError('이름은 필수 입력 항목입니다.')
       return
     }
-    // 형식 오류가 있으면 제출 차단
-    const errs: Record<string, string> = {}
-    const phoneErr1 = validatePhone(form.phone_primary)
-    const phoneErr2 = validatePhone(form.phone_secondary)
-    const emailErr1 = validateEmail(form.email_primary)
-    const emailErr2 = validateEmail(form.email_secondary)
-    if (phoneErr1) errs['phone_primary'] = phoneErr1
-    if (phoneErr2) errs['phone_secondary'] = phoneErr2
-    if (emailErr1) errs['email_primary'] = emailErr1
-    if (emailErr2) errs['email_secondary'] = emailErr2
-    if (Object.keys(errs).length > 0) {
-      setFieldErrors(errs)
-      setError('입력 형식을 확인해 주세요.')
-      return
-    }
+    // 형식 오류 선택 항목(이메일·전화)은 차단 대신 해당 값만 제거 후 진행
+    // (필수 항목이 아니므로 잘못된 형식이라도 나머지를 저장하는 게 더 나은 UX)
+    const strippedFields: string[] = []
+    if (validatePhone(form.phone_primary))   strippedFields.push('phone_primary')
+    if (validatePhone(form.phone_secondary)) strippedFields.push('phone_secondary')
+    if (validateEmail(form.email_primary))   strippedFields.push('email_primary')
+    if (validateEmail(form.email_secondary)) strippedFields.push('email_secondary')
+
     setError('')
+    setFieldErrors({})
 
     const payload = buildPayload()
+    // 형식 불량 필드는 페이로드에서 제거
+    strippedFields.forEach(f => { payload[f] = null })
 
     if (mode === 'edit') {
       // 편집 모드: 확인 모달 먼저 표시
@@ -430,23 +426,29 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     const url = mode === 'create' ? '/api/sources' : `/api/sources/${initialData?.id}`
     const method = mode === 'create' ? 'POST' : 'PATCH'
 
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    })
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
 
-    const data = await res.json()
+      const data = await res.json()
 
-    if (!res.ok) {
-      setError(data.error ?? '저장에 실패했습니다.')
-      setSubmitting(false)
+      if (!res.ok) {
+        setError(data.error ?? '저장에 실패했습니다.')
+        setShowConfirm(false)
+        return
+      }
+
+      router.push(mode === 'create' ? `/sources/${data.id}` : `/sources/${initialData?.id}`)
+      router.refresh()
+    } catch {
+      setError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
       setShowConfirm(false)
-      return
+    } finally {
+      setSubmitting(false)
     }
-
-    router.push(mode === 'create' ? `/sources/${data.id}` : `/sources/${initialData?.id}`)
-    router.refresh()
   }
 
   // 편집 확인 모달 - 변경 필드 diff 계산
