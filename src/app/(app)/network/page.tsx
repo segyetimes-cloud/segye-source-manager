@@ -250,8 +250,15 @@ function buildAutoLinks(sources: SourceRow[]): {
   for (const [k, m] of groupByField('high_school'))
     pairAll(m, 25, 'same_highschool', k => `고교동문 (${k})`, 2, k)
 
-  // ④ 시험 동기 (강도 4)
-  for (const [k, m] of groupByField('exam_batch'))
+  // ④ 시험 동기 (강도 4) — exam_batch 정규화 후 그룹핑 (사시28기·사시28회·사법고시28회 → 동일 그룹)
+  const examBatchNormGroups = new Map<string, SourceRow[]>()
+  for (const s of sources) {
+    if (!s.exam_batch?.trim()) continue
+    const { normalized } = normalizeExamBatch(s.exam_batch)
+    if (!examBatchNormGroups.has(normalized)) examBatchNormGroups.set(normalized, [])
+    examBatchNormGroups.get(normalized)!.push(s)
+  }
+  for (const [k, m] of examBatchNormGroups)
     pairAll(m, 60, 'same_exam', k => `동기 (${k})`, 4, k)
 
   // ⑤ 출신 광역시도 — 동향 (강도 1)
@@ -336,7 +343,8 @@ function buildAutoLinks(sources: SourceRow[]): {
 
   // ── 성능 최적화: 필드별 정규화 맵 사전 빌드 (반복 filter() 제거) ────────────
   const univFieldMap = new Map<string, SourceRow[]>()
-  const examFieldMap = new Map<string, SourceRow[]>()
+  // examFieldMap: ④에서 이미 normGroups로 빌드했으므로 재활용
+  const examFieldMap = examBatchNormGroups
   const orgFieldMap  = new Map<string, SourceRow[]>()
   const orgRawMap    = new Map<string, SourceRow[]>()   // 위원회 포함 검색용
   for (const s of sources) {
@@ -344,11 +352,6 @@ function buildAutoLinks(sources: SourceRow[]): {
       const n = normalizeUniversity(s.university).normalized
       if (!univFieldMap.has(n)) univFieldMap.set(n, [])
       univFieldMap.get(n)!.push(s)
-    }
-    if (s.exam_batch) {
-      const n = normalizeExamBatch(s.exam_batch).normalized
-      if (!examFieldMap.has(n)) examFieldMap.set(n, [])
-      examFieldMap.get(n)!.push(s)
     }
     if (s.current_organization) {
       const n = normalizeOrganization(s.current_organization).normalized
@@ -483,7 +486,7 @@ export default async function NetworkPage() {
 
   // Service Role 클라이언트 — RLS 우회하여 personal_notes 전체 접근
   // (이름 언급 연결 감지에 필요. 노트 내용 자체는 클라이언트에 전송 안 함)
-  const svc = createServiceClient() as any
+  const svc = createServiceClient()
 
   // ── 연결 감지용: 전체 소스 (삭제 안 된 것) — personal_notes 포함
   // 개인 소스도 포함해야 "김용출"처럼 personal로 등록된 취재원의 이름 언급이 감지됨
@@ -516,7 +519,7 @@ export default async function NetworkPage() {
     .select('source_a_id, source_b_id, relation_type, relation_label, strength')
     .limit(500)
 
-  const manualLinks: AutoLink[] = ((manualRelsRaw ?? []) as any[]).map(r => ({
+  const manualLinks: AutoLink[] = (manualRelsRaw ?? []).map(r => ({
     source: r.source_a_id,
     target: r.source_b_id,
     type: r.relation_type ?? 'manual',
