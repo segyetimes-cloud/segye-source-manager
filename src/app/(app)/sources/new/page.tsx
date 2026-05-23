@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import SourceForm from '@/components/sources/SourceForm'
+import type { Source } from '@/types/database'
 
 export default async function NewSourcePage({
   searchParams,
@@ -28,7 +29,7 @@ export default async function NewSourcePage({
     } | null
 
     if (helpReq) {
-      const acceptedResp = (helpReq.help_responses as any[])?.find((r: any) => r.is_accepted)
+      const acceptedResp = helpReq.help_responses?.find((r) => r.is_accepted)
       helpContext = {
         title: helpReq.title,
         body: helpReq.body,
@@ -44,7 +45,7 @@ export default async function NewSourcePage({
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
@@ -100,7 +101,7 @@ export default async function NewSourcePage({
         </div>
       )}
 
-      <SourceForm mode="create" initialData={initialData as any} />
+      <SourceForm mode="create" initialData={initialData as Partial<Source>} />
     </div>
   )
 }

@@ -42,6 +42,7 @@ export default function EditReportPage() {
 
   const [title, setTitle] = useState('')
   const [content, setContent] = useState('')
+  const [sensitiveContent, setSensitiveContent] = useState('')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [visibility, setVisibility] = useState<ReportVisibility>('author_only')
@@ -56,20 +57,28 @@ export default function EditReportPage() {
     fetch(`/api/reports/${id}`)
       .then(r => r.json())
       .then(data => {
-        if (data.error) { setError('보고서를 불러올 수 없습니다.'); setLoading(false); return }
-        setTitle(data.title ?? '')
-        setContent(data.content ?? '')
-        setTags(data.tags ?? [])
-        setVisibility(data.visibility ?? 'author_only')
-        const linkedSources = ((data.report_sources ?? []) as any[])
-          .map((rs: any) => rs.sources)
-          .filter(Boolean)
+        // GET /api/reports/[id] 는 { report: {...} } 구조로 반환
+        const r = data.report
+        if (!r) { setError('보고서를 불러올 수 없습니다.'); setLoading(false); return }
+
+        setTitle(r.title ?? '')
+        setContent(r.content ?? '')
+        setSensitiveContent(r.sensitive_content ?? '')
+        setTags(r.tags ?? [])
+        setVisibility(r.visibility ?? 'author_only')
+
+        interface ReportSourceItem { sources: { id: string; full_name: string; current_organization: string | null } | null }
+        const linkedSources = ((r.report_sources ?? []) as ReportSourceItem[])
+          .map((rs: ReportSourceItem) => rs.sources)
+          .filter((s): s is SourceResult => s !== null)
         setSelectedSources(linkedSources)
+
         // 기존 지정 열람자 로드
         fetch(`/api/reports/${id}/allowed-users`)
-          .then(r => r.ok ? r.json() : { allowed: [] })
+          .then(res => res.ok ? res.json() : { allowed: [] })
           .then(d => {
-            const users = ((d.allowed ?? []) as any[]).map((a: any) => ({
+            interface AllowedUserItem { user_id: string; profiles?: { full_name: string; department: string | null; rank: string | null } | null }
+            const users = ((d.allowed ?? []) as AllowedUserItem[]).map(a => ({
               id: a.user_id,
               full_name: a.profiles?.full_name ?? '—',
               department: a.profiles?.department ?? null,
@@ -77,9 +86,11 @@ export default function EditReportPage() {
             }))
             setAllowedUsers(users)
           })
+          .catch(() => {/* 열람자 로드 실패는 무시 */})
+
         setLoading(false)
       })
-      .catch(() => { setError('불러오기 실패'); setLoading(false) })
+      .catch(() => { setError('보고서를 불러올 수 없습니다.'); setLoading(false) })
   }, [id])
 
   async function searchSources(q: string) {
@@ -124,25 +135,41 @@ export default function EditReportPage() {
     setSubmitting(true)
     setError('')
 
-    const res = await fetch(`/api/reports/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        title, content, tags,
-        visibility,
-        source_ids: selectedSources.map(s => s.id),
-        allowed_user_ids: allowedUsers.map(u => u.id),
-      }),
-    })
+    const abort = new AbortController()
+    const timer = setTimeout(() => abort.abort(), 15_000)  // 15초 타임아웃
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? '수정에 실패했습니다.')
+    try {
+      const res = await fetch(`/api/reports/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        signal: abort.signal,
+        body: JSON.stringify({
+          title, content, tags,
+          sensitive_content: sensitiveContent,
+          visibility,
+          source_ids: selectedSources.map(s => s.id),
+          allowed_user_ids: allowedUsers.map(u => u.id),
+        }),
+      })
+
+      clearTimeout(timer)
+
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? '수정에 실패했습니다.')
+        return
+      }
+
+      router.push(`/reports/${id}`)
+    } catch (err) {
+      clearTimeout(timer)
+      const isTimeout = err instanceof Error && err.name === 'AbortError'
+      setError(isTimeout
+        ? '저장 요청이 시간 초과되었습니다. 다시 시도해 주세요.'
+        : '저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    router.push(`/reports/${id}`)
   }
 
   if (loading) {
@@ -152,7 +179,7 @@ export default function EditReportPage() {
   }
 
   return (
-    <div className="max-w-2xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
+    <div className="max-w-4xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
 
       {/* 헤더 */}
       <div className="flex items-center gap-3">
@@ -197,9 +224,39 @@ export default function EditReportPage() {
             value={content}
             onChange={e => setContent(e.target.value)}
             placeholder="보고서 내용을 작성하세요"
-            rows={12}
+            rows={18}
             style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             required
+          />
+        </div>
+
+        {/* 민감정보 */}
+        <div style={{
+          background: 'rgba(255,153,0,0.04)',
+          border: '1px solid rgba(255,153,0,0.25)',
+          borderRadius: '10px',
+          padding: '14px',
+        }}>
+          <label style={{ ...labelStyle, color: '#A87228', marginBottom: '4px' }}>
+            ⚠️ 민감정보{' '}
+            <span style={{ color: '#6B5020', fontWeight: 400 }}>(선택 — 작성자·데스크만 열람)</span>
+          </label>
+          <p style={{ fontSize: '11px', color: '#6B5020', marginBottom: '8px' }}>
+            공개 본문에 포함하기 어려운 민감한 취재 내용을 별도로 기록합니다. 데스크(부장 이상)와 작성자만 볼 수 있습니다.
+          </p>
+          <textarea
+            value={sensitiveContent}
+            onChange={e => setSensitiveContent(e.target.value)}
+            placeholder="공개되어선 안 되는 취재원 정보, 미확인 사실, 내부 동향 등을 입력하세요"
+            rows={8}
+            style={{
+              ...inputStyle,
+              resize: 'vertical',
+              lineHeight: 1.6,
+              background: 'rgba(30,16,4,0.6)',
+              border: '1px solid rgba(255,153,0,0.3)',
+              color: '#CDD5E0',
+            }}
           />
         </div>
 

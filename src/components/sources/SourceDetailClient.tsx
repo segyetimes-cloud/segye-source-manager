@@ -959,13 +959,13 @@ export default function SourceDetailClient({
         {/* personal_notes(민감 정보) — 차장이상/승인된 기자: 표시 */}
         {canSeePersonalNotes && source.personal_notes && (
           <SecureContainer
-            className="mb-4 p-4 rounded-lg"
+            className="mb-4 p-3 rounded-lg"
             style={{
               background: 'rgba(255,153,0,0.04)',
               border: '1px solid rgba(255,153,0,0.2)',
             }}
           >
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between mb-1">
               <p className="text-xs font-semibold" style={{ color: '#A87228', userSelect: 'text' }}>
                 {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
               </p>
