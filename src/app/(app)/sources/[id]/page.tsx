@@ -1,106 +1,230 @@
+import { Suspense } from 'react'
+import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import SourceForm from '@/components/sources/SourceForm'
+import {
+  can,
+  CAN_VIEW_SENSITIVE_SOURCE,
+  CAN_VIEW_PERSONAL_NOTES,
+  CAN_EDIT_ANY_SOURCE,
+} from '@/lib/permissions'
+import { decryptNullable } from '@/lib/crypto'
+import SourceDetailClient from '@/components/sources/SourceDetailClient'
+import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
+import SourceDetailLoading from './loading'
 
-export default async function NewSourcePage({
-  searchParams,
-}: {
-  searchParams: Promise<{ from_help?: string }>
-}) {
-  const params = await searchParams
+interface Params {
+  params: Promise<{ id: string }>
+}
+
+export default function SourceDetailPage({ params }: Params) {
+  return (
+    <Suspense fallback={<SourceDetailLoading />}>
+      <SourceDetailContent params={params} />
+    </Suspense>
+  )
+}
+
+async function SourceDetailContent({ params }: Params) {
+  const { id } = await params
   const supabase = await createClient()
 
-  let initialData: Record<string, unknown> = {}
-  let helpContext: { title: string; body: string | null; target_name: string | null; target_org: string | null; acceptedBody: string | null } | null = null
+  // ── 인증 확인 ──────────────────────────────────────────────────────────────
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
 
-  if (params.from_help) {
-    const { data: helpReqRaw } = await supabase
-      .from('help_requests')
+  // ── 사용자 프로필 ──────────────────────────────────────────────────────────
+  const { data: profileRaw } = await supabase
+    .from('profiles')
+    .select('role, full_name, department')
+    .eq('id', user.id)
+    .single()
+  const profile = profileRaw as { role: string; full_name: string; department: string | null } | null
+  const userRole       = profile?.role       ?? 'reporter'
+  const userFullName   = profile?.full_name  ?? '알 수 없음'
+  const userDepartment = profile?.department ?? null
+
+  // ── 권한 플래그 ─────────────────────────────────────────────────────────────
+  const isAdminOrAbove    = can(userRole, CAN_VIEW_SENSITIVE_SOURCE)  // 부장+
+  const isDeputyOrAboveF  = can(userRole, CAN_VIEW_PERSONAL_NOTES)   // 차장+
+  const isAdminFlag       = can(userRole, CAN_EDIT_ANY_SOURCE)        // 부장+
+
+  // ── 취재원 + 관련 데이터 조회 ─────────────────────────────────────────────
+  const [sourceResult, ratingsResult] = await Promise.all([
+    supabase
+      .from('sources')
       .select(`
-        title, body, target_name, target_org,
-        help_responses!request_id(body, is_accepted)
+        *,
+        profiles!owner_id(full_name, email, department),
+        source_positions(
+          id, organization, department, position, rank,
+          started_at, ended_at, is_current, change_source
+        ),
+        source_edit_history(
+          id, editor_name, field_name, old_value, new_value, edited_at
+        )
       `)
-      .eq('id', params.from_help)
-      .single()
-    const helpReq = helpReqRaw as {
-      id: string; title: string; body: string | null;
-      target_name: string | null; target_org: string | null;
-      help_responses: Array<{ body: string | null; is_accepted: boolean }>;
-    } | null
+      .eq('id', id)
+      .eq('is_deleted', false)
+      .single(),
+    // 유용성 평점 (avg + 내 평점)
+    supabase
+      .from('source_usefulness_ratings')
+      .select('rating, rater_id')
+      .eq('source_id', id),
+  ])
 
-    if (helpReq) {
-      const acceptedResp = (helpReq.help_responses as any[])?.find((r: any) => r.is_accepted)
-      helpContext = {
-        title: helpReq.title,
-        body: helpReq.body,
-        target_name: helpReq.target_name,
-        target_org: helpReq.target_org,
-        acceptedBody: acceptedResp?.body ?? null,
-      }
+  if (sourceResult.error) {
+    // DB 오류 시 notFound 대신 실제 에러를 throw해 error.tsx에서 잡히도록 함
+    // → digest 코드가 서버 로그에 기록되어 원인 추적 가능
+    throw new Error(
+      `취재원 조회 실패 [${sourceResult.error.code ?? 'unknown'}]: ${sourceResult.error.message}`
+    )
+  }
+  if (!sourceResult.data) notFound()
 
-      // 가능한 필드 자동 매핑
-      if (helpReq.target_name) initialData.full_name = helpReq.target_name
-      if (helpReq.target_org) initialData.current_organization = helpReq.target_org
-    }
+  const sourceRaw = sourceResult.data as Source & {
+    profiles?: { full_name: string; email: string; department: string | null } | null
+    source_positions?: SourcePosition[]
+    source_edit_history?: SourceEditHistory[]
   }
 
+  // Normalize null → undefined for the profiles join so the type matches SourceDetailClient's Props
+  const source: Source & {
+    profiles?: { full_name: string; email: string; department: string | null }
+    source_positions?: SourcePosition[]
+    source_edit_history?: SourceEditHistory[]
+  } = {
+    ...sourceRaw,
+    profiles: sourceRaw.profiles ?? undefined,
+  }
+
+  const isOwner = source.owner_id === user.id
+
+  // ── 열람 권한 확인 ─────────────────────────────────────────────────────────
+  // 개인 목록: 소유자 또는 부장+ 만
+  if (source.visibility === 'personal' && !isOwner && !isAdminOrAbove) {
+    notFound()
+  }
+  // 공유 + 민감: 소유자 또는 부장+ 만
+  if (
+    source.visibility === 'shared' &&
+    source.sensitivity === 'private' &&
+    !isOwner &&
+    !isAdminOrAbove
+  ) {
+    notFound()
+  }
+
+  // ── personal_notes 열람 승인 확인 ─────────────────────────────────────────
+  // 차장+ 또는 소유자는 항상 열람 가능; 기자는 데스크 승인 필요
+  let hasApproval = false
+  if (!isOwner && !isDeputyOrAboveF) {
+    const { data: approval } = await supabase
+      .from('source_access_approvals')
+      .select('id, expires_at')
+      .eq('source_id', id)
+      .eq('requester_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    hasApproval = !!approval &&
+      (!approval.expires_at || new Date(approval.expires_at) > new Date())
+  }
+
+  const canSeePersonalNotes = isOwner || isDeputyOrAboveF || hasApproval
+  const hasPrivateAccess    = canSeePersonalNotes
+
+  // ── 암호화 필드 복호화 ──────────────────────────────────────────────────────
+  source.phone_primary   = decryptNullable(source.phone_primary)
+  source.phone_secondary = decryptNullable(source.phone_secondary)
+  if (!canSeePersonalNotes) {
+    source.personal_notes = null
+  } else {
+    source.personal_notes = decryptNullable(source.personal_notes)
+  }
+
+  // ── 직책 이력 + 편집 이력 ──────────────────────────────────────────────────
+  const positions    = (source.source_positions    ?? []) as SourcePosition[]
+  const editHistory  = (source.source_edit_history ?? []) as SourceEditHistory[]
+
+  // ── 평점 계산 ───────────────────────────────────────────────────────────────
+  const ratings  = (ratingsResult.data ?? []) as { rating: number; rater_id: string }[]
+  const avgRating = ratings.length > 0
+    ? ratings.reduce((s, r) => s + r.rating, 0) / ratings.length
+    : null
+  const myRating = ratings.find(r => r.rater_id === user.id)?.rating ?? null
+
+  // ── 노트 조회 (역할 기반 필터) ─────────────────────────────────────────────
+  let notesQuery = supabase
+    .from('source_notes')
+    .select('id, content, is_sensitive, created_at, profiles!author_id(id, full_name, department)')
+    .eq('source_id', id)
+    .order('created_at', { ascending: true })
+
+  // 차장 미만: 공개 노트 + 자신이 작성한 민감 노트만
+  if (!isDeputyOrAboveF) {
+    notesQuery = notesQuery.or(`is_sensitive.eq.false,author_id.eq.${user.id}`)
+  }
+
+  const { data: notesRaw } = await notesQuery
+  const initialNotes = (notesRaw ?? []) as {
+    id: string
+    content: string
+    is_sensitive: boolean
+    created_at: string
+    profiles: { id: string; full_name: string; department: string | null } | null
+  }[]
+
+  // ── 잠긴 노트 수 (차장 미만에게 표시용) ──────────────────────────────────
+  let lockedNotesCount = 0
+  if (!isDeputyOrAboveF) {
+    const { count } = await supabase
+      .from('source_notes')
+      .select('id', { count: 'exact', head: true })
+      .eq('source_id', id)
+      .eq('is_sensitive', true)
+      .neq('author_id', user.id)
+    lockedNotesCount = count ?? 0
+  }
+
+  // ── 관련 정보보고 조회 ──────────────────────────────────────────────────────
+  const { data: rsRaw } = await supabase
+    .from('report_sources')
+    .select('information_reports!report_id(id, title, created_at, profiles!author_id(full_name))')
+    .eq('source_id', id)
+    .limit(20)
+
+  type RawRS = {
+    information_reports: {
+      id: string
+      title: string
+      created_at: string
+      profiles: { full_name: string } | null
+    } | null
+  }
+
+  const relatedReports = ((rsRaw ?? []) as RawRS[])
+    .map(rs => rs.information_reports)
+    .filter((r): r is NonNullable<RawRS['information_reports']> => r !== null)
+
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
-      <div className="flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
-          <p className="text-sm mt-1" style={{ color: '#687898' }}>
-            항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
-          </p>
-        </div>
-        {/* 가져오기 단축 버튼 묶음 */}
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, flexWrap: 'wrap' }}>
-          {/* 명함 일괄 등록 — 신규 */}
-          <a
-            href="/sources/import-cards"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
-              border: '1px solid rgba(30,144,255,0.3)', textDecoration: 'none',
-            }}>
-            📇 명함 여러 장 일괄 등록
-          </a>
-          {/* 엑셀 가져오기 */}
-          <a
-            href="/sources/import"
-            style={{
-              display: 'flex', alignItems: 'center', gap: '6px',
-              padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-              background: '#182035', color: '#687898', border: '1px solid #1A2838',
-              textDecoration: 'none',
-            }}>
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
-                stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            엑셀 가져오기
-          </a>
-        </div>
-      </div>
-
-      {helpContext && (
-        <div className="glass-card p-4" style={{ border: '1px solid rgba(0,204,102,0.2)', background: 'rgba(0,204,102,0.03)' }}>
-          <p className="text-xs font-semibold mb-2" style={{ color: '#3D9E6A' }}>📋 도움 게시판에서 가져온 정보</p>
-          <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>{helpContext.title}</p>
-          {helpContext.target_name && (
-            <p className="text-xs" style={{ color: '#687898' }}>대상: {helpContext.target_name} {helpContext.target_org && `(${helpContext.target_org})`}</p>
-          )}
-          {helpContext.acceptedBody && (
-            <details className="mt-2">
-              <summary className="text-xs cursor-pointer" style={{ color: '#485870' }}>채택된 응답 보기</summary>
-              <p className="text-xs mt-1 whitespace-pre-wrap leading-relaxed" style={{ color: '#687898' }}>{helpContext.acceptedBody}</p>
-            </details>
-          )}
-          <p className="text-xs mt-2" style={{ color: '#485870' }}>아래 양식에 정보를 입력한 후 저장하세요</p>
-        </div>
-      )}
-
-      <SourceForm mode="create" initialData={initialData as any} />
-    </div>
+    <SourceDetailClient
+      source={source}
+      positions={positions}
+      editHistory={editHistory}
+      avgRating={avgRating}
+      myRating={myRating}
+      hasPrivateAccess={hasPrivateAccess}
+      isOwner={isOwner}
+      isAdmin={isAdminFlag}
+      isDeputyOrAbove={isDeputyOrAboveF}
+      userRole={userRole}
+      canSeePersonalNotes={canSeePersonalNotes}
+      userId={user.id}
+      userFullName={userFullName}
+      userDepartment={userDepartment}
+      initialNotes={initialNotes}
+      lockedNotesCount={lockedNotesCount}
+      relatedReports={relatedReports}
+    />
   )
 }
