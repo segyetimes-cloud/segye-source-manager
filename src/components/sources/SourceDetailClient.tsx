@@ -115,14 +115,15 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
   return (
     <div className="rounded-xl overflow-hidden group"
       style={{
-        border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.25)' : 'rgba(30,144,255,0.15)'}`,
-        background: note.is_sensitive ? 'rgba(255,153,0,0.04)' : 'rgba(15,32,64,0.6)',
+        border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.35)' : '#DDE5EF'}`,
+        background: note.is_sensitive ? 'rgba(255,153,0,0.04)' : '#FFFFFF',
+        boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
       }}>
       {/* 카드 헤더: 작성자 정보 */}
       <div className="flex items-center justify-between px-4 py-2.5"
         style={{
-          background: note.is_sensitive ? 'rgba(255,153,0,0.08)' : 'rgba(30,144,255,0.06)',
-          borderBottom: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.15)' : 'rgba(30,144,255,0.1)'}`,
+          background: note.is_sensitive ? 'rgba(255,153,0,0.07)' : '#F5F8FC',
+          borderBottom: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.2)' : '#DDE5EF'}`,
         }}>
         <div className="flex items-center gap-2">
           {/* 아바타 */}
