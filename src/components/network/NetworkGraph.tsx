@@ -556,14 +556,14 @@ export default function NetworkGraph({ nodes, links }: Props) {
   }
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0A0E1A', overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520', overflow: 'hidden' }}>
 
       {/* ── Canvas ─────────────────────────────────────────────────────────── */}
       <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
         <ForceGraph2D
           ref={fgRef}
           graphData={graphData}
-          backgroundColor="#0A0E1A"
+          backgroundColor="#0D1520"
 
           nodeCanvasObject={nodeCanvasObject}
           nodeCanvasObjectMode={() => 'replace'}
@@ -934,9 +934,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
         </div>
       )}
 
-      {/* ── Zoom controls (top-left) ──────────────────────────────────────── */}
+      {/* ── Zoom controls (bottom-right) ─────────────────────────────────── */}
       <div style={{
-        position: 'absolute', top: '16px', left: '16px', zIndex: 20,
+        position: 'absolute', bottom: '16px', right: '16px', zIndex: 20,
         display: 'flex', flexDirection: 'column', gap: '4px',
       }}>
         {[
