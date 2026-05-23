@@ -359,19 +359,24 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
   function buildPayload() {
     const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/
+    // exam_batch: 폼에서 string으로 관리 → 숫자 변환, 빈값/비숫자는 null
+    const examBatchNum = form.exam_batch ? parseInt(String(form.exam_batch), 10) : NaN
     const payload: Record<string, unknown> = {
       ...form,
       visibility: 'shared',
-      on_record_status: form.on_record_status || null,
+      // enum 필드: 빈값 → undefined 로 보내야 Zod .default() 가 적용됨 (null 은 enum 검증 실패)
+      on_record_status: form.on_record_status || undefined,
       public_notes:    form.public_notes    || null,
       personal_notes:  form.personal_notes  || null,
-      // 빈 문자열·형식 불일치 선택 항목은 null 처리 — 서버 Zod 충돌 방지
+      // 빈 문자열·형식 불일치 선택 항목은 null — 서버 Zod 충돌 방지
       email_primary:   form.email_primary   || null,
       email_secondary: form.email_secondary || null,
       phone_primary:   form.phone_primary   || null,
       phone_secondary: form.phone_secondary || null,
-      // 생년월일: 형식(YYYY-MM-DD) 불일치 시 null (자동추출 값이 잘못될 수 있음)
+      // 생년월일: YYYY-MM-DD 형식 불일치 시 null
       birthday: form.birthday && BIRTHDAY_RE.test(form.birthday) ? form.birthday : null,
+      // exam_batch: 숫자 변환 실패 시 null
+      exam_batch: !isNaN(examBatchNum) && examBatchNum > 0 ? examBatchNum : null,
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
@@ -442,10 +447,18 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         body: JSON.stringify(payload),
       })
 
-      const data = await res.json()
+      // JSON 파싱 실패 = 서버가 HTML 오류 페이지를 반환한 경우
+      let data: Record<string, unknown> = {}
+      try {
+        data = await res.json()
+      } catch {
+        setError(`서버 오류 (${res.status}). 잠시 후 다시 시도해 주세요.`)
+        setShowConfirm(false)
+        return
+      }
 
       if (!res.ok) {
-        setError(data.error ?? '저장에 실패했습니다.')
+        setError((data.error as string) ?? '저장에 실패했습니다.')
         setShowConfirm(false)
         return
       }
@@ -453,7 +466,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       router.push(mode === 'create' ? `/sources/${data.id}` : `/sources/${initialData?.id}`)
       router.refresh()
     } catch {
-      setError('저장 중 오류가 발생했습니다. 다시 시도해 주세요.')
+      setError('네트워크 오류가 발생했습니다. 인터넷 연결을 확인해 주세요.')
       setShowConfirm(false)
     } finally {
       setSubmitting(false)

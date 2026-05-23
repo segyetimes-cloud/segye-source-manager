@@ -66,7 +66,7 @@ export const CreateSourceSchema = z.object({
   exam_batch:           z.number().int().positive().nullish(),
   visibility:           z.enum(['personal', 'shared']).default('shared'),
   sensitivity:          z.enum(['public', 'private']).default('public'),
-  on_record_status:     z.enum(['on_record', 'off_record', 'background']).default('on_record'),
+  on_record_status:     z.preprocess(v => (v === null || v === '') ? undefined : v, z.enum(['on_record', 'off_record', 'background']).default('on_record')),
   tags:                 z.array(z.string().trim().max(50)).max(30).optional(),
   public_notes:         z.string().trim().max(5000).nullish(),
   personal_notes:       z.string().trim().max(5000).nullish(),
