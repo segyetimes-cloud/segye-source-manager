@@ -54,11 +54,27 @@ export async function GET(request: NextRequest, { params }: Params) {
     return NextResponse.json({ error: '민감 정보로 분류된 취재원입니다. 데스크 이상만 열람할 수 있습니다.' }, { status: 403 })
   }
 
-  // ── 열람 승인 폐지: 모든 인증 사용자가 personal_notes 직접 열람 가능 ──────────
+  // ── personal_notes(민감 정보) 마스킹: 차장 이상 또는 데스크 승인된 기자만 열람 ──
+  if (!isOwner && !isDeputyOrAbove) {
+    const { data: approval } = await supabase
+      .from('source_access_approvals')
+      .select('id, expires_at')
+      .eq('source_id', id)
+      .eq('requester_id', user.id)
+      .eq('status', 'approved')
+      .maybeSingle()
+    const hasApproval = !!approval && (!approval.expires_at || new Date(approval.expires_at) > new Date())
+    if (!hasApproval) {
+      source.personal_notes = null
+    }
+  }
+
   // ── 암호화 필드 복호화 ────────────────────────────────────────────────────
   source.phone_primary   = decryptNullable(source.phone_primary)
   source.phone_secondary = decryptNullable(source.phone_secondary)
-  source.personal_notes = decryptNullable(source.personal_notes)
+  if (source.personal_notes !== null) {
+    source.personal_notes = decryptNullable(source.personal_notes)
+  }
   // ── public_notes: 모든 인증 사용자 열람 가능 (마스킹 없음) ──────────────────
 
   // 평균 유용성 점수 계산

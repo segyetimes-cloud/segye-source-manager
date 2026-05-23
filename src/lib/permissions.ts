@@ -13,7 +13,7 @@ export const CAN_VIEW_SENSITIVE_SOURCE: readonly UserRole[] = [
   'admin', 'section_editor', 'editor', 'publisher', 'superadmin',
 ] as const
 
-/** personal_notes 열람 가능 (차장 이상 — 기자는 역할 제한 없이 직접 열람 가능) */
+/** personal_notes 열람 가능 (차장 이상 — 기자는 데스크 승인 필요) */
 export const CAN_VIEW_PERSONAL_NOTES: readonly UserRole[] = [
   'deputy', 'admin', 'section_editor', 'editor', 'publisher', 'superadmin',
 ] as const
@@ -116,7 +116,7 @@ export const PERMISSION_MATRIX = {
   sources: {
     '공개 취재원 조회':          '전체',
     '공유+민감 취재원 조회':      '부장+',
-    'personal_notes 열람':      '전체 (열람 승인 폐지)',
+    'personal_notes 열람':      '차장+ (기자는 데스크 승인 필요)',
     '본인 취재원 수정':           '전체',
     '타인 취재원 수정':           '부장+',
     '취재원 삭제':               '부장+',

@@ -217,7 +217,7 @@ export default function SourceDetailClient({
   source, positions: initialPositions, editHistory,
   avgRating, myRating, hasPrivateAccess,
   isOwner, isAdmin, isDeputyOrAbove = false, userRole = 'reporter',
-  canSeePersonalNotes = true,
+  canSeePersonalNotes = false,
   userId, userFullName, userDepartment,
   initialNotes, lockedNotesCount,
   relatedReports = [],
@@ -1057,6 +1057,39 @@ export default function SourceDetailClient({
           )
         )}
 
+        {/* 기자가 민감 정보 열람 권한 없을 때 — 데스크 승인 신청 유도 */}
+        {!isOwner && !canSeePersonalNotes && (
+          <div className="mb-4 p-4 rounded-lg flex items-start gap-3"
+            style={{ background: 'rgba(255,153,0,0.04)', border: '1px solid rgba(255,153,0,0.2)' }}>
+            <span style={{ fontSize: '18px' }}>🔒</span>
+            <div className="flex-1">
+              <p className="text-xs font-semibold" style={{ color: '#A87228' }}>민감 정보는 데스크(부장+) 승인 후 열람 가능합니다</p>
+              {!showApprovalForm ? (
+                <button
+                  onClick={() => setShowApprovalForm(true)}
+                  className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
+                  style={{ background: 'rgba(255,153,0,0.12)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                  민감 정보 열람 신청
+                </button>
+              ) : (
+                <div className="mt-2 space-y-2">
+                  <textarea value={approvalReason} onChange={e => setApprovalReason(e.target.value)}
+                    placeholder="열람 사유를 입력하세요 (예: 기획기사 취재 목적)"
+                    rows={2}
+                    style={{ width: '100%', background: '#182035', border: '1px solid #1A2838', color: '#CDD5E0', borderRadius: '8px', padding: '8px', fontSize: '13px', resize: 'none' }} />
+                  <div className="flex gap-2">
+                    <button onClick={handleApprovalRequest}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: '#A87228', color: 'white', border: 'none', cursor: 'pointer' }}>신청</button>
+                    <button onClick={() => setShowApprovalForm(false)}
+                      className="px-3 py-1.5 rounded-lg text-xs"
+                      style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', cursor: 'pointer' }}>취소</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
       </div>
 
@@ -1074,9 +1107,20 @@ export default function SourceDetailClient({
             <span style={{ color: '#A87228' }}>🔒</span>
             <div>
               <p className="text-xs font-semibold" style={{ color: '#A87228' }}>
-                민감 노트 {lockedNotesCount}건 — 차장 이상만 열람 가능합니다
+                민감 정보 {lockedNotesCount}건이 잠겨 있습니다
+              </p>
+              <p className="text-xs" style={{ color: '#687898' }}>
+                데스크(부장+) 승인 후 열람 가능합니다
               </p>
             </div>
+            {!showApprovalForm && (
+              <button onClick={() => setShowApprovalForm(true)}
+                className="ml-auto text-xs px-3 py-1.5 rounded-lg"
+                style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228',
+                  border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                열람 신청
+              </button>
+            )}
           </div>
         )}
 
