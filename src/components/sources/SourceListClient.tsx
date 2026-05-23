@@ -2,7 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
-import { useState, useTransition, useCallback, type CSSProperties } from 'react'
+import { useState, useEffect, useMemo, useTransition, useCallback, type CSSProperties } from 'react'
 
 function Highlight({ text, query }: { text: string | null; query: string }) {
   if (!query.trim() || !text) return <>{text ?? ''}</>
@@ -67,10 +67,10 @@ export default function SourceListClient({
   const [searchInput, setSearchInput] = useState(currentQuery)
 
   // ── AI 검색 상태 ──────────────────────────────────────────────────
-  const [aiMode, setAiMode] = useState(false)
-  const [aiSearching, setAiSearching] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [aiResults, setAiResults] = useState<typeof initialSources | null>(null)
   const [aiIntent, setAiIntent] = useState('')
+  const [aiExpandedTerms, setAiExpandedTerms] = useState<string[]>([])
   const [aiError, setAiError] = useState('')
 
   // ── 대량 작업 상태 ──────────────────────────────────────────────────
@@ -80,6 +80,41 @@ export default function SourceListClient({
   const [tagInput, setTagInput] = useState('')
 
   const totalPages = Math.ceil(totalCount / pageSize)
+
+  // ── currentQuery 변경 시 자동 AI 검색 ──────────────────────────────
+  useEffect(() => {
+    if (!currentQuery.trim()) {
+      setAiResults(null)
+      setAiIntent('')
+      setAiExpandedTerms([])
+      return
+    }
+    setAiLoading(true)
+    setAiError('')
+    fetch('/api/sources/search-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: currentQuery }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { setAiError(data.error); return }
+        setAiResults(data.sources ?? [])
+        setAiIntent(data.intent ?? '')
+        setAiExpandedTerms(data.expandedTerms ?? [])
+      })
+      .catch(() => setAiError('AI 검색 오류'))
+      .finally(() => setAiLoading(false))
+  }, [currentQuery])
+
+  // ── 표시할 목록: 서버 결과 + AI 추가 결과 합집합 ─────────────────────
+  const displayedSources = useMemo(() => {
+    if (!currentQuery.trim()) return initialSources
+    if (!aiResults) return initialSources
+    const ids = new Set(initialSources.map(s => s.id))
+    const extra = aiResults.filter(s => !ids.has(s.id))
+    return [...initialSources, ...extra]
+  }, [initialSources, aiResults, currentQuery])
 
   function navigate(params: Record<string, string>) {
     const sp = new URLSearchParams()
@@ -95,27 +130,6 @@ export default function SourceListClient({
     navigate({ filter: currentFilter, q: searchInput, page: '1' })
   }
 
-  async function handleAiSearch() {
-    if (!currentQuery.trim()) return
-    setAiSearching(true)
-    setAiError('')
-    try {
-      const res = await fetch('/api/sources/search-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: currentQuery }),
-      })
-      const data = await res.json()
-      if (!res.ok) { setAiError(data.error ?? '검색 오류'); return }
-      setAiResults(data.sources)
-      setAiIntent(data.intent ?? '')
-    } catch {
-      setAiError('AI 검색 중 오류가 발생했습니다.')
-    } finally {
-      setAiSearching(false)
-    }
-  }
-
   // ── 체크박스 핸들러 ────────────────────────────────────────────────
   const toggleSelect = useCallback((id: string) => {
     setSelectedIds(prev => {
@@ -127,12 +141,12 @@ export default function SourceListClient({
   }, [])
 
   const toggleAll = useCallback(() => {
-    if (selectedIds.size === initialSources.length) {
+    if (selectedIds.size === displayedSources.length) {
       setSelectedIds(new Set())
     } else {
-      setSelectedIds(new Set(initialSources.map(s => s.id)))
+      setSelectedIds(new Set(displayedSources.map(s => s.id)))
     }
-  }, [selectedIds.size, initialSources])
+  }, [selectedIds.size, displayedSources])
 
   // ── 대량 작업 실행 ─────────────────────────────────────────────────
   async function executeBulk(action: string, value?: string) {
@@ -168,7 +182,7 @@ export default function SourceListClient({
   const scoreColor = (score: number) =>
     score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
 
-  const allSelected = initialSources.length > 0 && selectedIds.size === initialSources.length
+  const allSelected = displayedSources.length > 0 && selectedIds.size === displayedSources.length
   const someSelected = selectedIds.size > 0
 
   return (
@@ -206,22 +220,11 @@ export default function SourceListClient({
               초기화
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => {
-              if (!aiMode) { setAiMode(true); handleAiSearch() }
-              else { setAiMode(false); setAiResults(null); setAiIntent('') }
-            }}
-            title={aiMode ? 'AI 검색 끄기' : 'AI 문맥 검색 켜기'}
-            style={{
-              padding: '7px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: aiMode ? 'rgba(147,51,234,0.15)' : '#182035',
-              color: aiMode ? '#C084FC' : '#485870',
-              border: `1px solid ${aiMode ? 'rgba(147,51,234,0.4)' : '#1A2838'}`,
-              cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-            {aiSearching ? '…' : '✨ AI'}
-          </button>
+          {aiLoading && currentQuery && (
+            <span style={{ fontSize: '11px', color: '#9060B0', whiteSpace: 'nowrap', alignSelf: 'center' }}>
+              ✨ AI 검색 중…
+            </span>
+          )}
         </form>
 
         {/* 탭 + 총 명수 */}
@@ -270,13 +273,18 @@ export default function SourceListClient({
       </div>
 
       {/* AI 검색 배너 */}
-      {aiMode && aiIntent && (
+      {aiIntent && currentQuery && (
         <div style={{
           padding: '10px 14px', borderRadius: '10px', marginBottom: '12px',
           background: 'rgba(147,51,234,0.08)', border: '1px solid rgba(147,51,234,0.25)',
         }}>
           <p style={{ fontSize: '12px', color: '#C084FC', margin: 0 }}>
             ✨ AI 검색: {aiIntent}
+            {aiExpandedTerms.length > 0 && (
+              <span style={{ color: '#9060B0', marginLeft: '8px' }}>
+                → {aiExpandedTerms.join(', ')}
+              </span>
+            )}
           </p>
           {aiError && <p style={{ fontSize: '12px', color: '#C04040', marginTop: '4px' }}>{aiError}</p>}
         </div>
@@ -288,7 +296,7 @@ export default function SourceListClient({
           <div className="w-8 h-8 rounded-full border-2 animate-spin"
             style={{ borderColor: '#1A2838', borderTopColor: '#4A7CC0' }} />
         </div>
-      ) : (aiMode && aiResults ? aiResults : initialSources).length > 0 ? (
+      ) : displayedSources.length > 0 ? (
         <div className="glass-card overflow-hidden">
           {/* 데스크톱 테이블 헤더 */}
           <div className="source-table-header"
@@ -312,7 +320,7 @@ export default function SourceListClient({
             <div style={{ flex: '1 1 0', textAlign: 'center' }}>민감도</div>
           </div>
 
-          {(aiMode && aiResults ? aiResults : initialSources).map(source => {
+          {displayedSources.map(source => {
             const isMine = source.owner_id === userId
             const isChecked = selectedIds.has(source.id)
             return (
@@ -499,9 +507,7 @@ export default function SourceListClient({
             <path d="M8 44c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#485870" strokeWidth="2" strokeLinecap="round"/>
           </svg>
           <p className="text-sm" style={{ color: '#485870' }}>
-            {aiMode && aiResults
-              ? `AI 검색 결과가 없습니다`
-              : currentQuery ? `"${currentQuery}" 검색 결과가 없습니다` : '등록된 취재원이 없습니다'}
+            {currentQuery ? `"${currentQuery}" 검색 결과가 없습니다` : '등록된 취재원이 없습니다'}
           </p>
           <Link href="/sources/new" className="mt-3 text-sm" style={{ color: '#4A7CC0' }}>
             첫 번째 취재원을 등록하세요 →

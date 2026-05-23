@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { ReportVisibility } from '@/types/database'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
 
@@ -56,50 +56,48 @@ export default function ReportListClient({
   currentQuery,
 }: Props) {
   // AI 검색 상태
-  const [aiMode, setAiMode] = useState(false)
-  const [aiSearching, setAiSearching] = useState(false)
+  const [aiLoading, setAiLoading] = useState(false)
   const [aiResults, setAiResults] = useState<ReportListRow[] | null>(null)
   const [aiIntent, setAiIntent] = useState('')
   const [aiExpandedTerms, setAiExpandedTerms] = useState<string[]>([])
   const [aiError, setAiError] = useState('')
 
-  async function handleAiSearch() {
-    if (!currentQuery.trim()) return
-    setAiSearching(true)
-    setAiError('')
-    try {
-      const res = await fetch('/api/reports/search-ai', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ query: currentQuery, tab: currentTab }),
-      })
-      const data = await res.json()
-      if (!res.ok) { setAiError(data.error ?? '검색 오류'); return }
-      setAiResults(data.reports)
-      setAiIntent(data.intent ?? '')
-      setAiExpandedTerms(data.expandedTerms ?? [])
-    } catch {
-      setAiError('AI 검색 중 오류가 발생했습니다.')
-    } finally {
-      setAiSearching(false)
-    }
-  }
-
-  function toggleAiMode() {
-    if (!aiMode) {
-      setAiMode(true)
-      handleAiSearch()
-    } else {
-      setAiMode(false)
+  // currentQuery 변경 시 자동 AI 검색
+  useEffect(() => {
+    if (!currentQuery.trim()) {
       setAiResults(null)
       setAiIntent('')
       setAiExpandedTerms([])
-      setAiError('')
+      return
     }
-  }
+    setAiLoading(true)
+    setAiError('')
+    fetch('/api/reports/search-ai', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: currentQuery }),
+    })
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) { setAiError(data.error); return }
+        setAiResults(data.reports ?? [])
+        setAiIntent(data.intent ?? '')
+        setAiExpandedTerms(data.expandedTerms ?? [])
+      })
+      .catch(() => setAiError('AI 검색 오류'))
+      .finally(() => setAiLoading(false))
+  }, [currentQuery])
 
-  const displayReports = aiMode && aiResults !== null ? aiResults : initialReports
-  const highlightQuery = aiMode && aiResults !== null ? currentQuery : currentQuery
+  // 표시할 목록: 서버 결과 + AI 추가 결과 합집합
+  const displayReports = useMemo(() => {
+    if (!currentQuery.trim()) return initialReports
+    if (!aiResults) return initialReports
+    const ids = new Set(initialReports.map(r => r.id))
+    const extra = aiResults.filter(r => !ids.has(r.id))
+    return [...initialReports, ...extra]
+  }, [initialReports, aiResults, currentQuery])
+
+  const highlightQuery = currentQuery
 
   return (
     <div className="space-y-5">
@@ -126,19 +124,11 @@ export default function ReportListClient({
           }}>
             검색
           </button>
-          <button
-            type="button"
-            onClick={toggleAiMode}
-            title={aiMode ? 'AI 검색 끄기' : 'AI 문맥 검색 켜기'}
-            style={{
-              padding: '7px 12px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
-              background: aiMode ? 'rgba(147,51,234,0.15)' : '#182035',
-              color: aiMode ? '#C084FC' : '#485870',
-              border: `1px solid ${aiMode ? 'rgba(147,51,234,0.4)' : '#1A2838'}`,
-              cursor: 'pointer', whiteSpace: 'nowrap',
-            }}>
-            {aiSearching ? '…' : '✨ AI'}
-          </button>
+          {aiLoading && currentQuery && (
+            <span style={{ fontSize: '11px', color: '#9060B0', whiteSpace: 'nowrap', alignSelf: 'center' }}>
+              ✨ AI 검색 중…
+            </span>
+          )}
         </form>
 
         {/* 탭 + 총 건수 */}
@@ -164,15 +154,13 @@ export default function ReportListClient({
             ))}
           </div>
           <span style={{ fontSize: '12px', color: '#485870' }}>
-            {aiMode && aiResults !== null
-              ? `AI 검색 ${aiResults.length}건`
-              : `총 ${totalCount}건`}
+            총 {totalCount}건
           </span>
         </div>
       </div>
 
       {/* AI 배너 */}
-      {aiMode && aiIntent && (
+      {aiIntent && currentQuery && (
         <div style={{
           padding: '8px 12px', borderRadius: '8px',
           background: 'rgba(147,51,234,0.08)',
@@ -189,7 +177,7 @@ export default function ReportListClient({
       )}
 
       {/* AI 에러 */}
-      {aiMode && aiError && (
+      {aiError && currentQuery && (
         <div style={{
           padding: '8px 12px', borderRadius: '8px',
           background: 'rgba(192,64,64,0.08)', border: '1px solid rgba(192,64,64,0.25)',
@@ -203,11 +191,9 @@ export default function ReportListClient({
       {displayReports.length === 0 ? (
         <div className="glass-card p-8 text-center">
           <p style={{ color: '#485870', fontSize: '14px' }}>
-            {aiMode && aiResults !== null
-              ? 'AI 검색 결과가 없습니다.'
-              : currentQuery
-                ? `"${currentQuery}"에 해당하는 보고서가 없습니다.`
-                : '아직 보고서가 없습니다.'}
+            {currentQuery
+              ? `"${currentQuery}"에 해당하는 보고서가 없습니다.`
+              : '아직 보고서가 없습니다.'}
           </p>
         </div>
       ) : (
@@ -306,8 +292,8 @@ export default function ReportListClient({
         </div>
       )}
 
-      {/* 페이지네이션 (AI 모드가 아닐 때만) */}
-      {!aiMode && totalPages > 1 && (
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
         <div className="flex items-center justify-center gap-2 pt-2">
           {currentPage > 1 && (
             <a
