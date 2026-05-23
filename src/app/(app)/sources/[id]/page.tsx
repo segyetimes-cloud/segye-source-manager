@@ -26,6 +26,10 @@ export default function SourceDetailPage({ params }: Params) {
 
 async function SourceDetailContent({ params }: Params) {
   const { id } = await params
+
+  // ── id 방어: 빈값·"new"·"edit" 등 잘못된 값 차단 ──────────────────────────
+  if (!id || id === 'new' || id === 'edit') notFound()
+
   const supabase = await createClient()
 
   // ── 인증 확인 ──────────────────────────────────────────────────────────────
