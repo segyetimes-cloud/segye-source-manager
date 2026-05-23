@@ -34,9 +34,18 @@ interface Props {
 
 // ── Org-based color palette (FNV hash for consistency) ────────────────────────
 const ORG_PALETTE = [
-  '#4A90D9', '#5CAB7D', '#E2844A', '#9B6BE6',
-  '#E24A6B', '#27AE80', '#E6B42A', '#16A0A8',
-  '#3A7EC8', '#C05A8A', '#6EB848', '#D46020',
+  '#5C9CE8', // 코발트 블루
+  '#E8934C', // 웜 오렌지
+  '#52BF8C', // 세이지 그린
+  '#E8607A', // 코랄 레드
+  '#A474E8', // 소프트 바이올렛
+  '#E8C040', // 허니 골드
+  '#48BCE0', // 스카이 블루
+  '#D06AAC', // 피오니 핑크
+  '#80C450', // 스프링 그린
+  '#E8A04A', // 앰버
+  '#7880E8', // 퍼리윙클
+  '#C0488C', // 매젠타 로즈
 ]
 
 function orgColor(org: string | null): string {
