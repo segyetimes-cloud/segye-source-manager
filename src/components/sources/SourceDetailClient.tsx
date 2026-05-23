@@ -442,7 +442,7 @@ export default function SourceDetailClient({
         setNoteError((data.error as string) ?? '저장에 실패했습니다.')
         return
       }
-      setNotes(prev => [...prev, data as SourceNote])
+      setNotes(prev => [...prev, data as unknown as SourceNote])
       setNoteContent('')
       setNoteSensitive(false)
     } catch {
