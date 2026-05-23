@@ -81,8 +81,8 @@ const adminNavItems = [
   { href: '/admin/approvals', label: '열람 승인 관리' },
   { href: '/admin/users', label: '계정 관리' },
   { href: '/admin/audit', label: '접근 로그' },
-  { href: '/admin/help-rewards', label: '🏆 도움 보너스' },
-  { href: '/admin/stats', label: '📊 실적 집계' },
+  { href: '/admin/help-rewards', label: '도움 보너스' },
+  { href: '/admin/stats', label: '실적 집계' },
 ]
 
 interface SidebarProps {
