@@ -56,7 +56,7 @@ export const CreateSourceSchema = z.object({
   phone_secondary:      z.string().trim().max(30).nullish(),
   email_primary:        z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
   email_secondary:      z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
-  birthday:             z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD 입니다').nullish(),
+  birthday:             z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD 입니다').nullish()),
   hometown_province:    z.string().trim().max(50).nullish(),
   hometown_city:        z.string().trim().max(50).nullish(),
   high_school:          z.string().trim().max(100).nullish(),

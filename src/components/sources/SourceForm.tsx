@@ -358,16 +358,20 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   }
 
   function buildPayload() {
+    const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/
     const payload: Record<string, unknown> = {
       ...form,
       visibility: 'shared',
       on_record_status: form.on_record_status || null,
-      public_notes: form.public_notes || null,
-      // 빈 문자열은 null로 전송 — 서버 Zod .email()·.nullish() 충돌 방지
-      email_primary:   form.email_primary || null,
+      public_notes:    form.public_notes    || null,
+      personal_notes:  form.personal_notes  || null,
+      // 빈 문자열·형식 불일치 선택 항목은 null 처리 — 서버 Zod 충돌 방지
+      email_primary:   form.email_primary   || null,
       email_secondary: form.email_secondary || null,
-      phone_primary:   form.phone_primary || null,
+      phone_primary:   form.phone_primary   || null,
       phone_secondary: form.phone_secondary || null,
+      // 생년월일: 형식(YYYY-MM-DD) 불일치 시 null (자동추출 값이 잘못될 수 있음)
+      birthday: form.birthday && BIRTHDAY_RE.test(form.birthday) ? form.birthday : null,
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
