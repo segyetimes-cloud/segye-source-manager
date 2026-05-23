@@ -834,14 +834,14 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
           </div>
           <div>
             <label style={labelStyle}>이메일 <span style={{ color: '#687898', fontSize: '11px' }}>+0.5pt</span></label>
-            <input type="email" value={form.email_primary} onChange={e => setWithValidation('email_primary', e.target.value)}
+            <input type="text" value={form.email_primary} onChange={e => setWithValidation('email_primary', e.target.value)}
               placeholder="name@example.com"
               style={{ ...inputStyle, borderColor: fieldErrors.email_primary ? '#C04040' : undefined }} />
             {fieldErrors.email_primary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.email_primary}</p>}
           </div>
           <div>
             <label style={labelStyle}>보조 이메일</label>
-            <input type="email" value={form.email_secondary} onChange={e => setWithValidation('email_secondary', e.target.value)}
+            <input type="text" value={form.email_secondary} onChange={e => setWithValidation('email_secondary', e.target.value)}
               placeholder="name@gmail.com"
               style={{ ...inputStyle, borderColor: fieldErrors.email_secondary ? '#C04040' : undefined }} />
             {fieldErrors.email_secondary && <p style={{ fontSize: '11px', color: '#C04040', marginTop: '3px' }}>{fieldErrors.email_secondary}</p>}
