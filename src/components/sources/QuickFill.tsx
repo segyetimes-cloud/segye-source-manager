@@ -10,7 +10,7 @@
  *  - 자유 형식 텍스트 (이름·소속·전화·이메일 포함)
  */
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useCallback } from 'react'
 
 export interface FillData {
   full_name?: string
@@ -382,13 +382,74 @@ export function extractEducationFields(text: string): Pick<FillData,
   }
 }
 
-// ── 미리보기 행 ───────────────────────────────────────────────────────────────
-function PreviewRow({ label, value }: { label: string; value?: string }) {
+// ── 수정 가능한 미리보기 행 ──────────────────────────────────────────────────
+function EditablePreviewRow({
+  label, fieldKey, value, onUpdate,
+}: {
+  label: string
+  fieldKey: keyof FillData
+  value?: string
+  onUpdate: (key: keyof FillData, val: string | undefined) => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(value ?? '')
+
   if (!value) return null
+
+  if (editing) {
+    return (
+      <div style={{ display: 'flex', gap: '6px', fontSize: '12px', padding: '3px 0', alignItems: 'center' }}>
+        <span style={{ color: '#485870', flexShrink: 0, width: '64px' }}>{label}</span>
+        <input
+          value={draft}
+          onChange={e => setDraft(e.target.value)}
+          autoFocus
+          style={{
+            flex: 1, background: '#1A2838', border: '1px solid #4A7CC0',
+            color: '#CDD5E0', borderRadius: '4px', padding: '2px 8px',
+            fontSize: '12px', outline: 'none', minWidth: 0,
+          }}
+          onKeyDown={e => {
+            if (e.key === 'Enter') { onUpdate(fieldKey, draft.trim() || undefined); setEditing(false) }
+            if (e.key === 'Escape') { setDraft(value); setEditing(false) }
+          }}
+        />
+        <button type="button"
+          onClick={() => { onUpdate(fieldKey, draft.trim() || undefined); setEditing(false) }}
+          style={{ fontSize: '11px', color: '#4A7CC0', background: 'none', border: 'none', cursor: 'pointer', padding: '0 3px', fontWeight: 700 }}>
+          ✓
+        </button>
+        <button type="button"
+          onClick={() => { setDraft(value); setEditing(false) }}
+          style={{ fontSize: '13px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}>
+          ✕
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <div style={{ display: 'flex', gap: '8px', fontSize: '12px', padding: '3px 0', alignItems: 'flex-start' }}>
-      <span style={{ color: '#485870', flexShrink: 0, width: '64px', paddingTop: '1px' }}>{label}</span>
-      <span style={{ color: '#A8B8C8', fontWeight: 500, lineHeight: 1.5 }}>{value}</span>
+    <div
+      style={{ display: 'flex', gap: '8px', fontSize: '12px', padding: '3px 0', alignItems: 'center', borderRadius: '4px' }}
+      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+      onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+    >
+      <span style={{ color: '#485870', flexShrink: 0, width: '64px' }}>{label}</span>
+      <span style={{ color: '#A8B8C8', fontWeight: 500, flex: 1, lineHeight: 1.5 }}>{value}</span>
+      {/* 수정 버튼 */}
+      <button type="button"
+        onClick={() => { setDraft(value); setEditing(true) }}
+        title="수정"
+        style={{ fontSize: '10px', color: '#4A7099', background: 'none', border: 'none', cursor: 'pointer', padding: '0 3px', opacity: 0.7, flexShrink: 0 }}>
+        ✏️
+      </button>
+      {/* 삭제 버튼 */}
+      <button type="button"
+        onClick={() => onUpdate(fieldKey, undefined)}
+        title="삭제"
+        style={{ fontSize: '13px', color: '#C04040', background: 'none', border: 'none', cursor: 'pointer', padding: '0 3px', opacity: 0.7, flexShrink: 0, lineHeight: 1 }}>
+        ×
+      </button>
     </div>
   )
 }
@@ -407,6 +468,10 @@ export default function QuickFill({ onFill }: Props) {
     const result = parseContactText(text)
     setPreview(result)
   }
+
+  const updateField = useCallback((key: keyof FillData, val: string | undefined) => {
+    setPreview(prev => prev ? { ...prev, [key]: val } : prev)
+  }, [])
 
   function apply() {
     if (!preview) return
@@ -470,22 +535,23 @@ export default function QuickFill({ onFill }: Props) {
         <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(30,144,255,0.07)', border: '1px solid rgba(30,144,255,0.2)', borderRadius: '8px' }}>
           <p style={{ fontSize: '11px', color: '#485870', marginBottom: '6px' }}>
             추출된 정보 확인 ({countFields(preview)}개 항목)
+            <span style={{ marginLeft: '6px', color: '#385070', fontWeight: 400 }}>— 행 위에 올려 ✏️ 수정 · × 삭제</span>
           </p>
-          <PreviewRow label="이름"      value={preview.full_name} />
-          <PreviewRow label="소속"      value={preview.current_organization} />
-          <PreviewRow label="직책"      value={preview.current_position} />
-          <PreviewRow label="부서"      value={preview.current_department} />
-          <PreviewRow label="전화(주)"  value={preview.phone} />
-          <PreviewRow label="전화(보조)" value={preview.phone_secondary} />
-          <PreviewRow label="이메일"    value={preview.email} />
-          <PreviewRow label="이메일(2)" value={preview.email_secondary} />
-          <PreviewRow label="고시/기수" value={preview.exam_batch} />
-          <PreviewRow label="대학"      value={preview.university} />
-          <PreviewRow label="전공"      value={preview.university_major} />
-          <PreviewRow label="대학원"    value={preview.graduate_school} />
-          <PreviewRow label="고교"      value={preview.high_school} />
-          <PreviewRow label="생년월일"  value={preview.birthday} />
-          <PreviewRow label="출신지역"  value={preview.hometown_province} />
+          <EditablePreviewRow label="이름"      fieldKey="full_name"           value={preview.full_name}           onUpdate={updateField} />
+          <EditablePreviewRow label="소속"      fieldKey="current_organization" value={preview.current_organization} onUpdate={updateField} />
+          <EditablePreviewRow label="직책"      fieldKey="current_position"    value={preview.current_position}    onUpdate={updateField} />
+          <EditablePreviewRow label="부서"      fieldKey="current_department"  value={preview.current_department}  onUpdate={updateField} />
+          <EditablePreviewRow label="전화(주)"  fieldKey="phone"               value={preview.phone}               onUpdate={updateField} />
+          <EditablePreviewRow label="전화(보조)" fieldKey="phone_secondary"    value={preview.phone_secondary}     onUpdate={updateField} />
+          <EditablePreviewRow label="이메일"    fieldKey="email"               value={preview.email}               onUpdate={updateField} />
+          <EditablePreviewRow label="이메일(2)" fieldKey="email_secondary"     value={preview.email_secondary}     onUpdate={updateField} />
+          <EditablePreviewRow label="고시/기수" fieldKey="exam_batch"          value={preview.exam_batch}          onUpdate={updateField} />
+          <EditablePreviewRow label="대학"      fieldKey="university"          value={preview.university}          onUpdate={updateField} />
+          <EditablePreviewRow label="전공"      fieldKey="university_major"    value={preview.university_major}    onUpdate={updateField} />
+          <EditablePreviewRow label="대학원"    fieldKey="graduate_school"     value={preview.graduate_school}     onUpdate={updateField} />
+          <EditablePreviewRow label="고교"      fieldKey="high_school"         value={preview.high_school}         onUpdate={updateField} />
+          <EditablePreviewRow label="생년월일"  fieldKey="birthday"            value={preview.birthday}            onUpdate={updateField} />
+          <EditablePreviewRow label="출신지역"  fieldKey="hometown_province"   value={preview.hometown_province}   onUpdate={updateField} />
           {preview.personal_notes && (
             <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(30,144,255,0.15)' }}>
               <p style={{ fontSize: '11px', color: '#485870', marginBottom: '3px' }}>📝 메모 (경력/주소)</p>
