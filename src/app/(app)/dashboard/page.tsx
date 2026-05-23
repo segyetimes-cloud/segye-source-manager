@@ -68,7 +68,7 @@ export default async function DashboardPage() {
       .select('resource_id, created_at')
       .eq('user_id', user.id)
       .eq('resource_type', 'source')
-      .in('action', ['view', 'view_private'] as any[])
+      .in('action', ['view', 'view_private'])
       .order('created_at', { ascending: false })
       .limit(30)) as unknown as Promise<{ data: { resource_id: string | null }[] | null; error: unknown }>,
   ])
@@ -106,26 +106,26 @@ export default async function DashboardPage() {
   const allSharedSources = (allSharedSourcesRaw ?? []) as { sensitivity: string }[]
   const myReports = (myReportsRaw ?? []) as ReportRow[]
 
-  // 1. 월별 등록 추이 (최근 6개월)
-  const months: string[] = []
-  const monthlyMap = new Map<string, number>()
-  for (let i = 5; i >= 0; i--) {
+  // 1. 일별 등록 추이 (최근 30일)
+  const days: string[] = []
+  const dailyMap = new Map<string, number>()
+  for (let i = 29; i >= 0; i--) {
     const d = new Date()
-    d.setDate(1)
-    d.setMonth(d.getMonth() - i)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    const label = `${d.getMonth() + 1}월`
-    months.push(key)
-    monthlyMap.set(key, 0)
+    d.setDate(d.getDate() - i)
+    const key = d.toISOString().slice(0, 10)
+    days.push(key)
+    dailyMap.set(key, 0)
   }
   for (const s of mySourcesForChart) {
-    const d = new Date(s.created_at)
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
-    if (monthlyMap.has(key)) monthlyMap.set(key, (monthlyMap.get(key) ?? 0) + 1)
+    const key = new Date(s.created_at).toISOString().slice(0, 10)
+    if (dailyMap.has(key)) dailyMap.set(key, (dailyMap.get(key) ?? 0) + 1)
   }
-  const monthlyTrend = months.map(k => {
-    const [, m] = k.split('-')
-    return { label: `${parseInt(m)}월`, count: monthlyMap.get(k) ?? 0 }
+  // 5일 간격 + 첫날 + 마지막날만 레이블 표시, 나머지는 빈 문자열
+  const monthlyTrend = days.map((k, i) => {
+    const d = new Date(k)
+    const show = i === 0 || i === days.length - 1 || i % 5 === 0
+    const label = show ? `${d.getMonth() + 1}/${d.getDate()}` : ''
+    return { label, count: dailyMap.get(k) ?? 0 }
   })
 
   // 2. 완성도 분포 (5구간)
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
     score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-3">
       {/* 헤더 */}
       <div className="flex items-center justify-between gap-3">
         <div>
@@ -220,11 +220,11 @@ export default async function DashboardPage() {
           { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#7E6E48', icon: '⭐' },
           { label: '내 정보보고', value: myReports.length, unit: '건', color: '#3D9E6A', icon: '📋' },
         ].map(stat => (
-          <div key={stat.label} className="glass-card p-4">
+          <div key={stat.label} className="glass-card p-3">
             <div className="flex items-start justify-between">
               <div>
                 <p className="text-xs font-medium mb-1" style={{ color: '#687898' }}>{stat.label}</p>
-                <p className="text-2xl font-bold" style={{ color: stat.color }}>
+                <p className="text-xl font-bold" style={{ color: stat.color }}>
                   {stat.value.toLocaleString()}
                 </p>
                 <p className="text-xs mt-0.5" style={{ color: '#485870' }}>{stat.unit}</p>
@@ -240,8 +240,8 @@ export default async function DashboardPage() {
 
       {/* 최근 열람 취재원 */}
       {recentViewSources.length > 0 && (
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-3">
+        <div className="glass-card p-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold text-sm" style={{ color: '#CDD5E0' }}>🕐 최근 열람한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
@@ -281,8 +281,8 @@ export default async function DashboardPage() {
       <div className="dashboard-main-grid">
 
         {/* 최근 등록 취재원 */}
-        <div className="glass-card p-4">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>최근 등록한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
@@ -328,8 +328,8 @@ export default async function DashboardPage() {
         </div>
 
         {/* 포인트 리더보드 */}
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🏆 TOP 기여자</h2>
             <span className="text-xs" style={{ color: '#485870' }}>전체 공개</span>
           </div>
@@ -363,8 +363,8 @@ export default async function DashboardPage() {
 
       {/* 팔로업 예정 취재원 */}
       {followups.length > 0 && (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-3">
+          <div className="flex items-center justify-between mb-2">
             <div>
               <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>📅 팔로업 예정</h2>
               <p className="text-xs mt-0.5" style={{ color: '#485870' }}>7일 이내 연락 예정된 취재원</p>
@@ -415,8 +415,8 @@ export default async function DashboardPage() {
 
       {/* 도움 요청 */}
       {openHelp && openHelp.length > 0 && (
-        <div className="glass-card p-5">
-          <div className="flex items-center justify-between mb-4">
+        <div className="glass-card p-3">
+          <div className="flex items-center justify-between mb-2">
             <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🙋 도움이 필요한 동료</h2>
             <Link href="/help" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>

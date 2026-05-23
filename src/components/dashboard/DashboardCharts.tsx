@@ -16,7 +16,7 @@ export interface ChartData {
 // ────────────────────────────────────────────────────────────
 function LineChart({ data }: { data: { label: string; count: number }[] }) {
   const W = 320
-  const H = 110
+  const H = 90
   const PAD = { t: 12, b: 28, l: 28, r: 12 }
   const cW = W - PAD.l - PAD.r
   const cH = H - PAD.t - PAD.b
@@ -64,8 +64,8 @@ function LineChart({ data }: { data: { label: string; count: number }[] }) {
       {/* 점 */}
       {pts.map((p, i) => (
         <g key={i}>
-          <circle cx={p.x} cy={p.y} r="4" fill="#0D1520" stroke="#4A7CC0" strokeWidth="2" />
-          {p.count > 0 && (
+          <circle cx={p.x} cy={p.y} r={p.count > 0 ? 3.5 : 1.5} fill="#0D1520" stroke="#4A7CC0" strokeWidth={p.count > 0 ? 1.5 : 0.5} />
+          {p.count > 0 && p.label !== '' && (
             <text x={p.x} y={p.y - 8} textAnchor="middle" fontSize="9" fill="#7AADE0" fontWeight="600">
               {p.count}
             </text>
@@ -73,11 +73,11 @@ function LineChart({ data }: { data: { label: string; count: number }[] }) {
         </g>
       ))}
       {/* X축 레이블 */}
-      {pts.map((p, i) => (
+      {pts.map((p, i) => p.label ? (
         <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill="#485870">
           {p.label}
         </text>
-      ))}
+      ) : null)}
     </svg>
   )
 }
@@ -88,7 +88,7 @@ function LineChart({ data }: { data: { label: string; count: number }[] }) {
 function CompletenessChart({ data }: { data: { label: string; count: number; color: string }[] }) {
   const maxCount = Math.max(...data.map(d => d.count), 1)
   return (
-    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '90px', padding: '0 4px' }}>
+    <div style={{ display: 'flex', alignItems: 'flex-end', gap: '6px', height: '70px', padding: '0 4px' }}>
       {data.map((d, i) => {
         const pct = (d.count / maxCount) * 100
         return (
@@ -252,31 +252,31 @@ export default function DashboardCharts({ data }: { data: ChartData }) {
     background: 'rgba(19,28,44,0.8)',
     border: '1px solid #1A2838',
     borderRadius: '12px',
-    padding: '18px 20px',
+    padding: '12px 14px',
   }
   const titleStyle: React.CSSProperties = {
     fontSize: '13px', fontWeight: 600, color: '#8899AA',
-    marginBottom: '14px', letterSpacing: '0.02em',
+    marginBottom: '8px', letterSpacing: '0.02em',
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <h2 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
         📊 통계 분석
       </h2>
 
       {/* 상단 2열 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '10px' }}>
 
         {/* 월별 등록 추이 */}
         <div style={cardStyle}>
-          <p style={titleStyle}>📈 월별 취재원 등록 추이</p>
+          <p style={titleStyle}>📈 최근 30일 등록 추이</p>
           <LineChart data={data.monthlyTrend} />
         </div>
 
         {/* 완성도 분포 */}
         <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <p style={{ ...titleStyle, marginBottom: 0 }}>🎯 취재원 완성도 분포</p>
             <span style={{ fontSize: '12px', color: '#7AADE0', fontWeight: 700 }}>
               평균 {data.avgCompleteness}점
@@ -288,7 +288,7 @@ export default function DashboardCharts({ data }: { data: ChartData }) {
       </div>
 
       {/* 하단 3열 */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '10px' }}>
 
         {/* 보고서 카테고리 */}
         <div style={cardStyle}>
@@ -304,7 +304,7 @@ export default function DashboardCharts({ data }: { data: ChartData }) {
 
         {/* 공유 취재원 현황 */}
         <div style={cardStyle}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
             <p style={{ ...titleStyle, marginBottom: 0 }}>🌐 공유 취재원 현황</p>
           </div>
           <SharedSensitiveBar shared={data.sharedCount} sensitive={data.sensitiveCount} />
