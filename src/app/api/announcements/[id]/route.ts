@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database.generated'
+
+type AnnouncementUpdate = Database['public']['Tables']['announcements']['Update']
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -13,9 +16,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   const body = await request.json()
   const { title, body: bodyText, is_pinned } = body
 
-  const update: Record<string, unknown> = {}
-  if (title !== undefined) update.title = title.trim()
-  if (bodyText !== undefined) update.body = bodyText?.trim() || null
+  const update: AnnouncementUpdate = {}
+  if (title !== undefined) update.title = String(title).trim()
+  if (bodyText !== undefined) update.body = bodyText ? String(bodyText).trim() : null
   if (is_pinned !== undefined) update.is_pinned = !!is_pinned
 
   const { data, error } = await supabase.from('announcements').update(update).eq('id', id).select().single()
