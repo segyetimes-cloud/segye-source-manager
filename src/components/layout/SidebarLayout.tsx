@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import Sidebar from './Sidebar'
-import NotificationBell from './NotificationBell'
 import type { Profile } from '@/types/database'
 
 interface Props {
@@ -64,8 +63,6 @@ export default function SidebarLayout({ profile, children }: Props) {
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {/* 알림 벨 */}
-          <NotificationBell />
           {/* 햄버거 버튼 */}
           <button
             onClick={() => setMobileOpen(true)}
