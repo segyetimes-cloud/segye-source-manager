@@ -166,10 +166,23 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   return (
     <div className="max-w-3xl mx-auto space-y-6">
       {/* 네비게이션 */}
-      <div className="flex items-center gap-2 text-sm" style={{ color: '#485870' }}>
-        <Link href="/help" style={{ color: '#485870', textDecoration: 'none' }}>도움 게시판</Link>
-        <span>›</span>
-        <span style={{ color: '#687898' }}>{help.title}</span>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2 text-sm" style={{ color: '#485870' }}>
+          <Link href="/help" style={{ color: '#485870', textDecoration: 'none' }}>도움 게시판</Link>
+          <span>›</span>
+          <span style={{ color: '#687898' }}>{help.title}</span>
+        </div>
+        <Link
+          href="/help"
+          aria-label="목록으로"
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            width: '32px', height: '32px', borderRadius: '8px',
+            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+            color: '#8A9AB0', textDecoration: 'none', fontSize: '20px', lineHeight: 1,
+          }}>
+          ×
+        </Link>
       </div>
 
       {/* 요청 카드 */}
