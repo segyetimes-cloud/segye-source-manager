@@ -242,15 +242,14 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
-  // equilibrium r = sqrt((N-1) * |charge| / center_strength) ≈ 330px
-  // for N=14: sqrt(13 * 500 / 0.06) ≈ 330px — stays on-screen
-  const chargeStrength = -(200 + nodeCount * 22)
-  const linkDistance = Math.max(120, Math.min(90 + nodeCount * 5, 260))
+  // d3-force charge는 1/r² 감쇠 → charge만으론 못 퍼뜨림
+  // 노드를 실제로 퍼뜨리는 건 link force (target distance가 크면 노드가 벌어짐)
+  // link distance를 크게 잡고, center를 약하게 → 안정적으로 퍼짐
+  const linkDistance = Math.max(220, 180 + nodeCount * 8)
 
   const graphData = useMemo(() => {
     const count = nodes.length
-    // initial radius near equilibrium so nodes barely move at start
-    const radius = Math.max(220, count * 20)
+    const radius = Math.max(200, count * 18)
     return {
       nodes: nodes.map((n, i) => ({
         ...n,
@@ -277,27 +276,27 @@ export default function NetworkGraph({ nodes, links }: Props) {
         return
       }
       try {
-        // Weaken centering from default 0.1 → 0.06
-        // Equilibrium: r = sqrt(N * |charge| / strength) ≈ 330px for N=14
-        fg.d3Force('centerX')?.strength(0.06)
-        fg.d3Force('centerY')?.strength(0.06)
+        // center: 기본 0.1 → 0.05 (화면 이탈 방지만, 응집 최소화)
+        fg.d3Force('centerX')?.strength(0.05)
+        fg.d3Force('centerY')?.strength(0.05)
 
-        // Moderate charge — balanced so nodes stay on screen
-        fg.d3Force('charge')?.strength(chargeStrength)
+        // charge: 충돌 방지 + 최소 반발. 1/r² 감쇠라 큰 숫자 필요
+        fg.d3Force('charge')?.strength(-1500)
 
+        // link distance가 클수록 노드가 퍼짐 — 이게 핵심 spreading force
         fg.d3Force('link')
-          ?.strength(0.15)
+          ?.strength(0.3)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return Math.max(srcR + tgtR + 55, linkDistance)
+            return Math.max(srcR + tgtR + 60, linkDistance)
           })
-          .iterations(3)
+          .iterations(4)
 
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
-          return r * 2.5 + 10
-        }).iterations(4))
+          return r * 3.0 + 12
+        }).iterations(5))
 
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
