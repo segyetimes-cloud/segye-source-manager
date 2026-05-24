@@ -126,6 +126,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const fgRef = useRef<any>(null)
   const [dimensions, setDimensions] = useState({ width: 800, height: 600 })
   const [isMobile, setIsMobile] = useState(false)
+  // ── 그래프 준비 상태 — force 설정 완료 전에는 캔버스를 숨겨 ugly flash 방지 ──
+  const [graphReady, setGraphReady] = useState(false)
 
   // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
   const hoveredIdRef = useRef<string | null>(null)
@@ -274,12 +276,16 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
+    // 노드/링크 변경 시 캔버스 숨김 — force 적용 완료 후 다시 표시
+    setGraphReady(false)
     let tries = 0
+    let showTimer: ReturnType<typeof setTimeout> | null = null
 
     function applyForces() {
       const fg = fgRef.current
       if (!fg) {
         if (++tries < 30) setTimeout(applyForces, 50)
+        else setGraphReady(true)   // 포기 시 그냥 표시
         return
       }
       try {
@@ -316,12 +322,21 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
         // 3. 시뮬레이션 재시작
         fg.d3ReheatSimulation()
-      } catch (e) { console.warn('force config error', e) }
+
+        // 4. 첫 몇 틱이 올바른 force로 완료된 뒤 캔버스 표시 (150ms = ~9틱)
+        showTimer = setTimeout(() => setGraphReady(true), 150)
+      } catch (e) {
+        console.warn('force config error', e)
+        setGraphReady(true)   // 에러 시 그냥 표시
+      }
     }
 
     // 50ms 후 실행 — ForceGraph2D가 시뮬레이션을 완전히 초기화할 시간을 확보
     const timer = setTimeout(applyForces, 50)
-    return () => clearTimeout(timer)
+    return () => {
+      clearTimeout(timer)
+      if (showTimer) clearTimeout(showTimer)
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length])
 
@@ -668,8 +683,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520', overflow: 'hidden' }}>
 
-      {/* ── Canvas ─────────────────────────────────────────────────────────── */}
-      <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      {/* ── Canvas — force 설정 완료 전 숨김으로 ugly flash 방지 ──────────── */}
+      <div ref={containerRef} style={{ width: '100%', height: '100%', opacity: graphReady ? 1 : 0, transition: 'opacity 0.25s ease' }}>
         <ForceGraph2D
           ref={fgRef}
           graphData={graphData}
