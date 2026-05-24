@@ -242,28 +242,32 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
-  // d3-force charge는 1/r² 감쇠 → charge만으론 못 퍼뜨림
-  // 노드를 실제로 퍼뜨리는 건 link force (target distance가 크면 노드가 벌어짐)
-  // link distance를 크게 잡고, center를 약하게 → 안정적으로 퍼짐
-  const linkDistance = Math.max(220, 180 + nodeCount * 8)
 
-  const graphData = useMemo(() => {
-    const count = nodes.length
-    const radius = Math.max(200, count * 18)
-    return {
-      nodes: nodes.map((n, i) => ({
-        ...n,
-        name: n.label,
-        val: 1,
-        x: Math.cos((2 * Math.PI * i) / count) * radius,
-        y: Math.sin((2 * Math.PI * i) / count) * radius,
-      })),
-      links: filteredLinks.map(l => ({
-        ...l,
-        curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
-      })),
-    }
-  }, [nodes, filteredLinks])
+  // ── 올바른 charge 공식 ─────────────────────────────────────────────────────
+  // d3-force charge는 1/r² 감쇠: Δv = strength / r²
+  // center force: Δv = center_strength * r
+  // 균형점: (N-1)*|charge|/r² = center*r → r³ = (N-1)*|charge|/center
+  // r=200px, center=0.06 → |charge| = 200³*0.06/(N-1) = 480000/(N-1)
+  const TARGET_R = 200
+  const CENTER_STR = 0.06
+  const chargeStrength = -Math.round((TARGET_R ** 3 * CENTER_STR) / Math.max(nodeCount - 1, 1))
+  // 초기 원형 반경 = 균형점과 동일 → 시뮬레이션 시작 직후 거의 이동 없음
+  const initRadius = TARGET_R
+
+  const graphData = useMemo(() => ({
+    nodes: nodes.map((n, i) => ({
+      ...n,
+      name: n.label,
+      val: 1,
+      x: Math.cos((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
+      y: Math.sin((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
+    })),
+    links: filteredLinks.map(l => ({
+      ...l,
+      curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
+    })),
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [nodes, filteredLinks])
 
   // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
@@ -276,28 +280,20 @@ export default function NetworkGraph({ nodes, links }: Props) {
         return
       }
       try {
-        // center: 기본 0.1 → 0.05 (화면 이탈 방지만, 응집 최소화)
-        fg.d3Force('centerX')?.strength(0.05)
-        fg.d3Force('centerY')?.strength(0.05)
-
-        // charge: 충돌 방지 + 최소 반발. 1/r² 감쇠라 큰 숫자 필요
-        fg.d3Force('charge')?.strength(-1500)
-
-        // link distance가 클수록 노드가 퍼짐 — 이게 핵심 spreading force
+        fg.d3Force('centerX')?.strength(CENTER_STR)
+        fg.d3Force('centerY')?.strength(CENTER_STR)
+        fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')
           ?.strength(0.3)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return Math.max(srcR + tgtR + 60, linkDistance)
+            return srcR + tgtR + 80
           })
-          .iterations(4)
-
+          .iterations(3)
         fg.d3Force('collide', forceCollide((n: any) => {
-          const r = nodeRadius(n.degree ?? 1)
-          return r * 3.0 + 12
-        }).iterations(5))
-
+          return nodeRadius(n.degree ?? 1) * 2.5 + 10
+        }).iterations(4))
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }
