@@ -242,32 +242,43 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Force simulation setup ────────────────────────────────────────────────
   const nodeCount = nodes.length
-  const chargeStrength = Math.min(-300 - nodeCount * 20, -1400)
-  const linkDistance   = Math.max(130, Math.min(100 + nodeCount * 5, 300))
+  // Charge strong enough to spread nodes; center force will be weakened so they don't cluster
+  const chargeStrength = Math.min(-280 - nodeCount * 18, -1200)
+  const linkDistance   = Math.max(140, Math.min(110 + nodeCount * 6, 320))
 
   useEffect(() => {
-    const fg = fgRef.current
-    if (!fg) return
-    const timer = setTimeout(() => {
+    let tries = 0
+
+    function applyLayout() {
+      const fg = fgRef.current
+      if (!fg) {
+        // fgRef not set yet (dynamic import still loading) — retry
+        if (++tries < 10) setTimeout(applyLayout, 250)
+        return
+      }
+      const simNodes: any[] = fg.graphData()?.nodes ?? []
+      if (simNodes.length === 0) {
+        if (++tries < 10) setTimeout(applyLayout, 250)
+        return
+      }
       try {
-        // Directly set circular positions on internal simulation nodes
-        // so d3 always starts from a spread-out state (never clustered)
-        const simNodes: any[] = fg.graphData()?.nodes ?? []
+        // Position nodes on a circle so simulation always starts spread out
         const count = simNodes.length
         simNodes.forEach((n: any, i: number) => {
           const angle = (2 * Math.PI * i) / count
-          const radius = Math.max(190, count * 14)
+          const radius = Math.max(200, count * 15)
           n.x = Math.cos(angle) * radius
           n.y = Math.sin(angle) * radius
           n.vx = 0
           n.vy = 0
         })
-
+        // Tune center force: 0.10 gives equilibrium radius ~260px (visible, spread)
+        fg.d3Force('center')?.strength(0.10)
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')?.distance((link: any) => {
           const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
           const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-          return Math.max(srcR + tgtR + 60, linkDistance)
+          return Math.max(srcR + tgtR + 65, linkDistance)
         }).iterations(4)
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
@@ -275,7 +286,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
         }).iterations(6))
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
-    }, 150)
+    }
+
+    const timer = setTimeout(applyLayout, 150)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length])
