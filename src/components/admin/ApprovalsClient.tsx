@@ -163,7 +163,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeRejectModal}
                   style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
-                  취소
+                  나가기
                 </button>
                 <button onClick={handleReject} disabled={processing === rejectModal.approvalId}
                   style={{

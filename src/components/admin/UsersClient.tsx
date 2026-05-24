@@ -357,7 +357,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeRoleModal}
                   style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
-                  취소
+                  나가기
                 </button>
                 <button onClick={submitRoleChange} disabled={processing === roleModal.userId}
                   style={{
@@ -397,7 +397,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeRankModal}
                   style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
-                  취소
+                  나가기
                 </button>
                 <button onClick={submitRankChange} disabled={processing === rankModal.userId + '_rank'}
                   style={{
@@ -443,7 +443,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeApproveModal}
                   style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
-                  취소
+                  나가기
                 </button>
                 <button onClick={submitApprove} disabled={processing === approveModal.userId + '_approve'}
                   style={{
@@ -756,7 +756,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
                   <button type="button" onClick={closeCreateModal}
                     style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', cursor: 'pointer' }}>
-                    취소
+                    나가기
                   </button>
                   <button type="submit" disabled={createLoading}
                     style={{ background: createLoading ? 'rgba(30,144,255,0.1)' : 'rgba(30,144,255,0.2)', border: '1px solid rgba(30,144,255,0.5)', color: '#4A7CC0', borderRadius: '8px', padding: '10px 24px', fontSize: '13px', fontWeight: 600, cursor: createLoading ? 'not-allowed' : 'pointer', opacity: createLoading ? 0.7 : 1 }}>

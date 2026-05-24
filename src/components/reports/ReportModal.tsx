@@ -257,7 +257,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                     color: '#687898', borderRadius: 8, padding: '6px 14px',
                     fontSize: 12, cursor: 'pointer',
                   }}>
-                  닫기
+                  나가기
                 </button>
                 <a
                   href={`/reports/${report.id}`}

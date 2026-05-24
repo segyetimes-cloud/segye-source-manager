@@ -258,7 +258,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
                 <button onClick={closeModal}
                   style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
-                  취소
+                  나가기
                 </button>
                 <button onClick={submitPoints} disabled={awarding}
                   style={{

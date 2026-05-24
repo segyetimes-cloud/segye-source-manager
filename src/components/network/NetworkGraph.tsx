@@ -242,8 +242,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Force simulation setup ────────────────────────────────────────────────
   const nodeCount = nodes.length
-  const chargeStrength = Math.min(-180 - nodeCount * 15, -1200)
-  const linkDistance   = Math.max(100, Math.min(80 + nodeCount * 4, 280))
+  // Stronger repulsion so nodes always spread out (never cluster)
+  const chargeStrength = Math.min(-400 - nodeCount * 25, -1800)
+  const linkDistance   = Math.max(140, Math.min(110 + nodeCount * 6, 360))
 
   useEffect(() => {
     const fg = fgRef.current
@@ -254,12 +255,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
         fg.d3Force('link')?.distance((link: any) => {
           const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
           const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-          return Math.max(srcR + tgtR + 55, linkDistance)
-        }).iterations(5)
+          return Math.max(srcR + tgtR + 70, linkDistance)
+        }).iterations(6)
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
-          return r * 2.4 + 6
-        }).iterations(6))
+          return r * 3.2 + 14
+        }).iterations(8))
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }, 150)
@@ -599,8 +600,27 @@ export default function NetworkGraph({ nodes, links }: Props) {
     )
   }
 
+  // Pre-position nodes in a circle so d3 never starts from a clustered state
+  const initialPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
+  useEffect(() => {
+    // Only set positions for nodes we haven't seen yet
+    nodes.forEach((n, i) => {
+      if (!initialPositions.current.has(n.id)) {
+        const angle = (2 * Math.PI * i) / nodes.length
+        const radius = Math.max(180, nodes.length * 14)
+        initialPositions.current.set(n.id, {
+          x: Math.cos(angle) * radius,
+          y: Math.sin(angle) * radius,
+        })
+      }
+    })
+  }, [nodes])
+
   const graphData = {
-    nodes: nodes.map(n => ({ ...n, name: n.label, val: 1 })),
+    nodes: nodes.map(n => ({
+      ...n, name: n.label, val: 1,
+      ...initialPositions.current.get(n.id),
+    })),
     links: filteredLinks.map(l => ({
       ...l,
       curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
@@ -641,10 +661,10 @@ export default function NetworkGraph({ nodes, links }: Props) {
           height={dimensions.height}
           minZoom={0.02}
           maxZoom={12}
-          cooldownTicks={500}
-          warmupTicks={150}
-          d3AlphaDecay={0.008}
-          d3VelocityDecay={0.35}
+          cooldownTicks={600}
+          warmupTicks={300}
+          d3AlphaDecay={0.010}
+          d3VelocityDecay={0.30}
           nodeRelSize={1}
         />
       </div>
