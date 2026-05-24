@@ -140,6 +140,65 @@ function classifyMentionContext(text: string, name: string): MentionContext {
   return 'mention'
 }
 
+// ─── 부고 기사 파싱 ──────────────────────────────────────────────────────────
+// personal_notes에 붙여 넣은 부고 기사에서 상주(喪主) 목록·관계 유형을 추출
+const OBITUARY_TYPE_KEYWORDS = [
+  '부친상', '모친상',
+  '장인상', '장모상', '처부상', '처모상',
+  '시부상', '시모상',
+  '조부상', '조모상', '외조부상', '외조모상',
+  '배우자상', '형상', '제상', '자녀상',
+] as const
+
+interface ObituaryInfo {
+  type: string           // 발견된 상(喪) 키워드
+  mournerNames: string[] // 상주 목록에서 추출한 이름
+}
+
+function parseObituaryFromText(text: string): ObituaryInfo | null {
+  if (!text) return null
+
+  // 부고 키워드 탐지 (상(喪) 종류 우선, 없으면 별세·발인 등 보조 키워드)
+  const foundType = (OBITUARY_TYPE_KEYWORDS as readonly string[]).find(k => text.includes(k))
+    ?? (/(별세|타계|영면|작고|영결식|발인)/.test(text) ? '별세' : null)
+  if (!foundType) return null
+
+  const mournerNames: string[] = []
+
+  // 상주 목록 추출 — 다양한 포맷 처리
+  // 포맷 A: "상주: 이름1, 이름2, 이름3"
+  // 포맷 B: "상주: 이름1(장남) 이름2(차남)"
+  // 포맷 C: "상주 이름1·이름2·이름3"
+  const mournerMatch = text.match(
+    /상주\s*[:：]?\s*([가-힣()\s,·\/·]+?)(?=\s*[\n\r]|\s*(?:발인|장지|연락|빈소|장례식장)|$)/m,
+  )
+  if (mournerMatch) {
+    // 괄호 안 설명 (장남), (기자) 등 제거 후 이름만 추출
+    const cleaned = mournerMatch[1].replace(/\([^)]*\)/g, ' ')
+    for (const part of cleaned.split(/[\s,·\/·]+/).filter(Boolean)) {
+      const name = part.trim()
+      // 한국어 이름: 2~5글자 순수 한글
+      if (name.length >= 2 && name.length <= 5 && /^[가-힣]+$/.test(name))
+        if (!mournerNames.includes(name)) mournerNames.push(name)
+    }
+  }
+
+  // 배우자·부인 패턴 추가 추출 ("배우자: 홍길동", "부인 홍길순씨" 등)
+  const spousePatterns = [
+    /(?:배우자|부인|아내|처|남편)\s*[:：]?\s*([가-힣]{2,4})/g,
+    /([가-힣]{2,4})\s*씨?\s*(?:배우자|부인)/g,
+  ]
+  for (const pat of spousePatterns) {
+    let m
+    while ((m = pat.exec(text)) !== null) {
+      const name = m[1].trim()
+      if (name.length >= 2 && !mournerNames.includes(name)) mournerNames.push(name)
+    }
+  }
+
+  return { type: foundType, mournerNames }
+}
+
 // ─── 태그 → 속성 추출 ─────────────────────────────────────────────────────────
 function extractAttributesFromTags(tags: string[]): {
   universities: string[]
@@ -537,6 +596,35 @@ function buildAutoLinks(sources: SourceRow[]): {
     }
   }
 
+  // ⑫ 부고 기사 기반 가족/혼인 관계
+  //    personal_notes에 부고 기사가 붙여 넣어진 경우:
+  //    - 상주 목록에서 이름 추출 → DB 내 다른 취재원과 교차 검색
+  //    - 동일 부고의 상주끼리도 가족 관계로 연결 (형제·자매·배우자 등)
+  for (const s of sources) {
+    if (!s.personal_notes?.trim()) continue
+    const obit = parseObituaryFromText(s.personal_notes)
+    if (!obit || obit.mournerNames.length === 0) continue
+
+    // 상주 목록 중 DB에 존재하는 취재원 수집
+    const mournerSources: SourceRow[] = []
+    for (const mName of obit.mournerNames) {
+      const targets = nameToSources.get(mName) ?? []
+      for (const t of targets)
+        if (t.id !== s.id && !mournerSources.some(x => x.id === t.id))
+          mournerSources.push(t)
+    }
+    if (mournerSources.length === 0) continue
+
+    // s ↔ 각 상주 연결
+    for (const ms of mournerSources)
+      addConn(s.id, ms.id, 'family', `가족 (${obit.type})`, 5)
+
+    // 상주끼리 연결 (형제·자매 등)
+    for (let i = 0; i < mournerSources.length; i++)
+      for (let j = i + 1; j < mournerSources.length; j++)
+        addConn(mournerSources[i].id, mournerSources[j].id, 'family', `가족 (${obit.type})`, 5)
+  }
+
   // ── 집계: 쌍별 단일 링크 합산 ──────────────────────────────────────────────
   const links: AutoLink[] = []
   for (const [key, conns] of pairMap) {
@@ -567,6 +655,7 @@ const TYPE_LABELS: Record<string, string> = {
   same_position:    '직책/위원회',
   academic_mentor:  '지도/사사',
   close_friend:     '친분관계',
+  family:           '가족/혼인관계',
   mention:          '직접언급',
   manual:           '수동등록',
 }
