@@ -4,7 +4,11 @@ import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { forceCollide } = require('d3-force-3d') as { forceCollide: (r: (n: any) => number) => any }
+const { forceCollide, forceX, forceY } = require('d3-force-3d') as {
+  forceCollide: (r: (n: any) => number) => any
+  forceX: (x: number) => any
+  forceY: (y: number) => any
+}
 
 interface Node {
   id: string
@@ -243,15 +247,14 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
 
-  // ── charge 공식 (소스 코드 실측 확인) ────────────────────────────────────────
-  // manyBody.js line 89: node.vx += x * value * alpha / l  (l = r², x = r*cosθ)
-  // → |Δv| = |value| * alpha / r   (1/r 감쇠, NOT 1/r²)
-  // center force: |Δv| = center_str * r
-  // 균형: (N-1)*|charge|/r = center*r  →  r² = (N-1)*|charge|/center
-  // r=300px, center=0.08 → |charge| = 300²*0.08/(N-1) = 7200/(N-1)
+  // ── charge 공식 ───────────────────────────────────────────────────────────────
+  // d3 charge: Δvx = (xj-xi)*charge*α / r²  →  radial force = |charge|*α / (2r)  (대칭 합산)
+  // forceX: Δvx = strength*(0-x)*α           →  radial force = strength*r*α
+  // 균형: (N-1)*|charge|/(2r) = strength*r  →  r² = (N-1)*|charge| / (2*strength)
+  // r=300, strength=0.08 → |charge| = 300²*2*0.08/(N-1) = 14400/(N-1)
   const TARGET_R = 300
   const CENTER_STR = 0.08
-  const chargeStrength = -Math.round((TARGET_R ** 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
+  const chargeStrength = -Math.round((TARGET_R ** 2 * 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
   const initRadius = TARGET_R
 
   const graphData = useMemo(() => ({
@@ -276,35 +279,62 @@ export default function NetworkGraph({ nodes, links }: Props) {
     function applyForces() {
       const fg = fgRef.current
       if (!fg) {
-        if (++tries < 20) setTimeout(applyForces, 50)
+        if (++tries < 30) setTimeout(applyForces, 50)
         return
       }
       try {
-        fg.d3Force('centerX')?.strength(CENTER_STR)
-        fg.d3Force('centerY')?.strength(CENTER_STR)
+        // 1. Force 구성
+        //    react-force-graph 기본 force: 'center'(ForceCenter), 'charge', 'link'
+        //    centerX/centerY 없음 → 'x'/'y' 이름으로 forceX/forceY 직접 추가
+        fg.d3Force('x', forceX(0).strength(CENTER_STR))
+        fg.d3Force('y', forceY(0).strength(CENTER_STR))
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')
-          ?.strength(0.3)
+          ?.strength(0.04)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return srcR + tgtR + 80
+            return srcR + tgtR + 120
           })
-          .iterations(3)
+          .iterations(1)
         fg.d3Force('collide', forceCollide((n: any) => {
-          return nodeRadius(n.degree ?? 1) * 2.5 + 10
-        }).iterations(4))
+          return nodeRadius(n.degree ?? 1) + 18
+        }).iterations(3))
+
+        // 2. 노드 위치를 원형 배치로 리셋 — 기본 force가 이미 노드를 뭉쳤을 수 있으므로
+        //    깨끗한 시작점(원형, 반경 initRadius)으로 되돌리고 속도도 초기화
+        const data = fg.graphData()
+        const n = data.nodes.length
+        if (n > 0) {
+          data.nodes.forEach((node: any, i: number) => {
+            node.x = Math.cos((2 * Math.PI * i) / n) * initRadius
+            node.y = Math.sin((2 * Math.PI * i) / n) * initRadius
+            node.vx = 0
+            node.vy = 0
+          })
+        }
+
+        // 3. 시뮬레이션 재시작
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }
 
-    const timer = setTimeout(applyForces, 0)
+    // 50ms 후 실행 — ForceGraph2D가 시뮬레이션을 완전히 초기화할 시간을 확보
+    const timer = setTimeout(applyForces, 50)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length])
 
-  // ── Auto-fit after simulation stabilizes ─────────────────────────────────
+  // ── Auto-fit: simulation 중 60틱마다 + 종료 시 ───────────────────────────
+  const tickCountRef = useRef(0)
+  const handleEngineTick = useCallback(() => {
+    tickCountRef.current++
+    if (tickCountRef.current % 60 === 0) {
+      try { fgRef.current?.zoomToFit(200, 80) } catch {}
+    }
+  }, [])
   const handleEngineStop = useCallback(() => {
+    tickCountRef.current = 0
     try { fgRef.current?.zoomToFit(400, 60) } catch {}
   }, [])
 
@@ -663,16 +693,17 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
           onNodeClick={handleNodeClick}
           onNodeHover={handleNodeHover}
+          onEngineTick={handleEngineTick}
           onEngineStop={handleEngineStop}
 
           width={dimensions.width}
           height={dimensions.height}
           minZoom={0.02}
           maxZoom={12}
-          cooldownTicks={500}
+          cooldownTicks={300}
           warmupTicks={0}
-          d3AlphaDecay={0.012}
-          d3VelocityDecay={0.32}
+          d3AlphaDecay={0.015}
+          d3VelocityDecay={0.4}
           nodeRelSize={1}
         />
       </div>

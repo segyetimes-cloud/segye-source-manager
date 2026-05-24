@@ -747,7 +747,26 @@ export default async function NetworkPage() {
       isDuplicate: duplicateNames.includes(s.full_name),
     }))
 
-  const linkTypeCounts = allLinks.reduce((acc, l) => {
+  // 노드 목록에 없는 ID를 참조하는 링크 제거 — 팬텀 노드(0,0) 방지
+  // 그리고 같은 쌍(source-target)을 가진 중복 링크 통합 — 중복 링크가 쌓이면
+  // d3-force link spring이 과도하게 강해져 노드가 (0,0)에 밀집 → NaN position → blank
+  const nodeIds = new Set(nodes.map(n => n.id))
+  const rawVisible = allLinks.filter(l => nodeIds.has(l.source) && nodeIds.has(l.target))
+  const linkMergeMap = new Map<string, AutoLink>()
+  for (const l of rawVisible) {
+    const key = [l.source, l.target].sort().join('||')
+    if (!linkMergeMap.has(key)) {
+      linkMergeMap.set(key, { ...l, types: [...l.types] })
+    } else {
+      const ex = linkMergeMap.get(key)!
+      for (const t of l.types) if (!ex.types.includes(t)) ex.types.push(t)
+      ex.connectionCount = (ex.connectionCount ?? 1) + (l.connectionCount ?? 1)
+      ex.strength = Math.max(ex.strength, l.strength)
+    }
+  }
+  const visibleLinks = [...linkMergeMap.values()]
+
+  const linkTypeCounts = visibleLinks.reduce((acc, l) => {
     for (const t of l.types) acc[t] = (acc[t] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
@@ -759,7 +778,7 @@ export default async function NetworkPage() {
           <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>🕸️ 관계망 그래프</h1>
           {/* 통계: 모바일에서는 한 줄 요약만 */}
           <p className="text-xs mt-0.5" style={{ color: '#485870' }}>
-            {nodes.length}명 · {allLinks.length}쌍 연결
+            {nodes.length}명 · {visibleLinks.length}쌍 연결
           </p>
         </div>
         {/* PC에서만 상세 통계 표시 */}
@@ -785,7 +804,7 @@ export default async function NetworkPage() {
       )}
 
       <div className="graph-container" style={{ height: 'calc(100vh - 140px)', minHeight: '420px' }}>
-        <NetworkGraph nodes={nodes} links={allLinks} />
+        <NetworkGraph nodes={nodes} links={visibleLinks} />
       </div>
     </div>
   )
