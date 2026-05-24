@@ -584,6 +584,31 @@ export default function SourceDetailClient({
         </div>
 
         <div className="flex items-center gap-1.5">
+          {/* 닫기 — 목록으로 돌아가기 */}
+          <button
+            type="button"
+            onClick={() => router.push('/sources')}
+            title="목록으로 돌아가기"
+            style={{
+              width: '30px', height: '30px', borderRadius: '50%',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              background: 'rgba(0,0,0,0.04)', border: '1px solid #DDE5EF',
+              color: '#94A3B8', cursor: 'pointer', fontSize: '16px',
+              lineHeight: 1, flexShrink: 0,
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.background = 'rgba(192,64,64,0.08)'
+              e.currentTarget.style.borderColor = 'rgba(192,64,64,0.3)'
+              e.currentTarget.style.color = '#C04040'
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+              e.currentTarget.style.borderColor = '#DDE5EF'
+              e.currentTarget.style.color = '#94A3B8'
+            }}
+          >
+            ✕
+          </button>
           {canEdit && (
             <Link href={`/sources/${source.id}/edit`}
               style={{

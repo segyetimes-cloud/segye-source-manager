@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_EDIT_ANY_SOURCE } from '@/lib/permissions'
@@ -51,13 +52,28 @@ export default async function SourceEditPage({ params }: Params) {
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
-          취재원 수정
-        </h1>
-        <p className="text-sm mt-1" style={{ color: '#687898' }}>
-          {source.full_name} 취재원 정보를 수정합니다
-        </p>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
+            취재원 수정
+          </h1>
+          <p className="text-sm mt-1" style={{ color: '#687898' }}>
+            {source.full_name} 취재원 정보를 수정합니다
+          </p>
+        </div>
+        <Link
+          href={`/sources/${source.id}`}
+          title="상세 페이지로 돌아가기"
+          style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
+            color: '#94A3B8', fontSize: '16px', textDecoration: 'none',
+            lineHeight: 1, flexShrink: 0,
+          }}
+        >
+          ✕
+        </Link>
       </div>
 
       <SourceForm mode="edit" initialData={source} />
