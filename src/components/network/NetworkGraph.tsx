@@ -130,6 +130,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const orgColorMapRef = useRef<Map<string, string>>(new Map())
   const highlightIdsRef = useRef<Set<string>>(new Set())
   const [hoveredInfo, setHoveredInfo] = useState<Node | null>(null)
+  // Initial circular positions — declared here (before any conditional return) to satisfy Rules of Hooks
+  const initialPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
 
   // ── Search ────────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('')
@@ -600,21 +602,17 @@ export default function NetworkGraph({ nodes, links }: Props) {
     )
   }
 
-  // Pre-position nodes in a circle so d3 never starts from a clustered state
-  const initialPositions = useRef<Map<string, { x: number; y: number }>>(new Map())
-  useEffect(() => {
-    // Only set positions for nodes we haven't seen yet
-    nodes.forEach((n, i) => {
-      if (!initialPositions.current.has(n.id)) {
-        const angle = (2 * Math.PI * i) / nodes.length
-        const radius = Math.max(180, nodes.length * 14)
-        initialPositions.current.set(n.id, {
-          x: Math.cos(angle) * radius,
-          y: Math.sin(angle) * radius,
-        })
-      }
-    })
-  }, [nodes])
+  // Synchronous: runs during render so positions are ready before d3 starts
+  nodes.forEach((n, i) => {
+    if (!initialPositions.current.has(n.id)) {
+      const angle = (2 * Math.PI * i) / nodes.length
+      const radius = Math.max(220, nodes.length * 16)
+      initialPositions.current.set(n.id, {
+        x: Math.cos(angle) * radius,
+        y: Math.sin(angle) * radius,
+      })
+    }
+  })
 
   const graphData = {
     nodes: nodes.map(n => ({
