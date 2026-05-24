@@ -243,15 +243,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
 
-  // ── 올바른 charge 공식 ─────────────────────────────────────────────────────
-  // d3-force charge는 1/r² 감쇠: Δv = strength / r²
-  // center force: Δv = center_strength * r
-  // 균형점: (N-1)*|charge|/r² = center*r → r³ = (N-1)*|charge|/center
-  // r=200px, center=0.06 → |charge| = 200³*0.06/(N-1) = 480000/(N-1)
-  const TARGET_R = 200
-  const CENTER_STR = 0.06
-  const chargeStrength = -Math.round((TARGET_R ** 3 * CENTER_STR) / Math.max(nodeCount - 1, 1))
-  // 초기 원형 반경 = 균형점과 동일 → 시뮬레이션 시작 직후 거의 이동 없음
+  // ── charge 공식 (소스 코드 실측 확인) ────────────────────────────────────────
+  // manyBody.js line 89: node.vx += x * value * alpha / l  (l = r², x = r*cosθ)
+  // → |Δv| = |value| * alpha / r   (1/r 감쇠, NOT 1/r²)
+  // center force: |Δv| = center_str * r
+  // 균형: (N-1)*|charge|/r = center*r  →  r² = (N-1)*|charge|/center
+  // r=300px, center=0.08 → |charge| = 300²*0.08/(N-1) = 7200/(N-1)
+  const TARGET_R = 300
+  const CENTER_STR = 0.08
+  const chargeStrength = -Math.round((TARGET_R ** 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
   const initRadius = TARGET_R
 
   const graphData = useMemo(() => ({
