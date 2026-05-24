@@ -4,9 +4,10 @@ import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { forceCollide, forceCenter } = require('d3-force-3d') as {
+const { forceCollide, forceX, forceY } = require('d3-force-3d') as {
   forceCollide: (r: (n: any) => number) => any
-  forceCenter: (x: number, y: number) => any
+  forceX: (x: number) => any
+  forceY: (y: number) => any
 }
 
 interface Node {
@@ -243,49 +244,50 @@ export default function NetworkGraph({ nodes, links }: Props) {
     [links, activeTypes]
   )
 
-  // ── Force simulation setup ────────────────────────────────────────────────
+  // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
   const chargeStrength = Math.min(-600 - nodeCount * 40, -1800)
   const linkDistance   = Math.max(160, Math.min(120 + nodeCount * 7, 360))
 
+  const graphData = useMemo(() => {
+    const count = nodes.length
+    const radius = Math.max(300, count * 30)
+    return {
+      nodes: nodes.map((n, i) => ({
+        ...n,
+        name: n.label,
+        val: 1,
+        // circular initial positions — simulation starts spread out
+        x: Math.cos((2 * Math.PI * i) / count) * radius,
+        y: Math.sin((2 * Math.PI * i) / count) * radius,
+      })),
+      links: filteredLinks.map(l => ({
+        ...l,
+        curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
+      })),
+    }
+  }, [nodes, filteredLinks])
+
+  // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
     let tries = 0
 
-    function applyLayout() {
+    function applyForces() {
       const fg = fgRef.current
       if (!fg) {
-        if (++tries < 15) setTimeout(applyLayout, 200)
-        return
-      }
-      const simNodes: any[] = fg.graphData()?.nodes ?? []
-      if (simNodes.length === 0) {
-        if (++tries < 15) setTimeout(applyLayout, 200)
+        if (++tries < 20) setTimeout(applyForces, 50)
         return
       }
       try {
-        // Circular initial positions — spread before simulation starts
-        const count = simNodes.length
-        const radius = Math.max(280, count * 26)
-        simNodes.forEach((n: any, i: number) => {
-          const angle = (2 * Math.PI * i) / count
-          n.x = Math.cos(angle) * radius
-          n.y = Math.sin(angle) * radius
-          n.vx = 0
-          n.vy = 0
-        })
-
-        // KEY FIX: remove forceX/forceY (pulls each node individually to center →
-        // causes clustering). Replace with forceCenter which only translates the
-        // whole graph's centroid — no cohesive force on individual nodes.
-        fg.d3Force('centerX', null)
-        fg.d3Force('centerY', null)
-        fg.d3Force('center', forceCenter(0, 0))
+        // Replace default strong centering (strength 0.1) with very weak ones.
+        // forceX/forceY at 0.02 just prevents off-screen drift without clustering.
+        fg.d3Force('centerX', forceX(0).strength(0.02))
+        fg.d3Force('centerY', forceY(0).strength(0.02))
 
         fg.d3Force('charge')?.strength(chargeStrength)
 
-        // Explicit low link strength prevents dense graphs from over-clustering
         fg.d3Force('link')
-          ?.strength(0.18)
+          ?.strength(0.15)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
@@ -295,14 +297,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
-          return r * 2.8 + 10
+          return r * 2.5 + 10
         }).iterations(4))
 
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }
 
-    const timer = setTimeout(applyLayout, 150)
+    // setTimeout 0 = fires right after mount, before simulation runs more than 1-2 frames
+    const timer = setTimeout(applyForces, 0)
     return () => clearTimeout(timer)
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length])
@@ -639,14 +642,6 @@ export default function NetworkGraph({ nodes, links }: Props) {
     )
   }
 
-  const graphData = {
-    nodes: nodes.map(n => ({ ...n, name: n.label, val: 1 })),
-    links: filteredLinks.map(l => ({
-      ...l,
-      curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
-    })),
-  }
-
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520', overflow: 'hidden' }}>
 
@@ -682,7 +677,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
           minZoom={0.02}
           maxZoom={12}
           cooldownTicks={500}
-          warmupTicks={120}
+          warmupTicks={0}
           d3AlphaDecay={0.012}
           d3VelocityDecay={0.32}
           nodeRelSize={1}
