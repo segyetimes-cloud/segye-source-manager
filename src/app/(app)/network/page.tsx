@@ -544,14 +544,20 @@ function buildAutoLinks(sources: SourceRow[]): {
       }
     }
 
-    // ─ personal_notes에서 "지도교수: 이민규", "이민규 지도교수", "이민규 사사" 등
+    // ─ personal_notes에서 "지도교수: 이민규", "이민규 지도교수", "이민규 사사",
+    //   "이민규 기자의 석사학위 논문 지도교수" 등
+    //   패턴 A: 이름 뒤 같은 문장 안(최대 35자 이내)에 지도 관계어가 나오는 경우
+    //   패턴 B: 지도 관계어 바로 뒤에 이름이 나오는 경우 (지도교수: 이민규)
     if (s.personal_notes) {
       for (const [name, targets] of nameToSources) {
         if (targets.some(t => t.id === s.id)) continue
         const note = s.personal_notes
+        const mentorJoin = MENTOR_TERMS.join('|')
         const isMentor =
-          new RegExp(`${name}\\s*(?:의)?\\s*(?:${MENTOR_TERMS.join('|')})`).test(note) ||
-          new RegExp(`(?:${MENTOR_TERMS.join('|')})\\s*[:：]?\\s*${name}`).test(note)
+          // 패턴 A: "[이름] ... 지도교수" — 사이에 최대 35자 (줄바꿈·문장 종결 제외)
+          new RegExp(`${name}[^\\n。.!?]{0,35}(?:${mentorJoin})`).test(note) ||
+          // 패턴 B: "지도교수: [이름]" 또는 "지도교수 [이름]"
+          new RegExp(`(?:${mentorJoin})\\s*[:：]?\\s*${name}`).test(note)
         if (!isMentor) continue
         for (const t of targets) {
           addConn(s.id, t.id, 'academic_mentor', `지도교수 (${name})`, 5)
