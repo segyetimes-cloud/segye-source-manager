@@ -126,6 +126,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
   const hoveredIdRef = useRef<string | null>(null)
   const hoverCenterTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const clearHoverTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const orgColorMapRef = useRef<Map<string, string>>(new Map())
   const highlightIdsRef = useRef<Set<string>>(new Set())
   const [hoveredInfo, setHoveredInfo] = useState<Node | null>(null)
@@ -366,6 +367,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Hover handler — updates refs (for canvas) + state (for overlay) ───────
   const handleNodeHover = useCallback((node: unknown) => {
     const n = node as (Node & { x?: number; y?: number }) | null
+
+    // 펜딩 중인 클리어 타이머 취소 (새 노드에 진입했으므로)
+    if (clearHoverTimerRef.current) {
+      clearTimeout(clearHoverTimerRef.current)
+      clearHoverTimerRef.current = null
+    }
+
     hoveredIdRef.current = n?.id ?? null
 
     const ids = new Set<string>()
@@ -382,17 +390,23 @@ export default function NetworkGraph({ nodes, links }: Props) {
       } catch {}
     }
     highlightIdsRef.current = ids
-    setHoveredInfo(n ? (n as unknown as Node) : null)
 
-    // Debounced center-on-hover (280ms delay, no zoom change)
-    if (hoverCenterTimerRef.current) clearTimeout(hoverCenterTimerRef.current)
     if (n) {
+      setHoveredInfo(n as unknown as Node)
+      // Debounced center-on-hover (280ms delay, no zoom change)
+      if (hoverCenterTimerRef.current) clearTimeout(hoverCenterTimerRef.current)
       hoverCenterTimerRef.current = setTimeout(() => {
         try {
           const gn = fgRef.current?.graphData()?.nodes?.find((nn: any) => nn.id === n.id)
           if (gn?.x !== undefined) fgRef.current?.centerAt(gn.x, gn.y, 500)
         } catch {}
       }, 280)
+    } else {
+      // 커서가 노드 바깥으로 이동했을 때 600ms 유예 — 근처에 머물면 카드 유지
+      clearHoverTimerRef.current = setTimeout(() => {
+        setHoveredInfo(null)
+        clearHoverTimerRef.current = null
+      }, 600)
     }
   }, [])
 
