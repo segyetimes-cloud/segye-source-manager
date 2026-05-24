@@ -583,73 +583,31 @@ export default function SourceDetailClient({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          {/* 닫기 — 목록으로 돌아가기 */}
-          <button
-            type="button"
-            onClick={() => router.push('/sources')}
-            title="목록으로 돌아가기"
-            style={{
-              width: '30px', height: '30px', borderRadius: '50%',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              background: 'rgba(0,0,0,0.04)', border: '1px solid #DDE5EF',
-              color: '#94A3B8', cursor: 'pointer', fontSize: '16px',
-              lineHeight: 1, flexShrink: 0,
-            }}
-            onMouseEnter={e => {
-              e.currentTarget.style.background = 'rgba(192,64,64,0.08)'
-              e.currentTarget.style.borderColor = 'rgba(192,64,64,0.3)'
-              e.currentTarget.style.color = '#C04040'
-            }}
-            onMouseLeave={e => {
-              e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
-              e.currentTarget.style.borderColor = '#DDE5EF'
-              e.currentTarget.style.color = '#94A3B8'
-            }}
-          >
-            ✕
-          </button>
-          {canEdit && (
-            <Link href={`/sources/${source.id}/edit`}
-              style={{
-                display: 'flex', alignItems: 'center', gap: '4px',
-                padding: '5px 11px', borderRadius: '7px', fontSize: '12px', fontWeight: 500,
-                background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', textDecoration: 'none',
-              }}>
-              ✏️ 수정
-            </Link>
-          )}
-          <button onClick={() => setShowHistory(true)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: '4px',
-              padding: '5px 11px', borderRadius: '7px', fontSize: '12px',
-              background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer',
-            }}>
-            📋 이력
-          </button>
-          {/* B안 삭제: 부장+는 직접 삭제, 기자·차장은 삭제 요청 */}
-          {isAdmin ? (
-            <button onClick={handleDelete} disabled={deleting}
-              title="취재원 삭제 (부장 권한)"
-              style={{
-                padding: '5px 9px', borderRadius: '7px', fontSize: '13px',
-                background: 'rgba(255,68,68,0.08)', color: '#C04040',
-                border: '1px solid rgba(255,68,68,0.18)', cursor: 'pointer',
-              }}>
-              🗑️
-            </button>
-          ) : (
-            <button onClick={handleDeletionRequest} disabled={deleting}
-              title="삭제 요청 (부장 승인 필요)"
-              style={{
-                padding: '5px 9px', borderRadius: '7px', fontSize: '12px',
-                background: 'rgba(255,153,0,0.08)', color: '#A87228',
-                border: '1px solid rgba(255,153,0,0.2)', cursor: 'pointer',
-              }}>
-              🗑️ 요청
-            </button>
-          )}
-        </div>
+        {/* 닫기 — 목록으로 돌아가기 (상단 우측 고정) */}
+        <button
+          type="button"
+          onClick={() => router.push('/sources')}
+          title="목록으로 돌아가기"
+          style={{
+            width: '30px', height: '30px', borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(0,0,0,0.04)', border: '1px solid #DDE5EF',
+            color: '#94A3B8', cursor: 'pointer', fontSize: '16px',
+            lineHeight: 1, flexShrink: 0,
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = 'rgba(192,64,64,0.08)'
+            e.currentTarget.style.borderColor = 'rgba(192,64,64,0.3)'
+            e.currentTarget.style.color = '#C04040'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = 'rgba(0,0,0,0.04)'
+            e.currentTarget.style.borderColor = '#DDE5EF'
+            e.currentTarget.style.color = '#94A3B8'
+          }}
+        >
+          ✕
+        </button>
       </div>
 
       {/* 정보에서 구조화 가능한 항목 자동 감지 배너 */}
@@ -1419,6 +1377,80 @@ export default function SourceDetailClient({
         <span>등록: {source.profiles?.full_name ?? '—'}</span>
         <span>·</span>
         <span>최종수정: {new Date(source.updated_at).toLocaleString('ko-KR')}</span>
+      </div>
+
+      {/* ── 하단 액션 바 — 읽기 흐름이 끝난 뒤 행동 결정 ─────────────────── */}
+      <div className="flex items-center gap-2 pt-5" style={{ borderTop: '1px solid #DDE5EF' }}>
+        {canEdit && (
+          <Link
+            href={`/sources/${source.id}/edit`}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '5px',
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+              background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF',
+              textDecoration: 'none', transition: 'all 0.15s',
+            }}
+            onMouseEnter={e => {
+              (e.currentTarget as HTMLElement).style.background = '#E2E8F0'
+              ;(e.currentTarget as HTMLElement).style.color = '#1C2B3A'
+            }}
+            onMouseLeave={e => {
+              (e.currentTarget as HTMLElement).style.background = '#EEF2F7'
+              ;(e.currentTarget as HTMLElement).style.color = '#526070'
+            }}
+          >
+            ✏️ 수정
+          </Link>
+        )}
+        <button
+          onClick={() => setShowHistory(true)}
+          style={{
+            display: 'flex', alignItems: 'center', gap: '5px',
+            padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
+            background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF',
+            cursor: 'pointer', transition: 'all 0.15s',
+          }}
+          onMouseEnter={e => {
+            e.currentTarget.style.background = '#E2E8F0'
+            e.currentTarget.style.color = '#1C2B3A'
+          }}
+          onMouseLeave={e => {
+            e.currentTarget.style.background = '#EEF2F7'
+            e.currentTarget.style.color = '#526070'
+          }}
+        >
+          📋 이력
+        </button>
+
+        {/* 삭제는 오른쪽 끝 — 가장 파괴적인 행동이므로 마지막에 */}
+        <div style={{ flex: 1 }} />
+        {isAdmin ? (
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            title="취재원 삭제 (부장 권한)"
+            style={{
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
+              background: 'rgba(255,68,68,0.08)', color: '#C04040',
+              border: '1px solid rgba(255,68,68,0.18)', cursor: 'pointer',
+            }}
+          >
+            🗑️ 삭제
+          </button>
+        ) : (
+          <button
+            onClick={handleDeletionRequest}
+            disabled={deleting}
+            title="삭제 요청 (부장 승인 필요)"
+            style={{
+              padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
+              background: 'rgba(255,153,0,0.08)', color: '#A87228',
+              border: '1px solid rgba(255,153,0,0.2)', cursor: 'pointer',
+            }}
+          >
+            🗑️ 삭제 요청
+          </button>
+        )}
       </div>
     </div>
   )
