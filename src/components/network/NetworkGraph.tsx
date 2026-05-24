@@ -242,8 +242,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Force simulation setup ────────────────────────────────────────────────
   const nodeCount = nodes.length
-  // Charge strong enough to spread nodes; center force will be weakened so they don't cluster
-  const chargeStrength = Math.min(-280 - nodeCount * 18, -1200)
+  // Strong charge so nodes always spread; center forces are weakened below
+  const chargeStrength = Math.min(-550 - nodeCount * 38, -1600)
   const linkDistance   = Math.max(140, Math.min(110 + nodeCount * 6, 320))
 
   useEffect(() => {
@@ -252,28 +252,33 @@ export default function NetworkGraph({ nodes, links }: Props) {
     function applyLayout() {
       const fg = fgRef.current
       if (!fg) {
-        // fgRef not set yet (dynamic import still loading) — retry
-        if (++tries < 10) setTimeout(applyLayout, 250)
+        if (++tries < 12) setTimeout(applyLayout, 200)
         return
       }
       const simNodes: any[] = fg.graphData()?.nodes ?? []
       if (simNodes.length === 0) {
-        if (++tries < 10) setTimeout(applyLayout, 250)
+        if (++tries < 12) setTimeout(applyLayout, 200)
         return
       }
       try {
-        // Position nodes on a circle so simulation always starts spread out
+        // Set circular initial positions so simulation starts spread out
         const count = simNodes.length
         simNodes.forEach((n: any, i: number) => {
           const angle = (2 * Math.PI * i) / count
-          const radius = Math.max(200, count * 15)
+          const radius = Math.max(220, count * 16)
           n.x = Math.cos(angle) * radius
           n.y = Math.sin(angle) * radius
           n.vx = 0
           n.vy = 0
         })
-        // Tune center force: 0.10 gives equilibrium radius ~260px (visible, spread)
-        fg.d3Force('center')?.strength(0.10)
+
+        // react-force-graph-2d uses 'centerX'/'centerY' (not 'center').
+        // Weaken them so nodes spread to ~350px radius instead of clustering.
+        // Try all possible names defensively.
+        ;(['center', 'centerX', 'centerY', 'x', 'y'] as const).forEach(name => {
+          fg.d3Force(name)?.strength?.(0.06)
+        })
+
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')?.distance((link: any) => {
           const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
