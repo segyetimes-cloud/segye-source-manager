@@ -23,6 +23,12 @@ interface HelpRequest {
   help_responses: HelpResponse[]
 }
 
+interface PointsModal {
+  userId: string
+  requestId: string
+  userName: string
+}
+
 const REQUEST_TYPE_LABEL: Record<string, string> = {
   contact: '📞 연락처',
   info: '📋 정보',
@@ -30,34 +36,67 @@ const REQUEST_TYPE_LABEL: Record<string, string> = {
   other: '💬 기타',
 }
 
+const modalInput: React.CSSProperties = {
+  width: '100%', background: '#131C2C', border: '1px solid #1A2838',
+  color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
+  fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+}
+
 export default function HelpRewardsClient({ requests }: { requests: HelpRequest[] }) {
-  const [awarding, setAwarding] = useState<string | null>(null)
+  const [awarding, setAwarding] = useState(false)
   const [success, setSuccess] = useState<string | null>(null)
 
-  async function givePoints(userId: string, requestId: string, userName: string) {
-    const pointsStr = prompt(`${userName}에게 지급할 보너스 포인트를 입력하세요 (1~500):`)
-    if (!pointsStr) return
-    const points = parseInt(pointsStr)
-    if (isNaN(points) || points < 1 || points > 500) {
-      alert('1~500 사이의 숫자를 입력해주세요')
+  // 모달 상태
+  const [modal, setModal] = useState<PointsModal | null>(null)
+  const [points, setPoints] = useState('')
+  const [reason, setReason] = useState('')
+  const [modalError, setModalError] = useState('')
+
+  function openModal(userId: string, requestId: string, userName: string) {
+    setModal({ userId, requestId, userName })
+    setPoints('')
+    setReason('')
+    setModalError('')
+  }
+
+  function closeModal() {
+    setModal(null)
+    setPoints('')
+    setReason('')
+    setModalError('')
+  }
+
+  async function submitPoints() {
+    if (!modal) return
+    const pts = parseInt(points)
+    if (isNaN(pts) || pts < 1 || pts > 500) {
+      setModalError('1~500 사이의 숫자를 입력해주세요')
       return
     }
-    const reason = prompt('지급 사유를 입력하세요:') || '도움 게시판 기여 보너스'
-
-    setAwarding(userId + requestId)
+    if (!reason.trim()) {
+      setModalError('지급 사유를 입력해주세요')
+      return
+    }
+    setAwarding(true)
+    setModalError('')
     const res = await fetch('/api/admin/points', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user_id: userId, points, reason, related_request_id: requestId }),
+      body: JSON.stringify({
+        user_id: modal.userId,
+        points: pts,
+        reason: reason.trim(),
+        related_request_id: modal.requestId,
+      }),
     })
-    setAwarding(null)
-
+    setAwarding(false)
     if (res.ok) {
-      setSuccess(`${userName}에게 ${points}pt 지급 완료!`)
+      closeModal()
+      setSuccess(`${modal.userName}에게 ${pts}pt 지급 완료!`)
       setTimeout(() => setSuccess(null), 3000)
     } else {
       const data = await res.json()
-      alert('오류: ' + data.error)
+      setModalError('오류: ' + (data.error ?? '알 수 없는 오류'))
     }
   }
 
@@ -80,7 +119,6 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
 
       {requests.map(req => {
         const acceptedResp = req.help_responses?.find(r => r.is_accepted)
-
         return (
           <div key={req.id} className="glass-card p-5">
             <div className="flex items-start justify-between gap-4 mb-3">
@@ -105,7 +143,6 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {/* 요청자 */}
               <div className="rounded-lg p-3" style={{ background: 'rgba(30,144,255,0.05)', border: '1px solid rgba(30,144,255,0.1)' }}>
                 <p className="text-xs mb-1" style={{ color: '#485870' }}>📝 요청자</p>
                 <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
@@ -115,20 +152,13 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
                   <p className="text-xs" style={{ color: '#687898' }}>{req.profiles.department}</p>
                 )}
                 <button
-                  onClick={() => givePoints(req.requester_id, req.id, req.profiles?.full_name ?? '요청자')}
-                  disabled={awarding === req.requester_id + req.id}
+                  onClick={() => openModal(req.requester_id, req.id, req.profiles?.full_name ?? '요청자')}
                   className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold w-full"
-                  style={{
-                    background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
-                    color: 'white',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}>
-                  {awarding === req.requester_id + req.id ? '처리 중...' : '+ 보너스 지급'}
+                  style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white', border: 'none', cursor: 'pointer' }}>
+                  + 보너스 지급
                 </button>
               </div>
 
-              {/* 응답자 */}
               {acceptedResp ? (
                 <div className="rounded-lg p-3" style={{ background: 'rgba(0,204,102,0.05)', border: '1px solid rgba(0,204,102,0.1)' }}>
                   <p className="text-xs mb-1" style={{ color: '#485870' }}>✅ 채택된 응답자</p>
@@ -139,20 +169,15 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
                     <p className="text-xs" style={{ color: '#687898' }}>{acceptedResp.profiles.department}</p>
                   )}
                   <button
-                    onClick={() => givePoints(acceptedResp.responder_id, req.id, acceptedResp.profiles?.full_name ?? '응답자')}
-                    disabled={awarding === acceptedResp.responder_id + req.id}
+                    onClick={() => openModal(acceptedResp.responder_id, req.id, acceptedResp.profiles?.full_name ?? '응답자')}
                     className="mt-2 px-3 py-1.5 rounded-lg text-xs font-semibold w-full"
-                    style={{
-                      background: 'linear-gradient(135deg, #3D9E6A, #009944)',
-                      color: 'white',
-                      border: 'none',
-                      cursor: 'pointer',
-                    }}>
-                    {awarding === acceptedResp.responder_id + req.id ? '처리 중...' : '+ 보너스 지급'}
+                    style={{ background: 'linear-gradient(135deg, #3D9E6A, #009944)', color: 'white', border: 'none', cursor: 'pointer' }}>
+                    + 보너스 지급
                   </button>
                 </div>
               ) : (
-                <div className="rounded-lg p-3 flex items-center justify-center" style={{ background: 'rgba(74,96,128,0.05)', border: '1px solid rgba(74,96,128,0.1)' }}>
+                <div className="rounded-lg p-3 flex items-center justify-center"
+                  style={{ background: 'rgba(74,96,128,0.05)', border: '1px solid rgba(74,96,128,0.1)' }}>
                   <p className="text-xs" style={{ color: '#485870' }}>채택된 응답 없음</p>
                 </div>
               )}
@@ -160,6 +185,95 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
           </div>
         )
       })}
+
+      {/* ── 포인트 지급 모달 ── */}
+      {modal && (
+        <div
+          onClick={closeModal}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(5,10,20,0.78)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px 16px',
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#0D1726', border: '1px solid #1E3050',
+              borderRadius: '14px', width: '100%', maxWidth: 440,
+              boxShadow: '0 20px 56px rgba(0,0,0,0.7)', position: 'relative',
+            }}>
+            {/* 헤더 */}
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1A2838' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+                보너스 포인트 지급
+              </h3>
+              <button onClick={closeModal} aria-label="닫기"
+                style={{
+                  background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: '#8A9AB0', borderRadius: '7px', width: '30px', height: '30px',
+                  cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                ×
+              </button>
+            </div>
+
+            {/* 내용 */}
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
+                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 2px' }}>대상</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{modal.userName}</p>
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#687898', marginBottom: '5px' }}>
+                  포인트 (1~500) <span style={{ color: '#C04040' }}>*</span>
+                </label>
+                <input
+                  type="number" min={1} max={500}
+                  value={points} onChange={e => setPoints(e.target.value)}
+                  placeholder="예: 50"
+                  autoFocus
+                  style={modalInput}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#687898', marginBottom: '5px' }}>
+                  지급 사유 <span style={{ color: '#C04040' }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  value={reason} onChange={e => setReason(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && submitPoints()}
+                  placeholder="예: 도움 게시판 기여 보너스"
+                  style={modalInput}
+                />
+              </div>
+
+              {modalError && (
+                <p style={{ fontSize: '12px', color: '#C04040', margin: 0 }}>{modalError}</p>
+              )}
+
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
+                <button onClick={closeModal}
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  취소
+                </button>
+                <button onClick={submitPoints} disabled={awarding}
+                  style={{
+                    background: awarding ? 'rgba(74,124,192,0.1)' : 'rgba(74,124,192,0.2)',
+                    border: '1px solid rgba(74,124,192,0.5)', color: '#4A7CC0',
+                    borderRadius: '8px', padding: '9px 22px', fontSize: '13px', fontWeight: 700,
+                    cursor: awarding ? 'not-allowed' : 'pointer', opacity: awarding ? 0.6 : 1,
+                  }}>
+                  {awarding ? '처리 중...' : '지급 완료'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

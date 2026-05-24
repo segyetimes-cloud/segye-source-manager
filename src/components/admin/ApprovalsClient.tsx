@@ -23,13 +23,45 @@ interface Props {
   recent: Approval[]
 }
 
+interface RejectModal {
+  approvalId: string
+  sourceName: string
+  requesterName: string
+}
+
+const modalInput: React.CSSProperties = {
+  width: '100%', background: '#131C2C', border: '1px solid #1A2838',
+  color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
+  fontSize: '13px', outline: 'none', boxSizing: 'border-box',
+  resize: 'none',
+}
+
 export default function ApprovalsClient({ pending: initialPending, recent: initialRecent }: Props) {
   const router = useRouter()
   const [pending, setPending] = useState(initialPending)
   const [recent, setRecent] = useState(initialRecent)
   const [processing, setProcessing] = useState<string | null>(null)
-  const [rejectReasons, setRejectReasons] = useState<Record<string, string>>({})
-  const [showRejectForm, setShowRejectForm] = useState<string | null>(null)
+
+  // 거절 모달
+  const [rejectModal, setRejectModal] = useState<RejectModal | null>(null)
+  const [rejectReason, setRejectReason] = useState('')
+  const [rejectError, setRejectError] = useState('')
+
+  function openRejectModal(app: Approval) {
+    setRejectModal({
+      approvalId: app.id,
+      sourceName: app.sources?.full_name ?? app.source_id,
+      requesterName: app.profiles?.full_name ?? '—',
+    })
+    setRejectReason('')
+    setRejectError('')
+  }
+
+  function closeRejectModal() {
+    setRejectModal(null)
+    setRejectReason('')
+    setRejectError('')
+  }
 
   async function handleApprove(approvalId: string) {
     setProcessing(approvalId)
@@ -49,21 +81,26 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
     setProcessing(null)
   }
 
-  async function handleReject(approvalId: string) {
-    const reason = rejectReasons[approvalId] ?? ''
-    setProcessing(approvalId)
+  async function handleReject() {
+    if (!rejectModal) return
+    setProcessing(rejectModal.approvalId)
+    setRejectError('')
     const res = await fetch('/api/approvals', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ approval_id: approvalId, action: 'reject', reject_reason: reason }),
+      body: JSON.stringify({ approval_id: rejectModal.approvalId, action: 'reject', reject_reason: rejectReason }),
     })
     if (res.ok) {
-      const rejected = pending.find(a => a.id === approvalId)
+      const rejected = pending.find(a => a.id === rejectModal.approvalId)
       if (rejected) {
-        setPending(prev => prev.filter(a => a.id !== approvalId))
-        setRecent(prev => [{ ...rejected, status: 'rejected' as const, reject_reason: reason }, ...prev])
+        setPending(prev => prev.filter(a => a.id !== rejectModal.approvalId))
+        setRecent(prev => [{ ...rejected, status: 'rejected' as const, reject_reason: rejectReason }, ...prev])
       }
-      setShowRejectForm(null)
+      closeRejectModal()
+      router.refresh()
+    } else {
+      const data = await res.json()
+      setRejectError(data.error ?? '처리 실패')
     }
     setProcessing(null)
   }
@@ -77,6 +114,72 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
 
   return (
     <div className="space-y-8">
+      {/* ── 거절 모달 ── */}
+      {rejectModal && (
+        <div
+          onClick={closeRejectModal}
+          style={{
+            position: 'fixed', inset: 0, zIndex: 200,
+            background: 'rgba(5,10,20,0.78)', backdropFilter: 'blur(4px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: '24px 16px',
+          }}>
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              background: '#0D1726', border: '1px solid #1E3050',
+              borderRadius: '14px', width: '100%', maxWidth: 460,
+              boxShadow: '0 20px 56px rgba(0,0,0,0.7)', position: 'relative',
+            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1A2838' }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#C04040', margin: 0 }}>
+                ✗ 열람 요청 거절
+              </h3>
+              <button onClick={closeRejectModal} aria-label="닫기"
+                style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)', color: '#8A9AB0', borderRadius: '7px', width: '30px', height: '30px', cursor: 'pointer', fontSize: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                ×
+              </button>
+            </div>
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(192,64,64,0.06)', border: '1px solid rgba(192,64,64,0.2)' }}>
+                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 4px' }}>거절 대상</p>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', margin: '0 0 2px' }}>
+                  {rejectModal.requesterName} → {rejectModal.sourceName}
+                </p>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '12px', color: '#687898', marginBottom: '5px' }}>
+                  거절 사유 (선택사항)
+                </label>
+                <textarea
+                  rows={3}
+                  value={rejectReason}
+                  onChange={e => setRejectReason(e.target.value)}
+                  placeholder="거절 사유를 입력하세요 (생략 가능)"
+                  style={{ ...modalInput }}
+                />
+              </div>
+              {rejectError && <p style={{ fontSize: '12px', color: '#C04040', margin: 0 }}>{rejectError}</p>}
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                <button onClick={closeRejectModal}
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  취소
+                </button>
+                <button onClick={handleReject} disabled={processing === rejectModal.approvalId}
+                  style={{
+                    background: 'rgba(192,64,64,0.15)', border: '1px solid rgba(192,64,64,0.4)', color: '#C04040',
+                    borderRadius: '8px', padding: '9px 22px', fontSize: '13px', fontWeight: 700,
+                    cursor: processing === rejectModal.approvalId ? 'not-allowed' : 'pointer',
+                    opacity: processing === rejectModal.approvalId ? 0.6 : 1,
+                  }}>
+                  {processing === rejectModal.approvalId ? '처리 중...' : '거절 확인'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* 대기 중 */}
       <section>
         <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#CDD5E0' }}>
@@ -108,7 +211,6 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                         </span>
                       )}
                     </div>
-
                     <p className="text-xs mb-1" style={{ color: '#485870' }}>
                       📄 취재원:{' '}
                       <Link href={`/sources/${app.source_id}`} style={{ color: '#4A7CC0', textDecoration: 'none' }}>
@@ -116,37 +218,13 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                       </Link>
                       {app.sources?.current_organization && ` (${app.sources.current_organization})`}
                     </p>
-
                     <div className="mt-2 p-3 rounded-lg" style={{ background: '#182035' }}>
                       <p className="text-xs font-medium mb-1" style={{ color: '#687898' }}>신청 사유</p>
                       <p className="text-sm" style={{ color: '#CDD5E0' }}>{app.reason}</p>
                     </div>
-
                     <p className="text-xs mt-2" style={{ color: '#485870' }}>
                       신청일: {new Date(app.requested_at).toLocaleString('ko-KR')}
                     </p>
-
-                    {showRejectForm === app.id && (
-                      <div className="mt-3">
-                        <textarea
-                          value={rejectReasons[app.id] ?? ''}
-                          onChange={e => setRejectReasons(prev => ({ ...prev, [app.id]: e.target.value }))}
-                          placeholder="거절 사유를 입력하세요 (선택사항)"
-                          rows={2}
-                          style={{
-                            width: '100%',
-                            background: '#182035',
-                            border: '1px solid rgba(255,68,68,0.3)',
-                            color: '#CDD5E0',
-                            borderRadius: '8px',
-                            padding: '8px',
-                            fontSize: '13px',
-                            resize: 'none',
-                            outline: 'none',
-                          }}
-                        />
-                      </div>
-                    )}
                   </div>
 
                   <div className="flex flex-col gap-2 flex-shrink-0">
@@ -156,50 +234,21 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                       className="px-4 py-2 rounded-lg text-xs font-semibold"
                       style={{
                         background: processing === app.id ? '#1A2838' : 'rgba(0,204,102,0.15)',
-                        color: '#3D9E6A',
-                        border: '1px solid rgba(0,204,102,0.3)',
-                        cursor: processing === app.id ? 'not-allowed' : 'pointer',
-                        whiteSpace: 'nowrap',
+                        color: '#3D9E6A', border: '1px solid rgba(0,204,102,0.3)',
+                        cursor: processing === app.id ? 'not-allowed' : 'pointer', whiteSpace: 'nowrap',
                       }}>
                       ✅ 승인
                     </button>
-
-                    {showRejectForm === app.id ? (
-                      <div className="flex flex-col gap-1">
-                        <button
-                          onClick={() => handleReject(app.id)}
-                          disabled={processing === app.id}
-                          className="px-4 py-2 rounded-lg text-xs font-semibold"
-                          style={{
-                            background: 'rgba(255,68,68,0.15)',
-                            color: '#C04040',
-                            border: '1px solid rgba(255,68,68,0.3)',
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap',
-                          }}>
-                          거절 확인
-                        </button>
-                        <button
-                          onClick={() => setShowRejectForm(null)}
-                          className="px-4 py-1.5 rounded-lg text-xs"
-                          style={{ background: '#182035', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
-                          취소
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        onClick={() => setShowRejectForm(app.id)}
-                        className="px-4 py-2 rounded-lg text-xs font-semibold"
-                        style={{
-                          background: 'rgba(255,68,68,0.1)',
-                          color: '#C04040',
-                          border: '1px solid rgba(255,68,68,0.2)',
-                          cursor: 'pointer',
-                          whiteSpace: 'nowrap',
-                        }}>
-                        ✗ 거절
-                      </button>
-                    )}
+                    <button
+                      onClick={() => openRejectModal(app)}
+                      className="px-4 py-2 rounded-lg text-xs font-semibold"
+                      style={{
+                        background: 'rgba(255,68,68,0.1)', color: '#C04040',
+                        border: '1px solid rgba(255,68,68,0.2)',
+                        cursor: 'pointer', whiteSpace: 'nowrap',
+                      }}>
+                      ✗ 거절
+                    </button>
                   </div>
                 </div>
               </div>
@@ -221,8 +270,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
               <div key={app.id} style={cardStyle}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <span
-                      className="text-xs px-2 py-0.5 rounded font-semibold"
+                    <span className="text-xs px-2 py-0.5 rounded font-semibold"
                       style={{
                         background: app.status === 'approved' ? 'rgba(0,204,102,0.15)' : 'rgba(255,68,68,0.1)',
                         color: app.status === 'approved' ? '#3D9E6A' : '#C04040',
