@@ -5,6 +5,7 @@ import { calcCompletenessScore, INCREMENTAL_POINT_FIELDS } from '@/lib/points'
 import { can, CAN_VIEW_SENSITIVE_SOURCE, CAN_VIEW_PERSONAL_NOTES, CAN_EDIT_ANY_SOURCE, CAN_DELETE_SOURCE } from '@/lib/permissions'
 import { encryptNullable, decryptNullable } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
+import { extractRelationshipsWithAI } from '@/lib/aiRelations'
 
 interface Params {
   params: Promise<{ id: string }>
@@ -195,6 +196,23 @@ export async function PATCH(request: NextRequest, { params }: Params) {
     ip_address:    request.headers.get('x-forwarded-for') ?? null,
     metadata:      { changed_fields: Object.keys(updateFields) },
   })
+
+  // personal_notes 또는 public_notes가 변경된 경우 AI 관계 추출
+  // body[field]는 암호화 전 원문이므로 그대로 사용 가능
+  const notesChanged = editHistory.some(
+    h => h.field_name === 'personal_notes' || h.field_name === 'public_notes',
+  )
+  if (notesChanged && existing.full_name) {
+    const newPersonalNotes = body.personal_notes as string | undefined
+    const newPublicNotes   = body.public_notes   as string | undefined
+    const textToAnalyze = [newPersonalNotes, newPublicNotes].filter(Boolean).join('\n')
+    if (textToAnalyze.trim()) {
+      await Promise.race([
+        extractRelationshipsWithAI(id, existing.full_name, textToAnalyze),
+        new Promise<void>(res => setTimeout(res, 4000)),
+      ]).catch(() => {})
+    }
+  }
 
   // 증분 포인트: 새로 채워진 필드에 대해 포인트 지급 (lib/points.ts 기준)
   let incrementalPts = 0

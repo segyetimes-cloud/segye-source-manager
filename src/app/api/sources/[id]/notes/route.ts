@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseBody, CreateNoteSchema } from '@/lib/schemas'
 import { auditLog } from '@/lib/audit'
+import { extractRelationshipsWithAI } from '@/lib/aiRelations'
 
 interface Params { params: Promise<{ id: string }> }
 
@@ -55,9 +56,9 @@ export async function POST(request: NextRequest, { params }: Params) {
   if (!parsed.ok) return parsed.response
   const { content, is_sensitive } = parsed.data
 
-  // 취재원 존재 확인
+  // 취재원 존재 확인 (full_name은 AI 관계 추출 프롬프트에 사용)
   const { data: source } = await supabase
-    .from('sources').select('id').eq('id', id).eq('is_deleted', false).single()
+    .from('sources').select('id, full_name').eq('id', id).eq('is_deleted', false).single()
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { data: note, error } = await supabase
@@ -90,6 +91,12 @@ export async function POST(request: NextRequest, { params }: Params) {
     related_source_id: id,
     description: `정보 추가 (+10pt)`,
   })
+
+  // AI 관계 추출 — 노트 저장 후 최대 4초 내 실행, 실패해도 노트 저장 완료
+  await Promise.race([
+    extractRelationshipsWithAI(id, source.full_name ?? '', content.trim()),
+    new Promise<void>(res => setTimeout(res, 4000)),
+  ]).catch(() => {})
 
   return NextResponse.json(note, { status: 201 })
 }
