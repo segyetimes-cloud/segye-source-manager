@@ -58,27 +58,29 @@ function hexToRgb(hex: string): [number, number, number] {
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 const LINK_COLORS: Record<string, string> = {
-  same_org:        '#A87228',
-  same_university: '#3D9E6A',
-  same_highschool: '#4A7CC0',
-  same_exam:       '#B09048',
-  same_hometown:   '#8858C0',
-  same_tag:        '#3A90A8',
-  same_position:   '#BC5028',
-  mention:         '#A87090',
-  manual:          '#C04040',
+  same_org:         '#A87228',
+  same_university:  '#3D9E6A',
+  same_highschool:  '#4A7CC0',
+  same_exam:        '#B09048',
+  same_hometown:    '#8858C0',
+  same_tag:         '#3A90A8',
+  same_position:    '#BC5028',
+  academic_mentor:  '#38B8A0',  // 지도/사사 — 틸 그린
+  mention:          '#A87090',
+  manual:           '#C04040',
 }
 
 const LINK_LABELS: Record<string, string> = {
-  same_org:        '동료',
-  same_university: '대학동문',
-  same_highschool: '고교동문',
-  same_exam:       '시험동기',
-  same_hometown:   '동향',
-  same_tag:        '공통태그',
-  same_position:   '직책공유',
-  mention:         '직접언급',
-  manual:          '수동등록',
+  same_org:         '동료',
+  same_university:  '대학동문',
+  same_highschool:  '고교동문',
+  same_exam:        '시험동기',
+  same_hometown:    '동향',
+  same_tag:         '공통태그',
+  same_position:    '직책공유',
+  academic_mentor:  '지도/사사',
+  mention:          '직접언급',
+  manual:           '수동등록',
 }
 
 function nodeRadius(degree: number): number {

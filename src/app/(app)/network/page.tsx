@@ -425,6 +425,52 @@ function buildAutoLinks(sources: SourceRow[]): {
     nameToSources.get(name)!.push(s)
   }
 
+  // 지도/사사 관계를 먼저 감지해 mentor 쌍을 기록 → mention 중복 제거용
+  const mentorPairs = new Set<string>()
+
+  // ⑨-a 지도/사사 관계 — tags·notes에서 "[이름] 지도교수", "지도교수: [이름]" 패턴 감지
+  //     지원 패턴: 지도교수 / 사사 / 지도위원 / 스승 / 멘토
+  const MENTOR_TERMS = ['지도교수', '사사', '지도위원', '스승', '멘토']
+  const mentorTermRe = new RegExp(MENTOR_TERMS.join('|'))
+
+  for (const s of sources) {
+    // ─ 태그에서 "[이름] 지도교수", "지도교수 [이름]" 패턴
+    if (Array.isArray(s.tags)) {
+      for (const tag of s.tags) {
+        if (!tag || !mentorTermRe.test(tag)) continue
+        const namePart = tag
+          .replace(new RegExp(MENTOR_TERMS.join('|'), 'g'), '')
+          .replace(/[:：\s]/g, '')
+          .trim()
+        if (namePart.length < 2) continue
+        const targets = nameToSources.get(namePart)
+        if (!targets) continue
+        for (const t of targets) {
+          if (t.id === s.id) continue
+          addConn(s.id, t.id, 'academic_mentor', `지도교수 (${namePart})`, 5)
+          mentorPairs.add([s.id, t.id].sort().join('||'))
+        }
+      }
+    }
+
+    // ─ personal_notes에서 "지도교수: 이민규", "이민규 지도교수", "이민규 사사" 등
+    if (s.personal_notes) {
+      for (const [name, targets] of nameToSources) {
+        if (targets.some(t => t.id === s.id)) continue
+        const note = s.personal_notes
+        const isMentor =
+          new RegExp(`${name}\\s*(?:의)?\\s*(?:${MENTOR_TERMS.join('|')})`).test(note) ||
+          new RegExp(`(?:${MENTOR_TERMS.join('|')})\\s*[:：]?\\s*${name}`).test(note)
+        if (!isMentor) continue
+        for (const t of targets) {
+          addConn(s.id, t.id, 'academic_mentor', `지도교수 (${name})`, 5)
+          mentorPairs.add([s.id, t.id].sort().join('||'))
+        }
+      }
+    }
+  }
+
+  // ⑨-b 이름 언급 연결 (지도/사사로 이미 연결된 쌍은 mention 중복 생성 안 함)
   for (const s of sources) {
     // notes + tags 텍스트 합산
     const searchText = [
@@ -440,6 +486,9 @@ function buildAutoLinks(sources: SourceRow[]): {
       // 가족 맥락 없이 이름 등장 시 연결
       if (textMentionsName(searchText, name)) {
         for (const target of targets) {
+          // 이미 지도/사사 연결이 있는 쌍은 mention 추가 안 함 (레이블 중복 방지)
+          const pairKey = [s.id, target.id].sort().join('||')
+          if (mentorPairs.has(pairKey)) continue
           addConn(s.id, target.id, 'mention', `언급 (${name})`, 2)
         }
       }
@@ -467,15 +516,16 @@ function buildAutoLinks(sources: SourceRow[]): {
 }
 
 const TYPE_LABELS: Record<string, string> = {
-  same_org:        '동료',
-  same_university: '대학동문',
-  same_highschool: '고교동문',
-  same_exam:       '시험/기수동기',
-  same_hometown:   '동향',
-  same_tag:        '공통태그',
-  same_position:   '직책/위원회',
-  mention:         '직접언급',
-  manual:          '수동등록',
+  same_org:         '동료',
+  same_university:  '대학동문',
+  same_highschool:  '고교동문',
+  same_exam:        '시험/기수동기',
+  same_hometown:    '동향',
+  same_tag:         '공통태그',
+  same_position:    '직책/위원회',
+  academic_mentor:  '지도/사사',
+  mention:          '직접언급',
+  manual:           '수동등록',
 }
 
 export default async function NetworkPage() {
