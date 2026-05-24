@@ -1,6 +1,9 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { parseBody, CreateApprovalSchema, ApprovalDecisionSchema } from '@/lib/schemas'
+import type { ApprovalStatus } from '@/types/database'
+import { auditLog } from '@/lib/audit'
 
 // ── 역할 분류 헬퍼 ────────────────────────────────────────────────────────────
 // 전 부서 승인 가능: superadmin, publisher(편집인), editor(국장), section_editor(부국장)
@@ -31,8 +34,8 @@ export async function GET(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const role = (profile as any)?.role ?? 'reporter'
-  const myDept = (profile as any)?.department ?? null
+  const role = profile?.role ?? 'reporter'
+  const myDept = profile?.department ?? null
   const approver = hasAnyApprovalRight(role)
 
   const { searchParams } = new URL(request.url)
@@ -70,7 +73,7 @@ export async function GET(request: NextRequest) {
   // cross-dept roles: 필터 없이 전체 조회
 
   if (status && status !== 'all') {
-    query = query.eq('status', status)
+    query = query.eq('status', status as ApprovalStatus)
   } else if (!status) {
     query = query.eq('status', 'pending')
   }
@@ -87,12 +90,9 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json()
-  const { source_id, reason } = body
-
-  if (!source_id || !reason?.trim()) {
-    return NextResponse.json({ error: '취재원 ID와 신청 사유가 필요합니다' }, { status: 400 })
-  }
+  const parsed = await parseBody(request, CreateApprovalSchema)
+  if (!parsed.ok) return parsed.response
+  const { source_id, reason } = parsed.data
 
   // 이미 pending/approved 요청이 있는지 확인
   const { data: existing } = await supabase
@@ -158,19 +158,16 @@ export async function PATCH(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const role = (profile as any)?.role ?? 'reporter'
-  const myDept = (profile as any)?.department ?? null
+  const role = profile?.role ?? 'reporter'
+  const myDept = profile?.department ?? null
 
   if (!hasAnyApprovalRight(role)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await request.json()
-  const { approval_id, action, reject_reason } = body
-
-  if (!approval_id || !['approve', 'reject'].includes(action)) {
-    return NextResponse.json({ error: 'approval_id와 action(approve|reject)이 필요합니다' }, { status: 400 })
-  }
+  const parsed = await parseBody(request, ApprovalDecisionSchema)
+  if (!parsed.ok) return parsed.response
+  const { approval_id, action, reject_reason } = parsed.data
 
   // 부장(admin): 요청자가 같은 부서인지 확인
   if (canApproveSameDept(role)) {
@@ -179,7 +176,7 @@ export async function PATCH(request: NextRequest) {
       .select('requester_id, profiles!requester_id(department)')
       .eq('id', approval_id)
       .single()
-    const requesterDept = (approval as any)?.profiles?.department ?? null
+    const requesterDept = (approval?.profiles as { department?: string | null } | null)?.department ?? null
     if (!myDept || requesterDept !== myDept) {
       return NextResponse.json(
         { error: '부장은 소속 부서 기자의 신청만 승인·거절할 수 있습니다.' },
@@ -204,16 +201,16 @@ export async function PATCH(request: NextRequest) {
       reject_reason: reject_reason ?? null,
     })
     .eq('id', approval_id)
-    .select()
+    .select('*, sources!source_id(full_name)')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   // 감사 로그 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id: user.id,
     user_email: user.email,
-    user_role: profile.role,
+    user_role: profile?.role ?? null,
     action: action === 'approve' ? 'approve' : 'reject',
     resource_type: 'source_access_approvals',
     resource_id: approval_id,
@@ -223,8 +220,8 @@ export async function PATCH(request: NextRequest) {
   })
 
   // 신청자에게 알림 발송 (service role 사용)
-  const serviceClient = createServiceClient() as any
-  const sourceName = (updated as any).sources?.full_name ?? '취재원'
+  const serviceClient = createServiceClient()
+  const sourceName = (updated?.sources as { full_name?: string } | null)?.full_name ?? '취재원'
   await serviceClient.from('notifications').insert({
     user_id: updated.requester_id,
     type: 'approval_result',
@@ -238,7 +235,7 @@ export async function PATCH(request: NextRequest) {
 
   // 승인된 경우 포인트 지급
   if (action === 'approve') {
-    await serviceClient.from('point_transactions').insert({
+    await supabase.from('point_transactions').insert({
       user_id: updated.requester_id,
       point_type: 'contribution_used',
       points: 0,

@@ -16,7 +16,7 @@ export async function GET(_req: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  const unread = (data ?? []).filter((n: any) => !n.is_read).length
+  const unread = (data ?? []).filter((n) => !n.is_read).length
   return NextResponse.json({ notifications: data ?? [], unread })
 }
 
@@ -29,7 +29,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json().catch(() => ({}))
   const { id } = body as { id?: string }
 
-  let q = (supabase.from('notifications') as any)
+  let q = supabase.from('notifications')
     .update({ is_read: true })
     .eq('user_id', user.id)
 

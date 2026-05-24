@@ -57,12 +57,12 @@ export async function POST(request: NextRequest) {
     await service.auth.admin.updateUserById(uid, { email_confirm: true })
 
     // ③ profiles upsert — 이미 DB 트리거로 생성된 경우도 ON CONFLICT로 덮어씀
-    const { error: profileError } = await (service.from('profiles') as any).upsert(
+    const { error: profileError } = await service.from('profiles').upsert(
       {
         id: uid,
         email: email.trim(),
         full_name: full_name.trim(),
-        role: 'reporter',
+        role: 'reporter' as const,
         is_active: false,
         department: null,
         desk_name: null,

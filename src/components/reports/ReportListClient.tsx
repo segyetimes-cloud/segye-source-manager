@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { ReportVisibility } from '@/types/database'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
+import ReportModal from '@/components/reports/ReportModal'
 
 function Highlight({ text, query }: { text: string | null; query: string }) {
   if (!query.trim() || !text) return <>{text ?? ''}</>
@@ -45,6 +46,9 @@ interface Props {
   totalPages: number
   currentTab: string
   currentQuery: string
+  userId: string
+  userFullName: string
+  userDepartment: string | null
 }
 
 export default function ReportListClient({
@@ -54,7 +58,12 @@ export default function ReportListClient({
   totalPages,
   currentTab,
   currentQuery,
+  userId,
+  userFullName,
+  userDepartment,
 }: Props) {
+  const [openReportId, setOpenReportId] = useState<string | null>(null)
+
   // AI 검색 상태
   const [aiLoading, setAiLoading] = useState(false)
   const [aiResults, setAiResults] = useState<ReportListRow[] | null>(null)
@@ -101,6 +110,17 @@ export default function ReportListClient({
 
   return (
     <div className="space-y-5">
+      {/* 팝업 모달 */}
+      {openReportId && (
+        <ReportModal
+          reportId={openReportId}
+          onClose={() => setOpenReportId(null)}
+          userId={userId}
+          userFullName={userFullName}
+          userDepartment={userDepartment}
+        />
+      )}
+
       {/* 검색 + 탭 */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
         {/* 검색 폼 */}
@@ -223,11 +243,12 @@ export default function ReportListClient({
                 key={report.id}
                 href={`/reports/${report.id}`}
                 className="report-list-row"
+                onClick={e => { e.preventDefault(); setOpenReportId(report.id) }}
                 style={{
                   textDecoration: 'none', display: 'block', color: 'inherit',
                   borderBottom: idx < displayReports.length - 1 ? '1px solid #1A2838' : 'none',
                 }}>
-                <div style={{ padding: '13px 18px' }}>
+                <div style={{ padding: '8px 18px' }}>
                   {/* 제목 줄 */}
                   <div style={{ display: 'flex', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
                     {catCfg && (

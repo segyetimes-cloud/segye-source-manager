@@ -78,7 +78,8 @@ describe('crypto — encryptField / decryptField', () => {
     const { encryptField } = await freshCrypto()
     const plain  = 'abc'  // 3바이트
     const cipher = encryptField(plain)
-    const decoded = Buffer.from(cipher, 'base64')
+    const b64 = cipher.startsWith('v1:') ? cipher.slice(3) : cipher
+    const decoded = Buffer.from(b64, 'base64')
     expect(decoded.length).toBe(12 + 16 + Buffer.byteLength(plain, 'utf8'))
   })
 

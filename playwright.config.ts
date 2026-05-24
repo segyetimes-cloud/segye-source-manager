@@ -51,7 +51,7 @@ export default defineConfig({
     // 2) reporter 권한으로 실행
     {
       name: 'reporter',
-      testMatch: ['**/sources.spec.ts', '**/permissions.spec.ts', '**/export.spec.ts'],
+      testMatch: ['**/sources.spec.ts', '**/permissions.spec.ts', '**/export.spec.ts', '**/approvals.spec.ts'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/reporter.json',

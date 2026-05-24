@@ -1,6 +1,7 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import type { Database } from '@/types/database'
 
 // GET /api/help/[id] — 도움 요청 상세 + 응답 목록
 export async function GET(
@@ -72,11 +73,11 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const allowedFields = ['status', 'title', 'body']
-  const updates: Record<string, unknown> = {}
-  for (const field of allowedFields) {
-    if (field in body) updates[field] = body[field]
-  }
+  type HelpUpdate = Database['public']['Tables']['help_requests']['Update']
+  const updates: HelpUpdate = {}
+  if ('status' in body) updates.status = body.status as HelpUpdate['status']
+  if ('title'  in body) updates.title  = body.title  as string
+  if ('body'   in body) updates.body   = body.body   as string | null
 
   // closed 상태로 변경 시 포인트 환불 처리
   if (updates.status === 'closed') {
@@ -88,8 +89,7 @@ export async function PATCH(
 
     // open 상태에서 마감 + 채택 없음 → 포인트 환불
     if (currentReq?.status === 'open' && !currentReq?.accepted_response_id) {
-      const serviceClient2 = createServiceClient()
-      await serviceClient2.from('point_transactions').insert({
+      await supabase.from('point_transactions').insert({
         user_id: currentReq.requester_id,
         point_type: 'help_provided',
         points: currentReq.reward_points,

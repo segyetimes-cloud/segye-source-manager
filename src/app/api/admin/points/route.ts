@@ -1,6 +1,6 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
 
 // POST /api/admin/points — 관리자가 특정 유저에게 포인트 지급
 export async function POST(request: NextRequest) {
@@ -29,8 +29,7 @@ export async function POST(request: NextRequest) {
 
   const pts = Math.min(Math.max(Number(points), 1), 500)
 
-  const serviceClient = createServiceClient()
-  const { error } = await serviceClient.from('point_transactions').insert({
+  const { error } = await supabase.from('point_transactions').insert({
     user_id,
     point_type: 'help_accepted',
     points: pts,

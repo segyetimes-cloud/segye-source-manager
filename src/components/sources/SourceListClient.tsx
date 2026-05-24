@@ -418,10 +418,10 @@ export default function SourceListClient({
                     {/* 이름/소속 */}
                     <div style={{ flex: '3 1 0', display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
                       <div style={{
-                        width: 28, height: 28, borderRadius: '50%', flexShrink: 0,
+                        width: 24, height: 24, borderRadius: '50%', flexShrink: 0,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
-                        fontSize: 12, fontWeight: 700,
+                        fontSize: 11, fontWeight: 700,
                       }}>
                         {source.full_name[0]}
                       </div>

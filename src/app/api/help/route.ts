@@ -1,6 +1,8 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { createClient } from '@/lib/supabase/server'
+import { parseBody, CreateHelpSchema } from '@/lib/schemas'
+import type { HelpStatus } from '@/types/database'
 
 // GET /api/help — 도움 요청 목록
 export async function GET(request: NextRequest) {
@@ -25,7 +27,7 @@ export async function GET(request: NextRequest) {
     .range((page - 1) * pageSize, page * pageSize - 1)
 
   if (status !== 'all') {
-    query = query.eq('status', status)
+    query = query.eq('status', status as HelpStatus)
   }
 
   const { data, count, error } = await query
@@ -41,14 +43,10 @@ export async function POST(request: NextRequest) {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const body = await request.json()
-  const { title, body: requestBody, request_type, target_source_id, target_name, target_org, reward_points } = body
-
-  if (!title?.trim() || !request_type) {
-    return NextResponse.json({ error: '제목과 요청 유형은 필수입니다' }, { status: 400 })
-  }
-
-  const points = Math.min(Math.max(Number(reward_points) || 10, 5), 100)
+  const parsed = await parseBody(request, CreateHelpSchema)
+  if (!parsed.ok) return parsed.response
+  const { title, body: requestBody, request_type, target_source_id, target_name, target_org, reward_points } = parsed.data
+  const points = reward_points  // already clamped by Zod (min 5, max 100, default 10)
 
   // 포인트 잔액 확인
   const { data: summary } = await supabase
@@ -57,7 +55,7 @@ export async function POST(request: NextRequest) {
     .eq('user_id', user.id)
     .single()
 
-  const currentPoints = (summary as any)?.total_points ?? 0
+  const currentPoints = summary?.total_points ?? 0
   if (currentPoints < points) {
     return NextResponse.json({
       error: `포인트가 부족합니다 (현재: ${currentPoints}pt, 필요: ${points}pt)`
@@ -83,9 +81,8 @@ export async function POST(request: NextRequest) {
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
-  // 포인트 에스크로 차감 (Service Role)
-  const serviceClient = createServiceClient()
-  await serviceClient.from('point_transactions').insert({
+  // 포인트 에스크로 차감
+  await supabase.from('point_transactions').insert({
     user_id: user.id,
     point_type: 'penalty_deduct',
     points: -points,

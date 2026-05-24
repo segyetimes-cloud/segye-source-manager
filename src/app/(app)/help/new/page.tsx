@@ -38,20 +38,25 @@ export default function NewHelpPage() {
     setSubmitting(true)
     setError('')
 
-    const res = await fetch('/api/help', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    })
+    try {
+      const res = await fetch('/api/help', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
 
-    const data = await res.json()
-    if (!res.ok) {
-      setError(data.error ?? '등록에 실패했습니다.')
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? '등록에 실패했습니다.')
+        return
+      }
+
+      router.push(`/help/${data.id}`)
+    } catch {
+      setError('등록 중 오류가 발생했습니다. 다시 시도해 주세요.')
+    } finally {
       setSubmitting(false)
-      return
     }
-
-    router.push(`/help/${data.id}`)
   }
 
   const inputStyle = {

@@ -35,8 +35,8 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
   // 현재 사용자 역할·부서 조회
   const { data: myProfileRaw } = await supabase
-    .from('profiles').select('role, department').eq('id', user.id).single()
-  const myProfile = myProfileRaw as { role: string; department: string | null } | null
+    .from('profiles').select('role, department, full_name').eq('id', user.id).single()
+  const myProfile = myProfileRaw as { role: string; department: string | null; full_name: string | null } | null
   const myDept: string | null = myProfile?.department ?? null
   const myRole: string = myProfile?.role ?? 'reporter'
   const isAboveAdmin = can(myRole, CAN_APPROVE_REPORT)
@@ -156,6 +156,9 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
         totalPages={totalPages}
         currentTab={tab}
         currentQuery={q}
+        userId={user.id}
+        userFullName={myProfile?.full_name ?? '—'}
+        userDepartment={myProfile?.department ?? null}
       />
     </div>
   )

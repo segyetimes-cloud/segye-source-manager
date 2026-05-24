@@ -79,7 +79,7 @@ export async function POST(
     report_id:  id,
     user_id:    user_id.trim(),
     granted_by: user.id,
-  } as any)
+  })
 
   if (error) {
     if (error.code === '23505') return NextResponse.json({ error: '이미 등록된 열람자입니다.' }, { status: 409 })

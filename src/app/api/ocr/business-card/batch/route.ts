@@ -10,6 +10,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createMessageWithRetry } from '@/lib/claudeRetry'
 
 /** 실제 파일 헤더(magic bytes)로 이미지 여부 검증 */
 async function isValidImageBytes(file: File): Promise<boolean> {
@@ -115,7 +116,8 @@ export async function POST(request: NextRequest) {
       }
       const mediaType = (mimeMap[file.type] ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
 
-      const message = await anthropic.messages.create({
+      // 지수 백오프 재시도: 429/529/5xx 시 최대 3회 자동 재시도
+      const message = await createMessageWithRetry(anthropic, {
         model: 'claude-haiku-4-5',   // 빠르고 저렴한 모델로 OCR
         max_tokens: 512,
         messages: [{
@@ -142,7 +144,7 @@ export async function POST(request: NextRequest) {
         parsed = parseBusinessCard(raw)
       }
 
-      return { index, filename: file.name, data: parsed as any, error: null }
+      return { index, filename: file.name, data: parsed, error: null }
     } catch (e: any) {
       const msg = e?.message ?? '처리 오류'
       // rate limit 안내

@@ -20,7 +20,7 @@ export default async function SourcesPage({
   const query = params.q ?? ''
   const page = parseInt(params.page ?? '1')
   const tag = params.tag ?? ''
-  const pageSize = 20
+  const pageSize = 40
 
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -31,7 +31,7 @@ export default async function SourcesPage({
     .select('role')
     .eq('id', user.id)
     .single()
-  const callerRole = (callerProfile as any)?.role ?? 'reporter'
+  const callerRole = callerProfile?.role ?? 'reporter'
   const canSeeSensitive = can(callerRole, CAN_VIEW_SENSITIVE_SOURCE)
 
   let sourcesQuery = supabase
@@ -70,6 +70,23 @@ export default async function SourcesPage({
 
   const { data: sources, count } = await sourcesQuery
 
+  interface SourceListRow {
+    id: string
+    full_name: string
+    current_organization: string | null
+    current_position: string | null
+    phone_primary: string | null
+    email_primary: string | null
+    visibility: 'personal' | 'shared'
+    sensitivity: 'public' | 'private'
+    completeness_score: number
+    tags: string[]
+    exam_batch: string | null
+    updated_at: string
+    owner_id: string
+    profiles: { full_name: string } | null
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
@@ -102,7 +119,7 @@ export default async function SourcesPage({
       </div>
 
       <SourceListClient
-        initialSources={(sources ?? []) as any[]}
+        initialSources={(sources ?? []) as SourceListRow[]}
         totalCount={count ?? 0}
         currentFilter={filter}
         currentQuery={query}

@@ -23,11 +23,26 @@ export default async function HelpPage() {
     .select('request_id')
     .eq('responder_id', user.id)
 
-  const respondedIds: string[] = (myResponses ?? []).map((r: any) => r.request_id as string)
+  const respondedIds: string[] = (myResponses ?? []).map(r => r.request_id)
 
-  const requestsWithCount = (requests ?? []).map((r: any) => ({
+  interface HelpRequestRow {
+    id: string
+    title: string
+    body: string | null
+    request_type: string
+    target_name: string | null
+    target_org: string | null
+    status: 'open' | 'resolved' | 'closed'
+    reward_points: number
+    created_at: string
+    requester_id: string
+    profiles: { full_name: string; department: string | null } | null
+    help_responses: { count: number }[] | null
+  }
+
+  const requestsWithCount = (requests ?? []).map((r: HelpRequestRow) => ({
     ...r,
-    response_count: (r.help_responses as any[])?.[0]?.count ?? 0,
+    response_count: r.help_responses?.[0]?.count ?? 0,
   }))
 
   return (

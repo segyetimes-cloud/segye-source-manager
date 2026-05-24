@@ -33,6 +33,25 @@ export default async function HelpRewardsPage() {
     .order('created_at', { ascending: false })
     .limit(50)
 
+  interface HelpRewardRow {
+    id: string
+    title: string
+    request_type: string
+    target_name: string | null
+    reward_points: number
+    created_at: string
+    requester_id: string
+    accepted_response_id: string | null
+    profiles: { full_name: string; department: string | null } | null
+    help_responses: Array<{
+      id: string
+      responder_id: string
+      body: string
+      is_accepted: boolean
+      profiles: { full_name: string; department: string | null } | null
+    }>
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -41,7 +60,7 @@ export default async function HelpRewardsPage() {
           해결된 도움 요청에 대해 요청자 및 응답자에게 추가 포인트를 지급합니다
         </p>
       </div>
-      <HelpRewardsClient requests={(helpRequests ?? []) as any[]} />
+      <HelpRewardsClient requests={(helpRequests ?? []) as HelpRewardRow[]} />
     </div>
   )
 }

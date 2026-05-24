@@ -17,9 +17,12 @@ export async function createClient() {
         },
         setAll(cookiesToSet) {
           try {
-            cookiesToSet.forEach(({ name, value, options }) =>
-              cookieStore.set(name, value, options)
-            )
+            cookiesToSet.forEach(({ name, value, options }) => {
+              // 세션 쿠키로 강제: maxAge/expires 제거 → 브라우저 종료 시 자동 삭제
+              // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              const { maxAge: _m, expires: _e, ...sessionOpts } = options ?? {}
+              cookieStore.set(name, value, sessionOpts)
+            })
           } catch {
             // Server Component에서는 쿠키 설정 불가 — 미들웨어가 처리
           }

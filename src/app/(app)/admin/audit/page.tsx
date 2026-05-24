@@ -4,6 +4,24 @@ import AuditClient from '@/components/admin/AuditClient'
 import { CAN_VIEW_AUDIT_LOGS, can } from '@/lib/permissions'
 import type { AuditAction } from '@/types/database'
 
+// ip_address is typed as `unknown` in the generated DB types (inet column)
+// but AuditClient expects string | null — cast is safe at runtime
+interface AuditLogRow {
+  id: number
+  user_id: string | null
+  user_email: string | null
+  user_role: string | null
+  action: string
+  resource_type: string
+  resource_id: string | null
+  ip_address: string | null
+  is_vpn_access: boolean
+  export_row_count: number | null
+  watermark_token: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
 interface SearchParams {
   action?: string
   user_email?: string
@@ -64,7 +82,7 @@ export default async function AdminAuditPage({
 
   const { data: logsRaw, count } = await query
 
-  const logs       = (logsRaw ?? []) as any[]
+  const logs       = (logsRaw ?? []) as unknown as AuditLogRow[]
   const totalPages = Math.ceil((count ?? 0) / pageSize)
 
   return (

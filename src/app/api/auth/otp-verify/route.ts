@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * POST /api/auth/otp-verify
  *
@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createHmac } from 'crypto'
 import { createClient } from '@/lib/supabase/server'
 
-const OTP_MAX_AGE = 60 * 60 * 8  // 8시간
+// OTP_MAX_AGE 제거: otp_verified는 세션 쿠키로 설정 (브라우저 종료 시 삭제)
 
 export async function POST(request: NextRequest) {
   let body: { phone?: string; otp?: string } = {}
@@ -69,7 +69,8 @@ export async function POST(request: NextRequest) {
     const cookieValue = [
       `otp_verified=${otpToken}`,
       `Path=/`,
-      `Max-Age=${OTP_MAX_AGE}`,
+      // Max-Age 의도적으로 생략 → 세션 쿠키 (브라우저 종료 시 자동 삭제)
+      // 영속 쿠키로 두면 브라우저 닫고 재접속해도 OTP 재검증 없이 통과되는 취약점 발생
       `SameSite=Strict`,
       `HttpOnly`,                     // XSS 방어 핵심
       isProd ? `Secure` : '',          // HTTPS 전용 (프로덕션)

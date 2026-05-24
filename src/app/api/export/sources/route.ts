@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import * as XLSX from 'xlsx'
 import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT } from '@/lib/permissions'
 import { decryptNullable } from '@/lib/crypto'
+import { auditLog } from '@/lib/audit'
 
 // GET /api/export/sources
 export async function GET(request: NextRequest) {
@@ -29,8 +30,8 @@ export async function GET(request: NextRequest) {
     .eq('is_deleted', false)
     .limit(maxRows)
 
-  if (filter === 'mine') query = (query as any).eq('owner_id', user.id)
-  else query = (query as any).or(`visibility.eq.shared,owner_id.eq.${user.id}`)
+  if (filter === 'mine') query = query.eq('owner_id', user.id)
+  else query = query.or(`visibility.eq.shared,owner_id.eq.${user.id}`)
 
   if (q) {
     query = query.or(`full_name.ilike.%${q}%,current_organization.ilike.%${q}%`)
@@ -66,7 +67,7 @@ export async function GET(request: NextRequest) {
       p_row_count:     sources?.length ?? 0,
       p_filter_params: { filter, q } as Record<string, unknown>,
       p_watermark_id:  watermarkId,
-    } as unknown as undefined
+    } as any
   )
   const exportCheck = exportCheckRaw as ExportCheckResult | null
 
@@ -132,9 +133,8 @@ export async function GET(request: NextRequest) {
 
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
-  // audit_logs insert — supabase-js Insert 타입 추론 한계로 데이터만 캐스팅
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  void supabase.from('audit_logs').insert({
+  // audit_logs insert
+  void auditLog(supabase, {
     user_id: user.id,
     user_email: user.email,
     action: 'export',
@@ -142,7 +142,7 @@ export async function GET(request: NextRequest) {
     export_row_count: sources?.length ?? 0,
     watermark_token: watermarkId,
     metadata: { filter, query: q, role, daily_count: todayCount, ip: exportIP },
-  } as any)
+  })
 
   const filename = `취재원목록_${new Date().toLocaleDateString('ko-KR').replace(/\./g, '').replace(/ /g, '')}.xlsx`
 

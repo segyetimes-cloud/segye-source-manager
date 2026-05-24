@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 
@@ -53,7 +53,7 @@ export async function POST(
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   const serviceClient = createServiceClient()
-  await serviceClient.from('point_transactions').insert({
+  await supabase.from('point_transactions').insert({
     user_id: user.id,
     point_type: 'help_provided',
     points: 1,
@@ -63,7 +63,7 @@ export async function POST(
 
   // 요청자에게 알림 발송 (fire-and-forget)
   if (helpReq.requester_id !== user.id) {
-    void (serviceClient as any).from('notifications').insert({
+    void serviceClient.from('notifications').insert({
       user_id: helpReq.requester_id,
       type: 'help_response',
       title: `💬 도움 요청에 새 응답이 달렸습니다`,
@@ -121,7 +121,7 @@ export async function PATCH(
   ])
 
   const serviceClient = createServiceClient()
-  await serviceClient.from('point_transactions').insert({
+  await supabase.from('point_transactions').insert({
     user_id: response.responder_id,
     point_type: 'help_accepted',
     points: helpReq.reward_points,
@@ -131,7 +131,7 @@ export async function PATCH(
   })
 
   // 응답자에게 채택 알림 발송 (fire-and-forget)
-  void (serviceClient as any).from('notifications').insert({
+  void serviceClient.from('notifications').insert({
     user_id: response.responder_id,
     type: 'help_accepted',
     title: '⭐ 내 응답이 채택되었습니다',

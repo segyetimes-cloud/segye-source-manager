@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * POST /api/auth/session-control
  *
@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { auditLog } from '@/lib/audit'
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 감사 기록
-    await supabase.from('audit_logs').insert({
+    await auditLog(supabase, {
       user_id:       user.id,
       user_email:    user.email,
       action:        'session_invalidate_others',

@@ -42,8 +42,36 @@ export default async function HelpDetailPage({ params }: Params) {
 
   if (!helpRaw) notFound()
 
-  const help = helpRaw as any
-  const responses = (responsesRaw ?? []) as any[]
+  interface HelpWithProfile {
+    id: string
+    title: string
+    body: string | null
+    request_type: string
+    target_name: string | null
+    target_org: string | null
+    target_source_id: string | null
+    status: 'open' | 'resolved' | 'closed'
+    reward_points: number
+    requester_id: string
+    created_at: string
+    accepted_response_id: string | null
+    profiles: { full_name: string; department: string | null } | null
+  }
+
+  interface ResponseWithProfile {
+    id: string
+    request_id: string
+    responder_id: string
+    body: string
+    attached_source_id: string | null
+    is_accepted: boolean
+    upvotes: number
+    created_at: string
+    profiles: { full_name: string; department: string | null } | null
+  }
+
+  const help = helpRaw as HelpWithProfile
+  const responses = (responsesRaw ?? []) as ResponseWithProfile[]
   const profile = profileRaw as { role: string } | null
   const isAdmin = ['admin', 'superadmin'].includes(profile?.role ?? '')
 

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_APPROVE_REPORT } from '@/lib/permissions'
 import type { Database } from '@/types/database'
+import { auditLog } from '@/lib/audit'
 
 type ReportUpdate = Database['public']['Tables']['information_reports']['Update']
 
@@ -89,14 +90,14 @@ export async function PATCH(
   if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
 
   // 감사 로그
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email ?? null,
-    action:        `report_${action}` as any,
+    action:        action === 'submit' ? 'report_submit' : action === 'approve' ? 'report_approve' : 'report_reject',
     resource_type: 'report',
     resource_id:   id,
     metadata:      { note: note ?? null },
-  } as any)
+  })
 
   return NextResponse.json({ success: true, status: newStatus })
 }

@@ -1,8 +1,10 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_VIEW_AUDIT_LOGS } from '@/lib/permissions'
 import * as XLSX from 'xlsx'
+import type { Database } from '@/types/database.generated'
+import { auditLog } from '@/lib/audit'
 
 /**
  * GET /api/admin/audit/export
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(5000)
 
-  if (action)       query = query.eq('action', action)
+  if (action)       query = query.eq('action', action as Database['public']['Enums']['audit_action'])
   if (userEmail)    query = query.ilike('user_email', `%${userEmail}%`)
   if (resourceType) query = query.eq('resource_type', resourceType)
   if (resourceId)   query = query.ilike('resource_id', `%${resourceId}%`)
@@ -95,10 +97,10 @@ export async function GET(request: NextRequest) {
   const buffer = XLSX.write(wb, { type: 'buffer', bookType: 'xlsx' })
 
   // 이 export 자체도 감사 로그에 기록 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id: user.id,
     user_email: user.email,
-    user_role: profile?.role,
+    user_role: profile?.role ?? null,
     action: 'export',
     resource_type: 'audit_logs',
     export_row_count: (logs ?? []).length,

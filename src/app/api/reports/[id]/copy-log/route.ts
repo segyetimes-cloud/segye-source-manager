@@ -63,7 +63,7 @@ export async function POST(
     user_id:        user.id,
     copied_length:  typeof copied_length === 'number' ? copied_length : 0,
     copied_preview: typeof copied_preview === 'string' ? copied_preview.slice(0, 100) : null,
-  } as any)
+  })
 
   return NextResponse.json({ success: true })
 }

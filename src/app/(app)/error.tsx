@@ -6,7 +6,8 @@ import * as Sentry from '@sentry/nextjs'
 
 interface ErrorProps {
   error: Error & { digest?: string }
-  reset: () => void
+  /** Next.js 16 — re-fetches and re-renders the segment (preferred over `reset`) */
+  unstable_retry: () => void
 }
 
 /**
@@ -14,7 +15,7 @@ interface ErrorProps {
  * Next.js App Router — error.tsx 규약
  * 렌더링 중 uncaught 에러 발생 시 이 컴포넌트가 표시됩니다.
  */
-export default function AppError({ error, reset }: ErrorProps) {
+export default function AppError({ error, unstable_retry }: ErrorProps) {
   useEffect(() => {
     // Sentry로 에러 전송 (DSN 미설정 시 no-op)
     Sentry.captureException(error)
@@ -57,7 +58,7 @@ export default function AppError({ error, reset }: ErrorProps) {
       <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
         <button
           type="button"
-          onClick={reset}
+          onClick={() => unstable_retry()}
           style={{
             background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
             color: 'white',

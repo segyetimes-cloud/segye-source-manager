@@ -62,24 +62,29 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
     e.preventDefault()
     if (!summary.trim()) return
     setSubmitting(true)
-    const res = await fetch(`/api/sources/${sourceId}/contact-logs`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        method, summary, result,
-        contacted_at: new Date(contactedAt).toISOString(),
-        next_followup_at: nextFollowupAt ? new Date(nextFollowupAt).toISOString() : null,
-        is_sensitive: isSensitive,
-      }),
-    })
-    if (res.ok) {
-      const newLog = await res.json()
-      setLogs(prev => [newLog, ...prev])
-      setSummary(''); setResult(''); setAdding(false)
-      setContactedAt(new Date().toISOString().slice(0, 16))
-      setNextFollowupAt(''); setIsSensitive(false)
+    try {
+      const res = await fetch(`/api/sources/${sourceId}/contact-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          method, summary, result,
+          contacted_at: new Date(contactedAt).toISOString(),
+          next_followup_at: nextFollowupAt ? new Date(nextFollowupAt).toISOString() : null,
+          is_sensitive: isSensitive,
+        }),
+      })
+      if (res.ok) {
+        const newLog = await res.json()
+        setLogs(prev => [newLog, ...prev])
+        setSummary(''); setResult(''); setAdding(false)
+        setContactedAt(new Date().toISOString().slice(0, 16))
+        setNextFollowupAt(''); setIsSensitive(false)
+      }
+    } catch {
+      // 오류는 무시하고 폼 닫기 방지
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   async function handleDelete(logId: string) {

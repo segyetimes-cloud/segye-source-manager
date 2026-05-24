@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_EDIT_ANY_SOURCE, CAN_DELETE_SOURCE } from '@/lib/permissions'
@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  const role = (profile as any)?.role ?? 'reporter'
+  const role = profile?.role ?? 'reporter'
   const isAdmin = can(role, CAN_EDIT_ANY_SOURCE)
   const canBulkDelete = can(role, CAN_DELETE_SOURCE)
 

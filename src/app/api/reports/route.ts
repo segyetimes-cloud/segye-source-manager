@@ -1,6 +1,8 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { parseBody, CreateReportSchema } from '@/lib/schemas'
+import { auditLog } from '@/lib/audit'
 
 // GET /api/reports — 목록 조회
 export async function GET(request: NextRequest) {
@@ -129,27 +131,25 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const body = await request.json()
-  const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
-
-  if (!title?.trim()) return NextResponse.json({ error: '제목을 입력해 주세요.' }, { status: 400 })
-  if (!content?.trim()) return NextResponse.json({ error: '본문을 입력해 주세요.' }, { status: 400 })
+  const parsed = await parseBody(request, CreateReportSchema)
+  if (!parsed.ok) return parsed.response
+  const { title, content, sensitive_content, category, tags, visibility, source_ids, allowed_user_ids } = parsed.data
 
   // 작성자의 소속 부서를 스냅샷으로 저장 (라인 격벽용)
   const { data: authorProfile } = await supabase
     .from('profiles').select('department').eq('id', user.id).single()
   const authorDepartment = authorProfile?.department ?? null
 
-  const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
   const { data: report, error } = await supabase
     .from('information_reports')
     .insert({
       author_id: user.id,
       title: title.trim(),
       content: content.trim(),
-      category: VALID_CATEGORIES.includes(category) ? category : '일반',
+      sensitive_content: sensitive_content?.trim() || null,
+      category,
       tags: tags ?? [],
-      visibility: visibility ?? 'author_only',
+      visibility,
       author_department: authorDepartment,
     })
     .select()
@@ -182,13 +182,13 @@ export async function POST(request: NextRequest) {
     if (allowedErr) return NextResponse.json({ error: '열람자 등록에 실패했습니다.' }, { status: 500 })
   }
 
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email,
     action:        'report_create',
     resource_type: 'report',
     resource_id:   report?.id ?? null,
-    metadata:      { title: body?.title },
+    metadata:      { title },
   })
   return NextResponse.json(report, { status: 201 })
 }

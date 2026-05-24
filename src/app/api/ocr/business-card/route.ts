@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * POST /api/ocr/business-card
  * 명함 단건 OCR — Claude Vision API 사용
@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import Anthropic from '@anthropic-ai/sdk'
+import { createMessageWithRetry } from '@/lib/claudeRetry'
 
 async function isValidImageBytes(file: File): Promise<boolean> {
   const header = Buffer.from(await file.slice(0, 12).arrayBuffer())
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
     const mediaType = (mimeMap[file.type] ?? 'image/jpeg') as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp'
 
     const anthropic = new Anthropic({ apiKey })
-    const message = await anthropic.messages.create({
+    // 지수 백오프 재시도: 429/529/5xx 시 최대 3회 자동 재시도
+    const message = await createMessageWithRetry(anthropic, {
       model: 'claude-haiku-4-5',
       max_tokens: 512,
       messages: [{

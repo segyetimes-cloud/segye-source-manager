@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
-  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes((profile as any)?.role)) {
+  if (!['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
     helpMap.set(h.responder_id, (helpMap.get(h.responder_id) ?? 0) + 1)
   }
 
-  const stats = ((profiles ?? []) as any[]).map(p => ({
+  const stats = (profiles ?? []).map(p => ({
     id:          p.id,
     full_name:   p.full_name,
     department:  p.department,

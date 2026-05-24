@@ -10,6 +10,30 @@ interface PageProps {
   searchParams: Promise<{ tab?: string }>
 }
 
+interface ApprovalRow {
+  id: string
+  source_id: string
+  requester_id: string
+  reason: string
+  status: 'pending' | 'approved' | 'rejected'
+  requested_at: string
+  decided_at: string | null
+  expires_at: string | null
+  reject_reason: string | null
+  sources: { full_name: string; current_organization: string | null } | null
+  profiles: { full_name: string; department: string | null; email: string } | null
+}
+
+interface SubmittedReportRow {
+  id: string
+  title: string
+  author_id: string
+  status: string
+  created_at: string
+  updated_at: string
+  profiles: { full_name: string; department: string | null } | null
+}
+
 export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   const supabase = await createClient()
 
@@ -43,7 +67,7 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
       .from('profiles')
       .select('id')
       .eq('department', myDept)
-    deptUserIds = (deptUsers ?? []).map((u: any) => u.id as string)
+    deptUserIds = (deptUsers ?? []).map((u) => u.id)
   }
 
   // ── 취재원 열람 승인 데이터 ──────────────────────────────────────────────────
@@ -110,9 +134,9 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
     reportQuery,
   ])
 
-  const pending = (pendingRaw ?? []) as any[]
-  const recent = (recentRaw ?? []) as any[]
-  const submittedReports = (submittedReportsRaw ?? []) as any[]
+  const pending = (pendingRaw ?? []) as ApprovalRow[]
+  const recent = (recentRaw ?? []) as ApprovalRow[]
+  const submittedReports = (submittedReportsRaw ?? []) as SubmittedReportRow[]
 
   const roleLabel: Record<string, string> = {
     superadmin: '시스템 관리자',

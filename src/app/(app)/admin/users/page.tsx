@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import UsersClient from '@/components/admin/UsersClient'
 import { can, CAN_APPROVE_ACCESS } from '@/lib/permissions'
 import { isCrossDept } from '@/lib/roles'
+import type { Profile } from '@/types/database'
 
 export default async function AdminUsersPage() {
   const supabase = await createClient()
@@ -32,7 +33,7 @@ export default async function AdminUsersPage() {
     `)
     .order('created_at', { ascending: false })
 
-  const users = (usersRaw ?? []) as any[]
+  const users = (usersRaw ?? []) as Profile[]
 
   return (
     <div className="space-y-6">

@@ -18,7 +18,19 @@
       "Bash(mkdir -p \"C:\\\\Users\\\\admin\\\\Desktop\\\\segye-source-manager\\\\.claude\")",
       "mcp__Claude_Preview__preview_start",
       "Skill(anthropic-skills:pdf)",
-      "Skill(anthropic-skills:pdf:*)"
+      "Skill(anthropic-skills:pdf:*)",
+      "Skill(schedule)",
+      "Skill(schedule:*)",
+      "Skill(anthropic-skills:skill-creator)",
+      "Skill(anthropic-skills:skill-creator:*)",
+      "Bash(cp \"C:/Users/admin/Desktop/주간 정세 분석 \\(2026.04.25 ~ 05.01\\).hwp\" \"C:/Users/admin/Desktop/segye-weekly-report/samples/\")",
+      "Bash(cp \"C:/Users/admin/Desktop/주간 정세 분석\\(2026.03.21~03.27\\).hwp\" \"C:/Users/admin/Desktop/segye-weekly-report/samples/\")",
+      "Bash(cp \"C:/Users/admin/Desktop/주간 정세 분석\\(2026.04.04.~04.10\\).hwp\" \"C:/Users/admin/Desktop/segye-weekly-report/samples/\")",
+      "Bash(cp \"C:/Users/admin/Desktop/편집국 주간업무보고 모음 20260409.pdf\" \"C:/Users/admin/Desktop/segye-weekly-report/samples/\")",
+      "Read(//c/Users/admin/Desktop/segye-weekly-report/samples/**)",
+      "Skill(주간현안보고서)",
+      "Skill(주간현안보고서:*)",
+      "WebFetch(domain:vercel.com)"
     ]
   }
 }

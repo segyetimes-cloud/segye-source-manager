@@ -1,6 +1,9 @@
-// @ts-nocheck
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient, createServiceClient } from '@/lib/supabase/server'
+import { parseBody, CreateUserSchema } from '@/lib/schemas'
+import { auditLog } from '@/lib/audit'
+import type { Database, UserRole } from '@/types/database'
 
 // POST /api/admin/users — 계정 생성 (admin/superadmin만 가능)
 export async function POST(request: NextRequest) {
@@ -15,18 +18,15 @@ export async function POST(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const callerRole = (profile as any)?.role as string | undefined
-  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole)
+  const callerRole = profile?.role
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(callerRole ?? '')
   const isSuperadmin = callerRole === 'superadmin'
 
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
-  const body = await request.json()
-  const { email, password, full_name, role, department, desk_name, employee_id, phone } = body
-
-  if (!email || !password || !full_name) {
-    return NextResponse.json({ error: 'email, password, full_name은 필수입니다' }, { status: 400 })
-  }
+  const parsed = await parseBody(request, CreateUserSchema)
+  if (!parsed.ok) return parsed.response
+  const { email, password, full_name, role, department, desk_name, employee_id, phone } = parsed.data
 
   // 역할 권한 체계: admin은 reporter/deputy만, superadmin은 전체
   const targetRole = (role as string | undefined) ?? 'reporter'
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       id: newUserId,
       email,
       full_name,
-      role: targetRole,
+      role: targetRole as UserRole,
       department: department ?? null,
       desk_name: desk_name ?? null,
       employee_id: employee_id ?? null,
@@ -79,10 +79,10 @@ export async function POST(request: NextRequest) {
   }
 
   // 감사 로그 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id: user.id,
     user_email: user.email,
-    user_role: callerRole,
+    user_role: callerRole ?? null,
     action: 'create',
     resource_type: 'profiles',
     resource_id: newUserId,
@@ -107,8 +107,8 @@ export async function PATCH(request: NextRequest) {
     .eq('id', user.id)
     .single()
 
-  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes((profile as any)?.role)
-  const isSuperadmin = (profile as any)?.role === 'superadmin'
+  const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
+  const isSuperadmin = profile?.role === 'superadmin'
 
   if (!isAdmin) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
@@ -143,15 +143,15 @@ export async function PATCH(request: NextRequest) {
     if (profileErr) return NextResponse.json({ error: profileErr.message }, { status: 500 })
 
     // ③ 비밀번호 설정 링크 이메일 발송 (recovery 링크 = 비밀번호 재설정)
-    const targetEmail = (activated as any)?.email
+    const targetEmail = activated?.email
     if (targetEmail) {
       await serviceClient.auth.admin.generateLink({ type: 'recovery', email: targetEmail })
     }
 
-    await supabase.from('audit_logs').insert({
+    await auditLog(supabase, {
       user_id: user.id,
       user_email: user.email,
-      user_role: (profile as any)?.role ?? null,
+      user_role: profile?.role ?? null,
       action: 'approve',
       resource_type: 'profiles',
       resource_id: target_user_id,
@@ -189,10 +189,10 @@ export async function PATCH(request: NextRequest) {
 
     if (approveErr) return NextResponse.json({ error: approveErr.message }, { status: 500 })
 
-    await supabase.from('audit_logs').insert({
+    await auditLog(supabase, {
       user_id: user.id,
       user_email: user.email,
-      user_role: (profile as any)?.role ?? null,
+      user_role: profile?.role ?? null,
       action: 'approve',
       resource_type: 'profiles',
       resource_id: target_user_id,
@@ -224,7 +224,7 @@ export async function PATCH(request: NextRequest) {
     .eq('id', target_user_id)
     .single()
 
-  if ((targetProfile as any)?.role === 'superadmin' && !isSuperadmin) {
+  if (targetProfile?.role === 'superadmin' && !isSuperadmin) {
     return NextResponse.json({ error: '슈퍼관리자 계정은 슈퍼관리자만 수정할 수 있습니다' }, { status: 403 })
   }
 
@@ -240,13 +240,14 @@ export async function PATCH(request: NextRequest) {
     }
   }
 
-  const updates: Record<string, unknown> = {}
-  if (is_active !== undefined) updates.is_active = is_active
-  if (role !== undefined) updates.role = role
-  if (rank !== undefined) updates.rank = rank   // null 허용 (직급 해제)
-  if (full_name !== undefined) updates.full_name = full_name
-  if (department !== undefined) updates.department = department
-  if (desk_name !== undefined) updates.desk_name = desk_name
+  type ProfileUpdate = Database['public']['Tables']['profiles']['Update']
+  const updates: ProfileUpdate = {}
+  if (is_active !== undefined) updates.is_active = is_active as boolean
+  if (role !== undefined) updates.role = role as ProfileUpdate['role']
+  if (rank !== undefined) updates.rank = rank as ProfileUpdate['rank']
+  if (full_name !== undefined) updates.full_name = full_name as string
+  if (department !== undefined) updates.department = department as string | null
+  if (desk_name !== undefined) updates.desk_name = desk_name as string | null
 
   // Service Role 클라이언트 사용 — RLS 우회, 관리자가 다른 유저 프로필 수정 가능
   const serviceClient = createServiceClient()
@@ -267,16 +268,16 @@ export async function PATCH(request: NextRequest) {
   }
 
   // 감사 로그 (fire-and-forget)
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id: user.id,
     user_email: user.email,
-    user_role: (profile as any).role,
+    user_role: profile?.role ?? null,
     action: 'update',
     resource_type: 'profiles',
     resource_id: target_user_id,
     ip_address: request.headers.get('x-forwarded-for') ?? null,
     is_vpn_access: false,
-    metadata: updates,
+    metadata: updates as Record<string, unknown>,
   })
 
   return NextResponse.json(updated)

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { can, CAN_VIEW_ALL_REPORTS } from '@/lib/permissions'
 import { isDesk } from '@/lib/roles'
 import type { Database } from '@/types/database'
+import { auditLog } from '@/lib/audit'
 
 type ReportUpdate = Database['public']['Tables']['information_reports']['Update']
 
@@ -41,12 +42,12 @@ export async function GET(
 
   const report = reportRaw as {
     id: string; author_id: string; author_department: string | null;
-    visibility: string; status: string;
+    visibility: string; status: string; sensitive_content: string | null;
     [key: string]: unknown
   }
 
   const isAuthor = report.author_id === user.id
-  const canViewAll = can(profile?.role, CAN_VIEW_ALL_REPORTS)
+  const canViewAll = can(profile?.role, CAN_VIEW_ALL_REPORTS)  // 부장+ (데스크)
   const vis = report.visibility as string
 
   // 열람 권한 체크
@@ -60,6 +61,11 @@ export async function GET(
     if (report.status !== 'approved' && vis !== 'all') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
+  }
+
+  // 민감정보(sensitive_content)는 작성자 및 데스크(부장 이상)만 열람
+  if (!isAuthor && !canViewAll) {
+    report.sensitive_content = null
   }
 
   return NextResponse.json({ report: reportRaw })
@@ -94,7 +100,7 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, content, tags, visibility, category } = body
+  const { title, content, sensitive_content, tags, visibility, category, source_ids, allowed_user_ids } = body
 
   const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
 
@@ -104,40 +110,79 @@ export async function PATCH(
   if (tags)            updateData.tags       = tags
   if (visibility)      updateData.visibility = visibility
   if (category)        updateData.category   = VALID_CATEGORIES.includes(category) ? category : '일반'
+  // sensitive_content: 명시적으로 전달될 때만 업데이트 (빈 문자열은 null로 정규화)
+  if (sensitive_content !== undefined) {
+    updateData.sensitive_content = sensitive_content?.trim() || null
+  }
 
-  if (Object.keys(updateData).length === 0) {
+  // 본문 필드 변경이 없어도 source_ids / allowed_user_ids 만 바꾸는 경우는 허용
+  const hasFieldUpdate = Object.keys(updateData).length > 0
+  const hasRelationUpdate = Array.isArray(source_ids) || Array.isArray(allowed_user_ids)
+
+  if (!hasFieldUpdate && !hasRelationUpdate) {
     return NextResponse.json({ error: '수정할 내용이 없습니다.' }, { status: 400 })
   }
 
-  // TODO(Task #9): Remove cast when supabase gen types adds proper Relationships
-  const { data: updated, error: updateErr } = await (supabase as any)
-    .from('information_reports')
-    .update(updateData as ReportUpdate)
-    .eq('id', id)
-    .select()
-    .single()
+  if (hasFieldUpdate) {
+    // TODO(Task #9): Remove cast when supabase gen types adds proper Relationships
+    const { data: updated, error: updateErr } = await (supabase as any)
+      .from('information_reports')
+      .update(updateData as ReportUpdate)
+      .eq('id', id)
+      .select()
+      .single()
 
-  if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
+    if (updateErr) return NextResponse.json({ error: updateErr.message }, { status: 500 })
 
-  // 수정이력 기록 (content 변경 시만)
-  if (content?.trim()) {
-    await supabase.from('report_revisions').insert({
-      report_id: id,
-      author_id: user.id,
-      content:   content.trim(),
-    } as any)
+    // 수정이력 기록 (content 변경 시만)
+    if (content?.trim()) {
+      await supabase.from('report_revisions').insert({
+        report_id: id,
+        author_id: user.id,
+        content:   content.trim(),
+      })
+    }
+
+    void auditLog(supabase, {
+      user_id:       user.id,
+      user_email:    user.email ?? null,
+      action:        'report_update',
+      resource_type: 'report',
+      resource_id:   id,
+      metadata:      { fields: Object.keys(updateData) },
+    })
+
+    // source_ids / allowed_user_ids 관계 업데이트가 없으면 바로 반환
+    if (!hasRelationUpdate) return NextResponse.json({ report: updated })
   }
 
-  void supabase.from('audit_logs').insert({
-    user_id:       user.id,
-    user_email:    user.email ?? null,
-    action:        'report_update' as any,
-    resource_type: 'report',
-    resource_id:   id,
-    metadata:      { fields: Object.keys(updateData) },
-  } as any)
+  // ── 취재원 연결 업데이트 ──────────────────────────────────────────────────────
+  if (Array.isArray(source_ids)) {
+    await supabase.from('report_sources').delete().eq('report_id', id)
+    if ((source_ids as string[]).length > 0) {
+      const { error: srcErr } = await supabase.from('report_sources').insert(
+        (source_ids as string[]).map(sid => ({ report_id: id, source_id: sid }))
+      )
+      if (srcErr) return NextResponse.json({ error: srcErr.message }, { status: 500 })
+    }
+  }
 
-  return NextResponse.json({ report: updated })
+  // ── 지정 열람자 업데이트 ──────────────────────────────────────────────────────
+  if (Array.isArray(allowed_user_ids)) {
+    await supabase.from('report_allowed_users').delete().eq('report_id', id)
+    if ((allowed_user_ids as string[]).length > 0) {
+      const { error: auErr } = await supabase.from('report_allowed_users').insert(
+        (allowed_user_ids as string[]).map(uid => ({
+          report_id:  id,
+          user_id:    uid,
+          granted_by: user.id,
+        }))
+      )
+      if (auErr) return NextResponse.json({ error: auErr.message }, { status: 500 })
+    }
+  }
+
+  return NextResponse.json({ ok: true })
 }
 
 // DELETE — soft-delete
@@ -176,14 +221,14 @@ export async function DELETE(
 
   if (delErr) return NextResponse.json({ error: delErr.message }, { status: 500 })
 
-  void supabase.from('audit_logs').insert({
+  void auditLog(supabase, {
     user_id:       user.id,
     user_email:    user.email ?? null,
-    action:        'report_delete' as any,
+    action:        'report_delete',
     resource_type: 'report',
     resource_id:   id,
     metadata:      {},
-  } as any)
+  })
 
   return NextResponse.json({ success: true })
 }

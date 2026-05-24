@@ -1,4 +1,4 @@
-// @ts-nocheck
+
 /**
  * GET /api/auth/check-lockout?email=...
  *
@@ -10,6 +10,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServiceClient } from '@/lib/supabase/server'
+import type { AuditAction } from '@/types/database'
 
 const MAX_FAILURES   = 5
 const WINDOW_MINUTES = 15
@@ -26,7 +27,7 @@ export async function GET(request: NextRequest) {
     const { count } = await supabase
       .from('audit_logs')
       .select('*', { count: 'exact', head: true })
-      .eq('action', 'login_failed')
+      .eq('action', 'login_failed' as unknown as AuditAction)
       .ilike('user_email', email)
       .gte('created_at', windowStart)
 
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
       const { data: first } = await supabase
         .from('audit_logs')
         .select('created_at')
-        .eq('action', 'login_failed')
+        .eq('action', 'login_failed' as unknown as AuditAction)
         .ilike('user_email', email)
         .gte('created_at', windowStart)
         .order('created_at', { ascending: true })

@@ -10,7 +10,7 @@ export default async function AdminStatsPage() {
 
   const { data: profileRaw } = await supabase
     .from('profiles').select('role').eq('id', user.id).single()
-  const role = (profileRaw as any)?.role
+  const role = profileRaw?.role
   if (!can(role, CAN_VIEW_AUDIT_LOGS)) redirect('/dashboard')
 
   return (

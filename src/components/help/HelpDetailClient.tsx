@@ -92,16 +92,21 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   async function handleSubmitResponse() {
     if (!newResponse.trim()) return
     setSubmitting(true)
-    const res = await fetch(`/api/help/${help.id}/responses`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ body: newResponse.trim() }),
-    })
-    if (res.ok) {
-      setNewResponse('')
-      router.refresh()
+    try {
+      const res = await fetch(`/api/help/${help.id}/responses`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ body: newResponse.trim() }),
+      })
+      if (res.ok) {
+        setNewResponse('')
+        router.refresh()
+      }
+    } catch {
+      // 네트워크 오류 — 폼 상태만 복원
+    } finally {
+      setSubmitting(false)
     }
-    setSubmitting(false)
   }
 
   async function handleAccept(responseId: string) {

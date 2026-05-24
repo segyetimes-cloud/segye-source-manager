@@ -64,7 +64,8 @@ export async function POST(
 
   const VALID_METHODS = ['call', 'message', 'email', 'meet', 'other']
 
-  const { data, error } = await (supabase.from('contact_logs') as any)
+  const { data, error } = await supabase
+    .from('contact_logs')
     .insert({
       source_id: id,
       user_id: user.id,
