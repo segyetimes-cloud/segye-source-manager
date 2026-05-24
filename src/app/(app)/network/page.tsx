@@ -110,6 +110,36 @@ function extractCohortsFromText(text: string): string[] {
   return results
 }
 
+// ─── 자유 텍스트 → 학번 목록 추출 ────────────────────────────────────────────
+// personal_notes 에서 "고려대 86학번", "서울대 94학번" 패턴 추출
+function extractSchoolYearsFromText(text: string): string[] {
+  if (!text) return []
+  const results: string[] = []
+  const regex = /([가-힣]{2,}(?:대학교?|대))\s*[''"]?(\d{2})\s*학번/g
+  let m
+  while ((m = regex.exec(text)) !== null) {
+    const school = m[1].trim()
+    const year = m[2]
+    if (school.length >= 2) {
+      const cohort = `${school} ${year}학번`
+      if (!results.includes(cohort)) results.push(cohort)
+    }
+  }
+  return results
+}
+
+// ─── 이름 언급의 관계 맥락 분류 ──────────────────────────────────────────────
+// 이름 주변 50자를 보고 '동기', '친분', 일반 언급 구분
+type MentionContext = 'same_exam' | 'close_friend' | 'mention'
+function classifyMentionContext(text: string, name: string): MentionContext {
+  const idx = text.indexOf(name)
+  if (idx === -1) return 'mention'
+  const window = text.slice(Math.max(0, idx - 40), Math.min(text.length, idx + name.length + 40))
+  if (/동기|같은\s*기수|동창|동문/.test(window)) return 'same_exam'
+  if (/친분|절친|친한\s*친구|오랜\s*친구|절친한|가까운\s*사이/.test(window)) return 'close_friend'
+  return 'mention'
+}
+
 // ─── 태그 → 속성 추출 ─────────────────────────────────────────────────────────
 function extractAttributesFromTags(tags: string[]): {
   universities: string[]
@@ -338,6 +368,8 @@ function buildAutoLinks(sources: SourceRow[]): {
         addToGroup(tagCommitteeSources, cm, s)
       for (const c of extractCohortsFromText(s.personal_notes))
         addToGroup(tagCohortSources, c, s)
+      for (const sy of extractSchoolYearsFromText(s.personal_notes))
+        addToGroup(tagCohortSources, sy, s)
     }
   }
 
@@ -470,7 +502,7 @@ function buildAutoLinks(sources: SourceRow[]): {
     }
   }
 
-  // ⑨-b 이름 언급 연결 (지도/사사로 이미 연결된 쌍은 mention 중복 생성 안 함)
+  // ⑨-b 이름 언급 연결 — 문맥 인식: 동기/친분/일반 언급 구분
   for (const s of sources) {
     // notes + tags 텍스트 합산
     const searchText = [
@@ -484,11 +516,21 @@ function buildAutoLinks(sources: SourceRow[]): {
       // 자기 이름은 건너뜀
       if (targets.some(t => t.id === s.id)) continue
       // 가족 맥락 없이 이름 등장 시 연결
-      if (textMentionsName(searchText, name)) {
-        for (const target of targets) {
-          // 이미 지도/사사 연결이 있는 쌍은 mention 추가 안 함 (레이블 중복 방지)
-          const pairKey = [s.id, target.id].sort().join('||')
-          if (mentorPairs.has(pairKey)) continue
+      if (!textMentionsName(searchText, name)) continue
+
+      const pairKey = [s.id, ...targets.map(t => t.id)].sort().join('||')
+      if (mentorPairs.has([s.id, targets[0].id].sort().join('||'))) continue
+
+      // 맥락에 따라 링크 타입·강도 분기
+      const ctx = classifyMentionContext(searchText, name)
+      for (const target of targets) {
+        const pk = [s.id, target.id].sort().join('||')
+        if (mentorPairs.has(pk)) continue
+        if (ctx === 'same_exam') {
+          addConn(s.id, target.id, 'same_exam', `동기 (${name})`, 4)
+        } else if (ctx === 'close_friend') {
+          addConn(s.id, target.id, 'close_friend', `친분 (${name})`, 3)
+        } else {
           addConn(s.id, target.id, 'mention', `언급 (${name})`, 2)
         }
       }
@@ -524,6 +566,7 @@ const TYPE_LABELS: Record<string, string> = {
   same_tag:         '공통태그',
   same_position:    '직책/위원회',
   academic_mentor:  '지도/사사',
+  close_friend:     '친분관계',
   mention:          '직접언급',
   manual:           '수동등록',
 }

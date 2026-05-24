@@ -66,6 +66,7 @@ const LINK_COLORS: Record<string, string> = {
   same_tag:         '#3A90A8',
   same_position:    '#BC5028',
   academic_mentor:  '#38B8A0',  // 지도/사사 — 틸 그린
+  close_friend:     '#E8C040',  // 친분 — 허니 골드
   mention:          '#A87090',
   manual:           '#C04040',
 }
@@ -79,6 +80,7 @@ const LINK_LABELS: Record<string, string> = {
   same_tag:         '공통태그',
   same_position:    '직책공유',
   academic_mentor:  '지도/사사',
+  close_friend:     '친분관계',
   mention:          '직접언급',
   manual:           '수동등록',
 }
