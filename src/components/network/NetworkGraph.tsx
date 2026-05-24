@@ -4,7 +4,10 @@ import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const { forceCollide } = require('d3-force-3d') as { forceCollide: (r: (n: any) => number) => any }
+const { forceCollide, forceCenter } = require('d3-force-3d') as {
+  forceCollide: (r: (n: any) => number) => any
+  forceCenter: (x: number, y: number) => any
+}
 
 interface Node {
   id: string
@@ -242,9 +245,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Force simulation setup ────────────────────────────────────────────────
   const nodeCount = nodes.length
-  // Strong charge so nodes always spread; center forces are weakened below
-  const chargeStrength = Math.min(-550 - nodeCount * 38, -1600)
-  const linkDistance   = Math.max(140, Math.min(110 + nodeCount * 6, 320))
+  const chargeStrength = Math.min(-600 - nodeCount * 40, -1800)
+  const linkDistance   = Math.max(160, Math.min(120 + nodeCount * 7, 360))
 
   useEffect(() => {
     let tries = 0
@@ -252,43 +254,50 @@ export default function NetworkGraph({ nodes, links }: Props) {
     function applyLayout() {
       const fg = fgRef.current
       if (!fg) {
-        if (++tries < 12) setTimeout(applyLayout, 200)
+        if (++tries < 15) setTimeout(applyLayout, 200)
         return
       }
       const simNodes: any[] = fg.graphData()?.nodes ?? []
       if (simNodes.length === 0) {
-        if (++tries < 12) setTimeout(applyLayout, 200)
+        if (++tries < 15) setTimeout(applyLayout, 200)
         return
       }
       try {
-        // Set circular initial positions so simulation starts spread out
+        // Circular initial positions — spread before simulation starts
         const count = simNodes.length
+        const radius = Math.max(280, count * 26)
         simNodes.forEach((n: any, i: number) => {
           const angle = (2 * Math.PI * i) / count
-          const radius = Math.max(220, count * 16)
           n.x = Math.cos(angle) * radius
           n.y = Math.sin(angle) * radius
           n.vx = 0
           n.vy = 0
         })
 
-        // react-force-graph-2d uses 'centerX'/'centerY' (not 'center').
-        // Weaken them so nodes spread to ~350px radius instead of clustering.
-        // Try all possible names defensively.
-        ;(['center', 'centerX', 'centerY', 'x', 'y'] as const).forEach(name => {
-          fg.d3Force(name)?.strength?.(0.06)
-        })
+        // KEY FIX: remove forceX/forceY (pulls each node individually to center →
+        // causes clustering). Replace with forceCenter which only translates the
+        // whole graph's centroid — no cohesive force on individual nodes.
+        fg.d3Force('centerX', null)
+        fg.d3Force('centerY', null)
+        fg.d3Force('center', forceCenter(0, 0))
 
         fg.d3Force('charge')?.strength(chargeStrength)
-        fg.d3Force('link')?.distance((link: any) => {
-          const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
-          const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-          return Math.max(srcR + tgtR + 65, linkDistance)
-        }).iterations(4)
+
+        // Explicit low link strength prevents dense graphs from over-clustering
+        fg.d3Force('link')
+          ?.strength(0.18)
+          .distance((link: any) => {
+            const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
+            const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
+            return Math.max(srcR + tgtR + 70, linkDistance)
+          })
+          .iterations(3)
+
         fg.d3Force('collide', forceCollide((n: any) => {
           const r = nodeRadius(n.degree ?? 1)
-          return r * 3.0 + 12
-        }).iterations(6))
+          return r * 2.8 + 10
+        }).iterations(4))
+
         fg.d3ReheatSimulation()
       } catch (e) { console.warn('force config error', e) }
     }
