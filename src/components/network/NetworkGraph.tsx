@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useCallback, useState, useEffect, useMemo } from 'react'
+import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
 import dynamic from 'next/dynamic'
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -253,39 +253,62 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // d3 charge: Δvx = (xj-xi)*charge*α / r²  →  radial force = |charge|*α / (2r)  (대칭 합산)
   // forceX: Δvx = strength*(0-x)*α           →  radial force = strength*r*α
   // 균형: (N-1)*|charge|/(2r) = strength*r  →  r² = (N-1)*|charge| / (2*strength)
-  // r=300, strength=0.08 → |charge| = 300²*2*0.08/(N-1) = 14400/(N-1)
-  const TARGET_R = 300
+  // TARGET_R = max(300, 65*√N), strength=0.08 → |charge| = TARGET_R²*2*0.08/(N-1)
   const CENTER_STR = 0.08
+  // 노드 수가 많을수록 초기 반경을 키워서 겹침 방지 — sqrt 비례 스케일
+  // N=10→300px, N=50→460px, N=100→650px, N=300→1126px, N=400→1300px
+  const TARGET_R = Math.max(300, 65 * Math.sqrt(nodeCount))
   const chargeStrength = -Math.round((TARGET_R ** 2 * 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
   const initRadius = TARGET_R
 
-  const graphData = useMemo(() => ({
-    nodes: nodes.map((n, i) => ({
-      ...n,
-      name: n.label,
-      val: 1,
-      x: Math.cos((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
-      y: Math.sin((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
-    })),
-    links: filteredLinks.map(l => ({
-      ...l,
-      curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
-    })),
+  // nodeCount 최신값을 canvas 콜백(useCallback[])에서 참조하기 위한 ref
+  const nodeCountRef = useRef(nodeCount)
+  nodeCountRef.current = nodeCount
+
+  const graphData = useMemo(() => {
+    // 링크 수 상한 — 너무 많으면 렌더링 느려지고 레이아웃도 엉망
+    // 강도 순 정렬 후 상위 링크만 사용 (약한 연결은 시각적으로도 덜 중요)
+    const maxLinks = Math.min(1200, Math.max(200, nodeCount * 7))
+    const cappedLinks = filteredLinks.length > maxLinks
+      ? [...filteredLinks].sort((a, b) => b.strength - a.strength).slice(0, maxLinks)
+      : filteredLinks
+    return {
+      nodes: nodes.map((n, i) => ({
+        ...n,
+        name: n.label,
+        val: 1,
+        x: Math.cos((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
+        y: Math.sin((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
+      })),
+      links: cappedLinks.map(l => ({
+        ...l,
+        curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
+      })),
+    }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [nodes, filteredLinks])
+  }, [nodes, filteredLinks])
+
+  // ── Canvas 즉시 숨김 — 페인트 이전에 실행하여 ugly flash 차단 ─────────────
+  // useEffect는 브라우저 페인트 후 실행 → 새 데이터가 이전 graphReady=true 상태로
+  // 잠깐 노출됨. useLayoutEffect는 페인트 전 동기 실행 → flash 원천 차단
+  const firstNodeId = nodes[0]?.id ?? ''
+  useLayoutEffect(() => {
+    setGraphReady(false)
+    revealPendingRef.current = false
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nodes.length, links.length, firstNodeId])
 
   // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
-    // 노드/링크 변경 시 캔버스 숨김 — force 적용 완료 후 다시 표시
-    setGraphReady(false)
     let tries = 0
-    let showTimer: ReturnType<typeof setTimeout> | null = null
+    let fallbackTimer: ReturnType<typeof setTimeout> | null = null
 
     function applyForces() {
       const fg = fgRef.current
       if (!fg) {
-        if (++tries < 30) setTimeout(applyForces, 50)
-        else setGraphReady(true)   // 포기 시 그냥 표시
+        // react-force-graph-2d는 dynamic import — 첫 로드 시 수초 걸릴 수 있음
+        // 100회×100ms = 최대 10초 대기 (소진 시 overallFallback이 처리)
+        if (++tries < 100) setTimeout(applyForces, 100)
         return
       }
       try {
@@ -323,8 +346,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
         // 3. 시뮬레이션 재시작
         fg.d3ReheatSimulation()
 
-        // 4. 첫 몇 틱이 올바른 force로 완료된 뒤 캔버스 표시 (150ms = ~9틱)
-        showTimer = setTimeout(() => setGraphReady(true), 150)
+        // 4. 틱 카운트 리셋 후 reveal 활성화 — handleEngineTick 틱 30 도달 시 캔버스 표시
+        tickCountRef.current = 0
+        revealPendingRef.current = true
+
+        // 5. 안전망 타이머: 틱 이벤트가 충분히 발생하지 않을 경우 대비
+        fallbackTimer = setTimeout(() => setGraphReady(true), 3000)
       } catch (e) {
         console.warn('force config error', e)
         setGraphReady(true)   // 에러 시 그냥 표시
@@ -333,23 +360,33 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
     // 50ms 후 실행 — ForceGraph2D가 시뮬레이션을 완전히 초기화할 시간을 확보
     const timer = setTimeout(applyForces, 50)
+    // 전체 안전망: 10초 안에 어떤 경로로도 표시되지 않으면 강제 표시 (첫 로드 blank 방지)
+    const overallFallback = setTimeout(() => setGraphReady(true), 10000)
     return () => {
       clearTimeout(timer)
-      if (showTimer) clearTimeout(showTimer)
+      clearTimeout(overallFallback)
+      revealPendingRef.current = false
+      if (fallbackTimer) clearTimeout(fallbackTimer)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, links.length])
+  }, [nodes.length, links.length, firstNodeId])
 
-  // ── Auto-fit: simulation 중 60틱마다 + 종료 시 ───────────────────────────
+  // ── Auto-fit + reveal: simulation 틱마다, 종료 시 ─────────────────────────
   const tickCountRef = useRef(0)
+  const revealPendingRef = useRef(false)
   const handleEngineTick = useCallback(() => {
     tickCountRef.current++
-    if (tickCountRef.current % 60 === 0) {
-      try { fgRef.current?.zoomToFit(200, 80) } catch {}
+    // reveal 대기 중이고 30틱에 도달하면 → zoom 맞추고 캔버스 표시
+    if (revealPendingRef.current && tickCountRef.current >= 30) {
+      revealPendingRef.current = false
+      try { fgRef.current?.zoomToFit(300, 80) } catch {}
+      setGraphReady(true)
     }
   }, [])
   const handleEngineStop = useCallback(() => {
+    revealPendingRef.current = false
     tickCountRef.current = 0
+    setGraphReady(true)
     try { fgRef.current?.zoomToFit(400, 60) } catch {}
   }, [])
 
@@ -529,7 +566,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
     ctx.globalAlpha = isFaded ? 0.06 : 1
 
     // Radial glow (hover / highlighted / high-degree)
-    if (!isFaded && (isHovered || isHighlighted || degree >= 4)) {
+    // 노드 수 많을 때 매 프레임 gradient 객체 대량 생성은 렌더링 병목 → 호버/하이라이트만 표시
+    const glowEnabled = isHovered || isHighlighted || (degree >= 4 && nodeCountRef.current < 120)
+    if (!isFaded && glowEnabled) {
       const glowR = isHovered ? rDraw * 3.2 : rDraw * 2.2
       const glowAlpha = isHovered ? 0.5 : isHighlighted ? 0.2 : 0.1
       const [cr, cg, cb] = baseColor.startsWith('rgb')
