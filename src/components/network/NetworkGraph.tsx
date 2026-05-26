@@ -1111,59 +1111,10 @@ export default function NetworkGraph({ nodes, links }: Props) {
             borderRadius: '12px',
             backdropFilter: 'blur(16px)',
             boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
-            overflow: 'hidden',
+            maxHeight: 'calc(100vh - 80px)',
+            overflowY: 'auto',
+            overflowX: 'hidden',
           }}>
-
-            {/* ── Search ── */}
-            <div style={{ padding: '12px 14px 10px' }}>
-              <p style={sectionLabel}>검색</p>
-              <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#607898', pointerEvents: 'none' }}>🔍</span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={e => setSearchQuery(e.target.value)}
-                  placeholder="이름, 소속, 직책..."
-                  style={{
-                    width: '100%', paddingLeft: '26px', paddingRight: '8px',
-                    paddingTop: '6px', paddingBottom: '6px',
-                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
-                    borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
-                    outline: 'none', boxSizing: 'border-box',
-                  }}
-                />
-              </div>
-              {searchMatchCount !== null && (
-                <p style={{ fontSize: '11px', color: '#4A7CC0', marginTop: '5px' }}>
-                  {searchMatchCount > 0
-                    ? searchDepth === 2
-                      ? `직접 일치 ${searchMatchCount}명 + 연결 취재원 포함 강조`
-                      : `${searchMatchCount}명 일치`
-                    : '일치하는 취재원 없음'}
-                </p>
-              )}
-              {searchQuery.trim() && (
-                <div style={{ display: 'flex', gap: '5px', marginTop: '6px' }}>
-                  {([1, 2] as const).map(d => (
-                    <button
-                      key={d}
-                      type="button"
-                      onClick={() => setSearchDepth(d)}
-                      style={{
-                        flex: 1, padding: '4px 0', borderRadius: '5px',
-                        fontSize: '10px', cursor: 'pointer',
-                        background: searchDepth === d ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.06)',
-                        color: searchDepth === d ? '#88B8E8' : '#6A8098',
-                        border: searchDepth === d ? '1px solid rgba(74,124,192,0.5)' : '1px solid rgba(255,255,255,0.10)',
-                      }}>
-                      {d === 1 ? '1촌만' : '2촌 포함'}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            <Divider />
 
             {/* ── 중심 보기 ── */}
             <div style={{ padding: '10px 14px' }}>
@@ -1281,6 +1232,57 @@ export default function NetworkGraph({ nodes, links }: Props) {
                 )}
 
               </div>
+            </div>
+
+            <Divider />
+
+            {/* ── Search ── */}
+            <div style={{ padding: '12px 14px 10px' }}>
+              <p style={sectionLabel}>검색</p>
+              <div style={{ position: 'relative' }}>
+                <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#607898', pointerEvents: 'none' }}>🔍</span>
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={e => setSearchQuery(e.target.value)}
+                  placeholder="이름, 소속, 직책..."
+                  style={{
+                    width: '100%', paddingLeft: '26px', paddingRight: '8px',
+                    paddingTop: '6px', paddingBottom: '6px',
+                    background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
+                    borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
+                    outline: 'none', boxSizing: 'border-box',
+                  }}
+                />
+              </div>
+              {searchMatchCount !== null && (
+                <p style={{ fontSize: '11px', color: '#4A7CC0', marginTop: '5px' }}>
+                  {searchMatchCount > 0
+                    ? searchDepth === 2
+                      ? `직접 일치 ${searchMatchCount}명 + 연결 취재원 포함 강조`
+                      : `${searchMatchCount}명 일치`
+                    : '일치하는 취재원 없음'}
+                </p>
+              )}
+              {searchQuery.trim() && (
+                <div style={{ display: 'flex', gap: '5px', marginTop: '6px' }}>
+                  {([1, 2] as const).map(d => (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setSearchDepth(d)}
+                      style={{
+                        flex: 1, padding: '4px 0', borderRadius: '5px',
+                        fontSize: '10px', cursor: 'pointer',
+                        background: searchDepth === d ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.06)',
+                        color: searchDepth === d ? '#88B8E8' : '#6A8098',
+                        border: searchDepth === d ? '1px solid rgba(74,124,192,0.5)' : '1px solid rgba(255,255,255,0.10)',
+                      }}>
+                      {d === 1 ? '1촌만' : '2촌 포함'}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
 
             <Divider />
