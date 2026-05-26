@@ -256,18 +256,32 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
   const nodeCount = nodes.length
 
-  // ── charge 공식 ───────────────────────────────────────────────────────────────
-  // d3 charge: Δvx = (xj-xi)*charge*α / r²  →  radial force = |charge|*α / (2r)  (대칭 합산)
-  // forceX: Δvx = strength*(0-x)*α           →  radial force = strength*r*α
-  // 균형: (N-1)*|charge|/(2r) = strength*r  →  r² = (N-1)*|charge| / (2*strength)
-  // TARGET_R = max(420, 95*√N), strength=0.05 → |charge| = TARGET_R²*2*0.05/(N-1)
-  // CENTER_STR 낮춤(0.08→0.05): 노드가 화면 중심에 너무 강하게 끌리지 않고 넓게 퍼짐
-  // TARGET_R 키움(65→95, min 420): 초기 원형 배치 반경을 크게 잡아 퍼짐 유지
-  const CENTER_STR = 0.05
-  // N=10→420px, N=17→420px, N=50→672px, N=100→950px, N=150→1163px
-  const TARGET_R = Math.max(420, 95 * Math.sqrt(nodeCount))
-  const chargeStrength = -Math.round((TARGET_R ** 2 * 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
+  // ── charge 공식 + 밀도 보정 ──────────────────────────────────────────────────
+  // 계정마다 연결 수가 달라도 항상 퍼진 레이아웃을 유지하기 위해
+  // 노드당 평균 링크 수(밀도)에 비례해서 반발력을 자동으로 강화
+  //
+  // densityFactor: 밀도가 높을수록 링크 스프링이 강하게 당기므로
+  //   반발력(chargeStrength)을 같은 비율로 증폭 → 어느 계정이든 균형점 유지
+  //
+  // CENTER_STR = 0.04 (낮을수록 노드가 캔버스 중심에 덜 끌림 → 더 퍼짐)
+  // TARGET_R = max(500, 100*√N): 초기 원형 배치를 넉넉하게 잡아 초기 퍼짐 보장
+  const CENTER_STR = 0.04
+  const TARGET_R = Math.max(500, 100 * Math.sqrt(nodeCount))
+
+  // 노드당 평균 링크 수
+  const avgLinksPerNode = links.length / Math.max(nodeCount - 1, 1)
+  // 밀도 보정 배수: 링크가 많을수록 반발력 증폭 (최소 1.0)
+  // avgLinks=1 → 1.0, avgLinks=3 → 1.95, avgLinks=5 → 2.9
+  const densityFactor = Math.max(1.0, avgLinksPerNode * 0.65)
+
+  const chargeStrength = -Math.round(
+    (TARGET_R ** 2 * 2 * CENTER_STR * densityFactor) / Math.max(nodeCount - 1, 1)
+  )
   const initRadius = TARGET_R
+
+  // 링크 강도 역시 밀도에 반비례 — 연결 많을수록 스프링을 약하게
+  // avgLinks=1 → 0.016, avgLinks=3 → 0.0053, avgLinks=5 → 0.0032
+  const adaptiveLinkStrength = Math.max(0.003, 0.016 / Math.max(avgLinksPerNode, 1))
 
   // nodeCount 최신값을 canvas 콜백(useCallback[])에서 참조하기 위한 ref
   const nodeCountRef = useRef(nodeCount)
@@ -328,13 +342,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
         fg.d3Force('y', forceY(0).strength(CENTER_STR))
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')
-          // strength 낮춤(0.04→0.015): 연결이 많아도 노드를 한곳에 끌어당기는 힘을 약하게
-          // distance 늘림(+120→+220): 연결된 노드 간 거리를 더 멀리 유지
-          ?.strength(0.015)
+          // adaptiveLinkStrength: 연결 밀도에 반비례 → 연결 많은 계정도 퍼진 레이아웃 유지
+          // distance +280: 연결된 노드 간 기본 간격을 충분히 확보
+          ?.strength(adaptiveLinkStrength)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return srcR + tgtR + 220
+            return srcR + tgtR + 280
           })
           .iterations(1)
         fg.d3Force('collide', forceCollide((n: any) => {
