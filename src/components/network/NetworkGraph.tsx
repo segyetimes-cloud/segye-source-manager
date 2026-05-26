@@ -219,26 +219,6 @@ export default function NetworkGraph({ nodes, links }: Props) {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
-  // ── 마운트 시 내 네트워크 자동 포커스 ─────────────────────────────────────────
-  // 페이지를 열면 로그인한 사용자의 취재원 + 1촌 인맥만 먼저 표시.
-  // 이후 [인물 검색]으로 다른 취재원 중심 보기로 전환 가능.
-  const mountFocusApplied = useRef(false)
-  useEffect(() => {
-    if (mountFocusApplied.current) return
-    mountFocusApplied.current = true
-    const ownerIds = nodes.filter(n => n.isOwner).map(n => n.id)
-    if (ownerIds.length === 0) return   // 관리자 등 isOwner 없는 경우 → 기본 뷰 유지
-    const focusSet = new Set<string>(ownerIds)
-    for (const id of ownerIds) {
-      const nbrs = adjacencyMap.get(id)
-      if (nbrs) for (const nid of nbrs) focusSet.add(nid)
-    }
-    focusMatchIdsRef.current = focusSet
-    setFocusFilterIds(focusSet)
-    setFocusModeLabel('내 네트워크')
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
-
   // ── Container sizing ──────────────────────────────────────────────────────
   useEffect(() => {
     const el = containerRef.current
@@ -1080,41 +1060,37 @@ export default function NetworkGraph({ nodes, links }: Props) {
         />
       </div>
 
-      {/* ── Obsidian-style settings panel (bottom-left) ──────────────────── */}
-      <div style={{
-        position: 'absolute', bottom: '16px', left: '16px',
-        zIndex: 20, display: 'flex', flexDirection: 'column-reverse', gap: '8px',
-        alignItems: 'flex-start',
-      }}>
-        {/* Toggle button */}
-        <button
-          type="button"
-          onClick={() => setPanelOpen(p => !p)}
-          title={panelOpen ? '패널 닫기' : '설정 패널 열기'}
-          style={{
-            width: '36px', height: '36px', borderRadius: '8px',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: panelOpen ? 'rgba(74,124,192,0.25)' : 'rgba(8,14,28,0.88)',
-            border: `1px solid ${panelOpen ? 'rgba(74,124,192,0.55)' : '#1A2838'}`,
-            cursor: 'pointer', fontSize: '15px',
-            backdropFilter: 'blur(10px)',
-          }}>
-          ⚙
-        </button>
+      {/* ── Settings toggle button (bottom-left) ────────────────────────── */}
+      <button
+        type="button"
+        onClick={() => setPanelOpen(p => !p)}
+        title={panelOpen ? '패널 닫기' : '설정 패널 열기'}
+        style={{
+          position: 'absolute', bottom: '16px', left: '16px', zIndex: 20,
+          width: '36px', height: '36px', borderRadius: '8px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: panelOpen ? 'rgba(74,124,192,0.25)' : 'rgba(8,14,28,0.88)',
+          border: `1px solid ${panelOpen ? 'rgba(74,124,192,0.55)' : '#1A2838'}`,
+          cursor: 'pointer', fontSize: '15px',
+          backdropFilter: 'blur(10px)',
+        }}>
+        ⚙
+      </button>
 
-        {/* Panel body */}
-        {panelOpen && (
-          <div style={{
-            width: isMobile ? 'min(260px, calc(100vw - 80px))' : '228px',
-            background: 'rgba(10,18,32,0.96)',
-            border: '1px solid rgba(255,255,255,0.10)',
-            borderRadius: '12px',
-            backdropFilter: 'blur(16px)',
-            boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
-            maxHeight: 'calc(100vh - 80px)',
-            overflowY: 'auto',
-            overflowX: 'hidden',
-          }}>
+      {/* ── Settings panel body (above toggle button) ────────────────────── */}
+      {panelOpen && (
+        <div style={{
+          position: 'absolute', bottom: '60px', left: '16px', zIndex: 20,
+          width: isMobile ? 'min(260px, calc(100vw - 80px))' : '228px',
+          background: 'rgba(10,18,32,0.96)',
+          border: '1px solid rgba(255,255,255,0.10)',
+          borderRadius: '12px',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 8px 40px rgba(0,0,0,0.55)',
+          maxHeight: 'calc(100vh - 120px)',
+          overflowY: 'auto',
+          overflowX: 'hidden',
+        }}>
 
             {/* ── 중심 보기 ── */}
             <div style={{ padding: '10px 14px' }}>
@@ -1456,21 +1432,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
               </>
             )}
 
-            {/* ── Legend ── */}
-            <Divider />
-            <div style={{ padding: '8px 14px 10px', display: 'flex', gap: '12px', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#38C8B8', boxShadow: '0 0 4px #38C8B870', display: 'inline-block' }} />
-                <span style={{ fontSize: '10px', color: '#5A7090' }}>내 취재원</span>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#E8A030', border: '1px dashed rgba(255,165,50,0.7)', display: 'inline-block' }} />
-                <span style={{ fontSize: '10px', color: '#5A7090' }}>중복</span>
-              </div>
-            </div>
           </div>
         )}
-      </div>
 
       {/* ── Hovered node info card (top-right) ───────────────────────────── */}
       {hoveredInfo && (
@@ -1542,6 +1505,26 @@ export default function NetworkGraph({ nodes, links }: Props) {
             {btn.label}
           </button>
         ))}
+      </div>
+
+      {/* ── Legend bar (bottom-center) ────────────────────────────────────── */}
+      <div style={{
+        position: 'absolute', bottom: '20px', left: '50%', transform: 'translateX(-50%)',
+        zIndex: 15, display: 'flex', gap: '16px', alignItems: 'center',
+        background: 'rgba(10,18,32,0.82)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '8px', padding: '5px 14px',
+        backdropFilter: 'blur(12px)',
+        pointerEvents: 'none',
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#38C8B8', boxShadow: '0 0 4px #38C8B870', display: 'inline-block' }} />
+          <span style={{ fontSize: '10px', color: '#5A7090' }}>내 취재원</span>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ width: '9px', height: '9px', borderRadius: '50%', background: '#E8A030', border: '1px dashed rgba(255,165,50,0.7)', display: 'inline-block' }} />
+          <span style={{ fontSize: '10px', color: '#5A7090' }}>중복</span>
+        </div>
       </div>
     </div>
   )
