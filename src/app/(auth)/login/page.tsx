@@ -220,10 +220,10 @@ export default function LoginPage() {
                 backgroundClip: 'text',
               }}
             >
-              AI 취재원
+              취재원 및 정보
             </span>
             <br />
-            <span style={{ color: '#FFFFFF' }}>관리 시스템</span>
+            <span style={{ color: '#FFFFFF' }}>공유 시스템</span>
           </h1>
           <p
             style={{
@@ -233,7 +233,7 @@ export default function LoginPage() {
               maxWidth: '420px',
             }}
           >
-            기자들이 보유한 취재원 정보를 안전하게 관리하고,{'\n'}
+            기자들이 보유한 취재원 정보를 안전하게 공유하고,{'\n'}
             조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼
           </p>
         </div>
