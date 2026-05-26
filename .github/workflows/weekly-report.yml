@@ -1,0 +1,49 @@
+name: Weekly Current Issues Report
+
+on:
+  schedule:
+    # 매주 금요일 낮 12시 KST (03:00 UTC)
+    - cron: '0 3 * * 5'
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: '실제 등록 없이 테스트만 실행'
+        required: false
+        default: 'false'
+        type: boolean
+
+jobs:
+  generate-weekly-report:
+    name: 주간 현안 보고서 자동 생성
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 주간 현안 보고서 생성 요청
+        id: generate
+        run: |
+          RESPONSE=$(curl -s -w "\n%{http_code}" \
+            -X POST \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            "${{ secrets.APP_URL }}/api/cron/weekly-report")
+
+          HTTP_STATUS=$(echo "$RESPONSE" | tail -n1)
+          BODY=$(echo "$RESPONSE" | head -n -1)
+
+          echo "HTTP Status: $HTTP_STATUS"
+          echo "Response: $BODY"
+          echo "body=$BODY" >> "$GITHUB_OUTPUT"
+
+          if [ "$HTTP_STATUS" != "200" ]; then
+            echo "::error::보고서 생성 실패 (HTTP $HTTP_STATUS): $BODY"
+            exit 1
+          fi
+
+      - name: 결과 요약
+        if: success()
+        run: |
+          echo "### 주간 현안 보고서 생성 완료" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          echo '${{ steps.generate.outputs.body }}' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"

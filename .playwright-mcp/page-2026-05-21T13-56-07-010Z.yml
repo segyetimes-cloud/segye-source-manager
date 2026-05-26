@@ -1,0 +1,960 @@
+- generic [active] [ref=e1]:
+  - link "Skip to main content" [ref=e2] [cursor=pointer]:
+    - /url: "#main-content"
+  - banner "Site navigation" [ref=e3]:
+    - navigation "main" [ref=e5]:
+      - link "Welcome Page" [ref=e6] [cursor=pointer]:
+        - /url: https://sentry.io/welcome/
+        - img [ref=e7]
+      - list [ref=e9]:
+        - listitem [ref=e10]:
+          - button "Platform" [ref=e12] [cursor=pointer]:
+            - generic [ref=e13]: Platform
+            - img [ref=e15]
+        - listitem [ref=e17]:
+          - button "Solutions" [ref=e19] [cursor=pointer]:
+            - generic [ref=e20]: Solutions
+            - img [ref=e22]
+        - listitem [ref=e24]:
+          - button "Resources" [ref=e26] [cursor=pointer]:
+            - generic [ref=e27]: Resources
+            - img [ref=e29]
+        - listitem [ref=e31]:
+          - link "Docs" [ref=e33] [cursor=pointer]:
+            - /url: https://docs.sentry.io/
+            - generic [ref=e34]: Docs
+        - listitem [ref=e35]:
+          - link "Pricing" [ref=e37] [cursor=pointer]:
+            - /url: https://sentry.io/pricing/
+            - generic [ref=e38]: Pricing
+      - generic [ref=e39]:
+        - link "Sign In" [ref=e40] [cursor=pointer]:
+          - /url: https://sentry.io/auth/login/
+          - generic [ref=e41]: Sign In
+        - link "Get Demo" [ref=e42] [cursor=pointer]:
+          - /url: https://sentry.io/demo/
+          - generic [ref=e43]: Get Demo
+        - link "Get Started" [ref=e44] [cursor=pointer]:
+          - /url: https://sentry.io/signup/
+          - generic [ref=e45]: Get Started
+  - main "Main content" [ref=e46]:
+    - button "Marketing Mode ON OFF" [ref=e47]:
+      - generic [ref=e48]: Marketing Mode
+      - button "ON OFF" [ref=e50] [cursor=pointer]:
+        - text: "ON"
+        - text: "OFF"
+    - generic [ref=e53]:
+      - generic [ref=e55]:
+        - generic [ref=e60]:
+          - generic [ref=e61]:
+            - heading "No tricks, just Application Metrics." [level=2] [ref=e62]
+            - generic [ref=e63]: Instrument once, slice any way you need, trace any spike to the fix.
+            - generic [ref=e64]:
+              - link "Get started with Sentry" [ref=e65] [cursor=pointer]:
+                - /url: https://sentry.io/signup/
+                - generic [ref=e66]: Get started with Sentry
+              - link "Try Application Metrics" [ref=e67] [cursor=pointer]:
+                - /url: https://docs.sentry.io/product/explore/metrics/
+                - generic [ref=e68]: Try Application Metrics
+          - img "Sentry Application Metrics" [ref=e71]
+        - generic [ref=e73]:
+          - heading "Code breaks, fix it faster" [level=1] [ref=e74]:
+            - text: Code
+            - generic [ref=e75]: breaks,
+            - text: fix it faster
+          - paragraph [ref=e76]: Application monitoring software considered "not bad" by millions of developers.
+          - generic [ref=e77]:
+            - link "Get Started" [ref=e78] [cursor=pointer]:
+              - /url: https://sentry.io/signup/
+              - generic [ref=e79]: Get Started
+            - link "See How In Sandbox" [ref=e80] [cursor=pointer]:
+              - /url: https://sandbox.sentry.io/
+              - generic [ref=e81]: See How In Sandbox
+      - generic [ref=e88]:
+        - generic [ref=e89]:
+          - generic:
+            - img
+          - generic [ref=e92]:
+            - img [ref=e96]
+            - img [ref=e101]
+            - img [ref=e106]
+            - img [ref=e111]
+            - img [ref=e116]
+            - img [ref=e121]
+            - img [ref=e128]
+            - img [ref=e133]
+            - img [ref=e151]
+            - img [ref=e156]
+            - img [ref=e161]
+            - img [ref=e169]
+            - img [ref=e176]
+            - img [ref=e185]
+            - img [ref=e193]
+            - img [ref=e198]
+            - img [ref=e230]
+            - img [ref=e242]
+            - img [ref=e247]
+            - img [ref=e252]
+            - img [ref=e260]
+            - img [ref=e272]
+            - img [ref=e286]
+            - img [ref=e291]
+            - img [ref=e296]
+            - img [ref=e301]
+            - img [ref=e306]
+            - img [ref=e311]
+            - img [ref=e318]
+            - img [ref=e323]
+            - img [ref=e341]
+            - img [ref=e346]
+            - img [ref=e351]
+            - img [ref=e359]
+            - img [ref=e366]
+            - img [ref=e375]
+            - img [ref=e383]
+            - img [ref=e388]
+            - img [ref=e420]
+            - img [ref=e432]
+            - img [ref=e437]
+            - img [ref=e442]
+            - img [ref=e450]
+            - img [ref=e462]
+        - region "Customers" [ref=e473]:
+          - list [ref=e474]:
+            - listitem [ref=e475]: GitHub
+            - listitem [ref=e476]: Disney
+            - listitem [ref=e477]: Atlassian
+            - listitem [ref=e478]: Linear
+            - listitem [ref=e479]: Vercel
+            - listitem [ref=e480]: Cloudflare
+            - listitem [ref=e481]: Slack
+            - listitem [ref=e482]: Metronome
+            - listitem [ref=e483]: Autodesk
+            - listitem [ref=e484]: Microsoft
+            - listitem [ref=e485]: Instacart
+            - listitem [ref=e486]: Lyft
+            - listitem [ref=e487]: Bolt
+            - listitem [ref=e488]: Monday
+            - listitem [ref=e489]: Cursor
+            - listitem [ref=e490]: Anthropic
+            - listitem [ref=e491]: Factory AI
+            - listitem [ref=e492]: Sentry
+            - listitem [ref=e493]: Baseten
+            - listitem [ref=e494]: Runlayer
+            - listitem [ref=e495]: Convex
+            - listitem [ref=e496]: Supabase
+    - generic [ref=e500]:
+      - heading "Developer first. Always." [level=2] [ref=e501]:
+        - text: Developer first.
+        - generic [ref=e502]: Always.
+      - generic [ref=e506]:
+        - generic [ref=e508]:
+          - generic [ref=e510]:
+            - generic:
+              - img "Illustration of a terminal-style window showing the command npm install @sentry/browser on a dark purple background."
+          - generic [ref=e511]:
+            - heading "Monitor in five lines" [level=3] [ref=e512]
+            - paragraph [ref=e514]:
+              - text: Drop in the
+              - link "SDK" [ref=e515] [cursor=pointer]:
+                - /url: https://sentry.io/platforms/
+              - text: . No agents to install. No performance surprises.
+        - generic [ref=e517]:
+          - generic [ref=e519]:
+            - generic:
+              - 'img "A section labeled “Root Cause” with code insight stating: “The code attempts to check if $quantities,” highlighting a probable bug in the application logic."'
+          - generic [ref=e520]:
+            - heading "Automatically root-cause any issue" [level=3] [ref=e521]
+            - paragraph [ref=e523]:
+              - text: Catch critical issues before you merge and fix them when they hit prod with
+              - link "Seer, our debugging agent and code reviewer" [ref=e524] [cursor=pointer]:
+                - /url: https://sentry.io/product/seer/
+              - text: .
+        - generic [ref=e526]:
+          - generic [ref=e528]:
+            - generic:
+              - img "Code snippet with a console warning message and a Sentry UI section showing a bug in detectOperationType() linked to initial-build, with options for detailed analysis and a suggested fix."
+          - generic [ref=e529]:
+            - heading "Break production less" [level=3] [ref=e530]
+            - paragraph [ref=e532]:
+              - text: Predict and prevent the errors that matter most before they even make it to production with
+              - link "AI code review" [ref=e533] [cursor=pointer]:
+                - /url: https://sentry.io/product/seer/ai-code-review/
+              - text: .
+        - generic [ref=e535]:
+          - generic [ref=e537]:
+            - generic:
+              - img "Chat-style interface showing “Sentry agent connected” and a user named “codydearkland” asking, “@Sentry can i get some help?”"
+          - generic [ref=e538]:
+            - heading "Stay in the flow" [level=3] [ref=e539]
+            - paragraph [ref=e541]:
+              - text: From
+              - link "GitHub" [ref=e542] [cursor=pointer]:
+                - /url: https://sentry.io/integrations/github/
+              - text: ","
+              - link "Slack" [ref=e543] [cursor=pointer]:
+                - /url: https://sentry.io/integrations/slack/
+              - text: ","
+              - link "Jira" [ref=e544] [cursor=pointer]:
+                - /url: https://sentry.io/integrations/jira/
+              - text: ", and"
+              - link "Linear" [ref=e545] [cursor=pointer]:
+                - /url: https://sentry.io/integrations/linear/
+              - text: to coding agents with
+              - link "Sentry's MCP server" [ref=e546] [cursor=pointer]:
+                - /url: https://mcp.sentry.dev/
+              - text: ", Sentry brings full context to every fix from dev to prod."
+    - generic [ref=e548]:
+      - generic [ref=e551]:
+        - heading "Everything’s connected" [level=2] [ref=e552]:
+          - text: Everything’s
+          - generic [ref=e553]: connected
+        - generic [ref=e554]:
+          - paragraph [ref=e556]:
+            - text: Yeah, other tools exist. But
+            - link "errors" [ref=e557] [cursor=pointer]:
+              - /url: https://sentry.io/product/error-monitoring/
+            - text: ","
+            - link "logs" [ref=e558] [cursor=pointer]:
+              - /url: https://sentry.io/product/logs/
+            - text: ","
+            - link "replays" [ref=e559] [cursor=pointer]:
+              - /url: https://sentry.io/product/session-replay/
+            - text: ","
+            - link "spans" [ref=e560] [cursor=pointer]:
+              - /url: https://sentry.io/product/tracing/
+            - text: ","
+            - link "profiles" [ref=e561] [cursor=pointer]:
+              - /url: https://sentry.io/product/profiling/
+            - text: ", and"
+            - link "metrics" [ref=e562] [cursor=pointer]:
+              - /url: https://sentry.io/product/metrics/
+            - text: — all connected by the same trace? That’s kind of our thing.
+          - generic [ref=e563]:
+            - generic [ref=e564]:
+              - generic:
+                - generic:
+                  - 'img "Sentry Session Replay showing a user session on empower-plant.com with clicks, navigation, and two key errors during checkout: out-of-stock and 500 server error."'
+                  - img "Sentry trace waterfall view for an HTTP POST to /api/v1/buy-plants, showing AI-related spans including invoke_agent, chat, and execute_tool, with one invocation taking 4.04s—80% faster than average."
+                  - 'img "Sentry issue view showing an unhandled exception in src/main.py at line 279: “Error validating enough inventory for product.” Includes code context, release details, and related file changes in the empower.flask package."'
+            - generic [ref=e565]:
+              - heading "Go from Issue → Context → Fix." [level=3] [ref=e567]
+              - generic [ref=e569]:
+                - button "Debug 500's, trace slow requests, replay fetch() failures, and fix the broken code that caused it." [ref=e573] [cursor=pointer]
+                - button "Catch slow queries, N+1s, and request timeouts before the ‘why is this so slow?’ posts fill up your feed." [ref=e577] [cursor=pointer]
+                - button "Map every incident to the release, PR, and owner -- automatically." [ref=e581] [cursor=pointer]
+      - generic [ref=e584]:
+        - heading "Debugging needs context— with or without AI" [level=2] [ref=e585]:
+          - text: Debugging needs context—
+          - generic [ref=e586]: with or without AI
+        - generic [ref=e587]:
+          - paragraph [ref=e589]:
+            - link "Seer" [ref=e590] [cursor=pointer]:
+              - /url: https://sentry.io/product/seer/
+            - text: ", our AI debugger, uses Sentry context – logs, commits, traces, stack trace - so you can stop guessing and"
+            - emphasis [ref=e591]: it
+            - text: can fix issues for you.
+          - generic [ref=e592]:
+            - generic [ref=e593]:
+              - generic:
+                - generic:
+                  - 'img "Sentry issue detail page for a fatal read ETIMEDOUT error on a GET /api/projects request, showing root cause analysis: a missing DB connection timeout combined with latency and WebSocket activity. Includes stack trace, user impact, and code snippet with a new Pool() initialization lacking timeout settings."'
+                  - img "Code diff view showing new configurations added to prevent database timeout errors, including connection pool sizing, timeouts for idle connections and queries, and keepalive settings in client.ts."
+                  - 'img "GitHub code review by the Seer highlighting a potential bug: inconsistent error handling for missing OpenAI API keys in ProjectDetectionService, which throws an error in the constructor and may crash the app on startup."'
+            - generic [ref=e596]:
+              - button "Analyzes every signal to explain why your code failed, not just where." [ref=e600] [cursor=pointer]
+              - button "Fixes what’s broken while you ship what’s next – generating precise, merge-ready patches." [ref=e604] [cursor=pointer]
+              - button "Stops bad code before it starts bad days. Correlating PRs against real error and performance history to catch regressions before they ship." [ref=e608] [cursor=pointer]
+    - generic [ref=e612]:
+      - heading "Loved by developers worldwide" [level=2] [ref=e613]:
+        - text: Loved by developers
+        - generic [ref=e614]: worldwide
+      - generic [ref=e615]:
+        - generic [ref=e617]:
+          - generic [ref=e618]:
+            - img "quote mark" [ref=e620]
+            - generic [ref=e621]: We wouldn’t have scaled without Sentry. Most of our incidents are hardware-related—and we debug them all inside Sentry
+          - generic [ref=e622]:
+            - img "Anthropic" [ref=e625]
+            - generic [ref=e626]:
+              - paragraph [ref=e628]: Nova DasSarma
+              - paragraph [ref=e630]: Systems Lead, Anthropic
+        - generic [ref=e632]:
+          - generic [ref=e633]:
+            - img "quote mark" [ref=e635]
+            - generic [ref=e636]: Sentry’s high-quality tooling helps Disney+ maintain high-quality service to its tens of millions of global subscribers.
+          - generic [ref=e637]:
+            - img "Disney+" [ref=e640]
+            - generic [ref=e641]:
+              - paragraph [ref=e643]: Andrew Hay
+              - paragraph [ref=e645]: Director at Disney Streaming Services, Disney+
+        - generic [ref=e647]:
+          - generic [ref=e648]:
+            - img "quote mark" [ref=e650]
+            - generic [ref=e651]: The signal we get from Sentry is the most reliable indicator of software issues and is used throughout Instacart because it can be easily configured for each service regardless of the language or framework.
+          - generic [ref=e652]:
+            - img "Instacart" [ref=e655]
+            - generic [ref=e656]:
+              - paragraph [ref=e658]: Igor Dobrovitski
+              - paragraph [ref=e660]: Infrastructure Software Engineer, Instacart
+    - generic [ref=e665]:
+      - heading "Get started in minutes" [level=2] [ref=e666]:
+        - text: Get started
+        - generic [ref=e667]: in minutes
+      - paragraph [ref=e668]: Five lines of code. That's it. No complex setup, no performance hits, no waiting around.
+      - generic [ref=e669]:
+        - combobox "Installation Dropdown 23" [ref=e671]:
+          - option "Next.js" [selected]
+          - option "Angular"
+          - option "Android"
+          - option "iOS"
+          - option "Flutter"
+          - option "React Native"
+          - option ".NET MAUI"
+          - option "Python"
+          - option "Node.js"
+          - option "React"
+          - option ".NET"
+          - option "Go"
+          - option "Swift"
+          - option "Ruby"
+          - option "PHP"
+          - option "Laravel"
+          - option "ASP.NET Core"
+          - option "Spring Boot"
+          - option "Vue"
+          - option "Solid"
+          - option "Svelte"
+          - option "Astro"
+          - option "JavaScript"
+        - generic [ref=e672]:
+          - paragraph [ref=e673]: See -- it's really just one command.
+          - generic [ref=e674]:
+            - status [ref=e675]
+            - button "Copy code" [ref=e676] [cursor=pointer]:
+              - img [ref=e677]
+            - code [ref=e680]: npx @sentry/wizard@latest -i nextjs
+        - generic:
+          - paragraph [ref=e681]: "Get started with just one line of code:"
+          - generic [ref=e682]:
+            - status [ref=e683]
+            - button "Copy code" [ref=e684] [cursor=pointer]:
+              - img [ref=e685]
+            - code [ref=e688]: npx @sentry/wizard@latest -i angular
+        - generic:
+          - paragraph [ref=e689]: Just run this command to sign up for and install Sentry.
+          - generic [ref=e690]:
+            - status [ref=e691]
+            - button "Copy code" [ref=e692] [cursor=pointer]:
+              - img [ref=e693]
+            - code [ref=e696]: brew install getsentry/tools/sentry-wizard && sentry-wizard -i android
+        - generic:
+          - paragraph [ref=e697]: "Signup and install Sentry with just one line of code:"
+          - generic [ref=e698]:
+            - status [ref=e699]
+            - button "Copy code" [ref=e700] [cursor=pointer]:
+              - img [ref=e701]
+            - code [ref=e704]: brew install getsentry/tools/sentry-wizard && sentry-wizard -i ios
+        - generic:
+          - paragraph [ref=e705]: "Sign-up and install Sentry with just one line of code:"
+          - generic [ref=e706]:
+            - status [ref=e707]
+            - button "Copy code" [ref=e708] [cursor=pointer]:
+              - img [ref=e709]
+            - code [ref=e712]: npx @sentry/wizard@latest -i flutter
+        - generic:
+          - paragraph [ref=e713]: "Install Sentry with one line of code:"
+          - generic [ref=e714]:
+            - status [ref=e715]
+            - button "Copy code" [ref=e716] [cursor=pointer]:
+              - img [ref=e717]
+            - code [ref=e720]: npx @sentry/wizard@latest -i reactNative
+        - generic:
+          - paragraph [ref=e721]: "Add the Sentry dependency to your .NET MAUI application:"
+          - generic [ref=e722]:
+            - status [ref=e723]
+            - button "Copy code" [ref=e724] [cursor=pointer]:
+              - img [ref=e725]
+            - code [ref=e728]: dotnet add package Sentry.Maui -v 5.11.1
+        - generic:
+          - paragraph [ref=e729]:
+            - text: Grab the
+            - link "Sentry Python SDK" [ref=e730] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-python
+            - text: ":"
+          - generic [ref=e731]:
+            - status [ref=e732]
+            - button "Copy code" [ref=e733] [cursor=pointer]:
+              - img [ref=e734]
+            - code [ref=e737]: pip install --upgrade sentry-sdk
+          - paragraph [ref=e738]: "Configure your DSN:"
+          - generic [ref=e739]:
+            - status [ref=e740]
+            - button "Copy code" [ref=e741] [cursor=pointer]:
+              - img [ref=e742]
+            - code [ref=e745]: "import sentry_sdk sentry_sdk.init( \"https://<key>@sentry.io/<project>\", # Set traces_sample_rate to 1.0 to capture 100% # of transactions for Tracing. # We recommend adjusting this value in production. enable_tracing=True, traces_sample_rate=1.0, )"
+        - generic:
+          - paragraph [ref=e746]:
+            - text: Grab the
+            - link "Sentry Node SDK" [ref=e747] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-javascript/
+            - text: ":"
+          - generic [ref=e748]:
+            - status [ref=e749]
+            - button "Copy code" [ref=e750] [cursor=pointer]:
+              - img [ref=e751]
+            - code [ref=e754]: npm install @sentry/node
+          - paragraph [ref=e755]: "Configure your SDK:"
+          - generic [ref=e756]:
+            - status [ref=e757]
+            - button "Copy code" [ref=e758] [cursor=pointer]:
+              - img [ref=e759]
+            - code [ref=e762]: "const Sentry = require('@sentry/node'); Sentry.init({ dsn: 'https://<key>@sentry.io/<project>' });"
+        - generic:
+          - paragraph [ref=e763]:
+            - text: Grab the
+            - link "Sentry React SDK" [ref=e764] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-javascript/
+            - text: ":"
+          - generic [ref=e765]:
+            - status [ref=e766]
+            - button "Copy code" [ref=e767] [cursor=pointer]:
+              - img [ref=e768]
+            - code [ref=e771]: npm install @sentry/react
+          - paragraph [ref=e772]: "We recommend putting the Sentry initialization code into its own file and including that file as the first import in your application entry point as shown in the example below:"
+          - generic [ref=e773]:
+            - status [ref=e774]
+            - button "Copy code" [ref=e775] [cursor=pointer]:
+              - img [ref=e776]
+            - code [ref=e779]:
+              - text: "import { useEffect } from \"react\"; import * as Sentry from \"@sentry/react\"; Sentry.init({ dsn: \"https://examplePublicKey@o0.ingest.sentry.io/0\", integrations: [ ], // Set `tracePropagationTargets` to control for which URLs trace propagation should be enabled tracePropagationTargets: ["
+              - generic [ref=e780]: /^\//
+              - text: ","
+              - generic [ref=e781]: /^https:\/\/yourserver\.io\/api/
+              - text: "], });"
+          - paragraph [ref=e782]: "Include the Sentry initialization file as the first import statement:"
+          - generic [ref=e783]:
+            - status [ref=e784]
+            - button "Copy code" [ref=e785] [cursor=pointer]:
+              - img [ref=e786]
+            - code [ref=e789]:
+              - text: "// Sentry initialization should be imported first! import \"./instrument\"; import App from \"./App\"; import { createRoot } from \"react-dom/client\"; const container = document.getElementById(“app”); const root = createRoot(container); root.render("
+              - generic [ref=e790]:
+                - generic [ref=e791]: <App
+                - text: />
+              - text: );
+        - generic:
+          - paragraph [ref=e792]:
+            - text: Install the
+            - strong [ref=e793]: NuGet
+            - text: "package to add the Sentry dependency:"
+          - generic [ref=e794]:
+            - status [ref=e795]
+            - button "Copy code" [ref=e796] [cursor=pointer]:
+              - img [ref=e797]
+            - code [ref=e800]: dotnet add package Sentry
+          - paragraph [ref=e801]:
+            - text: Initialize the SDK as early as possible, like in the
+            - code [ref=e802]: Main
+            - text: method in
+            - code [ref=e803]: Program.cs/Program.fs
+            - text: ":"
+          - generic [ref=e804]:
+            - status [ref=e805]
+            - button "Copy code" [ref=e806] [cursor=pointer]:
+              - img [ref=e807]
+            - code [ref=e810]: "using (SentrySdk.Init(o => { // Tells which project in Sentry to send events to: o.Dsn = \"https://<key>@sentry.io/<project>\"; // When configuring for the first time, to see what the SDK is doing: o.Debug = true; // Set TracesSampleRate to 1.0 to capture 100% of transactions for Tracing. // We recommend adjusting this value in production. o.TracesSampleRate = 1.0; })) { // App code goes here - Disposing will flush events out }"
+        - generic:
+          - paragraph [ref=e811]:
+            - text: Grab the
+            - link "Sentry Go SDK" [ref=e812] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-go
+            - text: ":"
+          - generic [ref=e813]:
+            - status [ref=e814]
+            - button "Copy code" [ref=e815] [cursor=pointer]:
+              - img [ref=e816]
+            - code [ref=e819]: go get "github.com/getsentry/sentry-go"
+          - paragraph [ref=e820]: "Configuration should happen as early as possible in your application's lifecycle:"
+          - generic [ref=e821]:
+            - status [ref=e822]
+            - button "Copy code" [ref=e823] [cursor=pointer]:
+              - img [ref=e824]
+            - code [ref=e827]: "package main import ( \"log\" \"time\" \"github.com/getsentry/sentry-go\" ) func main() { err := sentry.Init(sentry.ClientOptions{ Dsn: \"https://<key>@sentry.io/<project>\", EnableTracing: true, // Specify a fixed sample rate: // We recommend adjusting this value in production TracesSampleRate: 1.0, // Or provide a custom sample rate: TracesSampler: sentry.TracesSampler(func(ctx sentry.SamplingContext) float64 { // As an example, this does not send some // transactions to Sentry based on their name. if ctx.Span.Name == \"GET /health\" { return 0.0 } return 1.0 }), }) if err != nil { log.Fatalf(\"sentry.Init: %s\", err) } // Flush buffered events before the program terminates. // Set the timeout to the maximum duration the program can afford to wait. defer sentry.Flush(2 * time.Second) }"
+        - generic:
+          - paragraph [ref=e828]:
+            - text: To integrate Sentry into your Xcode project, specify it in your
+            - code [ref=e829]: Podfile
+            - text: ", then run"
+            - code [ref=e830]: pod install
+            - text: ":"
+          - generic [ref=e831]:
+            - status [ref=e832]
+            - button "Copy code" [ref=e833] [cursor=pointer]:
+              - img [ref=e834]
+            - code [ref=e837]: "platform :ios, '9.0' use_frameworks! # This is important target 'YourApp' do pod 'Sentry', :git => 'https://github.com/getsentry/sentry-cocoa.git', :tag => '<VERSION>' end"
+          - paragraph [ref=e838]:
+            - text: Initialize the SDK as soon as possible in your application lifecycle, such as in your AppDelegate
+            - code [ref=e839]: application:didFinishLaunchingWithOptions
+            - text: "method:"
+          - generic [ref=e840]:
+            - status [ref=e841]
+            - button "Copy code" [ref=e842] [cursor=pointer]:
+              - img [ref=e843]
+            - code [ref=e846]:
+              - text: "import Sentry // Make sure you import Sentry func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool { SentrySDK.start { options in options.dsn ="
+              - generic [ref=e847]: "\"https://<key>@sentry.io/<project>\""
+              - text: "options.debug = true // Enabled debug when first installing is always helpful // Example uniform sample rate: capture 100% of transactions for Tracing options.tracesSampleRate = 1.0 } return true }"
+        - generic:
+          - paragraph [ref=e848]:
+            - text: Add the
+            - code [ref=e849]: sentry-ruby
+            - text: gem to your
+            - code [ref=e850]: Gemfile
+            - text: ":"
+          - generic [ref=e851]:
+            - status [ref=e852]
+            - button "Copy code" [ref=e853] [cursor=pointer]:
+              - img [ref=e854]
+            - code [ref=e857]:
+              - text: gem
+              - generic [ref=e858]: "\"sentry-ruby\""
+          - paragraph [ref=e859]: "Configure your DSN:"
+          - generic [ref=e860]:
+            - status [ref=e861]
+            - button "Copy code" [ref=e862] [cursor=pointer]:
+              - img [ref=e863]
+            - code [ref=e866]:
+              - text: Sentry.init do |config| config.dsn =
+              - generic [ref=e867]: "'https://<key>@sentry.io/<project>'"
+              - text: "# Set a uniform sample rate between 0.0 and 1.0 # We recommend adjusting the value in production: config.traces_sample_rate = 1.0 # or control sampling dynamically config.traces_sampler = lambda do |sampling_context| # sampling_context[:transaction_context] contains the information about the transaction # sampling_context[:parent_sampled] contains the transaction's parent's sample decision true # return value can be a boolean or a float between 0.0 and 1.0 end end"
+        - generic:
+          - paragraph [ref=e868]:
+            - text: Install the
+            - code [ref=e869]: sentry/sentry
+            - text: "package with Composer:"
+          - generic [ref=e870]:
+            - status [ref=e871]
+            - button "Copy code" [ref=e872] [cursor=pointer]:
+              - img [ref=e873]
+            - code [ref=e876]: composer require sentry/sentry
+          - paragraph [ref=e877]: To capture all errors, even the one during the startup of your application, you should initialize the Sentry PHP SDK as soon as possible.
+          - generic [ref=e878]:
+            - status [ref=e879]
+            - button "Copy code" [ref=e880] [cursor=pointer]:
+              - img [ref=e881]
+            - code [ref=e884]:
+              - generic [ref=e885]: \Sentry\init
+              - text: "(['dsn' => 'https://<key>@sentry.io/<project>', // Specify a fixed sample rate: 'traces_sample_rate' => 0.2, // Or provide a custom sampler: 'traces_sampler' => function (SentryTracingSamplingContext $context): float { // return a number between 0 and 1 }, ]);"
+        - generic:
+          - paragraph [ref=e886]:
+            - text: Install the
+            - code [ref=e887]: sentry/sentry-laravel
+            - text: "package with Composer:"
+          - generic [ref=e888]:
+            - status [ref=e889]
+            - button "Copy code" [ref=e890] [cursor=pointer]:
+              - img [ref=e891]
+            - code [ref=e894]: composer require sentry/sentry-laravel
+          - paragraph [ref=e895]:
+            - text: Add Sentry reporting to
+            - code [ref=e896]: bootstrap/app.php
+            - text: ":"
+          - generic [ref=e897]:
+            - status [ref=e898]
+            - button "Copy code" [ref=e899] [cursor=pointer]:
+              - img [ref=e900]
+            - code [ref=e903]:
+              - generic [ref=e904]:
+                - text: <?php use
+                - generic [ref=e905]: Illuminate\Foundation\Application
+                - text: ; use
+                - generic [ref=e906]: Illuminate\Foundation\Configuration\Exceptions
+                - text: ; use
+                - generic [ref=e907]: Illuminate\Foundation\Configuration\Middleware
+                - text: ; use
+                - generic [ref=e908]: Sentry\Laravel\Integration
+                - text: "; return Application::configure(basePath: dirname(__DIR__)) ->withRouting( web: __DIR__.'/../routes/web.php', commands: __DIR__.'/../routes/console.php', health: '/up', ) ->withMiddleware(function (Middleware $middleware) { // }) ->withExceptions(function (Exceptions $exceptions) { Integration::handles($exceptions); })->create();"
+          - paragraph [ref=e909]:
+            - text: Enable Sentry Tracing in
+            - code [ref=e910]: config/sentry.php
+            - text: ":"
+          - generic [ref=e911]:
+            - status [ref=e912]
+            - button "Copy code" [ref=e913] [cursor=pointer]:
+              - img [ref=e914]
+            - code [ref=e917]: "// Specify a fixed sample rate: 'traces_sample_rate' => 0.2, // Or provide a custom sampler: 'traces_sampler' => function (SentryTracingSamplingContext $context): float { // return a number between 0 and 1 },"
+          - paragraph [ref=e918]:
+            - text: Run this
+            - code [ref=e919]: Artisan
+            - text: "command to configure the Sentry DSN:"
+          - generic [ref=e920]:
+            - status [ref=e921]
+            - button "Copy code" [ref=e922] [cursor=pointer]:
+              - img [ref=e923]
+            - code [ref=e926]: php artisan sentry:publish --dsn=<paste-your-DSN-here>
+        - generic:
+          - paragraph [ref=e927]: "Add the Sentry dependency:"
+          - generic [ref=e928]:
+            - status [ref=e929]
+            - button "Copy code" [ref=e930] [cursor=pointer]:
+              - img [ref=e931]
+            - code [ref=e934]: dotnet add package Sentry.AspNetCore
+          - paragraph [ref=e935]:
+            - text: Configure Sentry in
+            - code [ref=e936]: appsettings.json
+            - text: .
+          - generic [ref=e937]:
+            - status [ref=e938]
+            - button "Copy code" [ref=e939] [cursor=pointer]:
+              - img [ref=e940]
+            - code [ref=e943]: "\"Sentry\": { \"Dsn\": \"https://examplePublicKey@o0.ingest.sentry.io/0\", \"Debug\": true, },"
+          - paragraph [ref=e944]:
+            - text: Then add the SDK by simply calling
+            - code [ref=e945]: UseSentry
+            - text: ":"
+          - generic [ref=e946]:
+            - status [ref=e947]
+            - button "Copy code" [ref=e948] [cursor=pointer]:
+              - img [ref=e949]
+            - code [ref=e952]:
+              - text: public static IHostBuilder CreateHostBuilder(
+              - generic [ref=e953]: string[]
+              - text: "args) => Host.CreateDefaultBuilder(args) .ConfigureWebHostDefaults(webBuilder => { // Add the following line: webBuilder.UseSentry(); });"
+        - generic:
+          - paragraph [ref=e954]:
+            - text: Grab the
+            - link "Sentry Java SDK" [ref=e955] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-java/
+            - text: ":"
+          - generic [ref=e956]:
+            - status [ref=e957]
+            - button "Copy code" [ref=e958] [cursor=pointer]:
+              - img [ref=e959]
+            - code [ref=e962]:
+              - generic [ref=e963]:
+                - generic [ref=e964]: <dependency
+                - text: ">"
+              - generic [ref=e965]:
+                - generic [ref=e966]: <groupId
+                - text: ">"
+              - text: io.sentry
+              - generic [ref=e967]:
+                - generic [ref=e968]: </groupId
+                - text: ">"
+              - generic [ref=e969]:
+                - generic [ref=e970]: <artifactId
+                - text: ">"
+              - text: sentry-spring-boot-starter
+              - generic [ref=e971]:
+                - generic [ref=e972]: </artifactId
+                - text: ">"
+              - generic [ref=e973]:
+                - generic [ref=e974]: <version
+                - text: ">"
+              - generic [ref=e975]:
+                - generic [ref=e976]: <VERSION
+                - text: ">"
+              - generic [ref=e977]:
+                - generic [ref=e978]: </version
+                - text: ">"
+              - generic [ref=e979]:
+                - generic [ref=e980]: </dependency
+                - text: ">"
+          - paragraph [ref=e981]:
+            - text: Configure your DSN in
+            - code [ref=e982]: application.properties
+            - text: ":"
+          - generic [ref=e983]:
+            - status [ref=e984]
+            - button "Copy code" [ref=e985] [cursor=pointer]:
+              - img [ref=e986]
+            - code [ref=e989]:
+              - text: sentry.dsn=https://
+              - generic [ref=e990]: <key>
+              - text: "@sentry.io/"
+              - generic [ref=e991]: <project>
+              - text: "# Set traces_sample_rate to 1.0 to capture 100% # of transactions for performance monitoring. # We recommend adjusting this value in production. sentry.traces-sample-rate=1.0"
+        - generic:
+          - paragraph [ref=e992]:
+            - text: Grab the
+            - link "Sentry Vue SDK" [ref=e993] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-javascript/
+            - text: ":"
+          - generic [ref=e994]:
+            - status [ref=e995]
+            - button "Copy code" [ref=e996] [cursor=pointer]:
+              - img [ref=e997]
+            - code [ref=e1000]: npm install @sentry/vue
+          - paragraph [ref=e1001]: "Configure your DSN:"
+          - generic [ref=e1002]:
+            - status [ref=e1003]
+            - button "Copy code" [ref=e1004] [cursor=pointer]:
+              - img [ref=e1005]
+            - code [ref=e1008]: "import { createApp } from \"vue\"; import * as Sentry from \"@sentry/vue\"; const app = createApp({ // ... }); Sentry.init({ app, dsn: \"https://<key>@sentry.io/<project>\"\", // This enables automatic instrumentation (highly recommended), // but is not necessary for purely manual usage // If you only want to use custom instrumentation: // * Remove the BrowserTracing integration // * add Sentry.addTracingExtensions() above your Sentry.init() call integrations: [Sentry.browserTracingIntegration()], // We recommend adjusting this value in production, or using tracesSampler // for finer control tracesSampleRate: 1.0, // Set tracePropagationTargets to control for which URLs distributed tracing should be enabled tracePropagationTargets: ['localhost', /^https://yourserver.io/api/], }); app.mount(\"#app\");"
+        - generic:
+          - paragraph [ref=e1009]: "To use the SDK, initialize Sentry in your Solid entry point index.jsx before you render your Solid app:"
+          - generic [ref=e1010]:
+            - status [ref=e1011]
+            - button "Copy code" [ref=e1012] [cursor=pointer]:
+              - img [ref=e1013]
+            - code [ref=e1016]:
+              - text: "// index.jsx / index.tsx import * as Sentry from \"@sentry/solid\"; import { useBeforeLeave, useLocation } from \"@solidjs/router\"; import { render } from \"solid-js/web\"; import App from \"./app\"; // Initialize the Sentry SDK here Sentry.init({ dsn: \"__DSN__\", integrations: [Sentry.browserTracingIntegration()], // Performance Monitoring tracesSampleRate: 1.0, // Capture 100% of the transactions // Set 'tracePropagationTargets' to control for which URLs trace propagation should be enabled tracePropagationTargets: [\"localhost\","
+              - generic [ref=e1017]: /^https:\/\/yourserver\.io\/api/
+              - text: "], }); const app = document.getElementById(\"app\"); if (!app) throw new Error(\"No #app element found in the DOM.\"); render(() =>"
+              - generic [ref=e1018]:
+                - generic [ref=e1019]: <App
+                - text: />
+              - text: ", app)"
+        - generic:
+          - paragraph [ref=e1020]: "To use the SDK, initialize Sentry in your Svelte entry point main.js before you bootstrap your Svelte app:"
+          - generic [ref=e1021]:
+            - status [ref=e1022]
+            - button "Copy code" [ref=e1023] [cursor=pointer]:
+              - img [ref=e1024]
+            - code [ref=e1027]: "// main.js / main.ts import App from \"./App.svelte\"; import * as Sentry from \"@sentry/svelte\"; import { BrowserTracing } from \"@sentry/tracing\"; // Initialize the Sentry SDK here Sentry.init({ dsn: \"__DSN__\", release: \"my-project-name@2.3.12\", integrations: [new BrowserTracing()], // This enables automatic instrumentation (highly recommended), // but is not necessary for purely manual usage // If you only want to use custom instrumentation: // * Remove the BrowserTracing integration // * add Sentry.addTracingExtensions() above your Sentry.init() call integrations: [Sentry.browserTracingIntegration()], // We recommend adjusting this value in production, or using tracesSampler // for finer control tracesSampleRate: 1.0, // Set tracePropagationTargets to control for which URLs distributed tracing should be enabled tracePropagationTargets: ['localhost', /^https://yourserver.io/api/], }); // Then bootstrap your Svelte app const app = new App({ target: document.getElementById(\"app\"), }); export default app;"
+        - generic:
+          - paragraph [ref=e1028]: Just run this command to install and register Sentry's Astro integration.
+          - generic [ref=e1029]:
+            - status [ref=e1030]
+            - button "Copy code" [ref=e1031] [cursor=pointer]:
+              - img [ref=e1032]
+            - code [ref=e1035]: npx astro add @sentry/astro
+          - paragraph [ref=e1036]:
+            - text: And add your DSN and project config to your
+            - code [ref=e1037]: astro.config.mjs
+            - text: "file:"
+          - generic [ref=e1038]:
+            - status [ref=e1039]
+            - button "Copy code" [ref=e1040] [cursor=pointer]:
+              - img [ref=e1041]
+            - code [ref=e1044]: "import { defineConfig } from \"astro/config\"; import sentry from \"@sentry/astro\"; export default defineConfig({ integrations: [ sentry({ dsn: \"__DSN__\", sourceMapsUploadOptions: { project: \"your-project-slug\", authToken: process.env.SENTRY_AUTH_TOKEN, }, tracesSampleRate: 1.0, }), ], });"
+        - generic:
+          - paragraph [ref=e1045]:
+            - text: Grab the
+            - link "Sentry JavaScript SDK" [ref=e1046] [cursor=pointer]:
+              - /url: https://github.com/getsentry/sentry-javascript/
+            - text: ":"
+          - generic [ref=e1047]:
+            - status [ref=e1048]
+            - button "Copy code" [ref=e1049] [cursor=pointer]:
+              - img [ref=e1050]
+            - code [ref=e1053]:
+              - generic [ref=e1054]:
+                - generic [ref=e1055]: <script
+                - text: src
+                - generic [ref=e1056]: ="https://browser.sentry-cdn.com/<VERSION>/bundle.min.js"
+                - text: ">"
+              - generic [ref=e1057]:
+                - generic [ref=e1058]: </script
+                - text: ">"
+          - paragraph [ref=e1059]: "Configure your DSN:"
+          - generic [ref=e1060]:
+            - status [ref=e1061]
+            - button "Copy code" [ref=e1062] [cursor=pointer]:
+              - img [ref=e1063]
+            - code [ref=e1066]: "Sentry.init({ dsn: 'https://<key>@sentry.io/<project>', // This enables automatic instrumentation (highly recommended), // but is not necessary for purely manual usage // If you only want to use custom instrumentation: // * Remove the BrowserTracing integration // * add Sentry.addTracingExtensions() above your Sentry.init() call integrations: [Sentry.browserTracingIntegration()], // We recommend adjusting this value in production, or using tracesSampler // for finer control tracesSampleRate: 1.0, // Set tracePropagationTargets to control for which URLs distributed tracing should be enabled tracePropagationTargets: ['localhost', /^https://yourserver.io/api/], });"
+        - img "Left Installation Instructions Image"
+        - img "Right Installation Instructions Image"
+    - generic [ref=e1068]:
+      - heading "Built to be secure, Designed to not get in your way" [level=2] [ref=e1069]:
+        - text: Built to be secure,
+        - generic [ref=e1070]: Designed to not get in your way
+      - generic [ref=e1071]:
+        - generic [ref=e1073]: Security and compliance aren't just checkboxes—they're built into how we run Sentry. We use industry-standard tech and practices to keep your data safe, and we stay out of your way while doing it.
+        - generic [ref=e1075]:
+          - img "GDPR" [ref=e1077]:
+            - img [ref=e1078]
+          - img "SOC 2 Type 2" [ref=e1095]:
+            - img [ref=e1096]
+          - img "ISO 27001" [ref=e1102]:
+            - img [ref=e1103]
+          - img "HIPAA compliant" [ref=e1142]:
+            - img [ref=e1143]
+        - generic [ref=e1146]:
+          - link "Check out our Privacy Policy" [ref=e1147] [cursor=pointer]:
+            - /url: https://sentry.io/privacy/
+            - generic [ref=e1148]: Check out our Privacy Policy
+          - link "Contact Us" [ref=e1149] [cursor=pointer]:
+            - /url: https://sentry.io/contact/enterprise/
+            - generic [ref=e1150]: Contact Us
+    - generic [ref=e1151]:
+      - generic [ref=e1152]:
+        - heading "Get monthly product updates from our newsletter" [level=2] [ref=e1153]:
+          - text: Get monthly product updates
+          - generic [ref=e1154]: from our newsletter
+        - heading [level=3]
+      - generic [ref=e1156]:
+        - generic [ref=e1161]:
+          - generic [ref=e1164]:
+            - generic [ref=e1165]: "Your Email:"
+            - textbox "Your Email:" [ref=e1166]:
+              - /placeholder: ""
+          - generic [ref=e1170] [cursor=pointer]:
+            - checkbox "I want to receive the monthly newsletter and other updates from Sentry. You may unsubscribe at any time." [ref=e1171]
+            - text: I want to receive the monthly newsletter and other updates from Sentry. You may unsubscribe at any time.
+          - generic [ref=e1174]:
+            - generic [ref=e1175]: By filling out this form, you agree to our
+            - link "privacy policy" [ref=e1176] [cursor=pointer]:
+              - /url: https://sentry.io/privacy/
+            - generic [ref=e1177]:
+              - text: . This form is protected by reCAPTCHA and Google's
+              - link "Privacy Policy" [ref=e1178] [cursor=pointer]:
+                - /url: https://policies.google.com/privacy
+              - text: and
+              - link "Terms of Service" [ref=e1179] [cursor=pointer]:
+                - /url: https://policies.google.com/terms
+              - text: apply.
+          - button "Sign Up" [ref=e1181] [cursor=pointer]:
+            - generic [ref=e1182]: Sign Up
+        - img "Cartoon showing the Sentry logo as a distressed character watching one person stuck in a smartphone and another diving headfirst into a retro computer—illustrating developers getting lost in debugging chaos."
+    - generic [ref=e1186]:
+      - heading "Fix It" [level=2] [ref=e1187]
+      - generic [ref=e1188]: Get started with the only application monitoring platform that empowers developers to fix application problems without compromising on velocity.
+      - generic [ref=e1189]:
+        - link "Try Sentry for Free" [ref=e1190] [cursor=pointer]:
+          - /url: https://sentry.io/signup/
+          - generic [ref=e1191]: Try Sentry for Free
+        - link "Get a Demo" [ref=e1192] [cursor=pointer]:
+          - /url: https://sentry.io/demo/
+          - generic [ref=e1193]: Get a Demo
+  - contentinfo "Site footer" [ref=e1194]:
+    - generic [ref=e1197]:
+      - navigation "footer navigation" [ref=e1198]:
+        - generic [ref=e1199]:
+          - generic [ref=e1201]:
+            - heading "Company" [level=3] [ref=e1202]
+            - list [ref=e1203]:
+              - listitem [ref=e1204]:
+                - link "About" [ref=e1205] [cursor=pointer]:
+                  - /url: https://sentry.io/about/
+              - listitem [ref=e1206]:
+                - link "Blog" [ref=e1207] [cursor=pointer]:
+                  - /url: https://blog.sentry.io/
+              - listitem [ref=e1208]:
+                - link "Careers" [ref=e1209] [cursor=pointer]:
+                  - /url: https://sentry.io/careers/
+              - listitem [ref=e1210]:
+                - link "Contact Us" [ref=e1211] [cursor=pointer]:
+                  - /url: https://sentry.io/contact/enterprise/
+              - listitem [ref=e1212]:
+                - link "Trust" [ref=e1213] [cursor=pointer]:
+                  - /url: https://sentry.io/trust/
+          - generic [ref=e1215]:
+            - heading "Platform" [level=3] [ref=e1216]
+            - list [ref=e1217]:
+              - listitem [ref=e1218]:
+                - link "Error Monitoring" [ref=e1219] [cursor=pointer]:
+                  - /url: https://sentry.io/product/error-monitoring/
+              - listitem [ref=e1220]:
+                - link "Logs" [ref=e1221] [cursor=pointer]:
+                  - /url: https://sentry.io/product/logs/
+              - listitem [ref=e1222]:
+                - link "Seer" [ref=e1223] [cursor=pointer]:
+                  - /url: https://sentry.io/product/seer/
+              - listitem [ref=e1224]:
+                - link "Session Replay" [ref=e1225] [cursor=pointer]:
+                  - /url: https://sentry.io/product/session-replay/
+              - listitem [ref=e1226]:
+                - link "Metrics" [ref=e1227] [cursor=pointer]:
+                  - /url: https://sentry.io/product/metrics/
+              - listitem [ref=e1228]:
+                - link "Tracing" [ref=e1229] [cursor=pointer]:
+                  - /url: https://sentry.io/product/tracing/
+              - listitem [ref=e1230]:
+                - link "Uptime Monitoring" [ref=e1231] [cursor=pointer]:
+                  - /url: https://sentry.io/product/uptime-monitoring/
+              - listitem [ref=e1232]:
+                - link "Profiling" [ref=e1233] [cursor=pointer]:
+                  - /url: https://sentry.io/product/profiling/
+              - listitem [ref=e1234]:
+                - link "Cron Monitoring" [ref=e1235] [cursor=pointer]:
+                  - /url: https://sentry.io/product/cron-monitoring/
+              - listitem [ref=e1236]:
+                - link "Integrations" [ref=e1237] [cursor=pointer]:
+                  - /url: https://sentry.io/integrations/
+          - generic [ref=e1239]:
+            - heading "Solutions" [level=3] [ref=e1240]
+            - list [ref=e1241]:
+              - listitem [ref=e1242]:
+                - link "Web / Full Stack Development" [ref=e1243] [cursor=pointer]:
+                  - /url: https://sentry.io/for/full-stack/
+              - listitem [ref=e1244]:
+                - link "Mobile Crash Reporting" [ref=e1245] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/mobile-developers/
+              - listitem [ref=e1246]:
+                - link "Game Crash Reporting" [ref=e1247] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/game-developers/
+              - listitem [ref=e1248]:
+                - link "AI Observability" [ref=e1249] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/ai-observability/
+              - listitem [ref=e1250]:
+                - link "Application Performance Monitoring" [ref=e1251] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/application-performance-monitoring/
+              - listitem [ref=e1252]:
+                - link "Application Observability" [ref=e1253] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/application-observability/
+              - listitem [ref=e1254]:
+                - link "Real User Monitoring" [ref=e1255] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/real-user-monitoring-rum/
+              - listitem [ref=e1256]:
+                - link "Ecommerce" [ref=e1257] [cursor=pointer]:
+                  - /url: https://sentry.io/solutions/ecommerce/
+              - listitem [ref=e1258]:
+                - link "Enterprise" [ref=e1259] [cursor=pointer]:
+                  - /url: https://sentry.io/for/enterprise/
+              - listitem [ref=e1260]:
+                - link "Startups" [ref=e1261] [cursor=pointer]:
+                  - /url: https://sentry.io/for/startups/
+          - generic [ref=e1263]:
+            - heading "Get Help" [level=3] [ref=e1264]
+            - list [ref=e1265]:
+              - listitem [ref=e1266]:
+                - link "Docs" [ref=e1267] [cursor=pointer]:
+                  - /url: https://docs.sentry.io/
+              - listitem [ref=e1268]:
+                - link "Help Center" [ref=e1269] [cursor=pointer]:
+                  - /url: https://help.sentry.io/
+              - listitem [ref=e1270]:
+                - link "Status" [ref=e1271] [cursor=pointer]:
+                  - /url: https://status.sentry.io/
+              - listitem [ref=e1272]:
+                - link "Dev Resources" [ref=e1273] [cursor=pointer]:
+                  - /url: https://develop.sentry.dev/getting-started/
+      - img [ref=e1274]
+      - generic [ref=e1276]:
+        - navigation "Legal links" [ref=e1278]:
+          - generic [ref=e1279]:
+            - link "Terms" [ref=e1280] [cursor=pointer]:
+              - /url: https://sentry.io/terms/
+            - link "Security & Compliance" [ref=e1281] [cursor=pointer]:
+              - /url: https://sentry.io/security/
+            - link "Privacy" [ref=e1282] [cursor=pointer]:
+              - /url: https://sentry.io/privacy/
+        - generic [ref=e1283]:
+          - generic [ref=e1284]:
+            - link "home" [ref=e1285] [cursor=pointer]:
+              - /url: https://sentry.io/
+              - img [ref=e1286]
+            - link "Open Source Pledge" [ref=e1288] [cursor=pointer]:
+              - /url: https://opensourcepledge.com/members/sentry/
+              - img [ref=e1289]
+          - navigation "Social media links" [ref=e1300]:
+            - generic [ref=e1301]:
+              - link "Twitter Menu Button" [ref=e1302] [cursor=pointer]:
+                - /url: https://x.com/sentry/
+                - img [ref=e1303]
+                - generic [ref=e1304]: Twitter Menu Button
+              - link "Github Social Menu Button" [ref=e1305] [cursor=pointer]:
+                - /url: https://github.com/getsentry/
+                - img [ref=e1306]
+                - generic [ref=e1307]: Github Social Menu Button
+              - link "LinkedIn Menu Button" [ref=e1308] [cursor=pointer]:
+                - /url: https://www.linkedin.com/company/getsentry/
+                - img [ref=e1309]
+                - generic [ref=e1310]: LinkedIn Menu Button
+              - link "Discord Menu Button" [ref=e1311] [cursor=pointer]:
+                - /url: https://discord.gg/sentry
+                - img [ref=e1312]
+                - generic [ref=e1313]: Discord Menu Button
+      - generic [ref=e1314]: © 2026 • Sentry is a registered Trademark of Functional Software, Inc.

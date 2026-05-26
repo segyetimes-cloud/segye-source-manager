@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
@@ -35,7 +35,7 @@ const REQUEST_TYPE_LABEL: Record<string, string> = {
 const STATUS_LABEL: Record<string, { label: string; color: string }> = {
   open: { label: '요청 중', color: '#4A7CC0' },
   resolved: { label: '해결됨', color: '#3D9E6A' },
-  closed: { label: '마감', color: '#485870' },
+  closed: { label: '마감', color: '#607898' },
 }
 
 const TYPE_FILTERS = [
@@ -100,7 +100,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
           borderRadius: '8px',
           padding: '9px 14px',
           fontSize: '14px',
-          color: '#CDD5E0',
+          color: '#DCE8F4',
           outline: 'none',
           boxSizing: 'border-box',
         }}
@@ -125,7 +125,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                 fontSize: '13px',
                 fontWeight: 500,
                 background: statusFilter === t.value ? '#4A7CC0' : 'transparent',
-                color: statusFilter === t.value ? 'white' : '#687898',
+                color: statusFilter === t.value ? 'white' : '#8AAAC8',
                 cursor: 'pointer',
                 border: 'none',
                 whiteSpace: 'nowrap',
@@ -148,7 +148,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                 fontSize: '12px',
                 fontWeight: 500,
                 background: typeFilter === t.value ? 'rgba(74,124,192,0.3)' : 'transparent',
-                color: typeFilter === t.value ? '#CDD5E0' : '#687898',
+                color: typeFilter === t.value ? '#DCE8F4' : '#8AAAC8',
                 cursor: 'pointer',
                 border: 'none',
                 whiteSpace: 'nowrap',
@@ -164,7 +164,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
       <div className="space-y-3">
         {filtered.length === 0 ? (
           <div className="glass-card flex flex-col items-center py-12">
-            <p className="text-sm" style={{ color: '#485870' }}>
+            <p className="text-sm" style={{ color: '#607898' }}>
               {searchQuery ? `"${searchQuery}"에 해당하는 요청이 없습니다` : '요청이 없습니다'}
             </p>
           </div>
@@ -181,7 +181,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2 mb-1.5" style={{ flexWrap: 'wrap' }}>
                   <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
+                    style={{ background: 'rgba(30,144,255,0.1)', color: '#8AAAC8' }}>
                     {REQUEST_TYPE_LABEL[req.request_type] ?? req.request_type}
                   </span>
                   <span className="text-xs" style={{ color: STATUS_LABEL[req.status].color }}>
@@ -195,18 +195,18 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                   )}
                 </div>
 
-                <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
+                <h3 className="text-sm font-semibold mb-1" style={{ color: '#DCE8F4' }}>
                   {req.title}
                 </h3>
 
                 {(req.target_name || req.target_org) && (
-                  <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
+                  <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>
                     대상: {req.target_name}{req.target_org && ` (${req.target_org})`}
                   </p>
                 )}
 
                 {req.body && (
-                  <p className="text-xs mt-1 line-clamp-2" style={{ color: '#485870' }}>
+                  <p className="text-xs mt-1 line-clamp-2" style={{ color: '#607898' }}>
                     {req.body}
                   </p>
                 )}
@@ -222,11 +222,11 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                     💬 {req.response_count}
                   </span>
                 )}
-                <span className="text-xs" style={{ color: '#485870' }}>
+                <span className="text-xs" style={{ color: '#607898' }}>
                   {req.profiles?.full_name ?? '—'}
                   {req.profiles?.department && ` · ${req.profiles.department}`}
                 </span>
-                <span className="text-xs" style={{ color: '#485870' }}>
+                <span className="text-xs" style={{ color: '#607898' }}>
                   {new Date(req.created_at).toLocaleDateString('ko-KR')}
                 </span>
               </div>

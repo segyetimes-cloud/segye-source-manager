@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -34,7 +34,7 @@ interface Props {
 }
 
 const ACTION_LABELS: Record<string, { label: string; color: string }> = {
-  view:           { label: '조회',          color: '#687898' },
+  view:           { label: '조회',          color: '#8AAAC8' },
   create:         { label: '등록',          color: '#3D9E6A' },
   update:         { label: '수정',          color: '#4A7CC0' },
   delete:         { label: '삭제',          color: '#C04040' },
@@ -51,7 +51,7 @@ const ACTION_OPTIONS = ['', 'view', 'view_private', 'create', 'update', 'delete'
 const inputStyle = {
   background: '#182035',
   border: '1px solid #1A2838',
-  color: '#CDD5E0',
+  color: '#DCE8F4',
   borderRadius: '8px',
   padding: '8px 12px',
   fontSize: '13px',
@@ -140,7 +140,7 @@ export default function AuditClient({
         {/* 첫 번째 줄: 액션 · 이메일 · 리소스 유형 */}
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>액션</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>액션</label>
             <select value={action} onChange={e => setAction(e.target.value)}
               style={{ ...inputStyle, cursor: 'pointer' }}>
               {ACTION_OPTIONS.map(a => (
@@ -152,7 +152,7 @@ export default function AuditClient({
           </div>
 
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>이메일</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>이메일</label>
             <input
               type="text" value={email}
               onChange={e => setEmail(e.target.value)}
@@ -163,7 +163,7 @@ export default function AuditClient({
           </div>
 
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>리소스 유형</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>리소스 유형</label>
             <select value={resourceType} onChange={e => setResourceType(e.target.value)}
               style={{ ...inputStyle, cursor: 'pointer' }}>
               {['', 'source', 'report', 'user', 'approval', 'contact_log', 'export', 'help', 'audit_logs'].map(rt => (
@@ -173,7 +173,7 @@ export default function AuditClient({
           </div>
 
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>리소스 ID</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>리소스 ID</label>
             <input
               type="text" value={resourceId}
               onChange={e => setResourceId(e.target.value)}
@@ -187,7 +187,7 @@ export default function AuditClient({
         {/* 두 번째 줄: 날짜 범위 · 검색 · 초기화 · Export */}
         <div className="flex flex-wrap items-end gap-3">
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>시작일</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>시작일</label>
             <input
               type="date" value={dateFrom}
               onChange={e => setDateFrom(e.target.value)}
@@ -195,7 +195,7 @@ export default function AuditClient({
             />
           </div>
           <div>
-            <label className="block text-xs mb-1.5" style={{ color: '#687898' }}>종료일</label>
+            <label className="block text-xs mb-1.5" style={{ color: '#8AAAC8' }}>종료일</label>
             <input
               type="date" value={dateTo}
               onChange={e => setDateTo(e.target.value)}
@@ -222,7 +222,7 @@ export default function AuditClient({
                 setResourceId(''); setDateFrom(''); setDateTo('')
                 startTransition(() => router.push(pathname))
               }}
-              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', borderRadius: '8px', padding: '9px 14px', fontSize: '13px', cursor: 'pointer' }}>
+              style={{ background: '#182035', color: '#8AAAC8', border: '1px solid #1A2838', borderRadius: '8px', padding: '9px 14px', fontSize: '13px', cursor: 'pointer' }}>
               초기화
             </button>
           )}
@@ -240,7 +240,7 @@ export default function AuditClient({
             {exporting ? '처리 중...' : '📥 Excel 내보내기'}
           </button>
 
-          <span className="text-xs" style={{ color: '#485870', whiteSpace: 'nowrap' }}>
+          <span className="text-xs" style={{ color: '#607898', whiteSpace: 'nowrap' }}>
             총 {totalCount.toLocaleString()}건
           </span>
         </div>
@@ -253,7 +253,7 @@ export default function AuditClient({
             <thead>
               <tr style={{ borderBottom: '1px solid #1A2838' }}>
                 {['시각', '사용자', '액션', '리소스', 'IP', 'VPN', '메타'].map(h => (
-                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#485870', fontWeight: 600, whiteSpace: 'nowrap' }}>
+                  <th key={h} style={{ padding: '10px 14px', textAlign: 'left', color: '#607898', fontWeight: 600, whiteSpace: 'nowrap' }}>
                     {h}
                   </th>
                 ))}
@@ -262,24 +262,24 @@ export default function AuditClient({
             <tbody>
               {logs.length === 0 ? (
                 <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#485870' }}>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: '#607898' }}>
                     로그가 없습니다
                   </td>
                 </tr>
               ) : logs.map(log => {
-                const actionInfo = ACTION_LABELS[log.action] ?? { label: log.action, color: '#687898' }
+                const actionInfo = ACTION_LABELS[log.action] ?? { label: log.action, color: '#8AAAC8' }
                 return (
                   <tr key={log.id} style={{ borderBottom: '1px solid rgba(26,48,80,0.5)' }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.03)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
 
-                    <td style={{ padding: '10px 14px', color: '#485870', whiteSpace: 'nowrap' }}>
+                    <td style={{ padding: '10px 14px', color: '#607898', whiteSpace: 'nowrap' }}>
                       {new Date(log.created_at).toLocaleString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
                     </td>
 
                     <td style={{ padding: '10px 14px' }}>
-                      <div style={{ color: '#CDD5E0' }}>{log.user_email?.split('@')[0] ?? '—'}</div>
-                      <div style={{ color: '#485870', fontSize: '11px' }}>{log.user_role}</div>
+                      <div style={{ color: '#DCE8F4' }}>{log.user_email?.split('@')[0] ?? '—'}</div>
+                      <div style={{ color: '#607898', fontSize: '11px' }}>{log.user_role}</div>
                     </td>
 
                     <td style={{ padding: '10px 14px' }}>
@@ -290,9 +290,9 @@ export default function AuditClient({
                     </td>
 
                     <td style={{ padding: '10px 14px' }}>
-                      <div style={{ color: '#687898' }}>{log.resource_type}</div>
+                      <div style={{ color: '#8AAAC8' }}>{log.resource_type}</div>
                       {log.resource_id && (
-                        <div style={{ color: '#485870', fontSize: '11px', fontFamily: 'monospace' }}>
+                        <div style={{ color: '#607898', fontSize: '11px', fontFamily: 'monospace' }}>
                           {log.resource_id.slice(0, 8)}…
                         </div>
                       )}
@@ -301,21 +301,21 @@ export default function AuditClient({
                       )}
                     </td>
 
-                    <td style={{ padding: '10px 14px', color: '#485870', fontSize: '11px', fontFamily: 'monospace' }}>
+                    <td style={{ padding: '10px 14px', color: '#607898', fontSize: '11px', fontFamily: 'monospace' }}>
                       {log.ip_address ?? '—'}
                     </td>
 
                     <td style={{ padding: '10px 14px' }}>
                       {log.is_vpn_access
                         ? <span style={{ color: '#3D9E6A', fontSize: '11px' }}>✅ VPN</span>
-                        : <span style={{ color: '#485870', fontSize: '11px' }}>외부</span>}
+                        : <span style={{ color: '#607898', fontSize: '11px' }}>외부</span>}
                     </td>
 
                     <td style={{ padding: '10px 14px', maxWidth: '200px' }}>
                       {Object.keys(log.metadata ?? {}).length > 0 && (
                         <details>
-                          <summary style={{ color: '#485870', fontSize: '11px', cursor: 'pointer' }}>보기</summary>
-                          <pre style={{ color: '#687898', fontSize: '10px', marginTop: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
+                          <summary style={{ color: '#607898', fontSize: '11px', cursor: 'pointer' }}>보기</summary>
+                          <pre style={{ color: '#8AAAC8', fontSize: '10px', marginTop: '4px', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
                             {JSON.stringify(log.metadata, null, 2)}
                           </pre>
                         </details>
@@ -335,17 +335,17 @@ export default function AuditClient({
           {currentPage > 1 && (
             <Link href={buildPageUrl(currentPage - 1)}
               className="px-3 py-1.5 rounded-lg text-sm"
-              style={{ background: '#131C2C', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none' }}>
+              style={{ background: '#131C2C', color: '#8AAAC8', border: '1px solid #1A2838', textDecoration: 'none' }}>
               ← 이전
             </Link>
           )}
-          <span className="text-sm" style={{ color: '#485870' }}>
+          <span className="text-sm" style={{ color: '#607898' }}>
             {currentPage} / {totalPages}
           </span>
           {currentPage < totalPages && (
             <Link href={buildPageUrl(currentPage + 1)}
               className="px-3 py-1.5 rounded-lg text-sm"
-              style={{ background: '#131C2C', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none' }}>
+              style={{ background: '#131C2C', color: '#8AAAC8', border: '1px solid #1A2838', textDecoration: 'none' }}>
               다음 →
             </Link>
           )}

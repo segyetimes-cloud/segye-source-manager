@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
@@ -200,7 +200,7 @@ export default function SourceListClient({
               flex: 1,
               background: '#131C2C',
               border: '1px solid #1A2838',
-              color: '#CDD5E0',
+              color: '#DCE8F4',
               borderRadius: '8px',
               padding: '9px 12px',
               fontSize: '14px',
@@ -216,7 +216,7 @@ export default function SourceListClient({
             <button
               type="button"
               onClick={() => { setSearchInput(''); navigate({ filter: currentFilter, page: '1' }) }}
-              style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
+              style={{ background: '#182035', color: '#8AAAC8', border: '1px solid #1A2838', borderRadius: 8, padding: '9px 12px', fontSize: 13, cursor: 'pointer', flexShrink: 0 }}>
               초기화
             </button>
           )}
@@ -240,7 +240,7 @@ export default function SourceListClient({
                 className="px-4 py-1.5 rounded-md text-sm font-medium transition-all"
                 style={{
                   background: currentFilter === t.value ? '#4A7CC0' : 'transparent',
-                  color: currentFilter === t.value ? 'white' : '#687898',
+                  color: currentFilter === t.value ? 'white' : '#8AAAC8',
                   border: 'none',
                   cursor: 'pointer',
                 }}>
@@ -248,14 +248,14 @@ export default function SourceListClient({
               </button>
             ))}
           </div>
-          <span className="text-sm flex-shrink-0" style={{ color: '#485870' }}>
+          <span className="text-sm flex-shrink-0" style={{ color: '#607898' }}>
             총 {totalCount.toLocaleString()}명
           </span>
         </div>
 
         {currentTag && (
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap' }}>
-            <span style={{ fontSize: 12, color: '#485870' }}>태그 필터:</span>
+            <span style={{ fontSize: 12, color: '#607898' }}>태그 필터:</span>
             <span style={{
               fontSize: 12, padding: '3px 10px', borderRadius: 99, fontWeight: 600,
               background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.35)',
@@ -300,7 +300,7 @@ export default function SourceListClient({
         <div className="glass-card overflow-hidden">
           {/* 데스크톱 테이블 헤더 */}
           <div className="source-table-header"
-            style={{ background: '#182035', color: '#485870', borderBottom: '1px solid #1A2838' }}>
+            style={{ background: '#182035', color: '#607898', borderBottom: '1px solid #1A2838' }}>
             {/* 전체 선택 체크박스 */}
             <div style={{ width: 36, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <input
@@ -366,7 +366,7 @@ export default function SourceListClient({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ color: '#DCE8F4', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
@@ -375,7 +375,7 @@ export default function SourceListClient({
                             </span>
                           )}
                         </div>
-                        <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ color: '#8AAAC8', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {source.current_organization
                             ? <><Highlight text={source.current_organization} query={currentQuery} />{source.current_position ? <> · <Highlight text={source.current_position} query={currentQuery} /></> : ''}</>
                             : <>{'—'}{source.current_position ? <> · <Highlight text={source.current_position} query={currentQuery} /></> : ''}</>
@@ -395,7 +395,7 @@ export default function SourceListClient({
                     {(source.phone_primary || source.email_primary || source.exam_batch || source.tags.length > 0) && (
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 6 }}>
                         {source.phone_primary && (
-                          <span style={{ fontSize: 11, color: '#687898' }}>{source.phone_primary}</span>
+                          <span style={{ fontSize: 11, color: '#8AAAC8' }}>{source.phone_primary}</span>
                         )}
                         {source.exam_batch && (
                           <span style={{ fontSize: 11, padding: '1px 6px', borderRadius: 4, background: 'rgba(0,212,255,0.1)', color: '#3A90A8' }}>
@@ -427,7 +427,7 @@ export default function SourceListClient({
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ color: '#DCE8F4', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
@@ -436,7 +436,7 @@ export default function SourceListClient({
                             </span>
                           )}
                         </div>
-                        <p style={{ color: '#687898', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <p style={{ color: '#8AAAC8', fontSize: 11, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {source.current_organization
                             ? <Highlight text={source.current_organization} query={currentQuery} />
                             : '—'
@@ -446,7 +446,7 @@ export default function SourceListClient({
                     </div>
                     {/* 직책 */}
                     <div style={{ flex: '2 1 0', minWidth: 0 }}>
-                      <p style={{ color: '#687898', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ color: '#8AAAC8', fontSize: 13, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {source.current_position
                           ? <Highlight text={source.current_position} query={currentQuery} />
                           : '—'
@@ -455,7 +455,7 @@ export default function SourceListClient({
                     </div>
                     {/* 연락처 */}
                     <div style={{ flex: '2 1 0', minWidth: 0 }}>
-                      <p style={{ color: '#687898', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <p style={{ color: '#8AAAC8', fontSize: 12, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {source.phone_primary ?? source.email_primary ?? '—'}
                       </p>
                     </div>
@@ -503,10 +503,10 @@ export default function SourceListClient({
       ) : (
         <div className="glass-card flex flex-col items-center justify-center py-16">
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none" className="mb-4">
-            <circle cx="24" cy="20" r="10" stroke="#485870" strokeWidth="2"/>
-            <path d="M8 44c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#485870" strokeWidth="2" strokeLinecap="round"/>
+            <circle cx="24" cy="20" r="10" stroke="#607898" strokeWidth="2"/>
+            <path d="M8 44c0-8.837 7.163-16 16-16s16 7.163 16 16" stroke="#607898" strokeWidth="2" strokeLinecap="round"/>
           </svg>
-          <p className="text-sm" style={{ color: '#485870' }}>
+          <p className="text-sm" style={{ color: '#607898' }}>
             {currentQuery ? `"${currentQuery}" 검색 결과가 없습니다` : '등록된 취재원이 없습니다'}
           </p>
           <Link href="/sources/new" className="mt-3 text-sm" style={{ color: '#4A7CC0' }}>
@@ -523,14 +523,14 @@ export default function SourceListClient({
             disabled={currentPage <= 1}
             className="px-3 py-1.5 rounded-lg text-sm transition-colors"
             style={{
-              background: '#182035', color: '#687898',
+              background: '#182035', color: '#8AAAC8',
               border: '1px solid #1A2838',
               opacity: currentPage <= 1 ? 0.4 : 1,
               cursor: currentPage <= 1 ? 'not-allowed' : 'pointer',
             }}>
             ← 이전
           </button>
-          <span className="text-sm px-3" style={{ color: '#687898' }}>
+          <span className="text-sm px-3" style={{ color: '#8AAAC8' }}>
             {currentPage} / {totalPages}
           </span>
           <button
@@ -538,7 +538,7 @@ export default function SourceListClient({
             disabled={currentPage >= totalPages}
             className="px-3 py-1.5 rounded-lg text-sm transition-colors"
             style={{
-              background: '#182035', color: '#687898',
+              background: '#182035', color: '#8AAAC8',
               border: '1px solid #1A2838',
               opacity: currentPage >= totalPages ? 0.4 : 1,
               cursor: currentPage >= totalPages ? 'not-allowed' : 'pointer',
@@ -585,7 +585,7 @@ export default function SourceListClient({
                 placeholder="태그 입력 후 Enter"
                 autoFocus
                 style={{
-                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
+                  background: '#182035', border: '1px solid #2A4060', color: '#DCE8F4',
                   borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
                 }}
               />
@@ -595,7 +595,7 @@ export default function SourceListClient({
                 style={{ ...bulkBtnStyle('#3D9E6A'), opacity: !tagInput.trim() ? 0.5 : 1 }}>
                 적용
               </button>
-              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#485870')}>취소</button>
+              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#607898')}>취소</button>
             </div>
           ) : bulkAction === 'remove_tag' ? (
             <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
@@ -607,7 +607,7 @@ export default function SourceListClient({
                 placeholder="제거할 태그 입력"
                 autoFocus
                 style={{
-                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
+                  background: '#182035', border: '1px solid #2A4060', color: '#DCE8F4',
                   borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
                 }}
               />
@@ -617,7 +617,7 @@ export default function SourceListClient({
                 style={{ ...bulkBtnStyle('#A87228'), opacity: !tagInput.trim() ? 0.5 : 1 }}>
                 적용
               </button>
-              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#485870')}>취소</button>
+              <button onClick={() => setBulkAction(null)} style={bulkBtnStyle('#607898')}>취소</button>
             </div>
           ) : (
             <>
@@ -642,7 +642,7 @@ export default function SourceListClient({
               <button
                 onClick={() => executeBulk('set_visibility', 'personal')}
                 disabled={bulkLoading}
-                style={bulkBtnStyle('#687898')}>
+                style={bulkBtnStyle('#8AAAC8')}>
                 🔒 개인 전환
               </button>
               <button
@@ -658,7 +658,7 @@ export default function SourceListClient({
 
           <button
             onClick={() => { setSelectedIds(new Set()); setBulkAction(null); setTagInput('') }}
-            style={{ background: 'none', border: 'none', color: '#485870', cursor: 'pointer', fontSize: 18, padding: '0 4px', lineHeight: 1 }}
+            style={{ background: 'none', border: 'none', color: '#607898', cursor: 'pointer', fontSize: 18, padding: '0 4px', lineHeight: 1 }}
             title="선택 취소">
             ✕
           </button>

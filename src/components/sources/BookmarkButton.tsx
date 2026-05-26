@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useTransition } from 'react'
 
@@ -39,7 +39,7 @@ export default function BookmarkButton({ sourceId, initialBookmarked }: Props) {
       style={{
         background: bookmarked ? 'rgba(168,114,40,0.15)' : 'rgba(26,40,56,0.8)',
         border: `1px solid ${bookmarked ? 'rgba(168,114,40,0.4)' : '#1A2838'}`,
-        color: bookmarked ? '#A87228' : '#687898',
+        color: bookmarked ? '#A87228' : '#8AAAC8',
         borderRadius: 8,
         padding: '7px 14px',
         fontSize: 13,

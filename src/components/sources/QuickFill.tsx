@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * QuickFill — 연락처/웹 텍스트 붙여넣기 간편 입력
@@ -399,14 +399,14 @@ function EditablePreviewRow({
   if (editing) {
     return (
       <div style={{ display: 'flex', gap: '6px', fontSize: '12px', padding: '3px 0', alignItems: 'center' }}>
-        <span style={{ color: '#485870', flexShrink: 0, width: '64px' }}>{label}</span>
+        <span style={{ color: '#607898', flexShrink: 0, width: '64px' }}>{label}</span>
         <input
           value={draft}
           onChange={e => setDraft(e.target.value)}
           autoFocus
           style={{
             flex: 1, background: '#1A2838', border: '1px solid #4A7CC0',
-            color: '#CDD5E0', borderRadius: '4px', padding: '2px 8px',
+            color: '#DCE8F4', borderRadius: '4px', padding: '2px 8px',
             fontSize: '12px', outline: 'none', minWidth: 0,
           }}
           onKeyDown={e => {
@@ -421,7 +421,7 @@ function EditablePreviewRow({
         </button>
         <button type="button"
           onClick={() => { setDraft(value); setEditing(false) }}
-          style={{ fontSize: '13px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}>
+          style={{ fontSize: '13px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer', padding: '0 2px' }}>
           ✕
         </button>
       </div>
@@ -434,7 +434,7 @@ function EditablePreviewRow({
       onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
       onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
     >
-      <span style={{ color: '#485870', flexShrink: 0, width: '64px' }}>{label}</span>
+      <span style={{ color: '#607898', flexShrink: 0, width: '64px' }}>{label}</span>
       <span style={{ color: '#A8B8C8', fontWeight: 500, flex: 1, lineHeight: 1.5 }}>{value}</span>
       {/* 수정 버튼 */}
       <button type="button"
@@ -494,7 +494,7 @@ export default function QuickFill({ onFill }: Props) {
   if (done) return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 14px', borderRadius: '10px', background: 'rgba(0,204,102,0.08)', border: '1px solid rgba(0,204,102,0.3)' }}>
       <span style={{ fontSize: '13px', color: '#3D9E6A', fontWeight: 600 }}>✅ {doneLabel} 정보 입력 완료</span>
-      <button type="button" onClick={reset} style={{ fontSize: '11px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>다시</button>
+      <button type="button" onClick={reset} style={{ fontSize: '11px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}>다시</button>
     </div>
   )
 
@@ -506,7 +506,7 @@ export default function QuickFill({ onFill }: Props) {
         <p style={{ fontSize: '13px', fontWeight: 600, color: '#3D9E6A', marginBottom: '3px' }}>
           📋 연락처 텍스트 붙여넣기
         </p>
-        <p style={{ fontSize: '11px', color: '#485870', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '11px', color: '#607898', lineHeight: 1.6 }}>
           연락처 앱 공유 텍스트, 네이버 인물정보, 뉴스·블로그 복사 등 어떤 형식이든 붙여넣으세요
         </p>
       </div>
@@ -522,7 +522,7 @@ export default function QuickFill({ onFill }: Props) {
             width: '100%', boxSizing: 'border-box',
             padding: '10px 12px', resize: 'vertical',
             background: '#1A2838', border: '1px solid #202C3A',
-            borderRadius: '8px', color: '#CDD5E0',
+            borderRadius: '8px', color: '#DCE8F4',
             fontSize: '13px', lineHeight: 1.6, outline: 'none',
             fontFamily: 'inherit',
           }}
@@ -533,7 +533,7 @@ export default function QuickFill({ onFill }: Props) {
       {/* 추출 결과 미리보기 */}
       {preview && (
         <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(30,144,255,0.07)', border: '1px solid rgba(30,144,255,0.2)', borderRadius: '8px' }}>
-          <p style={{ fontSize: '11px', color: '#485870', marginBottom: '6px' }}>
+          <p style={{ fontSize: '11px', color: '#607898', marginBottom: '6px' }}>
             추출된 정보 확인 ({countFields(preview)}개 항목)
             <span style={{ marginLeft: '6px', color: '#385070', fontWeight: 400 }}>— 행 위에 올려 ✏️ 수정 · × 삭제</span>
           </p>
@@ -554,8 +554,8 @@ export default function QuickFill({ onFill }: Props) {
           <EditablePreviewRow label="출신지역"  fieldKey="hometown_province"   value={preview.hometown_province}   onUpdate={updateField} />
           {preview.personal_notes && (
             <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(30,144,255,0.15)' }}>
-              <p style={{ fontSize: '11px', color: '#485870', marginBottom: '3px' }}>📝 메모 (경력/주소)</p>
-              <p style={{ fontSize: '12px', color: '#687898', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
+              <p style={{ fontSize: '11px', color: '#607898', marginBottom: '3px' }}>📝 메모 (경력/주소)</p>
+              <p style={{ fontSize: '12px', color: '#8AAAC8', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
                 {preview.personal_notes.slice(0, 200)}{preview.personal_notes.length > 200 ? '…' : ''}
               </p>
             </div>
@@ -574,7 +574,7 @@ export default function QuickFill({ onFill }: Props) {
               🔍 자동 분석
             </button>
             <button type="button" onClick={() => { setOpen(false); setText(''); setPreview(null) }}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
               취소
             </button>
           </>
@@ -587,11 +587,11 @@ export default function QuickFill({ onFill }: Props) {
               </button>
             )}
             <button type="button" onClick={() => setPreview(null)}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
               수정
             </button>
             <button type="button" onClick={() => { setOpen(false); setText(''); setPreview(null) }}
-              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#485870', fontSize: '12px', cursor: 'pointer' }}>
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
               취소
             </button>
           </>
@@ -616,9 +616,9 @@ export default function QuickFill({ onFill }: Props) {
       <span style={{ fontSize: '26px', flexShrink: 0 }}>📋</span>
       <div style={{ textAlign: 'left' }}>
         <p style={{ fontSize: '13px', color: '#A8B8C8', fontWeight: 600, margin: 0 }}>연락처 붙여넣기</p>
-        <p style={{ fontSize: '10px', color: '#485870', margin: 0 }}>연락처·네이버·뉴스 복사 → 이름·소속·전화·기수·경력 자동 추출</p>
+        <p style={{ fontSize: '10px', color: '#607898', margin: 0 }}>연락처·네이버·뉴스 복사 → 이름·소속·전화·기수·경력 자동 추출</p>
       </div>
-      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#485870' }}>탭하여 열기 →</span>
+      <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#607898' }}>탭하여 열기 →</span>
     </button>
   )
 }

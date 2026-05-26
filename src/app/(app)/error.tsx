@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 import Link from 'next/link'
@@ -40,7 +40,7 @@ export default function AppError({ error, unstable_retry }: ErrorProps) {
       <div style={{ fontSize: '48px', lineHeight: 1 }}>⚠️</div>
 
       <div>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 8px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 8px' }}>
           페이지를 불러오는 중 오류가 발생했습니다
         </h2>
         <p style={{ fontSize: '13px', color: '#5A7099', margin: 0 }}>
@@ -49,7 +49,7 @@ export default function AppError({ error, unstable_retry }: ErrorProps) {
             : '잠시 후 다시 시도해 주세요.'}
         </p>
         {error?.digest && (
-          <p style={{ fontSize: '11px', color: '#485870', marginTop: '4px', fontFamily: 'monospace' }}>
+          <p style={{ fontSize: '11px', color: '#607898', marginTop: '4px', fontFamily: 'monospace' }}>
             오류 코드: {error.digest}
           </p>
         )}
@@ -77,7 +77,7 @@ export default function AppError({ error, unstable_retry }: ErrorProps) {
           style={{
             background: '#182035',
             border: '1px solid #1A2838',
-            color: '#687898',
+            color: '#8AAAC8',
             borderRadius: '8px',
             padding: '9px 20px',
             fontSize: '13px',

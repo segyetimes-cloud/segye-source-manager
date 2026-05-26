@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect } from 'react'
 import * as Sentry from '@sentry/nextjs'
@@ -27,7 +27,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       <body
         style={{
           background: '#0D1520',
-          color: '#CDD5E0',
+          color: '#DCE8F4',
           fontFamily: 'system-ui, sans-serif',
           margin: 0,
           minHeight: '100vh',

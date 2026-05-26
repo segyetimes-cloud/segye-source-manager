@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { can, CAN_APPROVE_REPORT } from '@/lib/permissions'
@@ -133,7 +133,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>📋 정보보고</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>📋 정보보고</h1>
           <p className="text-xs mt-0.5" style={{ color: '#5A7099' }}>취재 관련 정보 보고서를 작성하고 공유합니다</p>
         </div>
         <Link

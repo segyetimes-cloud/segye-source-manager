@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef, useState } from 'react'
 
@@ -71,12 +71,12 @@ export default function BusinessCardScanner({ onExtracted }: Props) {
           <p style={{ fontSize: '13px', color: '#3D9E6A', fontWeight: 600, margin: 0 }}>
             ✅ 정보 추출 완료
           </p>
-          <p style={{ fontSize: '11px', color: '#485870', margin: '2px 0 0' }}>
+          <p style={{ fontSize: '11px', color: '#607898', margin: '2px 0 0' }}>
             아래 필드를 확인 · 수정해 주세요
           </p>
         </div>
         <button type="button" onClick={reset}
-          style={{ fontSize: '11px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>
+          style={{ fontSize: '11px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', flexShrink: 0 }}>
           다시 스캔
         </button>
       </div>
@@ -126,7 +126,7 @@ export default function BusinessCardScanner({ onExtracted }: Props) {
         }}
       >
         📸 명함 사진 스캔
-        <span style={{ fontSize: '11px', fontWeight: 400, color: '#485870' }}>
+        <span style={{ fontSize: '11px', fontWeight: 400, color: '#607898' }}>
           — 촬영 또는 갤러리 선택
         </span>
       </button>

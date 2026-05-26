@@ -1,0 +1,42 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - img "세계일보 로고" [ref=e7]
+        - generic [ref=e8]:
+          - generic [ref=e9]: THE SEGYE TIMES
+          - generic [ref=e10]: 가장 먼저, 그리고 끝까지 · First to report, Last to cover
+      - generic [ref=e11]:
+        - heading "AI 취재원 관리 시스템" [level=1] [ref=e12]:
+          - text: AI 취재원
+          - text: 관리 시스템
+        - paragraph [ref=e13]: 기자들이 보유한 취재원 정보를 안전하게 관리하고, 조직 전체의 인적 네트워크를 체계화하는 스마트 플랫폼
+      - generic [ref=e14]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: 👤
+          - paragraph [ref=e17]: 취재원 관리
+          - paragraph [ref=e18]: 등록·검색·이력
+        - generic [ref=e19]:
+          - generic [ref=e20]: 📋
+          - paragraph [ref=e21]: 정보보고 관리
+          - paragraph [ref=e22]: 작성·공유·보안
+        - generic [ref=e23]:
+          - generic [ref=e24]: 🕸️
+          - paragraph [ref=e25]: 관계망 시각화
+          - paragraph [ref=e26]: 자동 인맥 분석
+    - generic [ref=e27]:
+      - paragraph [ref=e29]: 세계일보 취재원 관리시스템
+      - generic [ref=e30]:
+        - button "로그인" [ref=e31] [cursor=pointer]
+        - button "회원가입" [ref=e32] [cursor=pointer]
+      - generic [ref=e34]:
+        - generic [ref=e35]:
+          - generic [ref=e36]: 이메일
+          - textbox "name@segye.com" [ref=e37]
+        - generic [ref=e38]:
+          - generic [ref=e39]: 비밀번호
+          - textbox "비밀번호 입력" [ref=e40]
+        - button "로그인" [ref=e41] [cursor=pointer]
+        - paragraph [ref=e42]: "계정 문의: 관리자에게 연락하세요"
+      - paragraph [ref=e43]: 본 시스템은 사내 VPN 환경에서만 이용 가능합니다
+  - alert [ref=e44]

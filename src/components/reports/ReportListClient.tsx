@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useMemo } from 'react'
 import type { ReportVisibility } from '@/types/database'
@@ -133,7 +133,7 @@ export default function ReportListClient({
             placeholder="제목 내용 검색"
             style={{
               flex: 1, background: '#131C2C',
-              border: '1px solid #1A2838', color: '#CDD5E0',
+              border: '1px solid #1A2838', color: '#DCE8F4',
               borderRadius: '8px', padding: '9px 12px', fontSize: '14px', outline: 'none',
             }}
           />
@@ -165,7 +165,7 @@ export default function ReportListClient({
                   padding: '6px 16px', fontSize: '13px', fontWeight: 500,
                   textDecoration: 'none',
                   background: currentTab === t.value ? 'rgba(30,144,255,0.15)' : 'transparent',
-                  color: currentTab === t.value ? '#4A7CC0' : '#687898',
+                  color: currentTab === t.value ? '#4A7CC0' : '#8AAAC8',
                   borderRight: t.value === 'all' ? '1px solid #1A2838' : 'none',
                   display: 'inline-block',
                 }}>
@@ -173,7 +173,7 @@ export default function ReportListClient({
               </a>
             ))}
           </div>
-          <span style={{ fontSize: '12px', color: '#485870' }}>
+          <span style={{ fontSize: '12px', color: '#607898' }}>
             총 {totalCount}건
           </span>
         </div>
@@ -210,7 +210,7 @@ export default function ReportListClient({
       {/* 목록 */}
       {displayReports.length === 0 ? (
         <div className="glass-card p-8 text-center">
-          <p style={{ color: '#485870', fontSize: '14px' }}>
+          <p style={{ color: '#607898', fontSize: '14px' }}>
             {currentQuery
               ? `"${currentQuery}"에 해당하는 보고서가 없습니다.`
               : '아직 보고서가 없습니다.'}
@@ -261,7 +261,7 @@ export default function ReportListClient({
                       </span>
                     )}
                     <span style={{
-                      fontSize: '14px', fontWeight: 600, color: '#CDD5E0',
+                      fontSize: '14px', fontWeight: 600, color: '#DCE8F4',
                       lineHeight: 1.35, flex: 1, minWidth: 0,
                     }}>
                       <Highlight text={report.title} query={highlightQuery} />
@@ -304,7 +304,7 @@ export default function ReportListClient({
                     <span style={{ fontSize: '11px', color: '#5A7099' }}>
                       {author?.full_name ?? '—'}{author?.department ? ` · ${author.department}` : ''}
                     </span>
-                    <span style={{ fontSize: '11px', color: '#485870' }}>{dateStr}</span>
+                    <span style={{ fontSize: '11px', color: '#607898' }}>{dateStr}</span>
                   </div>
                 </div>
               </a>
@@ -319,7 +319,7 @@ export default function ReportListClient({
           {currentPage > 1 && (
             <a
               href={`/reports?tab=${currentTab}&q=${currentQuery}&page=${currentPage - 1}`}
-              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               이전
             </a>
           )}
@@ -329,7 +329,7 @@ export default function ReportListClient({
           {currentPage < totalPages && (
             <a
               href={`/reports?tab=${currentTab}&q=${currentQuery}&page=${currentPage + 1}`}
-              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               다음
             </a>
           )}

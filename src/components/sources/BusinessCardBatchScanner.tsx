@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * BusinessCardBatchScanner
@@ -453,7 +453,7 @@ export default function BusinessCardBatchScanner() {
             display: 'flex', alignItems: 'center', gap: '6px',
             padding: '9px 16px', borderRadius: '8px', fontWeight: 600, fontSize: '13px',
             background: 'rgba(30,144,255,0.08)',
-            color: '#687898', border: '1px solid #1A2838', cursor: 'pointer',
+            color: '#8AAAC8', border: '1px solid #1A2838', cursor: 'pointer',
           }}
         >
           🖼️ 사진 파일 선택 (여러 장)
@@ -462,7 +462,7 @@ export default function BusinessCardBatchScanner() {
         {/* 통계 */}
         {queue.length > 0 && (
           <div style={{ marginLeft: 'auto', display: 'flex', gap: '10px', fontSize: '12px', flexWrap: 'wrap' }}>
-            {pendingCount  > 0 && <span style={{ color: '#687898' }}>대기 {pendingCount}장</span>}
+            {pendingCount  > 0 && <span style={{ color: '#8AAAC8' }}>대기 {pendingCount}장</span>}
             {analyzingCount > 0 && <span style={{ color: '#4A7CC0' }}>분석 중 {analyzingCount}장</span>}
             {doneCount     > 0 && <span style={{ color: '#3D9E6A' }}>완료 {doneCount}장</span>}
             {errorCount    > 0 && <span style={{ color: '#C04040' }}>오류 {errorCount}장</span>}
@@ -540,7 +540,7 @@ export default function BusinessCardBatchScanner() {
               type="button" onClick={stopCamera}
               style={{
                 padding: '10px 18px', background: 'transparent',
-                color: '#485870', border: '1px solid #1A2838',
+                color: '#607898', border: '1px solid #1A2838',
                 borderRadius: '8px', fontSize: '13px', cursor: 'pointer',
               }}
             >
@@ -571,10 +571,10 @@ export default function BusinessCardBatchScanner() {
           background: 'rgba(30,144,255,0.02)',
         }}>
           <div style={{ fontSize: '40px', marginBottom: '12px' }}>📇</div>
-          <p style={{ fontSize: '14px', color: '#687898', fontWeight: 600 }}>
+          <p style={{ fontSize: '14px', color: '#8AAAC8', fontWeight: 600 }}>
             명함 사진을 추가해주세요
           </p>
-          <p style={{ fontSize: '12px', color: '#485870', marginTop: '6px' }}>
+          <p style={{ fontSize: '12px', color: '#607898', marginTop: '6px' }}>
             카메라로 연속 촬영하거나, 갤러리에서 여러 장을 한꺼번에 선택할 수 있습니다
           </p>
         </div>
@@ -587,7 +587,7 @@ export default function BusinessCardBatchScanner() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: '10px',
           }}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>
               📋 분석 대기 — {pendingCount}장
             </p>
             <button
@@ -675,7 +675,7 @@ export default function BusinessCardBatchScanner() {
             marginBottom: '12px', flexWrap: 'wrap', gap: '8px',
           }}>
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0 }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', margin: 0 }}>
                 📝 추출 결과 확인 · 수정
               </p>
               {checkedCount > 0 && (
@@ -781,7 +781,7 @@ function ResultCard({
           <p style={{ fontSize: '12px', color: '#685070', margin: 0 }}>{state.error}</p>
         </div>
         <button type="button" onClick={onRemove}
-          style={{ background: 'none', border: 'none', color: '#485870', fontSize: '16px', cursor: 'pointer' }}>
+          style={{ background: 'none', border: 'none', color: '#607898', fontSize: '16px', cursor: 'pointer' }}>
           ✕
         </button>
       </div>
@@ -812,7 +812,7 @@ function ResultCard({
             type="checkbox" checked={item.checked} onChange={onToggleCheck}
             style={{ width: '16px', height: '16px', accentColor: '#4A7CC0' }}
           />
-          <span style={{ fontSize: '12px', color: item.checked ? '#4A7CC0' : '#485870', fontWeight: 600 }}>
+          <span style={{ fontSize: '12px', color: item.checked ? '#4A7CC0' : '#607898', fontWeight: 600 }}>
             {item.checked ? '등록 포함' : '등록 제외'}
           </span>
         </label>
@@ -828,16 +828,16 @@ function ResultCard({
 
         {/* 요약 정보 */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#DCE8F4', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {d.full_name || <span style={{ color: '#C04040' }}>이름 없음 ← 필수 입력</span>}
           </p>
-          <p style={{ fontSize: '12px', color: '#687898', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {[d.current_organization, d.current_position].filter(Boolean).join(' · ') || '—'}
           </p>
         </div>
 
         <button type="button" onClick={onRemove}
-          style={{ background: 'none', border: 'none', color: '#485870', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>
+          style={{ background: 'none', border: 'none', color: '#607898', fontSize: '18px', cursor: 'pointer', flexShrink: 0 }}>
           ✕
         </button>
       </div>
@@ -850,7 +850,7 @@ function ResultCard({
       }}>
         {(Object.keys(FIELD_LABELS) as Array<keyof ExtractedCard>).map(field => (
           <div key={field}>
-            <label style={{ display: 'block', fontSize: '10px', color: '#485870', marginBottom: '3px' }}>
+            <label style={{ display: 'block', fontSize: '10px', color: '#607898', marginBottom: '3px' }}>
               {FIELD_LABELS[field]}
               {REQUIRED_FIELDS.includes(field) && <span style={{ color: '#C04040' }}> *</span>}
             </label>
@@ -863,7 +863,7 @@ function ResultCard({
                 width: '100%', padding: '6px 9px', fontSize: '12px',
                 background: '#182035',
                 border: `1px solid ${REQUIRED_FIELDS.includes(field) && !d[field] ? 'rgba(192,64,64,0.5)' : '#1A2838'}`,
-                borderRadius: '6px', color: '#CDD5E0', outline: 'none',
+                borderRadius: '6px', color: '#DCE8F4', outline: 'none',
               }}
             />
           </div>

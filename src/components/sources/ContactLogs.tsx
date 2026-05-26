@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import ProtectedText from '@/components/common/ProtectedText'
@@ -20,7 +20,7 @@ const METHOD_LABELS: Record<string, string> = {
 }
 
 const METHOD_COLORS: Record<string, string> = {
-  call: '#4A7CC0', message: '#3A90A8', email: '#3D9E6A', meet: '#A87228', other: '#485870',
+  call: '#4A7CC0', message: '#3A90A8', email: '#3D9E6A', meet: '#A87228', other: '#607898',
 }
 
 function formatFollowup(iso: string): { label: string; urgent: boolean } {
@@ -94,14 +94,14 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
   }
 
   const inputStyle: React.CSSProperties = {
-    background: '#1A2838', border: '1px solid #202C3A', color: '#CDD5E0',
+    background: '#1A2838', border: '1px solid #202C3A', color: '#DCE8F4',
     borderRadius: '6px', padding: '7px 10px', fontSize: '13px', width: '100%',
   }
 
   return (
     <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>📞 연락 이력</h2>
+        <h2 className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>📞 연락 이력</h2>
         <button
           type="button"
           onClick={() => setAdding(!adding)}
@@ -134,7 +134,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
             <span style={{ fontSize: '14px' }}>{urgent ? '🔔' : '📅'}</span>
             <div>
               <span style={{ fontSize: '11px', fontWeight: 600, color: urgent ? '#3D9E6A' : '#4A7CC0' }}>다음 팔로업</span>
-              <span style={{ fontSize: '12px', color: '#CDD5E0', marginLeft: '8px' }}>{label}</span>
+              <span style={{ fontSize: '12px', color: '#DCE8F4', marginLeft: '8px' }}>{label}</span>
             </div>
           </div>
         )
@@ -149,7 +149,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
         }}>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label style={{ fontSize: '12px', color: '#485870', display: 'block', marginBottom: '4px' }}>방법</label>
+              <label style={{ fontSize: '12px', color: '#607898', display: 'block', marginBottom: '4px' }}>방법</label>
               <select value={method} onChange={e => setMethod(e.target.value as typeof method)} style={inputStyle}>
                 {Object.entries(METHOD_LABELS).map(([v, l]) => (
                   <option key={v} value={v}>{l}</option>
@@ -157,7 +157,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
               </select>
             </div>
             <div>
-              <label style={{ fontSize: '12px', color: '#485870', display: 'block', marginBottom: '4px' }}>일시</label>
+              <label style={{ fontSize: '12px', color: '#607898', display: 'block', marginBottom: '4px' }}>일시</label>
               <input
                 type="datetime-local"
                 value={contactedAt}
@@ -167,7 +167,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
             </div>
           </div>
           <div style={{ marginBottom: '10px' }}>
-            <label style={{ fontSize: '12px', color: '#485870', display: 'block', marginBottom: '4px' }}>내용 *</label>
+            <label style={{ fontSize: '12px', color: '#607898', display: 'block', marginBottom: '4px' }}>내용 *</label>
             <textarea
               value={summary}
               onChange={e => setSummary(e.target.value)}
@@ -179,7 +179,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
           </div>
           <div className="grid grid-cols-2 gap-3 mb-3">
             <div>
-              <label style={{ fontSize: '12px', color: '#485870', display: 'block', marginBottom: '4px' }}>결과 (선택)</label>
+              <label style={{ fontSize: '12px', color: '#607898', display: 'block', marginBottom: '4px' }}>결과 (선택)</label>
               <input
                 value={result}
                 onChange={e => setResult(e.target.value)}
@@ -204,7 +204,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
               onChange={e => setIsSensitive(e.target.checked)}
               style={{ width: '14px', height: '14px', accentColor: '#C04040', cursor: 'pointer' }}
             />
-            <span style={{ fontSize: '12px', color: isSensitive ? '#E06060' : '#485870', fontWeight: isSensitive ? 600 : 400 }}>
+            <span style={{ fontSize: '12px', color: isSensitive ? '#E06060' : '#607898', fontWeight: isSensitive ? 600 : 400 }}>
               🔒 민감 연락 (부장 이상만 열람)
             </span>
           </label>
@@ -226,10 +226,10 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
 
       {/* 목록 */}
       {loading ? (
-        <p style={{ fontSize: '13px', color: '#485870', textAlign: 'center', padding: '16px 0' }}>불러오는 중…</p>
+        <p style={{ fontSize: '13px', color: '#607898', textAlign: 'center', padding: '16px 0' }}>불러오는 중…</p>
       ) : logs.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '24px 0' }}>
-          <p style={{ fontSize: '14px', color: '#485870' }}>연락 이력이 없습니다.</p>
+          <p style={{ fontSize: '14px', color: '#607898' }}>연락 이력이 없습니다.</p>
           <p style={{ fontSize: '12px', color: '#384860', marginTop: '4px' }}>
             통화·문자·이메일·대면 연락을 기록해두면 히스토리로 관리됩니다.
           </p>
@@ -244,7 +244,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
 
           <div className="space-y-4">
             {logs.map(log => {
-              const color = METHOD_COLORS[log.method] ?? '#485870'
+              const color = METHOD_COLORS[log.method] ?? '#607898'
               const dateStr = new Date(log.contacted_at).toLocaleString('ko-KR', {
                 year: 'numeric', month: '2-digit', day: '2-digit',
                 hour: '2-digit', minute: '2-digit',
@@ -277,12 +277,12 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
                             🔒 민감
                           </span>
                         )}
-                        <span style={{ fontSize: '11px', color: '#485870' }}>{dateStr}</span>
+                        <span style={{ fontSize: '11px', color: '#607898' }}>{dateStr}</span>
                         {isOwn && (
                           <button
                             type="button"
                             onClick={() => handleDelete(log.id)}
-                            style={{ fontSize: '11px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                            style={{ fontSize: '11px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
                             title="삭제">
                             ✕
                           </button>
@@ -290,9 +290,9 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
                       </div>
                     </div>
                     {log.is_sensitive ? (
-                      <ProtectedText text={log.summary} fontSize={13} color="#CDD5E0" style={{ display: 'block', lineHeight: 1.5 }} />
+                      <ProtectedText text={log.summary} fontSize={13} color="#DCE8F4" style={{ display: 'block', lineHeight: 1.5 }} />
                     ) : (
-                      <p style={{ fontSize: '13px', color: '#CDD5E0', lineHeight: 1.5, margin: 0 }}>{log.summary}</p>
+                      <p style={{ fontSize: '13px', color: '#DCE8F4', lineHeight: 1.5, margin: 0 }}>{log.summary}</p>
                     )}
                     {log.result && (
                       log.is_sensitive ? (
@@ -313,7 +313,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
                       )
                     })()}
                     {log.profiles?.full_name && !isOwn && (
-                      <p style={{ fontSize: '11px', color: '#485870', marginTop: '2px' }}>
+                      <p style={{ fontSize: '11px', color: '#607898', marginTop: '2px' }}>
                         기록: {log.profiles.full_name}
                       </p>
                     )}

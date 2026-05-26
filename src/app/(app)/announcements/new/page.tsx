@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
@@ -32,15 +32,15 @@ export default function NewAnnouncementPage() {
   const inputStyle = {
     width: '100%', padding: '10px 12px',
     background: '#182035', border: '1px solid #1A2838',
-    borderRadius: '8px', color: '#CDD5E0', fontSize: '14px',
+    borderRadius: '8px', color: '#DCE8F4', fontSize: '14px',
     outline: 'none', boxSizing: 'border-box' as const,
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>📢 새 공지 작성</h1>
-        <p className="text-sm mt-1" style={{ color: '#687898' }}>작성한 공지는 전체 구성원에게 표시됩니다</p>
+        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>📢 새 공지 작성</h1>
+        <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>작성한 공지는 전체 구성원에게 표시됩니다</p>
       </div>
 
       <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
@@ -70,14 +70,14 @@ export default function NewAnnouncementPage() {
         <div className="flex gap-3 justify-end">
           <a href="/announcements"
             style={{ padding: '9px 18px', borderRadius: '8px', fontSize: '13px',
-              background: '#1A2838', color: '#687898', border: '1px solid #1A2838',
+              background: '#1A2838', color: '#8AAAC8', border: '1px solid #1A2838',
               textDecoration: 'none', display: 'inline-block' }}>
             취소
           </a>
           <button type="submit" disabled={submitting}
             style={{ padding: '9px 22px', borderRadius: '8px', fontSize: '13px', fontWeight: 600,
               background: submitting ? '#1A2838' : 'rgba(30,144,255,0.18)',
-              color: submitting ? '#485870' : '#4A7CC0',
+              color: submitting ? '#607898' : '#4A7CC0',
               border: '1px solid rgba(30,144,255,0.3)', cursor: submitting ? 'not-allowed' : 'pointer' }}>
             {submitting ? '저장 중...' : '공지 등록'}
           </button>

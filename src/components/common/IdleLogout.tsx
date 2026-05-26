@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useRef, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -114,10 +114,10 @@ export default function IdleLogout() {
           fontSize: '28px',
         }}>⏰</div>
 
-        <p style={{ fontSize: '17px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 10px' }}>
+        <p style={{ fontSize: '17px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 10px' }}>
           세션이 곧 만료됩니다
         </p>
-        <p style={{ fontSize: '13px', color: '#687898', margin: '0 0 6px', lineHeight: 1.6 }}>
+        <p style={{ fontSize: '13px', color: '#8AAAC8', margin: '0 0 6px', lineHeight: 1.6 }}>
           장시간 활동이 없어 보안을 위해<br/>자동 로그아웃됩니다.
         </p>
 
@@ -154,7 +154,7 @@ export default function IdleLogout() {
               flex: 1, padding: '11px',
               borderRadius: '8px', fontSize: '14px', fontWeight: 500,
               background: 'none',
-              color: '#687898', border: '1px solid #1A2838', cursor: 'pointer',
+              color: '#8AAAC8', border: '1px solid #1A2838', cursor: 'pointer',
             }}
           >
             지금 로그아웃

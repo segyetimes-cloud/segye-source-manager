@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import SourceForm from '@/components/sources/SourceForm'
 import type { Source } from '@/types/database'
 
@@ -48,8 +48,8 @@ export default async function NewSourcePage({
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
-          <p className="text-sm mt-1" style={{ color: '#687898' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>새 취재원 등록</h1>
+          <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
             항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
           </p>
         </div>
@@ -72,7 +72,7 @@ export default async function NewSourcePage({
             style={{
               display: 'flex', alignItems: 'center', gap: '6px',
               padding: '8px 14px', borderRadius: '8px', fontSize: '13px', fontWeight: 500,
-              background: '#182035', color: '#687898', border: '1px solid #1A2838',
+              background: '#182035', color: '#8AAAC8', border: '1px solid #1A2838',
               textDecoration: 'none',
             }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -87,17 +87,17 @@ export default async function NewSourcePage({
       {helpContext && (
         <div className="glass-card p-4" style={{ border: '1px solid rgba(0,204,102,0.2)', background: 'rgba(0,204,102,0.03)' }}>
           <p className="text-xs font-semibold mb-2" style={{ color: '#3D9E6A' }}>📋 도움 게시판에서 가져온 정보</p>
-          <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>{helpContext.title}</p>
+          <p className="text-sm font-medium mb-1" style={{ color: '#DCE8F4' }}>{helpContext.title}</p>
           {helpContext.target_name && (
-            <p className="text-xs" style={{ color: '#687898' }}>대상: {helpContext.target_name} {helpContext.target_org && `(${helpContext.target_org})`}</p>
+            <p className="text-xs" style={{ color: '#8AAAC8' }}>대상: {helpContext.target_name} {helpContext.target_org && `(${helpContext.target_org})`}</p>
           )}
           {helpContext.acceptedBody && (
             <details className="mt-2">
-              <summary className="text-xs cursor-pointer" style={{ color: '#485870' }}>채택된 응답 보기</summary>
-              <p className="text-xs mt-1 whitespace-pre-wrap leading-relaxed" style={{ color: '#687898' }}>{helpContext.acceptedBody}</p>
+              <summary className="text-xs cursor-pointer" style={{ color: '#607898' }}>채택된 응답 보기</summary>
+              <p className="text-xs mt-1 whitespace-pre-wrap leading-relaxed" style={{ color: '#8AAAC8' }}>{helpContext.acceptedBody}</p>
             </details>
           )}
-          <p className="text-xs mt-2" style={{ color: '#485870' }}>아래 양식에 정보를 입력한 후 저장하세요</p>
+          <p className="text-xs mt-2" style={{ color: '#607898' }}>아래 양식에 정보를 입력한 후 저장하세요</p>
         </div>
       )}
 

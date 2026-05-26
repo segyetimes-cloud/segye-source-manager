@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useEffect, useState } from 'react'
 import ReportContentViewer from './ReportContentViewer'
@@ -34,7 +34,7 @@ const STATUS_LABEL: Record<string, string> = {
   draft: '임시저장', submitted: '검토 중', approved: '승인됨', rejected: '반려됨',
 }
 const STATUS_COLOR: Record<string, { bg: string; color: string; border: string }> = {
-  draft:     { bg: 'rgba(104,120,152,0.15)', color: '#687898', border: 'rgba(104,120,152,0.35)' },
+  draft:     { bg: 'rgba(104,120,152,0.15)', color: '#8AAAC8', border: 'rgba(104,120,152,0.35)' },
   submitted: { bg: 'rgba(74,124,192,0.15)',  color: '#4A7CC0', border: 'rgba(74,124,192,0.35)' },
   approved:  { bg: 'rgba(61,158,106,0.15)',  color: '#3D9E6A', border: 'rgba(61,158,106,0.35)' },
   rejected:  { bg: 'rgba(192,64,64,0.15)',   color: '#C04040', border: 'rgba(192,64,64,0.35)' },
@@ -119,7 +119,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
           }}
           onMouseEnter={e => {
             ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.13)'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#CDD5E0'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#DCE8F4'
           }}
           onMouseLeave={e => {
             ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'
@@ -158,7 +158,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                            report.category === '인터뷰' ? '#3D9E6A' : '#4A7CC0',
                   }}>{report.category}</span>
                 )}
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#CDD5E0', lineHeight: 1.35, flex: 1, margin: 0 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#DCE8F4', lineHeight: 1.35, flex: 1, margin: 0 }}>
                   {report.title}
                 </h2>
               </div>
@@ -175,11 +175,11 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   {STATUS_LABEL[report.status] ?? '승인됨'}
                 </span>
                 <VisibilityBadge visibility={report.visibility as ReportVisibility} />
-                <span style={{ fontSize: 12, color: '#687898', marginLeft: 'auto' }}>
+                <span style={{ fontSize: 12, color: '#8AAAC8', marginLeft: 'auto' }}>
                   ✍️ {report.profiles?.full_name ?? '—'}
                   {report.profiles?.department ? ` · ${report.profiles.department}` : ''}
                 </span>
-                <span style={{ fontSize: 12, color: '#485870' }}>
+                <span style={{ fontSize: 12, color: '#607898' }}>
                   {new Date(report.created_at).toLocaleDateString('ko-KR', {
                     year: 'numeric', month: '2-digit', day: '2-digit',
                   })}
@@ -207,7 +207,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   <p style={{ fontSize: 11, fontWeight: 600, color: '#A87228', marginBottom: 6, margin: '0 0 6px' }}>
                     ⚠️ 민감정보
                   </p>
-                  <p style={{ fontSize: 13, color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+                  <p style={{ fontSize: 13, color: '#DCE8F4', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
                     {report.sensitive_content}
                   </p>
                 </div>
@@ -229,7 +229,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
               {/* 연결된 취재원 */}
               {(report.report_sources?.length ?? 0) > 0 && (
                 <div style={{ marginBottom: 16 }}>
-                  <p style={{ fontSize: 11, color: '#485870', margin: '0 0 6px' }}>연결된 취재원</p>
+                  <p style={{ fontSize: 11, color: '#607898', margin: '0 0 6px' }}>연결된 취재원</p>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
                     {report.report_sources.map((rs, i) => rs.sources && (
                       <a
@@ -254,7 +254,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   onClick={onClose}
                   style={{
                     background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                    color: '#687898', borderRadius: 8, padding: '6px 14px',
+                    color: '#8AAAC8', borderRadius: 8, padding: '6px 14px',
                     fontSize: 12, cursor: 'pointer',
                   }}>
                   나가기

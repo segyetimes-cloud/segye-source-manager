@@ -1,4 +1,4 @@
-import Link from 'next/link'
+﻿import Link from 'next/link'
 import { redirect, notFound } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_EDIT_ANY_SOURCE } from '@/lib/permissions'
@@ -54,10 +54,10 @@ export default async function SourceEditPage({ params }: Params) {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>
             취재원 수정
           </h1>
-          <p className="text-sm mt-1" style={{ color: '#687898' }}>
+          <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
             {source.full_name} 취재원 정보를 수정합니다
           </p>
         </div>

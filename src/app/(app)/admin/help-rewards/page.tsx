@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HelpRewardsClient from '@/components/admin/HelpRewardsClient'
 import { can, CAN_MANAGE_HELP_REWARDS } from '@/lib/permissions'
@@ -55,8 +55,8 @@ export default async function HelpRewardsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>🏆 도움 보너스 포인트</h1>
-        <p className="text-sm mt-1" style={{ color: '#687898' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>🏆 도움 보너스 포인트</h1>
+        <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
           해결된 도움 요청에 대해 요청자 및 응답자에게 추가 포인트를 지급합니다
         </p>
       </div>

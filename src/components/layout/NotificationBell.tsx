@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -103,7 +103,7 @@ export default function NotificationBell() {
         style={{
           position: 'relative', background: 'none', border: 'none',
           cursor: 'pointer', fontSize: '20px', padding: '4px 6px',
-          lineHeight: 1, color: '#687898',
+          lineHeight: 1, color: '#8AAAC8',
         }}
         title="알림"
       >
@@ -137,7 +137,7 @@ export default function NotificationBell() {
             borderBottom: '1px solid #1A2838',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>알림</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>알림</span>
             {notifications.some(n => !n.is_read) && (
               <button
                 type="button"
@@ -155,9 +155,9 @@ export default function NotificationBell() {
           {/* 목록 */}
           <div style={{ overflowY: 'auto', maxHeight: '360px' }}>
             {loading ? (
-              <p style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: '#485870' }}>불러오는 중…</p>
+              <p style={{ padding: '24px', textAlign: 'center', fontSize: '13px', color: '#607898' }}>불러오는 중…</p>
             ) : notifications.length === 0 ? (
-              <p style={{ padding: '32px 16px', textAlign: 'center', fontSize: '13px', color: '#485870' }}>
+              <p style={{ padding: '32px 16px', textAlign: 'center', fontSize: '13px', color: '#607898' }}>
                 알림이 없습니다
               </p>
             ) : (
@@ -180,11 +180,11 @@ export default function NotificationBell() {
                       {TYPE_ICONS[n.type] ?? '🔔'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '13px', color: '#CDD5E0', fontWeight: n.is_read ? 400 : 600, margin: 0, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: '13px', color: '#DCE8F4', fontWeight: n.is_read ? 400 : 600, margin: 0, lineHeight: 1.4 }}>
                         {n.title}
                       </p>
                       {n.body && (
-                        <p style={{ fontSize: '12px', color: '#485870', margin: '2px 0 0', lineHeight: 1.4 }}>
+                        <p style={{ fontSize: '12px', color: '#607898', margin: '2px 0 0', lineHeight: 1.4 }}>
                           {n.body}
                         </p>
                       )}

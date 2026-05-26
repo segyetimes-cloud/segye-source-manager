@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import DashboardCharts, { type ChartData } from '@/components/dashboard/DashboardCharts'
 
@@ -154,11 +154,11 @@ export default async function DashboardPage() {
   }
   const catColors: Record<string, string> = {
     '일반': '#4A7CC0', '단독': '#C04040', '공동취재': '#3A90A8',
-    '인터뷰': '#7E6E48', '배경설명': '#5A7099', '분석': '#3D9E6A', '기타': '#485870',
+    '인터뷰': '#7E6E48', '배경설명': '#5A7099', '분석': '#3D9E6A', '기타': '#607898',
   }
   const reportCategories: ChartData['reportCategories'] = Array.from(catMap.entries())
     .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count, color: catColors[name] ?? '#485870' }))
+    .map(([name, count]) => ({ name, count, color: catColors[name] ?? '#607898' }))
 
   // 4. 상위 출입처 TOP 5
   const orgMap = new Map<string, number>()
@@ -195,8 +195,8 @@ export default async function DashboardPage() {
       {/* 헤더 */}
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>대시보드</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>
+          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>대시보드</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>
             {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
           </p>
         </div>
@@ -223,11 +223,11 @@ export default async function DashboardPage() {
           <div key={stat.label} className="glass-card p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium mb-1" style={{ color: '#687898' }}>{stat.label}</p>
+                <p className="text-xs font-medium mb-1" style={{ color: '#8AAAC8' }}>{stat.label}</p>
                 <p className="text-xl font-bold" style={{ color: stat.color }}>
                   {stat.value.toLocaleString()}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#485870' }}>{stat.unit}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#607898' }}>{stat.unit}</p>
               </div>
               <span className="text-xl">{stat.icon}</span>
             </div>
@@ -242,7 +242,7 @@ export default async function DashboardPage() {
       {recentViewSources.length > 0 && (
         <div className="glass-card p-3">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold text-sm" style={{ color: '#CDD5E0' }}>🕐 최근 열람한 취재원</h2>
+            <h2 className="font-semibold text-sm" style={{ color: '#DCE8F4' }}>🕐 최근 열람한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -265,8 +265,8 @@ export default async function DashboardPage() {
                     {s.full_name[0]}
                   </div>
                   <div>
-                    <p style={{ color: '#CDD5E0', fontSize: 13, fontWeight: 600, margin: 0 }}>{s.full_name}</p>
-                    <p style={{ color: '#687898', fontSize: 11, margin: 0 }}>
+                    <p style={{ color: '#DCE8F4', fontSize: 13, fontWeight: 600, margin: 0 }}>{s.full_name}</p>
+                    <p style={{ color: '#8AAAC8', fontSize: 11, margin: 0 }}>
                       {s.current_organization ?? '—'}
                     </p>
                   </div>
@@ -283,7 +283,7 @@ export default async function DashboardPage() {
         {/* 최근 등록 취재원 */}
         <div className="glass-card p-3">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>최근 등록한 취재원</h2>
+            <h2 className="font-semibold" style={{ color: '#DCE8F4' }}>최근 등록한 취재원</h2>
             <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
 
@@ -300,8 +300,8 @@ export default async function DashboardPage() {
                     {source.full_name[0]}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>{source.full_name}</p>
-                    <p className="text-xs truncate" style={{ color: '#687898' }}>
+                    <p className="text-sm font-semibold truncate" style={{ color: '#DCE8F4' }}>{source.full_name}</p>
+                    <p className="text-xs truncate" style={{ color: '#8AAAC8' }}>
                       {source.current_organization} {source.current_position}
                     </p>
                   </div>
@@ -318,7 +318,7 @@ export default async function DashboardPage() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-8" style={{ color: '#485870' }}>
+            <div className="text-center py-8" style={{ color: '#607898' }}>
               <p className="text-sm">등록된 취재원이 없습니다</p>
               <Link href="/sources/new" className="text-xs mt-2 block" style={{ color: '#4A7CC0' }}>
                 첫 번째 취재원을 등록해보세요 →
@@ -330,8 +330,8 @@ export default async function DashboardPage() {
         {/* 포인트 리더보드 */}
         <div className="glass-card p-3">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🏆 TOP 기여자</h2>
-            <span className="text-xs" style={{ color: '#485870' }}>전체 공개</span>
+            <h2 className="font-semibold" style={{ color: '#DCE8F4' }}>🏆 TOP 기여자</h2>
+            <span className="text-xs" style={{ color: '#607898' }}>전체 공개</span>
           </div>
           {leaderboard && leaderboard.length > 0 ? (
             <div className="space-y-2">
@@ -345,8 +345,8 @@ export default async function DashboardPage() {
                       background: isMe ? 'rgba(255,215,0,0.08)' : 'transparent',
                       border: isMe ? '1px solid rgba(255,215,0,0.2)' : '1px solid transparent',
                     }}>
-                    <span className="text-sm w-5 text-center" style={{ color: '#485870' }}>{medal || `${idx + 1}`}</span>
-                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#7E6E48' : '#CDD5E0' }}>
+                    <span className="text-sm w-5 text-center" style={{ color: '#607898' }}>{medal || `${idx + 1}`}</span>
+                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#7E6E48' : '#DCE8F4' }}>
                       {item.profiles?.full_name || '—'}
                       {isMe && <span className="text-xs ml-1" style={{ color: '#7E6E48' }}>(나)</span>}
                     </span>
@@ -356,7 +356,7 @@ export default async function DashboardPage() {
               })}
             </div>
           ) : (
-            <p className="text-center text-sm py-4" style={{ color: '#485870' }}>포인트 집계 중...</p>
+            <p className="text-center text-sm py-4" style={{ color: '#607898' }}>포인트 집계 중...</p>
           )}
         </div>
       </div>
@@ -366,8 +366,8 @@ export default async function DashboardPage() {
         <div className="glass-card p-3">
           <div className="flex items-center justify-between mb-2">
             <div>
-              <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>📅 팔로업 예정</h2>
-              <p className="text-xs mt-0.5" style={{ color: '#485870' }}>7일 이내 연락 예정된 취재원</p>
+              <h2 className="font-semibold" style={{ color: '#DCE8F4' }}>📅 팔로업 예정</h2>
+              <p className="text-xs mt-0.5" style={{ color: '#607898' }}>7일 이내 연락 예정된 취재원</p>
             </div>
             <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
@@ -394,11 +394,11 @@ export default async function DashboardPage() {
                       {f.sources?.full_name?.[0] ?? '?'}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
+                      <p className="text-sm font-semibold truncate" style={{ color: '#DCE8F4' }}>
                         {f.sources?.full_name ?? '—'}
                       </p>
                       {f.summary && (
-                        <p className="text-xs truncate" style={{ color: '#687898' }}>{f.summary}</p>
+                        <p className="text-xs truncate" style={{ color: '#8AAAC8' }}>{f.summary}</p>
                       )}
                     </div>
                     <span className="text-xs font-bold flex-shrink-0 px-2 py-0.5 rounded-full"
@@ -417,7 +417,7 @@ export default async function DashboardPage() {
       {openHelp && openHelp.length > 0 && (
         <div className="glass-card p-3">
           <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🙋 도움이 필요한 동료</h2>
+            <h2 className="font-semibold" style={{ color: '#DCE8F4' }}>🙋 도움이 필요한 동료</h2>
             <Link href="/help" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
           </div>
           <div className="dashboard-help-grid">
@@ -425,9 +425,9 @@ export default async function DashboardPage() {
               <Link key={req.id} href={`/help/${req.id}`}
                 className="p-3 rounded-lg transition-colors"
                 style={{ background: '#182035', border: '1px solid #1A2838' }}>
-                <p className="text-sm font-medium truncate" style={{ color: '#CDD5E0' }}>{req.title}</p>
+                <p className="text-sm font-medium truncate" style={{ color: '#DCE8F4' }}>{req.title}</p>
                 <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs" style={{ color: '#687898' }}>
+                  <span className="text-xs" style={{ color: '#8AAAC8' }}>
                     {new Date(req.created_at).toLocaleDateString('ko-KR')}
                   </span>
                   <span className="text-xs font-bold" style={{ color: '#7E6E48' }}>+{req.reward_points}pt</span>

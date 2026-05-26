@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 /**
  * DeviceGuard
@@ -72,10 +72,10 @@ export default function DeviceGuard() {
     >
       <span style={{ fontSize: '22px', flexShrink: 0, marginTop: '1px' }}>🔔</span>
       <div>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 4px' }}>
           새 기기에서 접속
         </p>
-        <p style={{ fontSize: '12px', color: '#687898', margin: 0, lineHeight: 1.5 }}>
+        <p style={{ fontSize: '12px', color: '#8AAAC8', margin: 0, lineHeight: 1.5 }}>
           처음 접속하는 기기입니다. 본인이 아닌 경우 즉시 비밀번호를 변경하세요.
         </p>
       </div>
@@ -83,7 +83,7 @@ export default function DeviceGuard() {
         onClick={() => setNewDevice(false)}
         style={{
           flexShrink: 0, background: 'none', border: 'none',
-          color: '#485870', cursor: 'pointer', fontSize: '16px',
+          color: '#607898', cursor: 'pointer', fontSize: '16px',
           padding: '0', lineHeight: 1,
         }}
       >×</button>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
@@ -154,7 +154,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   const statusColors: Record<string, string> = {
     open: '#4A7CC0',
     resolved: '#3D9E6A',
-    closed: '#485870',
+    closed: '#607898',
   }
 
   const statusLabels: Record<string, string> = {
@@ -167,10 +167,10 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
     <div className="max-w-3xl mx-auto space-y-6">
       {/* 네비게이션 */}
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 text-sm" style={{ color: '#485870' }}>
-          <Link href="/help" style={{ color: '#485870', textDecoration: 'none' }}>도움 게시판</Link>
+        <div className="flex items-center gap-2 text-sm" style={{ color: '#607898' }}>
+          <Link href="/help" style={{ color: '#607898', textDecoration: 'none' }}>도움 게시판</Link>
           <span>›</span>
-          <span style={{ color: '#687898' }}>{help.title}</span>
+          <span style={{ color: '#8AAAC8' }}>{help.title}</span>
         </div>
         <Link
           href="/help"
@@ -191,7 +191,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
               <span className="text-xs px-2 py-0.5 rounded"
-                style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
+                style={{ background: 'rgba(30,144,255,0.1)', color: '#8AAAC8' }}>
                 {REQUEST_TYPE_LABEL[help.request_type] ?? help.request_type}
               </span>
               <span className="text-xs font-semibold" style={{ color: statusColors[help.status] }}>
@@ -199,17 +199,17 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               </span>
             </div>
 
-            <h1 className="text-xl font-bold mb-2" style={{ color: '#CDD5E0' }}>{help.title}</h1>
+            <h1 className="text-xl font-bold mb-2" style={{ color: '#DCE8F4' }}>{help.title}</h1>
 
             {(help.target_name || help.target_org) && (
-              <p className="text-sm mb-3" style={{ color: '#687898' }}>
-                📍 대상: <span style={{ color: '#CDD5E0' }}>{help.target_name}</span>
+              <p className="text-sm mb-3" style={{ color: '#8AAAC8' }}>
+                📍 대상: <span style={{ color: '#DCE8F4' }}>{help.target_name}</span>
                 {help.target_org && <span> ({help.target_org})</span>}
               </p>
             )}
 
             {help.body && (
-              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#687898' }}>
+              <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#8AAAC8' }}>
                 {help.body}
               </p>
             )}
@@ -219,11 +219,11 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
             <span className="text-2xl font-bold" style={{ color: '#7E6E48' }}>
               +{help.reward_points}pt
             </span>
-            <span className="text-xs" style={{ color: '#485870' }}>
+            <span className="text-xs" style={{ color: '#607898' }}>
               {help.profiles?.full_name}
               {help.profiles?.department && ` · ${help.profiles.department}`}
             </span>
-            <span className="text-xs" style={{ color: '#485870' }}>
+            <span className="text-xs" style={{ color: '#607898' }}>
               {new Date(help.created_at).toLocaleString('ko-KR')}
             </span>
           </div>
@@ -234,7 +234,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
             <button
               onClick={handleClose}
               className="px-3 py-1.5 rounded-lg text-xs"
-              style={{ background: 'rgba(74,96,128,0.15)', color: '#485870', border: '1px solid #1A2838', cursor: 'pointer' }}>
+              style={{ background: 'rgba(74,96,128,0.15)', color: '#607898', border: '1px solid #1A2838', cursor: 'pointer' }}>
               마감하기
             </button>
           </div>
@@ -243,7 +243,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
       {/* 응답 목록 */}
       <div>
-        <h2 className="text-sm font-semibold mb-3" style={{ color: '#687898' }}>
+        <h2 className="text-sm font-semibold mb-3" style={{ color: '#8AAAC8' }}>
           응답 {responses.length}개
           {responses.length > 1 && (
             <span className="ml-2 font-normal text-xs" style={{ color: '#384860' }}>
@@ -254,7 +254,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
         {responses.length === 0 ? (
           <div className="glass-card p-8 text-center">
-            <p className="text-sm" style={{ color: '#485870' }}>아직 응답이 없습니다. 첫 번째로 도움을 주세요! 🙋</p>
+            <p className="text-sm" style={{ color: '#607898' }}>아직 응답이 없습니다. 첫 번째로 도움을 주세요! 🙋</p>
           </div>
         ) : (
           <div className="space-y-3">
@@ -276,13 +276,13 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
                     </div>
                   )}
 
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#CDD5E0' }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#DCE8F4' }}>
                     {resp.body}
                   </p>
 
                   <div className="flex items-center justify-between mt-3">
-                    <div className="text-xs" style={{ color: '#485870' }}>
-                      <span style={{ color: '#687898' }}>{resp.profiles?.full_name ?? '—'}</span>
+                    <div className="text-xs" style={{ color: '#607898' }}>
+                      <span style={{ color: '#8AAAC8' }}>{resp.profiles?.full_name ?? '—'}</span>
                       {resp.profiles?.department && ` · ${resp.profiles.department}`}
                       {' · '}
                       {new Date(resp.created_at).toLocaleString('ko-KR')}
@@ -302,7 +302,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
                           fontSize: '12px',
                           fontWeight: 500,
                           background: hasVoted ? 'rgba(74,124,192,0.2)' : 'rgba(74,124,192,0.08)',
-                          color: hasVoted ? '#4A7CC0' : '#687898',
+                          color: hasVoted ? '#4A7CC0' : '#8AAAC8',
                           border: hasVoted ? '1px solid rgba(74,124,192,0.4)' : '1px solid rgba(74,124,192,0.15)',
                           cursor: hasVoted ? 'default' : 'pointer',
                           transition: 'all 0.15s',
@@ -315,7 +315,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
                     )}
 
                     {isOwnResponse && resp.upvotes > 0 && (
-                      <span className="text-xs" style={{ color: '#485870' }}>
+                      <span className="text-xs" style={{ color: '#607898' }}>
                         👍 {resp.upvotes}
                       </span>
                     )}
@@ -360,9 +360,9 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
       {/* 응답 작성 */}
       {help.status === 'open' && !isRequester && (
         <div className="glass-card p-5" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: '#DCE8F4' }}>
             💡 응답하기
-            <span className="text-xs ml-2 font-normal" style={{ color: '#485870' }}>
+            <span className="text-xs ml-2 font-normal" style={{ color: '#607898' }}>
               채택 시 {help.reward_points}pt + 작성만 해도 1pt
             </span>
           </h3>
@@ -375,7 +375,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               width: '100%',
               background: '#182035',
               border: '1px solid #1A2838',
-              color: '#CDD5E0',
+              color: '#DCE8F4',
               borderRadius: '8px',
               padding: '10px 12px',
               fontSize: '14px',
@@ -403,7 +403,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
       {help.status !== 'open' && (
         <div className="text-center py-4 space-y-3">
-          <span className="text-sm px-4 py-2 rounded-full" style={{ background: '#131C2C', color: '#485870', border: '1px solid #1A2838' }}>
+          <span className="text-sm px-4 py-2 rounded-full" style={{ background: '#131C2C', color: '#607898', border: '1px solid #1A2838' }}>
             {help.status === 'resolved' ? '✅ 해결된 요청입니다' : '🔒 마감된 요청입니다'}
           </span>
 
@@ -419,7 +419,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
                 }}>
                 📋 이 정보로 취재원 등록하기
               </Link>
-              <p className="text-xs mt-2" style={{ color: '#485870' }}>
+              <p className="text-xs mt-2" style={{ color: '#607898' }}>
                 응답에서 공유된 정보를 취재원 데이터베이스에 바로 추가할 수 있습니다
               </p>
             </div>

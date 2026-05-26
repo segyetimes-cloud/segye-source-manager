@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
@@ -10,7 +10,7 @@ import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/All
 const inputStyle: React.CSSProperties = {
   background: '#182035',
   border: '1px solid #1A2838',
-  color: '#CDD5E0',
+  color: '#DCE8F4',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -22,7 +22,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 500,
   marginBottom: '6px',
-  color: '#687898',
+  color: '#8AAAC8',
 }
 
 interface SourceResult {
@@ -209,13 +209,13 @@ export default function NewReportPage() {
 
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Link href="/reports" style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+        <Link href="/reports" style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div style={{ flex: 1 }}>
-          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>새 보고서 작성</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#DCE8F4' }}>새 보고서 작성</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
             <p className="text-xs" style={{ color: '#5A7099' }}>정보보고 작성</p>
             {isSaving && (
-              <span style={{ fontSize: '11px', color: '#485870' }}>저장 중...</span>
+              <span style={{ fontSize: '11px', color: '#607898' }}>저장 중...</span>
             )}
             {!isSaving && lastSaved && (
               <span style={{ fontSize: '11px', color: '#3D7A50' }}>
@@ -236,7 +236,7 @@ export default function NewReportPage() {
             <p style={{ fontSize: '13px', color: '#7AADE0', fontWeight: 600, margin: 0 }}>
               💾 저장된 임시보고가 있습니다
             </p>
-            <p style={{ fontSize: '11px', color: '#485870', margin: '2px 0 0' }}>
+            <p style={{ fontSize: '11px', color: '#607898', margin: '2px 0 0' }}>
               {new Date(draftInfo.savedAt).toLocaleString('ko-KR', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })} 저장
             </p>
           </div>
@@ -256,7 +256,7 @@ export default function NewReportPage() {
               onClick={dismissDraft}
               style={{
                 background: 'none', border: '1px solid #1A2838',
-                color: '#485870', borderRadius: '6px', padding: '5px 12px',
+                color: '#607898', borderRadius: '6px', padding: '5px 12px',
                 fontSize: '12px', cursor: 'pointer',
               }}>
               무시
@@ -338,14 +338,14 @@ export default function NewReportPage() {
               lineHeight: 1.6,
               background: 'rgba(30,16,4,0.6)',
               border: '1px solid rgba(255,153,0,0.3)',
-              color: '#CDD5E0',
+              color: '#DCE8F4',
             }}
           />
         </div>
 
         {/* 태그 */}
         <div>
-          <label style={labelStyle}>태그 <span style={{ color: '#485870', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
+          <label style={labelStyle}>태그 <span style={{ color: '#607898', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
           <input
             type="text"
             value={tagInput}
@@ -395,7 +395,7 @@ export default function NewReportPage() {
                   style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -408,7 +408,7 @@ export default function NewReportPage() {
           <div>
             <label style={labelStyle}>
               지정 열람자{' '}
-              <span style={{ color: '#485870', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
+              <span style={{ color: '#607898', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
             </label>
             <AllowedUsersSelector selected={allowedUsers} onChange={setAllowedUsers} />
           </div>
@@ -416,7 +416,7 @@ export default function NewReportPage() {
 
         {/* 취재원 연결 */}
         <div>
-          <label style={labelStyle}>취재원 연결 <span style={{ color: '#485870', fontWeight: 400 }}>(선택)</span></label>
+          <label style={labelStyle}>취재원 연결 <span style={{ color: '#607898', fontWeight: 400 }}>(선택)</span></label>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -440,7 +440,7 @@ export default function NewReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
+                      cursor: 'pointer', color: '#DCE8F4', fontSize: '13px',
                       borderBottom: '1px solid #1A2838',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
@@ -454,7 +454,7 @@ export default function NewReportPage() {
               </div>
             )}
             {sourceSearching && (
-              <p style={{ fontSize: '12px', color: '#485870', marginTop: '4px' }}>검색 중...</p>
+              <p style={{ fontSize: '12px', color: '#607898', marginTop: '4px' }}>검색 중...</p>
             )}
           </div>
 
@@ -486,7 +486,7 @@ export default function NewReportPage() {
             onClick={saveDraft}
             style={{
               background: '#182035', border: '1px solid #1A2838',
-              color: '#687898', borderRadius: '8px', padding: '11px 16px',
+              color: '#8AAAC8', borderRadius: '8px', padding: '11px 16px',
               fontSize: '13px', fontWeight: 500, cursor: 'pointer',
               flexShrink: 0,
             }}>
@@ -507,7 +507,7 @@ export default function NewReportPage() {
           </button>
           <Link href="/reports" style={{
             padding: '11px 20px', background: '#182035',
-            border: '1px solid #1A2838', color: '#687898',
+            border: '1px solid #1A2838', color: '#8AAAC8',
             borderRadius: '8px', fontSize: '14px',
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}>

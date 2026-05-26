@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -113,7 +113,7 @@ export default function LoginPage() {
   const inputStyle: React.CSSProperties = {
     background: '#0D1F3C',
     border: '1px solid #1A2838',
-    color: '#CDD5E0',
+    color: '#DCE8F4',
     borderRadius: '8px',
     padding: '10px 14px',
     fontSize: '14px',
@@ -269,7 +269,7 @@ export default function LoginPage() {
             >
               👤
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원 관리</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>취재원 관리</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
           </div>
 
@@ -302,7 +302,7 @@ export default function LoginPage() {
             >
               📋
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>정보보고 관리</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>정보보고 관리</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
           </div>
 
@@ -335,7 +335,7 @@ export default function LoginPage() {
             >
               🕸️
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>관계망 시각화</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>관계망 시각화</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function LoginPage() {
       >
         {/* 브랜드 헤더 */}
         <div className="mb-8">
-          <p style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+          <p style={{ fontSize: '16px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>
             세계일보{' '}
             <span style={{ fontSize: '12px', fontWeight: 400, color: '#5A7099' }}>
               취재원 관리시스템
@@ -373,7 +373,7 @@ export default function LoginPage() {
             <span style={{ fontSize: '18px' }}>⏰</span>
             <p style={{ fontSize: '13px', color: '#A87228', margin: 0, lineHeight: 1.5 }}>
               장시간 활동이 없어 자동 로그아웃되었습니다.<br />
-              <span style={{ color: '#687898' }}>다시 로그인하면 계속 사용할 수 있습니다.</span>
+              <span style={{ color: '#8AAAC8' }}>다시 로그인하면 계속 사용할 수 있습니다.</span>
             </p>
           </div>
         )}
@@ -393,7 +393,7 @@ export default function LoginPage() {
                 padding: '14px',
                 fontSize: '14px',
                 fontWeight: tab === t ? 600 : 400,
-                color: tab === t ? '#4A7CC0' : '#485870',
+                color: tab === t ? '#4A7CC0' : '#607898',
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
@@ -413,7 +413,7 @@ export default function LoginPage() {
           {tab === 'login' && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                   이메일
                 </label>
                 <input
@@ -429,7 +429,7 @@ export default function LoginPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                   비밀번호
                 </label>
                 <input
@@ -505,11 +505,11 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold" style={{ color: '#CDD5E0' }}>가입 신청 완료!</p>
-                    <p className="text-sm mt-2" style={{ color: '#687898' }}>
+                    <p className="font-semibold" style={{ color: '#DCE8F4' }}>가입 신청 완료!</p>
+                    <p className="text-sm mt-2" style={{ color: '#8AAAC8' }}>
                       관리자 승인 후 이메일로 안내가 발송됩니다.
                     </p>
-                    <p className="text-xs mt-1" style={{ color: '#485870' }}>
+                    <p className="text-xs mt-1" style={{ color: '#607898' }}>
                       승인까지 최대 1영업일이 소요될 수 있습니다.
                     </p>
                   </div>
@@ -532,7 +532,7 @@ export default function LoginPage() {
               ) : (
                 <form onSubmit={handleSignup} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                       이름
                     </label>
                     <input
@@ -548,7 +548,7 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                       이메일
                     </label>
                     <input
@@ -564,7 +564,7 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                       비밀번호 <span style={{ color: '#384860', fontWeight: 400 }}>(8자 이상)</span>
                     </label>
                     <input
@@ -580,7 +580,7 @@ export default function LoginPage() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium mb-2" style={{ color: '#687898' }}>
+                    <label className="block text-sm font-medium mb-2" style={{ color: '#8AAAC8' }}>
                       비밀번호 확인
                     </label>
                     <input

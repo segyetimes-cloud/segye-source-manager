@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -62,7 +62,7 @@ export default function NewHelpPage() {
   const inputStyle = {
     background: '#182035',
     border: '1px solid #1A2838',
-    color: '#CDD5E0',
+    color: '#DCE8F4',
     borderRadius: '8px',
     padding: '9px 12px',
     fontSize: '14px',
@@ -74,17 +74,17 @@ export default function NewHelpPage() {
     fontSize: '13px',
     fontWeight: 500,
     marginBottom: '6px',
-    color: '#687898',
+    color: '#8AAAC8',
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Link href="/help" style={{ color: '#485870', textDecoration: 'none', fontSize: '20px' }}>←</Link>
+        <Link href="/help" style={{ color: '#607898', textDecoration: 'none', fontSize: '20px' }}>←</Link>
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>도움 요청</h1>
-          <p className="text-sm mt-0.5" style={{ color: '#687898' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>도움 요청</h1>
+          <p className="text-sm mt-0.5" style={{ color: '#8AAAC8' }}>
             동료 기자에게 취재 도움을 요청합니다. 채택 시 포인트가 지급됩니다.
           </p>
         </div>
@@ -106,8 +106,8 @@ export default function NewHelpPage() {
                   border: `1px solid ${form.request_type === t.value ? 'rgba(30,144,255,0.4)' : '#1A2838'}`,
                   cursor: 'pointer',
                 }}>
-                <div className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{t.label}</div>
-                <div className="text-xs mt-0.5" style={{ color: '#485870' }}>{t.desc}</div>
+                <div className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>{t.label}</div>
+                <div className="text-xs mt-0.5" style={{ color: '#607898' }}>{t.desc}</div>
               </button>
             ))}
           </div>
@@ -179,7 +179,7 @@ export default function NewHelpPage() {
               {form.reward_points}pt
             </span>
           </div>
-          <p className="text-xs mt-2" style={{ color: '#485870' }}>
+          <p className="text-xs mt-2" style={{ color: '#607898' }}>
             포인트가 높을수록 빠른 응답을 받을 수 있습니다 (5~100pt)
           </p>
         </div>
@@ -206,7 +206,7 @@ export default function NewHelpPage() {
           <Link
             href="/help"
             className="px-6 py-3 rounded-lg text-sm font-medium"
-            style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
+            style={{ background: '#182035', color: '#8AAAC8', border: '1px solid #1A2838', textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             취소
           </Link>
         </div>

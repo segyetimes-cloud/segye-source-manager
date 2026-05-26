@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useCallback } from 'react'
 
@@ -54,7 +54,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
           placeholder="기자 이름 또는 부서 검색"
           style={{
             background: '#182035', border: '1px solid #1A2838',
-            color: '#CDD5E0', borderRadius: '8px',
+            color: '#DCE8F4', borderRadius: '8px',
             padding: '9px 12px', fontSize: '14px', width: '100%',
           }}
         />
@@ -74,7 +74,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
                   display: 'flex', alignItems: 'center', gap: '10px',
                   width: '100%', textAlign: 'left',
                   padding: '9px 12px', background: 'none', border: 'none',
-                  cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
+                  cursor: 'pointer', color: '#DCE8F4', fontSize: '13px',
                   borderBottom: '1px solid #1A2838',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
@@ -85,7 +85,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
                   <span style={{
                     fontSize: '11px', fontWeight: 600,
                     color: ['부국장','편집국장','편집인'].includes(u.rank) ? '#FFB800'
-                          : u.rank === '부장' ? '#3A90A8' : '#687898',
+                          : u.rank === '부장' ? '#3A90A8' : '#8AAAC8',
                     background: 'rgba(255,255,255,0.06)',
                     borderRadius: '4px', padding: '1px 6px',
                   }}>{u.rank}</span>
@@ -98,7 +98,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
           </div>
         )}
         {searching && (
-          <p style={{ fontSize: '12px', color: '#485870', marginTop: '4px' }}>검색 중...</p>
+          <p style={{ fontSize: '12px', color: '#607898', marginTop: '4px' }}>검색 중...</p>
         )}
       </div>
 

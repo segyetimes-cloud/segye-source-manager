@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 
@@ -38,7 +38,7 @@ const REQUEST_TYPE_LABEL: Record<string, string> = {
 
 const modalInput: React.CSSProperties = {
   width: '100%', background: '#131C2C', border: '1px solid #1A2838',
-  color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
+  color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
   fontSize: '13px', outline: 'none', boxSizing: 'border-box',
 }
 
@@ -103,7 +103,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
   if (requests.length === 0) {
     return (
       <div className="glass-card p-12 text-center">
-        <p style={{ color: '#485870' }}>해결된 도움 요청이 없습니다</p>
+        <p style={{ color: '#607898' }}>해결된 도움 요청이 없습니다</p>
       </div>
     )
   }
@@ -125,31 +125,31 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <span className="text-xs px-2 py-0.5 rounded"
-                    style={{ background: 'rgba(30,144,255,0.1)', color: '#687898' }}>
+                    style={{ background: 'rgba(30,144,255,0.1)', color: '#8AAAC8' }}>
                     {REQUEST_TYPE_LABEL[req.request_type] ?? req.request_type}
                   </span>
                   <span className="text-xs font-semibold" style={{ color: '#7E6E48' }}>
                     기존 리워드: {req.reward_points}pt
                   </span>
                 </div>
-                <h3 className="font-semibold" style={{ color: '#CDD5E0' }}>{req.title}</h3>
+                <h3 className="font-semibold" style={{ color: '#DCE8F4' }}>{req.title}</h3>
                 {req.target_name && (
-                  <p className="text-xs mt-1" style={{ color: '#687898' }}>대상: {req.target_name}</p>
+                  <p className="text-xs mt-1" style={{ color: '#8AAAC8' }}>대상: {req.target_name}</p>
                 )}
               </div>
-              <span className="text-xs flex-shrink-0" style={{ color: '#485870' }}>
+              <span className="text-xs flex-shrink-0" style={{ color: '#607898' }}>
                 {new Date(req.created_at).toLocaleDateString('ko-KR')}
               </span>
             </div>
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div className="rounded-lg p-3" style={{ background: 'rgba(30,144,255,0.05)', border: '1px solid rgba(30,144,255,0.1)' }}>
-                <p className="text-xs mb-1" style={{ color: '#485870' }}>📝 요청자</p>
-                <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+                <p className="text-xs mb-1" style={{ color: '#607898' }}>📝 요청자</p>
+                <p className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
                   {req.profiles?.full_name ?? '—'}
                 </p>
                 {req.profiles?.department && (
-                  <p className="text-xs" style={{ color: '#687898' }}>{req.profiles.department}</p>
+                  <p className="text-xs" style={{ color: '#8AAAC8' }}>{req.profiles.department}</p>
                 )}
                 <button
                   onClick={() => openModal(req.requester_id, req.id, req.profiles?.full_name ?? '요청자')}
@@ -161,12 +161,12 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
 
               {acceptedResp ? (
                 <div className="rounded-lg p-3" style={{ background: 'rgba(0,204,102,0.05)', border: '1px solid rgba(0,204,102,0.1)' }}>
-                  <p className="text-xs mb-1" style={{ color: '#485870' }}>✅ 채택된 응답자</p>
-                  <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+                  <p className="text-xs mb-1" style={{ color: '#607898' }}>✅ 채택된 응답자</p>
+                  <p className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
                     {acceptedResp.profiles?.full_name ?? '—'}
                   </p>
                   {acceptedResp.profiles?.department && (
-                    <p className="text-xs" style={{ color: '#687898' }}>{acceptedResp.profiles.department}</p>
+                    <p className="text-xs" style={{ color: '#8AAAC8' }}>{acceptedResp.profiles.department}</p>
                   )}
                   <button
                     onClick={() => openModal(acceptedResp.responder_id, req.id, acceptedResp.profiles?.full_name ?? '응답자')}
@@ -178,7 +178,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               ) : (
                 <div className="rounded-lg p-3 flex items-center justify-center"
                   style={{ background: 'rgba(74,96,128,0.05)', border: '1px solid rgba(74,96,128,0.1)' }}>
-                  <p className="text-xs" style={{ color: '#485870' }}>채택된 응답 없음</p>
+                  <p className="text-xs" style={{ color: '#607898' }}>채택된 응답 없음</p>
                 </div>
               )}
             </div>
@@ -205,7 +205,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
             }}>
             {/* 헤더 */}
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px 20px', borderBottom: '1px solid #1A2838' }}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>
                 보너스 포인트 지급
               </h3>
               <button onClick={closeModal} aria-label="닫기"
@@ -221,12 +221,12 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
             {/* 내용 */}
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
-                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 2px' }}>대상</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{modal.userName}</p>
+                <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>대상</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>{modal.userName}</p>
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#687898', marginBottom: '5px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#8AAAC8', marginBottom: '5px' }}>
                   포인트 (1~500) <span style={{ color: '#C04040' }}>*</span>
                 </label>
                 <input
@@ -239,7 +239,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '12px', color: '#687898', marginBottom: '5px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#8AAAC8', marginBottom: '5px' }}>
                   지급 사유 <span style={{ color: '#C04040' }}>*</span>
                 </label>
                 <input
@@ -257,7 +257,7 @@ export default function HelpRewardsClient({ requests }: { requests: HelpRequest[
 
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '4px' }}>
                 <button onClick={closeModal}
-                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
                   나가기
                 </button>
                 <button onClick={submitPoints} disabled={awarding}

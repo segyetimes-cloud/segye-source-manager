@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import ApprovalsClient from '@/components/admin/ApprovalsClient'
@@ -160,21 +160,21 @@ export default async function AdminApprovalsPage({ searchParams }: PageProps) {
   const tabActive: React.CSSProperties = {
     ...tabBase,
     background: 'rgba(15,32,64,0.9)',
-    color: '#CDD5E0',
+    color: '#DCE8F4',
     borderColor: '#2A3848',
   }
   const tabInactive: React.CSSProperties = {
     ...tabBase,
     background: 'transparent',
-    color: '#485870',
+    color: '#607898',
     borderColor: 'transparent',
   }
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div>
-        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#CDD5E0', marginBottom: '4px' }}>승인 관리</h1>
-        <p style={{ fontSize: '13px', color: '#687898', marginBottom: '6px' }}>
+        <h1 style={{ fontSize: '22px', fontWeight: 700, color: '#DCE8F4', marginBottom: '4px' }}>승인 관리</h1>
+        <p style={{ fontSize: '13px', color: '#8AAAC8', marginBottom: '6px' }}>
           {crossDept
             ? '전 부서 승인 요청을 검토합니다'
             : `${myDept ?? '소속'} 승인 요청을 검토합니다`}

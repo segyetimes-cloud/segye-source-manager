@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import UsersClient from '@/components/admin/UsersClient'
 import { can, CAN_APPROVE_ACCESS } from '@/lib/permissions'
@@ -38,8 +38,8 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>계정 관리</h1>
-        <p className="text-sm mt-1" style={{ color: '#687898' }}>
+        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>계정 관리</h1>
+        <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
           기자 계정의 권한 및 활성 상태를 관리합니다
         </p>
       </div>

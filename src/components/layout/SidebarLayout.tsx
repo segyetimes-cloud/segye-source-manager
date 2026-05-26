@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
@@ -57,7 +57,7 @@ export default function SidebarLayout({ profile, children }: Props) {
               style={{ filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
           </div>
           <div>
-            <p style={{ color: '#CDD5E0', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
+            <p style={{ color: '#DCE8F4', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
             <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원 관리</p>
           </div>
         </div>
@@ -69,7 +69,7 @@ export default function SidebarLayout({ profile, children }: Props) {
             aria-label="메뉴 열기"
             style={{
               background: 'none', border: 'none', cursor: 'pointer',
-              padding: 8, color: '#687898',
+              padding: 8, color: '#8AAAC8',
             }}>
             <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
               <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>

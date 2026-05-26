@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef, useState, useEffect } from 'react'
 
@@ -191,11 +191,11 @@ export default function ContactImporter({ onImported }: Props) {
           borderBottom: '1px solid #1A2838',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          <p style={{ fontSize: '13px', fontWeight: 600, color: '#687898' }}>
+          <p style={{ fontSize: '13px', fontWeight: 600, color: '#8AAAC8' }}>
             📋 {candidates.length}명 검색됨 — 등록할 연락처를 선택하세요
           </p>
           <button type="button" onClick={reset}
-            style={{ fontSize: '12px', color: '#485870', background: 'none', border: 'none', cursor: 'pointer' }}>
+            style={{ fontSize: '12px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer' }}>
             취소
           </button>
         </div>
@@ -210,7 +210,7 @@ export default function ContactImporter({ onImported }: Props) {
             style={{
               width: '100%', padding: '7px 10px',
               background: '#1A2838', border: '1px solid #202C3A',
-              borderRadius: '6px', color: '#CDD5E0', fontSize: '13px',
+              borderRadius: '6px', color: '#DCE8F4', fontSize: '13px',
               outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -219,7 +219,7 @@ export default function ContactImporter({ onImported }: Props) {
         {/* 목록 */}
         <div style={{ maxHeight: '280px', overflowY: 'auto' }}>
           {filtered.length === 0 ? (
-            <p style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: '#485870' }}>
+            <p style={{ padding: '16px', textAlign: 'center', fontSize: '13px', color: '#607898' }}>
               검색 결과 없음
             </p>
           ) : filtered.map((c, i) => (
@@ -246,15 +246,15 @@ export default function ContactImporter({ onImported }: Props) {
                   {c.full_name?.[0] ?? '?'}
                 </div>
                 <div>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', margin: 0 }}>
                     {c.full_name}
                     {c.current_position && (
-                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#485870', fontWeight: 400 }}>
+                      <span style={{ marginLeft: '6px', fontSize: '11px', color: '#607898', fontWeight: 400 }}>
                         {c.current_position}
                       </span>
                     )}
                   </p>
-                  <p style={{ fontSize: '11px', color: '#485870', margin: 0 }}>
+                  <p style={{ fontSize: '11px', color: '#607898', margin: 0 }}>
                     {[c.current_organization, c.phone].filter(Boolean).join(' · ')}
                   </p>
                 </div>
@@ -280,11 +280,11 @@ export default function ContactImporter({ onImported }: Props) {
             <p style={{ fontSize: '13px', color: '#3D9E6A', fontWeight: 600 }}>
               {contactName} 연락처 불러오기 완료
             </p>
-            <p style={{ fontSize: '11px', color: '#485870' }}>아래 필드를 확인하세요</p>
+            <p style={{ fontSize: '11px', color: '#607898' }}>아래 필드를 확인하세요</p>
           </div>
         </div>
         <button type="button" onClick={reset} style={{
-          fontSize: '11px', color: '#485870', background: 'none',
+          fontSize: '11px', color: '#607898', background: 'none',
           border: 'none', cursor: 'pointer', textDecoration: 'underline',
         }}>
           다시 가져오기
@@ -317,8 +317,8 @@ export default function ContactImporter({ onImported }: Props) {
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
           }}>
             <span style={{ fontSize: '22px' }}>👤</span>
-            <span style={{ fontSize: '12px', color: '#687898', fontWeight: 500 }}>전화번호부에서</span>
-            <span style={{ fontSize: '10px', color: '#485870' }}>연락처 바로 선택</span>
+            <span style={{ fontSize: '12px', color: '#8AAAC8', fontWeight: 500 }}>전화번호부에서</span>
+            <span style={{ fontSize: '10px', color: '#607898' }}>연락처 바로 선택</span>
           </button>
         )}
 
@@ -330,23 +330,23 @@ export default function ContactImporter({ onImported }: Props) {
           display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
         }}>
           <span style={{ fontSize: '22px' }}>📂</span>
-          <span style={{ fontSize: '12px', color: '#687898', fontWeight: 500 }}>연락처 파일(.vcf)</span>
-          <span style={{ fontSize: '10px', color: '#485870' }}>1명 또는 전체 내보내기 후 업로드</span>
+          <span style={{ fontSize: '12px', color: '#8AAAC8', fontWeight: 500 }}>연락처 파일(.vcf)</span>
+          <span style={{ fontSize: '10px', color: '#607898' }}>1명 또는 전체 내보내기 후 업로드</span>
         </button>
       </div>
 
       {/* iOS 안내 */}
       <details style={{ marginTop: '8px' }}>
-        <summary style={{ fontSize: '11px', color: '#485870', cursor: 'pointer' }}>
+        <summary style={{ fontSize: '11px', color: '#607898', cursor: 'pointer' }}>
           📱 연락처 파일 내보내는 방법
         </summary>
         <div style={{
           marginTop: '6px', padding: '8px 10px',
           background: 'rgba(255,255,255,0.03)', borderRadius: '6px',
-          fontSize: '11px', color: '#485870', lineHeight: '1.8',
+          fontSize: '11px', color: '#607898', lineHeight: '1.8',
         }}>
-          <strong style={{ color: '#687898' }}>iPhone:</strong> 연락처 앱 → 해당 연락처 열기 → 하단 <strong style={{ color: '#687898' }}>연락처 공유</strong> → 파일로 저장 → 업로드<br />
-          <strong style={{ color: '#687898' }}>Android:</strong> 연락처 앱 → 해당 연락처 열기 → ⋮ 메뉴 → <strong style={{ color: '#687898' }}>공유</strong> → .vcf 파일 → 업로드<br />
+          <strong style={{ color: '#8AAAC8' }}>iPhone:</strong> 연락처 앱 → 해당 연락처 열기 → 하단 <strong style={{ color: '#8AAAC8' }}>연락처 공유</strong> → 파일로 저장 → 업로드<br />
+          <strong style={{ color: '#8AAAC8' }}>Android:</strong> 연락처 앱 → 해당 연락처 열기 → ⋮ 메뉴 → <strong style={{ color: '#8AAAC8' }}>공유</strong> → .vcf 파일 → 업로드<br />
           <span style={{ color: '#384860' }}>※ 전체 연락처를 업로드해도 여기서 한 명씩 선택할 수 있습니다</span>
         </div>
       </details>

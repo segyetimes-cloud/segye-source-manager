@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import Link from 'next/link'
 import Image from 'next/image'
@@ -140,7 +140,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         <button
           className="sidebar-close-btn"
           onClick={onMobileClose}
-          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#485870', fontSize: 22, lineHeight: 1, padding: 4 }}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#607898', fontSize: 22, lineHeight: 1, padding: 4 }}
           aria-label="메뉴 닫기">
           ×
         </button>
@@ -174,7 +174,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             />
           </div>
           <div>
-            <p className="text-sm font-bold leading-tight" style={{ color: '#CDD5E0' }}>세계일보</p>
+            <p className="text-sm font-bold leading-tight" style={{ color: '#DCE8F4' }}>세계일보</p>
             <p className="text-xs leading-tight" style={{ color: '#5A7099' }}>취재원 관리</p>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
       {/* 내 정보 */}
       <div className="px-3 py-2 mx-3 mt-2 rounded-lg"
         style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
-        <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
+        <p className="text-sm font-semibold truncate" style={{ color: '#DCE8F4' }}>
           {profile.full_name || profile.email}
         </p>
         <div className="flex items-center gap-2 mt-1">
@@ -191,7 +191,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             {roleLabelText}
           </span>
           {profile.department && (
-            <span className="text-xs truncate" style={{ color: '#485870' }}>
+            <span className="text-xs truncate" style={{ color: '#607898' }}>
               {profile.department}
             </span>
           )}
@@ -206,11 +206,11 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             href={item.href}
             className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             style={{
-              color: isActive(item.href) ? '#4A7CC0' : '#687898',
+              color: isActive(item.href) ? '#4A7CC0' : '#8AAAC8',
               background: isActive(item.href) ? 'rgba(30,144,255,0.1)' : 'transparent',
               border: isActive(item.href) ? '1px solid rgba(30,144,255,0.2)' : '1px solid transparent',
             }}>
-            <span style={{ color: isActive(item.href) ? '#4A7CC0' : '#485870' }}>
+            <span style={{ color: isActive(item.href) ? '#4A7CC0' : '#607898' }}>
               {item.icon}
             </span>
             {item.label}
@@ -220,7 +220,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         {/* 어드민 메뉴 */}
         {(profile.role === 'admin' || profile.role === 'superadmin') && (
           <div className="mt-2 pt-2" style={{ borderTop: '1px solid #1A2838' }}>
-            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#485870' }}>
+            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#607898' }}>
               관리자 메뉴
             </p>
             {adminNavItems.map(item => (
@@ -229,7 +229,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
                 style={{
-                  color: pathname === item.href ? '#7E6E48' : '#687898',
+                  color: pathname === item.href ? '#7E6E48' : '#8AAAC8',
                   background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
                 }}>
                 {item.label}
@@ -245,9 +245,9 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         <button
           onClick={handleLogout}
           className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm w-full transition-all"
-          style={{ color: '#485870' }}
+          style={{ color: '#607898' }}
           onMouseEnter={e => (e.currentTarget.style.color = '#C04040')}
-          onMouseLeave={e => (e.currentTarget.style.color = '#485870')}>
+          onMouseLeave={e => (e.currentTarget.style.color = '#607898')}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
             <path d="M10 2H13a1 1 0 011 1v10a1 1 0 01-1 1H10M7 11l3-3-3-3M10 8H2"
               stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

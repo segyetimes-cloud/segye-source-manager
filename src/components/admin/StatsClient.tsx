@@ -1,4 +1,4 @@
-
+﻿
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
@@ -239,7 +239,7 @@ export default function StatsClient() {
                 fontSize: '13px',
                 fontWeight: preset === p ? 600 : 400,
                 background: preset === p ? 'rgba(30,144,255,0.18)' : 'rgba(26,48,80,0.6)',
-                color: preset === p ? '#4A7CC0' : '#687898',
+                color: preset === p ? '#4A7CC0' : '#8AAAC8',
                 border: preset === p ? '1px solid rgba(30,144,255,0.4)' : '1px solid #1A2838',
                 cursor: 'pointer',
                 transition: 'all 0.15s',
@@ -258,14 +258,14 @@ export default function StatsClient() {
               style={{
                 background: '#131C2C',
                 border: '1px solid #1A2838',
-                color: '#CDD5E0',
+                color: '#DCE8F4',
                 borderRadius: '8px',
                 padding: '6px 10px',
                 fontSize: '13px',
                 outline: 'none',
               }}
             />
-            <span style={{ color: '#485870' }}>~</span>
+            <span style={{ color: '#607898' }}>~</span>
             <input
               type="date"
               value={customTo}
@@ -273,7 +273,7 @@ export default function StatsClient() {
               style={{
                 background: '#131C2C',
                 border: '1px solid #1A2838',
-                color: '#CDD5E0',
+                color: '#DCE8F4',
                 borderRadius: '8px',
                 padding: '6px 10px',
                 fontSize: '13px',
@@ -297,8 +297,8 @@ export default function StatsClient() {
           </div>
         )}
 
-        <p className="text-xs mt-2" style={{ color: '#485870' }}>
-          조회 기간: <span style={{ color: '#687898' }}>{displayDate(from)} ~ {displayDate(to)}</span>
+        <p className="text-xs mt-2" style={{ color: '#607898' }}>
+          조회 기간: <span style={{ color: '#8AAAC8' }}>{displayDate(from)} ~ {displayDate(to)}</span>
         </p>
       </div>
 
@@ -314,7 +314,7 @@ export default function StatsClient() {
                 <span style={{ fontSize: '14px', marginLeft: '2px' }}>{card.unit}</span>
               </div>
             )}
-            <div className="text-xs mt-1" style={{ color: '#687898' }}>{card.label}</div>
+            <div className="text-xs mt-1" style={{ color: '#8AAAC8' }}>{card.label}</div>
           </div>
         ))}
       </div>
@@ -322,7 +322,7 @@ export default function StatsClient() {
       {/* 사용자별 실적 테이블 */}
       <div className="glass-card overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #1A2838' }}>
-          <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+          <h2 className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
             사용자별 실적
           </h2>
           <button
@@ -337,7 +337,7 @@ export default function StatsClient() {
               background: rows.length === 0 || loading
                 ? 'rgba(26,48,80,0.4)'
                 : 'linear-gradient(135deg, #1E6B3C, #0D4F2B)',
-              color: rows.length === 0 || loading ? '#485870' : '#4ADE80',
+              color: rows.length === 0 || loading ? '#607898' : '#4ADE80',
               border: rows.length === 0 || loading
                 ? '1px solid #1A2838'
                 : '1px solid rgba(74,222,128,0.3)',
@@ -366,7 +366,7 @@ export default function StatsClient() {
 
         {loading ? (
           <div className="py-16 text-center">
-            <div style={{ color: '#485870', fontSize: '14px' }}>데이터를 불러오는 중...</div>
+            <div style={{ color: '#607898', fontSize: '14px' }}>데이터를 불러오는 중...</div>
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -389,7 +389,7 @@ export default function StatsClient() {
                       style={{
                         padding: '10px 14px',
                         textAlign: col.key && col.key !== 'full_name' ? 'right' : 'left',
-                        color: '#687898',
+                        color: '#8AAAC8',
                         fontWeight: 600,
                         whiteSpace: 'nowrap',
                         cursor: col.key ? 'pointer' : 'default',
@@ -411,25 +411,25 @@ export default function StatsClient() {
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.04)')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}>
-                    <td style={{ padding: '10px 14px', color: '#687898', textAlign: 'center', width: '48px' }}>
+                    <td style={{ padding: '10px 14px', color: '#8AAAC8', textAlign: 'center', width: '48px' }}>
                       {rankEmoji(i)}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#CDD5E0', fontWeight: 500 }}>
+                    <td style={{ padding: '10px 14px', color: '#DCE8F4', fontWeight: 500 }}>
                       {row.full_name || '—'}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#687898' }}>
+                    <td style={{ padding: '10px 14px', color: '#8AAAC8' }}>
                       {row.department || '—'}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#687898' }}>
+                    <td style={{ padding: '10px 14px', color: '#8AAAC8' }}>
                       {ROLE_LABEL[row.role] ?? row.role}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.sources_created === 0 ? '#2A4060' : '#CDD5E0', fontWeight: row.sources_created > 0 ? 600 : 400 }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.sources_created === 0 ? '#2A4060' : '#DCE8F4', fontWeight: row.sources_created > 0 ? 600 : 400 }}>
                       {row.sources_created}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.edits_made === 0 ? '#2A4060' : '#CDD5E0' }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.edits_made === 0 ? '#2A4060' : '#DCE8F4' }}>
                       {row.edits_made}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.help_responses === 0 ? '#2A4060' : '#CDD5E0' }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.help_responses === 0 ? '#2A4060' : '#DCE8F4' }}>
                       {row.help_responses}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: row.points_earned === 0 ? '#2A4060' : '#7E6E48', fontWeight: row.points_earned > 0 ? 600 : 400 }}>
@@ -441,20 +441,20 @@ export default function StatsClient() {
                 {/* 합계 행 */}
                 {sorted.length > 0 && (
                   <tr style={{ borderTop: '2px solid #1A2838', background: 'rgba(26,48,80,0.3)' }}>
-                    <td style={{ padding: '10px 14px', color: '#485870', textAlign: 'center' }}>—</td>
-                    <td style={{ padding: '10px 14px', color: '#687898', fontWeight: 700 }}>TOTAL</td>
+                    <td style={{ padding: '10px 14px', color: '#607898', textAlign: 'center' }}>—</td>
+                    <td style={{ padding: '10px 14px', color: '#8AAAC8', fontWeight: 700 }}>TOTAL</td>
                     <td style={{ padding: '10px 14px' }} />
                     <td style={{ padding: '10px 14px' }} />
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalSources}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalEdits}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalHelp}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalSources}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalEdits}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalHelp}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#7E6E48', fontWeight: 700 }}>+{totalPoints.toLocaleString()}</td>
                   </tr>
                 )}
 
                 {sorted.length === 0 && !loading && (
                   <tr>
-                    <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#485870' }}>
+                    <td colSpan={8} style={{ padding: '40px', textAlign: 'center', color: '#607898' }}>
                       해당 기간에 실적 데이터가 없습니다.
                     </td>
                   </tr>

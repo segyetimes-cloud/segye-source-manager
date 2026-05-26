@@ -1,4 +1,4 @@
-import { createClient } from '@/lib/supabase/server'
+﻿import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import SourceListClient from '@/components/sources/SourceListClient'
 import { can, CAN_VIEW_SENSITIVE_SOURCE } from '@/lib/permissions'
@@ -91,8 +91,8 @@ export default async function SourcesPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>취재원 목록</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#687898' }}>편집국 공유 취재원 데이터베이스</p>
+          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>취재원 목록</h1>
+          <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>편집국 공유 취재원 데이터베이스</p>
         </div>
         <div className="source-header-actions">
           <Link
@@ -108,7 +108,7 @@ export default async function SourcesPage({
           <Link
             href="/sources/import"
             className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm transition-colors"
-            style={{ background: '#182035', color: '#687898', border: '1px solid #1A2838' }}>
+            style={{ background: '#182035', color: '#8AAAC8', border: '1px solid #1A2838' }}>
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
               <path d="M7 1v8M4 6l3 3 3-3M2 10v2a1 1 0 001 1h8a1 1 0 001-1v-2"
                 stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>

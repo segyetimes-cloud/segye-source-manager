@@ -1,4 +1,4 @@
-@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
+﻿@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css');
 @import "tailwindcss";
 
 :root {
@@ -12,9 +12,9 @@
   --accent-cyan: #3A90A8;
   --accent-gold: #7E6E48;
 
-  --text-primary: #CDD5E0;
-  --text-secondary: #687898;
-  --text-muted: #485870;
+  --text-primary: #DCE8F4;
+  --text-secondary: #8AAAC8;
+  --text-muted: #607898;
 
   --border-default: #1A2838;
   --border-bright: #263548;

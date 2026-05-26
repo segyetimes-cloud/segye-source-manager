@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 export interface ChartData {
   monthlyTrend: { label: string; count: number }[]       // 최근 6개월 취재원 등록 수
@@ -74,7 +74,7 @@ function LineChart({ data }: { data: { label: string; count: number }[] }) {
       ))}
       {/* X축 레이블 */}
       {pts.map((p, i) => p.label ? (
-        <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill="#485870">
+        <text key={i} x={p.x} y={H - 4} textAnchor="middle" fontSize="9" fill="#607898">
           {p.label}
         </text>
       ) : null)}
@@ -102,7 +102,7 @@ function CompletenessChart({ data }: { data: { label: string; count: number; col
               transition: 'height 0.4s ease',
               minHeight: '4px',
             }} />
-            <span style={{ fontSize: '9px', color: '#485870', whiteSpace: 'nowrap' }}>{d.label}</span>
+            <span style={{ fontSize: '9px', color: '#607898', whiteSpace: 'nowrap' }}>{d.label}</span>
           </div>
         )
       })}
@@ -121,7 +121,7 @@ function DonutChart({ data, total }: { data: { name: string; count: number; colo
 
   if (total === 0) {
     return (
-      <div style={{ textAlign: 'center', padding: '20px 0', color: '#485870', fontSize: '13px' }}>
+      <div style={{ textAlign: 'center', padding: '20px 0', color: '#607898', fontSize: '13px' }}>
         작성된 보고서가 없습니다
       </div>
     )
@@ -154,15 +154,15 @@ function DonutChart({ data, total }: { data: { name: string; count: number; colo
         {arcs.map((arc, i) => (
           <path key={i} d={sectorPath(arc.start, arc.end)} fill={arc.color} />
         ))}
-        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="13" fill="#CDD5E0" fontWeight="700">{total}</text>
-        <text x={cx} y={cy + 8} textAnchor="middle" fontSize="7.5" fill="#485870">건</text>
+        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="13" fill="#DCE8F4" fontWeight="700">{total}</text>
+        <text x={cx} y={cy + 8} textAnchor="middle" fontSize="7.5" fill="#607898">건</text>
       </svg>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
         {arcs.map((arc, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: arc.color, flexShrink: 0 }} />
             <span style={{ fontSize: '11px', color: '#8899AA', flex: 1 }}>{arc.name}</span>
-            <span style={{ fontSize: '11px', color: '#CDD5E0', fontWeight: 600 }}>{arc.count}</span>
+            <span style={{ fontSize: '11px', color: '#DCE8F4', fontWeight: 600 }}>{arc.count}</span>
           </div>
         ))}
       </div>
@@ -176,7 +176,7 @@ function DonutChart({ data, total }: { data: { name: string; count: number; colo
 function OrgBarChart({ data }: { data: { name: string; count: number }[] }) {
   const maxCount = Math.max(...data.map(d => d.count), 1)
   if (data.length === 0) return (
-    <p style={{ color: '#485870', fontSize: '13px', textAlign: 'center', padding: '16px 0' }}>
+    <p style={{ color: '#607898', fontSize: '13px', textAlign: 'center', padding: '16px 0' }}>
       취재원 소속 데이터가 없습니다
     </p>
   )
@@ -184,11 +184,11 @@ function OrgBarChart({ data }: { data: { name: string; count: number }[] }) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
       {data.map((d, i) => (
         <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', color: '#687898', width: '14px', textAlign: 'right', flexShrink: 0 }}>
+          <span style={{ fontSize: '11px', color: '#8AAAC8', width: '14px', textAlign: 'right', flexShrink: 0 }}>
             {i + 1}
           </span>
           <span style={{
-            fontSize: '12px', color: '#CDD5E0',
+            fontSize: '12px', color: '#DCE8F4',
             width: '90px', flexShrink: 0,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{d.name}</span>
@@ -237,7 +237,7 @@ function SharedSensitiveBar({ shared, sensitive }: { shared: number; sensitive: 
           <span style={{ fontSize: '13px', fontWeight: 700, color: '#C04040' }}>{sensitive}</span>
         </div>
       </div>
-      <p style={{ fontSize: '11px', color: '#485870', margin: 0 }}>
+      <p style={{ fontSize: '11px', color: '#607898', margin: 0 }}>
         전체 공유 취재원 {total}명 중 민감 분류 {sensitiveRatio}%
       </p>
     </div>
@@ -261,7 +261,7 @@ export default function DashboardCharts({ data }: { data: ChartData }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>
         📊 통계 분석
       </h2>
 

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState } from 'react'
 
@@ -21,7 +21,7 @@ const RANK_OPTIONS = ['기자', '차장', '부장', '부국장', '편집국장',
 type ReporterRank = typeof RANK_OPTIONS[number]
 
 const RANK_COLOR: Record<string, string> = {
-  '기자': '#687898',
+  '기자': '#8AAAC8',
   '차장': '#3A90A8',
   '부장': '#3A90A8',
   '부국장': '#FFB800',
@@ -289,11 +289,11 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: '#0D1520', border: '1px solid #1A2838',
-    color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
+    color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
     fontSize: '13px', outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '12px', color: '#687898', marginBottom: '4px',
+    display: 'block', fontSize: '12px', color: '#8AAAC8', marginBottom: '4px',
   }
 
   // 공통 모달 스타일
@@ -322,7 +322,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
   }
   const modalSelect: React.CSSProperties = {
     width: '100%', background: '#131C2C', border: '1px solid #1A2838',
-    color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
+    color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
     fontSize: '13px', outline: 'none', cursor: 'pointer',
   }
 
@@ -334,13 +334,13 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
         <div onClick={closeRoleModal} style={modalOverlay}>
           <div onClick={e => e.stopPropagation()} style={modalBox}>
             <div style={modalHeader}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>역할 변경</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>역할 변경</h3>
               <button onClick={closeRoleModal} aria-label="닫기" style={closeBtn}>×</button>
             </div>
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
-                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 2px' }}>대상 사용자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{roleModal.userName}</p>
+                <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>대상 사용자</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>{roleModal.userName}</p>
               </div>
               <div>
                 <label style={labelStyle}>새 역할</label>
@@ -356,7 +356,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               </div>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeRoleModal}
-                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
                   나가기
                 </button>
                 <button onClick={submitRoleChange} disabled={processing === roleModal.userId}
@@ -379,13 +379,13 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
         <div onClick={closeRankModal} style={modalOverlay}>
           <div onClick={e => e.stopPropagation()} style={modalBox}>
             <div style={modalHeader}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>직급 변경</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>직급 변경</h3>
               <button onClick={closeRankModal} aria-label="닫기" style={closeBtn}>×</button>
             </div>
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
-                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 2px' }}>대상 사용자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{rankModal.userName}</p>
+                <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>대상 사용자</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>{rankModal.userName}</p>
               </div>
               <div>
                 <label style={labelStyle}>새 직급</label>
@@ -396,7 +396,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               </div>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeRankModal}
-                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
                   나가기
                 </button>
                 <button onClick={submitRankChange} disabled={processing === rankModal.userId + '_rank'}
@@ -424,9 +424,9 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
             </div>
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(61,158,106,0.06)', border: '1px solid rgba(61,158,106,0.2)' }}>
-                <p style={{ fontSize: '12px', color: '#687898', margin: '0 0 2px' }}>신청자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 2px' }}>{approveModal.userName}</p>
-                <p style={{ fontSize: '12px', color: '#687898', margin: 0 }}>{approveModal.email}</p>
+                <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>신청자</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 2px' }}>{approveModal.userName}</p>
+                <p style={{ fontSize: '12px', color: '#8AAAC8', margin: 0 }}>{approveModal.email}</p>
               </div>
               <div>
                 <label style={labelStyle}>부여할 역할</label>
@@ -442,7 +442,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               </div>
               <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
                 <button onClick={closeApproveModal}
-                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
+                  style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '9px 18px', fontSize: '13px', cursor: 'pointer' }}>
                   나가기
                 </button>
                 <button onClick={submitApprove} disabled={processing === approveModal.userId + '_approve'}
@@ -472,7 +472,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
           ].map(s => (
             <div key={s.label} className="glass-card p-3 text-center">
               <div className="text-xl font-bold" style={{ color: s.color }}>{s.value}</div>
-              <div className="text-xs mt-0.5" style={{ color: '#485870' }}>{s.label}</div>
+              <div className="text-xs mt-0.5" style={{ color: '#607898' }}>{s.label}</div>
             </div>
           ))}
         </div>
@@ -498,7 +498,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               flex: 1, padding: '8px 14px', borderRadius: '9px', fontSize: '13px', fontWeight: 600,
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',
               background: tab === t.key ? '#182035' : 'transparent',
-              color: tab === t.key ? '#CDD5E0' : '#485870',
+              color: tab === t.key ? '#DCE8F4' : '#607898',
               outline: tab === t.key ? '1px solid #1A2838' : 'none',
             }}>
             {t.label}
@@ -515,7 +515,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
       <input
         type="text" value={search} onChange={e => setSearch(e.target.value)}
         placeholder="이름, 이메일, 부서로 검색..."
-        style={{ width: '100%', background: '#131C2C', border: '1px solid #1A2838', color: '#CDD5E0', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', outline: 'none' }}
+        style={{ width: '100%', background: '#131C2C', border: '1px solid #1A2838', color: '#DCE8F4', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', outline: 'none' }}
       />
 
       {/* ── 활성 계정 탭 ── */}
@@ -532,7 +532,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'nowrap', overflow: 'hidden' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', flexShrink: 0 }}>{u.full_name}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', flexShrink: 0 }}>{u.full_name}</span>
                     {u.id === currentUserId && (
                       <span style={{ fontSize: '10px', padding: '0 5px', borderRadius: '4px', background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', flexShrink: 0 }}>나</span>
                     )}
@@ -561,7 +561,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                       <button type="button" title="직급 변경" onClick={() => openRankModal(u)}
                         style={{
                           fontSize: '11px', fontWeight: 600,
-                          color: u.rank ? (RANK_COLOR[u.rank] ?? '#687898') : '#3a4a60',
+                          color: u.rank ? (RANK_COLOR[u.rank] ?? '#8AAAC8') : '#3a4a60',
                           background: 'transparent', border: 'none',
                           padding: '0 2px', cursor: 'pointer', flexShrink: 0,
                         }}>
@@ -570,7 +570,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                     )}
                   </div>
 
-                  <div style={{ fontSize: '11px', color: '#485870', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontSize: '11px', color: '#607898', marginTop: '1px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {u.email}
                     {u.department && ` · ${u.department}`}
                     {u.last_login_at && ` · ${new Date(u.last_login_at).toLocaleDateString('ko-KR')}`}
@@ -588,7 +588,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                   {u.id !== currentUserId && (
                     <button onClick={() => sendResetEmail(u.id)} disabled={processing === u.id + '_reset'} title="비밀번호 재설정"
                       className="text-xs px-2 py-1 rounded"
-                      style={{ background: 'transparent', color: '#485870', border: '1px solid #1A2838', cursor: processing === u.id + '_reset' ? 'not-allowed' : 'pointer', opacity: processing === u.id + '_reset' ? 0.5 : 1 }}>
+                      style={{ background: 'transparent', color: '#607898', border: '1px solid #1A2838', cursor: processing === u.id + '_reset' ? 'not-allowed' : 'pointer', opacity: processing === u.id + '_reset' ? 0.5 : 1 }}>
                       {processing === u.id + '_reset' ? '...' : '🔑'}
                     </button>
                   )}
@@ -604,7 +604,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
           {filteredActive.length === 0 && (
             <div className="glass-card p-8 text-center">
-              <p className="text-sm" style={{ color: '#485870' }}>검색 결과가 없습니다</p>
+              <p className="text-sm" style={{ color: '#607898' }}>검색 결과가 없습니다</p>
             </div>
           )}
         </div>
@@ -616,8 +616,8 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
           {filteredPending.length === 0 ? (
             <div className="glass-card p-10 text-center">
               <p className="text-2xl mb-3">✅</p>
-              <p className="text-sm font-medium" style={{ color: '#CDD5E0' }}>대기 중인 가입 신청이 없습니다</p>
-              <p className="text-xs mt-1" style={{ color: '#485870' }}>자가 가입 신청 시 이곳에 표시됩니다</p>
+              <p className="text-sm font-medium" style={{ color: '#DCE8F4' }}>대기 중인 가입 신청이 없습니다</p>
+              <p className="text-xs mt-1" style={{ color: '#607898' }}>자가 가입 신청 시 이곳에 표시됩니다</p>
             </div>
           ) : (
             filteredPending.map(u => {
@@ -633,14 +633,14 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{u.full_name}</span>
+                          <span className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>{u.full_name}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded"
                             style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)' }}>
                             승인 대기
                           </span>
                         </div>
-                        <div className="text-xs mt-0.5" style={{ color: '#485870' }}>{u.email}</div>
-                        <div className="text-xs mt-0.5" style={{ color: '#485870' }}>
+                        <div className="text-xs mt-0.5" style={{ color: '#607898' }}>{u.email}</div>
+                        <div className="text-xs mt-0.5" style={{ color: '#607898' }}>
                           신청일: {new Date(u.created_at).toLocaleString('ko-KR')}
                         </div>
                       </div>
@@ -679,9 +679,9 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
           <div className="glass-card"
             style={{ width: '100%', maxWidth: '560px', background: '#131C2C', border: '1px solid #1A2838', borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #1A2838', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0' }}>새 계정 생성</h2>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#DCE8F4' }}>새 계정 생성</h2>
               <button onClick={closeCreateModal}
-                style={{ background: 'none', border: 'none', color: '#485870', cursor: 'pointer', fontSize: '20px', lineHeight: 1 }}>
+                style={{ background: 'none', border: 'none', color: '#607898', cursor: 'pointer', fontSize: '20px', lineHeight: 1 }}>
                 ×
               </button>
             </div>
@@ -690,14 +690,14 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               <div style={{ padding: '32px 24px', textAlign: 'center' }}>
                 <div style={{ fontSize: '32px', marginBottom: '12px' }}>✅</div>
                 <p style={{ color: '#3D9E6A', fontSize: '15px', fontWeight: 600, marginBottom: '8px' }}>계정이 생성되었습니다.</p>
-                <p style={{ color: '#687898', fontSize: '13px', marginBottom: '24px' }}>임시 비밀번호를 해당 기자에게 전달해주세요.</p>
+                <p style={{ color: '#8AAAC8', fontSize: '13px', marginBottom: '24px' }}>임시 비밀번호를 해당 기자에게 전달해주세요.</p>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
                   <button onClick={() => { setCreateSuccess(false); setCreateError(null) }}
                     style={{ background: 'rgba(30,144,255,0.15)', border: '1px solid rgba(30,144,255,0.4)', color: '#4A7CC0', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
                     추가 생성
                   </button>
                   <button onClick={closeCreateModal}
-                    style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', cursor: 'pointer' }}>
+                    style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', cursor: 'pointer' }}>
                     닫기
                   </button>
                 </div>
@@ -723,7 +723,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                     <div style={{ position: 'relative' }}>
                       <input type={showPassword ? 'text' : 'password'} required minLength={8} value={createForm.password} onChange={e => setCreateForm(f => ({ ...f, password: e.target.value }))} placeholder="8자 이상" style={{ ...inputStyle, paddingRight: '40px' }} />
                       <button type="button" onClick={() => setShowPassword(v => !v)}
-                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#485870', fontSize: '14px', lineHeight: 1, padding: '2px' }}>
+                        style={{ position: 'absolute', right: '10px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', cursor: 'pointer', color: '#607898', fontSize: '14px', lineHeight: 1, padding: '2px' }}>
                         {showPassword ? '🙈' : '👁'}
                       </button>
                     </div>
@@ -755,7 +755,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                 </div>
                 <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '20px' }}>
                   <button type="button" onClick={closeCreateModal}
-                    style={{ background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', cursor: 'pointer' }}>
+                    style={{ background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '8px', padding: '10px 20px', fontSize: '13px', cursor: 'pointer' }}>
                     나가기
                   </button>
                   <button type="submit" disabled={createLoading}

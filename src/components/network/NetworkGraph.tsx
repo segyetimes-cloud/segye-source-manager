@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useRef, useCallback, useState, useEffect, useLayoutEffect, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
@@ -151,7 +151,7 @@ const ForceGraph2D = dynamic(
             border: '2px solid #1A2838', borderTopColor: '#4A7CC0',
             animation: 'spin 0.8s linear infinite', margin: '0 auto 10px',
           }} />
-          <p style={{ fontSize: '13px', color: '#485870' }}>그래프 로딩 중...</p>
+          <p style={{ fontSize: '13px', color: '#607898' }}>그래프 로딩 중...</p>
         </div>
       </div>
     ),
@@ -894,7 +894,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const either = activeIds?.has(srcId) || activeIds?.has(tgtId)
     const isFadedBySearch = activeIds !== null && !either
 
-    const color = LINK_COLORS[l.type] ?? '#485870'
+    const color = LINK_COLORS[l.type] ?? '#607898'
     if (isFadedByHover || isFadedBySearch) return color + '0C'
 
     const count = l.connectionCount ?? 1
@@ -1003,19 +1003,19 @@ export default function NetworkGraph({ nodes, links }: Props) {
     return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '16px' }}>
         <svg width="64" height="64" viewBox="0 0 64 64" fill="none">
-          <circle cx="32" cy="32" r="8" stroke="#485870" strokeWidth="2"/>
-          <circle cx="12" cy="12" r="6" stroke="#485870" strokeWidth="2"/>
-          <circle cx="52" cy="12" r="6" stroke="#485870" strokeWidth="2"/>
-          <circle cx="12" cy="52" r="6" stroke="#485870" strokeWidth="2"/>
-          <circle cx="52" cy="52" r="6" stroke="#485870" strokeWidth="2"/>
-          <path d="M18 18L26 26M38 26L46 18M18 46L26 38M38 38L46 46" stroke="#485870" strokeWidth="1.5"/>
+          <circle cx="32" cy="32" r="8" stroke="#607898" strokeWidth="2"/>
+          <circle cx="12" cy="12" r="6" stroke="#607898" strokeWidth="2"/>
+          <circle cx="52" cy="12" r="6" stroke="#607898" strokeWidth="2"/>
+          <circle cx="12" cy="52" r="6" stroke="#607898" strokeWidth="2"/>
+          <circle cx="52" cy="52" r="6" stroke="#607898" strokeWidth="2"/>
+          <path d="M18 18L26 26M38 26L46 18M18 46L26 38M38 38L46 46" stroke="#607898" strokeWidth="1.5"/>
         </svg>
         <div style={{ textAlign: 'center' }}>
-          <p style={{ fontSize: '14px', fontWeight: 500, color: '#687898' }}>연결된 취재원이 없습니다</p>
-          <p style={{ fontSize: '12px', marginTop: '4px', color: '#485870' }}>
+          <p style={{ fontSize: '14px', fontWeight: 500, color: '#8AAAC8' }}>연결된 취재원이 없습니다</p>
+          <p style={{ fontSize: '12px', marginTop: '4px', color: '#607898' }}>
             취재원 등록 시 소속·대학·시험기수 등을 입력하면
           </p>
-          <p style={{ fontSize: '12px', color: '#485870' }}>자동으로 관계망이 그려집니다</p>
+          <p style={{ fontSize: '12px', color: '#607898' }}>자동으로 관계망이 그려집니다</p>
         </div>
       </div>
     )
@@ -1027,8 +1027,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
       <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520' }}>
         {viewTabBar}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
-          <p style={{ fontSize: '14px', color: '#687898' }}>아직 등록한 취재원이 없습니다</p>
-          <p style={{ fontSize: '12px', color: '#485870' }}>조직 클러스터 또는 전체 보기를 선택하세요</p>
+          <p style={{ fontSize: '14px', color: '#8AAAC8' }}>아직 등록한 취재원이 없습니다</p>
+          <p style={{ fontSize: '12px', color: '#607898' }}>조직 클러스터 또는 전체 보기를 선택하세요</p>
         </div>
       </div>
     )
@@ -1118,7 +1118,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
             <div style={{ padding: '12px 14px 10px' }}>
               <p style={sectionLabel}>검색</p>
               <div style={{ position: 'relative' }}>
-                <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#485870', pointerEvents: 'none' }}>🔍</span>
+                <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#607898', pointerEvents: 'none' }}>🔍</span>
                 <input
                   type="text"
                   value={searchQuery}
@@ -1393,7 +1393,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                       width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
                     }}>
                     <p style={sectionLabel}>관계 유형 필터</p>
-                    <span style={{ fontSize: '10px', color: '#485870' }}>{filtersOpen ? '▲' : '▼'}</span>
+                    <span style={{ fontSize: '10px', color: '#607898' }}>{filtersOpen ? '▲' : '▼'}</span>
                   </button>
 
                   {filtersOpen && (
@@ -1402,7 +1402,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                         <button type="button" onClick={() => setActiveTypes(new Set(allTypes))}
                           style={smallBtn('#4A7CC0')}>전체 선택</button>
                         <button type="button" onClick={() => setActiveTypes(new Set())}
-                          style={smallBtn('#485870')}>전체 해제</button>
+                          style={smallBtn('#607898')}>전체 해제</button>
                       </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
                         {allTypes.map(type => (
@@ -1420,7 +1420,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                               padding: '1px 0', opacity: activeTypes.has(type) ? 1 : 0.28,
                               transition: 'opacity 0.15s',
                             }}>
-                            <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#687898', flexShrink: 0 }} />
+                            <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#8AAAC8', flexShrink: 0 }} />
                             <span style={{ fontSize: '11px', color: '#C8D8E8', textAlign: 'left' }}>
                               {LINK_LABELS[type] ?? type}
                             </span>
@@ -1440,7 +1440,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
                 <div style={{ padding: '8px 14px', fontSize: '10px', color: '#5A7090', lineHeight: 1.5 }}>
                   ℹ 노드당 상위 {MAX_LINKS_PER_NODE}개 연결만 표시
                   <br />
-                  <span style={{ color: '#485870' }}>{hiddenLinkCount}개 추가 연결은 상세 페이지에서 확인</span>
+                  <span style={{ color: '#607898' }}>{hiddenLinkCount}개 추가 연결은 상세 페이지에서 확인</span>
                 </div>
               </>
             )}
@@ -1525,7 +1525,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               background: 'rgba(6,12,24,0.88)', border: '1px solid #1A2838',
               cursor: 'pointer', fontSize: btn.label === '⊡' ? '13px' : '17px',
-              color: '#485870', backdropFilter: 'blur(8px)',
+              color: '#607898', backdropFilter: 'blur(8px)',
               lineHeight: 1,
             }}>
             {btn.label}

@@ -1,4 +1,4 @@
-export const dynamic = 'force-dynamic'   // 캐시 비활성화 — 항상 최신 데이터
+﻿export const dynamic = 'force-dynamic'   // 캐시 비활성화 — 항상 최신 데이터
 
 import { createClient, createServiceClient } from '@/lib/supabase/server'
 import NetworkGraph from '@/components/network/NetworkGraph'
@@ -775,14 +775,14 @@ export default async function NetworkPage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>🕸️ 관계망 그래프</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>🕸️ 관계망 그래프</h1>
           {/* 통계: 모바일에서는 한 줄 요약만 */}
-          <p className="text-xs mt-0.5" style={{ color: '#485870' }}>
+          <p className="text-xs mt-0.5" style={{ color: '#607898' }}>
             {nodes.length}명 · {visibleLinks.length}쌍 연결
           </p>
         </div>
         {/* PC에서만 상세 통계 표시 */}
-        <div className="hidden md:block text-right text-xs flex-shrink-0" style={{ color: '#485870' }}>
+        <div className="hidden md:block text-right text-xs flex-shrink-0" style={{ color: '#607898' }}>
           {Object.entries(linkTypeCounts).map(([type, count]) => (
             <p key={type}>{TYPE_LABELS[type] ?? type}: {count}건</p>
           ))}

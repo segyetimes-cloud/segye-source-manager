@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect, useCallback } from 'react'
 
@@ -43,8 +43,8 @@ export default function SourceCopyLogs({ sourceId }: Props) {
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>🔍 복사 이력 추적</span>
-          <span style={{ fontSize: '11px', color: '#485870', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: '4px', padding: '1px 7px' }}>데스크 전용</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#DCE8F4' }}>🔍 복사 이력 추적</span>
+          <span style={{ fontSize: '11px', color: '#607898', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: '4px', padding: '1px 7px' }}>데스크 전용</span>
         </div>
         <div className="flex items-center gap-3">
           {logs.length > 0 && (
@@ -53,14 +53,14 @@ export default function SourceCopyLogs({ sourceId }: Props) {
               <span style={{ background: 'rgba(255,153,0,0.12)', color: '#A87228', border: '1px solid rgba(255,153,0,0.25)', borderRadius: '6px', padding: '2px 10px', fontSize: '12px', fontWeight: 600 }}>{uniqueUsers}명</span>
             </div>
           )}
-          <span style={{ fontSize: '18px', color: '#485870' }}>{expanded ? '▲' : '▼'}</span>
+          <span style={{ fontSize: '18px', color: '#607898' }}>{expanded ? '▲' : '▼'}</span>
         </div>
       </button>
 
       {expanded && (
         <div style={{ marginTop: '14px' }}>
-          {loading && <p style={{ fontSize: '13px', color: '#485870', textAlign: 'center', padding: '12px' }}>불러오는 중...</p>}
-          {!loading && logs.length === 0 && <p style={{ fontSize: '13px', color: '#485870', textAlign: 'center', padding: '12px' }}>복사 이력이 없습니다.</p>}
+          {loading && <p style={{ fontSize: '13px', color: '#607898', textAlign: 'center', padding: '12px' }}>불러오는 중...</p>}
+          {!loading && logs.length === 0 && <p style={{ fontSize: '13px', color: '#607898', textAlign: 'center', padding: '12px' }}>복사 이력이 없습니다.</p>}
           {!loading && logs.length > 0 && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {logs.map((log, idx) => {
@@ -70,10 +70,10 @@ export default function SourceCopyLogs({ sourceId }: Props) {
                     <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-2">
                         <span style={{ fontSize: '13px', fontWeight: 600, color: '#C04040' }}>{person?.full_name ?? '알 수 없음'}</span>
-                        {person?.department && <span style={{ fontSize: '11px', color: '#485870' }}>{person.department}</span>}
+                        {person?.department && <span style={{ fontSize: '11px', color: '#607898' }}>{person.department}</span>}
                         <span style={{ fontSize: '11px', color: '#5A7099', background: 'rgba(30,144,255,0.08)', borderRadius: '4px', padding: '1px 6px' }}>{log.copied_length}자</span>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#485870', flexShrink: 0 }}>{fmt(log.created_at)}</span>
+                      <span style={{ fontSize: '11px', color: '#607898', flexShrink: 0 }}>{fmt(log.created_at)}</span>
                     </div>
                     {log.copied_preview && (
                       <p style={{ marginTop: '5px', fontSize: '12px', color: '#5A7099', background: '#182035', borderRadius: '4px', padding: '4px 8px', fontFamily: 'monospace', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -85,7 +85,7 @@ export default function SourceCopyLogs({ sourceId }: Props) {
               })}
             </div>
           )}
-          <button onClick={load} style={{ marginTop: '10px', width: '100%', padding: '7px', background: '#182035', border: '1px solid #1A2838', color: '#687898', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>새로고침</button>
+          <button onClick={load} style={{ marginTop: '10px', width: '100%', padding: '7px', background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>새로고침</button>
         </div>
       )}
     </div>

@@ -1,4 +1,4 @@
-'use client'
+﻿'use client'
 
 import { useState, useEffect } from 'react'
 import { useRouter, useParams } from 'next/navigation'
@@ -10,7 +10,7 @@ import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/All
 const inputStyle: React.CSSProperties = {
   background: '#182035',
   border: '1px solid #1A2838',
-  color: '#CDD5E0',
+  color: '#DCE8F4',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -22,7 +22,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 500,
   marginBottom: '6px',
-  color: '#687898',
+  color: '#8AAAC8',
 }
 
 interface SourceResult {
@@ -174,7 +174,7 @@ export default function EditReportPage() {
 
   if (loading) {
     return (
-      <div style={{ padding: '2rem', textAlign: 'center', color: '#485870' }}>불러오는 중...</div>
+      <div style={{ padding: '2rem', textAlign: 'center', color: '#607898' }}>불러오는 중...</div>
     )
   }
 
@@ -183,10 +183,10 @@ export default function EditReportPage() {
 
       {/* 헤더 */}
       <div className="flex items-center gap-3">
-        <Link href={`/reports/${id}`} style={{ color: '#485870', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+        <Link href={`/reports/${id}`} style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>보고서 수정</h1>
-          <p style={{ fontSize: '12px', color: '#485870', marginTop: '2px' }}>
+          <h1 className="text-lg font-bold" style={{ color: '#DCE8F4' }}>보고서 수정</h1>
+          <p style={{ fontSize: '12px', color: '#607898', marginTop: '2px' }}>
             내용을 변경하면 수정 이력이 자동으로 기록됩니다
           </p>
         </div>
@@ -255,14 +255,14 @@ export default function EditReportPage() {
               lineHeight: 1.6,
               background: 'rgba(30,16,4,0.6)',
               border: '1px solid rgba(255,153,0,0.3)',
-              color: '#CDD5E0',
+              color: '#DCE8F4',
             }}
           />
         </div>
 
         {/* 태그 */}
         <div>
-          <label style={labelStyle}>태그 <span style={{ color: '#485870', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
+          <label style={labelStyle}>태그 <span style={{ color: '#607898', fontWeight: 400 }}>(쉼표 또는 Enter로 추가)</span></label>
           <input
             type="text"
             value={tagInput}
@@ -312,7 +312,7 @@ export default function EditReportPage() {
                   style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -325,7 +325,7 @@ export default function EditReportPage() {
           <div>
             <label style={labelStyle}>
               지정 열람자{' '}
-              <span style={{ color: '#485870', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
+              <span style={{ color: '#607898', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
             </label>
             <AllowedUsersSelector selected={allowedUsers} onChange={setAllowedUsers} />
           </div>
@@ -333,7 +333,7 @@ export default function EditReportPage() {
 
         {/* 취재원 연결 */}
         <div>
-          <label style={labelStyle}>취재원 연결 <span style={{ color: '#485870', fontWeight: 400 }}>(선택)</span></label>
+          <label style={labelStyle}>취재원 연결 <span style={{ color: '#607898', fontWeight: 400 }}>(선택)</span></label>
           <div style={{ position: 'relative' }}>
             <input
               type="text"
@@ -357,7 +357,7 @@ export default function EditReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
+                      cursor: 'pointer', color: '#DCE8F4', fontSize: '13px',
                       borderBottom: '1px solid #1A2838',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
@@ -371,7 +371,7 @@ export default function EditReportPage() {
               </div>
             )}
             {sourceSearching && (
-              <p style={{ fontSize: '12px', color: '#485870', marginTop: '4px' }}>검색 중...</p>
+              <p style={{ fontSize: '12px', color: '#607898', marginTop: '4px' }}>검색 중...</p>
             )}
           </div>
 
@@ -413,7 +413,7 @@ export default function EditReportPage() {
           </button>
           <Link href={`/reports/${id}`} style={{
             padding: '11px 20px', background: '#182035',
-            border: '1px solid #1A2838', color: '#687898',
+            border: '1px solid #1A2838', color: '#8AAAC8',
             borderRadius: '8px', fontSize: '14px',
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}>
