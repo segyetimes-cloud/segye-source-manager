@@ -240,7 +240,7 @@ export default function LoginPage() {
 
         {/* 3. 기능 카드 3개 */}
         <div className="flex gap-2 relative z-10">
-          {/* 카드 1: 취재원 공유 */}
+          {/* 카드 1: 취재원 및 정보 공유 */}
           <div
             style={{
               flex: 1,
@@ -269,7 +269,7 @@ export default function LoginPage() {
             >
               👤
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원 공유</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원 및 정보 공유</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
           </div>
 
@@ -358,7 +358,7 @@ export default function LoginPage() {
           <p style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
             세계일보{' '}
             <span style={{ fontSize: '12px', fontWeight: 400, color: '#5A7099' }}>
-              취재원 공유 시스템
+              취재원 및 정보 공유 시스템
             </span>
           </p>
         </div>

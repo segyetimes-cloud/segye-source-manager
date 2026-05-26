@@ -58,7 +58,7 @@ export default function SidebarLayout({ profile, children }: Props) {
           </div>
           <div>
             <p style={{ color: '#CDD5E0', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
-            <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원 공유</p>
+            <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원 및 정보 공유</p>
           </div>
         </div>
 

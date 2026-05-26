@@ -172,7 +172,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
           </div>
           <div>
             <p className="text-sm font-bold leading-tight" style={{ color: '#CDD5E0' }}>세계일보</p>
-            <p className="text-xs leading-tight" style={{ color: '#5A7099' }}>취재원 공유</p>
+            <p className="text-xs leading-tight" style={{ color: '#5A7099' }}>취재원 및 정보 공유</p>
           </div>
         </div>
       </div>
