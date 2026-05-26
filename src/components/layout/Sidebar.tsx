@@ -31,6 +31,17 @@ const navItems = [
     label: '취재원 목록',
   },
   {
+    href: '/analysis',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.5"/>
+        <path d="M10.5 10.5L15 15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+        <path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
+      </svg>
+    ),
+    label: '취재원 상세 열람',
+  },
+  {
     href: '/reports',
     icon: (
       <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
@@ -39,21 +50,6 @@ const navItems = [
       </svg>
     ),
     label: '정보보고',
-  },
-  {
-    href: '/network',
-    icon: (
-      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
-        <circle cx="9" cy="9" r="2" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="3" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="15" cy="3" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="3" cy="15" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="15" cy="15" r="1.5" stroke="currentColor" strokeWidth="1.5"/>
-        <path d="M4.5 4.5L7.5 7.5M10.5 7.5L13.5 4.5M4.5 13.5L7.5 10.5M10.5 10.5L13.5 13.5"
-          stroke="currentColor" strokeWidth="1.2"/>
-      </svg>
-    ),
-    label: '관계망 그래프',
   },
   {
     href: '/help',
@@ -113,6 +109,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
       }
       return false
     }
+    if (href === '/analysis') return pathname.startsWith(href)
     if (href === '/reports') return pathname.startsWith(href)
     return pathname === href
   }
