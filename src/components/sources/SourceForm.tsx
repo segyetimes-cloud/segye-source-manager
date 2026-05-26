@@ -743,7 +743,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
             <div className="h-full rounded-full transition-all duration-300"
               style={{ width: `${score}%`, background: scoreColor }} />
           </div>
-          <span className="text-sm font-bold flex-shrink-0" style={{ color: scoreColor }}>{score}점</span>
+          <span className="text-sm font-bold flex-shrink-0" style={{ color: scoreColor }}>{score}%</span>
           <span className="text-xs flex-shrink-0" style={{ color: '#485870' }}>
             +{pts}pt
           </span>

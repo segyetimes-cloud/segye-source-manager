@@ -128,6 +128,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const [isMobile, setIsMobile] = useState(false)
   // ── 그래프 준비 상태 — force 설정 완료 전에는 캔버스를 숨겨 ugly flash 방지 ──
   const [graphReady, setGraphReady] = useState(false)
+  // ── 커스텀 force가 실제로 적용됐는지 추적 ─────────────────────────────────────
+  // handleEngineStop이 applyForces 실행 전에 발화하면 캔버스를 열지 않도록 가드
+  const forcesAppliedRef = useRef(false)
 
   // ── Hover state — refs for canvas (no re-render), state for UI overlays ───
   const hoveredIdRef = useRef<string | null>(null)
@@ -159,15 +162,19 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const [filtersOpen, setFiltersOpen] = useState(false)
 
   // ── Mobile detection ──────────────────────────────────────────────────────
+  // resize 이벤트에서는 isMobile만 갱신 — panelOpen은 초기 마운트 시 1회만 설정
+  // (resize마다 setPanelOpen을 호출하면 가상 키보드·화면 회전 시 패널이 멋대로 열림)
   useEffect(() => {
-    const check = () => {
-      const mobile = window.innerWidth < 768
-      setIsMobile(mobile)
-      setPanelOpen(!mobile)
+    const mobile = window.innerWidth < 768
+    setIsMobile(mobile)
+    setPanelOpen(!mobile)   // 초기값: 모바일=닫힘, 데스크톱=열림
+
+    const onResize = () => {
+      setIsMobile(window.innerWidth < 768)
+      // panelOpen 은 건드리지 않음 — 사용자가 직접 열고 닫은 상태를 유지
     }
-    check()
-    window.addEventListener('resize', check)
-    return () => window.removeEventListener('resize', check)
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
   }, [])
 
   // ── Container sizing ──────────────────────────────────────────────────────
@@ -253,11 +260,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // d3 charge: Δvx = (xj-xi)*charge*α / r²  →  radial force = |charge|*α / (2r)  (대칭 합산)
   // forceX: Δvx = strength*(0-x)*α           →  radial force = strength*r*α
   // 균형: (N-1)*|charge|/(2r) = strength*r  →  r² = (N-1)*|charge| / (2*strength)
-  // TARGET_R = max(300, 65*√N), strength=0.08 → |charge| = TARGET_R²*2*0.08/(N-1)
-  const CENTER_STR = 0.08
-  // 노드 수가 많을수록 초기 반경을 키워서 겹침 방지 — sqrt 비례 스케일
-  // N=10→300px, N=50→460px, N=100→650px, N=300→1126px, N=400→1300px
-  const TARGET_R = Math.max(300, 65 * Math.sqrt(nodeCount))
+  // TARGET_R = max(420, 95*√N), strength=0.05 → |charge| = TARGET_R²*2*0.05/(N-1)
+  // CENTER_STR 낮춤(0.08→0.05): 노드가 화면 중심에 너무 강하게 끌리지 않고 넓게 퍼짐
+  // TARGET_R 키움(65→95, min 420): 초기 원형 배치 반경을 크게 잡아 퍼짐 유지
+  const CENTER_STR = 0.05
+  // N=10→420px, N=17→420px, N=50→672px, N=100→950px, N=150→1163px
+  const TARGET_R = Math.max(420, 95 * Math.sqrt(nodeCount))
   const chargeStrength = -Math.round((TARGET_R ** 2 * 2 * CENTER_STR) / Math.max(nodeCount - 1, 1))
   const initRadius = TARGET_R
 
@@ -295,6 +303,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
   useLayoutEffect(() => {
     setGraphReady(false)
     revealPendingRef.current = false
+    forcesAppliedRef.current = false   // 노드/링크가 바뀌면 반드시 다시 적용해야 함
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nodes.length, links.length, firstNodeId])
 
@@ -319,15 +328,17 @@ export default function NetworkGraph({ nodes, links }: Props) {
         fg.d3Force('y', forceY(0).strength(CENTER_STR))
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')
-          ?.strength(0.04)
+          // strength 낮춤(0.04→0.015): 연결이 많아도 노드를 한곳에 끌어당기는 힘을 약하게
+          // distance 늘림(+120→+220): 연결된 노드 간 거리를 더 멀리 유지
+          ?.strength(0.015)
           .distance((link: any) => {
             const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
             const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return srcR + tgtR + 120
+            return srcR + tgtR + 220
           })
           .iterations(1)
         fg.d3Force('collide', forceCollide((n: any) => {
-          return nodeRadius(n.degree ?? 1) + 18
+          return nodeRadius(n.degree ?? 1) + 22
         }).iterations(3))
 
         // 2. 노드 위치를 원형 배치로 리셋 — 기본 force가 이미 노드를 뭉쳤을 수 있으므로
@@ -343,10 +354,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
           })
         }
 
-        // 3. 시뮬레이션 재시작
+        // 3. 커스텀 force 적용 완료 표시 — handleEngineStop 조기 발화 가드
+        forcesAppliedRef.current = true
+
+        // 4. 시뮬레이션 재시작
         fg.d3ReheatSimulation()
 
-        // 4. 틱 카운트 리셋 후 reveal 활성화 — handleEngineTick 틱 30 도달 시 캔버스 표시
+        // 5. 틱 카운트 리셋 후 reveal 활성화 — handleEngineTick 틱 30 도달 시 캔버스 표시
         tickCountRef.current = 0
         revealPendingRef.current = true
 
@@ -358,8 +372,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
       }
     }
 
-    // 50ms 후 실행 — ForceGraph2D가 시뮬레이션을 완전히 초기화할 시간을 확보
-    const timer = setTimeout(applyForces, 50)
+    // 즉시 실행 시도 — fgRef가 없으면 내부 재시도 루프(100ms×100회)가 처리
+    // 딜레이를 50ms→0ms로 단축: 기본 d3 force가 수렴하기 전에 커스텀 force를 먼저 적용
+    const timer = setTimeout(applyForces, 0)
     // 전체 안전망: 10초 안에 어떤 경로로도 표시되지 않으면 강제 표시 (첫 로드 blank 방지)
     const overallFallback = setTimeout(() => setGraphReady(true), 10000)
     return () => {
@@ -386,6 +401,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const handleEngineStop = useCallback(() => {
     revealPendingRef.current = false
     tickCountRef.current = 0
+    // ⚠ 커스텀 force가 아직 적용되지 않은 상태에서 발화하면 무시
+    // (기본 d3 force로 뭉친 상태를 노출하는 것을 차단)
+    if (!forcesAppliedRef.current) return
     setGraphReady(true)
     try { fgRef.current?.zoomToFit(400, 60) } catch {}
   }, [])
@@ -754,10 +772,10 @@ export default function NetworkGraph({ nodes, links }: Props) {
           height={dimensions.height}
           minZoom={0.02}
           maxZoom={12}
-          cooldownTicks={300}
+          cooldownTicks={400}
           warmupTicks={0}
-          d3AlphaDecay={0.015}
-          d3VelocityDecay={0.4}
+          d3AlphaDecay={0.010}
+          d3VelocityDecay={0.35}
           nodeRelSize={1}
         />
       </div>

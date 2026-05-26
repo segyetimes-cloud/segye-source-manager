@@ -74,7 +74,7 @@ function ScoreBadge({ score }: { score: number }) {
       <div className="w-24 h-2 rounded-full" style={{ background: '#DDE5EF' }}>
         <div className="h-full rounded-full" style={{ width: `${score}%`, background: color }} />
       </div>
-      <span className="text-sm font-bold" style={{ color }}>{score}점</span>
+      <span className="text-sm font-bold" style={{ color }}>{score}%</span>
     </div>
   )
 }
