@@ -95,6 +95,37 @@ function nodeRadius(degree: number): number {
   return Math.max(3.5, Math.min(3.5 + Math.log2(degree + 1) * 2.2, 13))
 }
 
+// 노드당 표시할 최대 링크 수 — 이 값이 일관된 레이아웃의 핵심
+const MAX_LINKS_PER_NODE = 5
+
+// ── 노드당 링크 수 상한 ────────────────────────────────────────────────────────
+// 연결이 많은 계정일수록 스프링이 많아져 그래프가 뭉치는 근본 원인 해결.
+// 각 노드에서 강도 상위 maxPerNode개의 링크만 그래프에 표시.
+// (나머지 연결은 취재원 상세 페이지에서 확인 가능)
+function capLinksPerNode<T extends { source: string | any; target: string | any; strength: number }>(
+  links: T[],
+  maxPerNode: number
+): { capped: T[]; hiddenCount: number } {
+  const sorted = [...links].sort((a, b) => b.strength - a.strength)
+  const counts = new Map<string, number>()
+  const capped: T[] = []
+  let hiddenCount = 0
+  for (const l of sorted) {
+    const src = typeof l.source === 'string' ? l.source : l.source?.id ?? ''
+    const tgt = typeof l.target === 'string' ? l.target : l.target?.id ?? ''
+    const sc = counts.get(src) ?? 0
+    const tc = counts.get(tgt) ?? 0
+    if (sc >= maxPerNode || tc >= maxPerNode) {
+      hiddenCount++
+      continue
+    }
+    counts.set(src, sc + 1)
+    counts.set(tgt, tc + 1)
+    capped.push(l)
+  }
+  return { capped, hiddenCount }
+}
+
 function baseLinkWidth(strength: number, connectionCount: number): number {
   const base = Math.max(0.4, strength * 0.3)
   const bonus = Math.min((connectionCount - 1) * 0.5, 2.5)
@@ -268,32 +299,33 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const CENTER_STR = 0.04
   const TARGET_R = Math.max(500, 100 * Math.sqrt(nodeCount))
 
-  // 노드당 평균 링크 수
-  const avgLinksPerNode = links.length / Math.max(nodeCount - 1, 1)
-  // 밀도 보정 배수: 링크가 많을수록 반발력 증폭 (최소 1.0)
-  // avgLinks=1 → 1.0, avgLinks=3 → 1.95, avgLinks=5 → 2.9
-  const densityFactor = Math.max(1.0, avgLinksPerNode * 0.65)
+  // ── 노드당 링크 상한 ─────────────────────────────────────────────────────────
+  // MAX_LINKS_PER_NODE: 컴포넌트 바깥 상수 (아래 패널 렌더에서도 참조)
+
+  const [displayLinks, hiddenLinkCount] = useMemo(() => {
+    const { capped, hiddenCount } = capLinksPerNode(filteredLinks, MAX_LINKS_PER_NODE)
+    return [capped, hiddenCount]
+  }, [filteredLinks])
+
+  // 실제 표시되는 링크 수 기준으로 밀도 계산
+  const avgLinksPerNode = displayLinks.length / Math.max(nodeCount - 1, 1)
+
+  // densityFactor는 이미 capLinksPerNode로 상한이 걸려 있어서 소폭만 보정
+  const densityFactor = Math.max(1.0, avgLinksPerNode * 0.4)
 
   const chargeStrength = -Math.round(
     (TARGET_R ** 2 * 2 * CENTER_STR * densityFactor) / Math.max(nodeCount - 1, 1)
   )
   const initRadius = TARGET_R
 
-  // 링크 강도 역시 밀도에 반비례 — 연결 많을수록 스프링을 약하게
-  // avgLinks=1 → 0.016, avgLinks=3 → 0.0053, avgLinks=5 → 0.0032
-  const adaptiveLinkStrength = Math.max(0.003, 0.016 / Math.max(avgLinksPerNode, 1))
+  // 링크 강도: 상한 덕분에 노드당 최대 5개이므로 고정값으로 충분
+  const adaptiveLinkStrength = 0.012
 
   // nodeCount 최신값을 canvas 콜백(useCallback[])에서 참조하기 위한 ref
   const nodeCountRef = useRef(nodeCount)
   nodeCountRef.current = nodeCount
 
   const graphData = useMemo(() => {
-    // 링크 수 상한 — 너무 많으면 렌더링 느려지고 레이아웃도 엉망
-    // 강도 순 정렬 후 상위 링크만 사용 (약한 연결은 시각적으로도 덜 중요)
-    const maxLinks = Math.min(1200, Math.max(200, nodeCount * 7))
-    const cappedLinks = filteredLinks.length > maxLinks
-      ? [...filteredLinks].sort((a, b) => b.strength - a.strength).slice(0, maxLinks)
-      : filteredLinks
     return {
       nodes: nodes.map((n, i) => ({
         ...n,
@@ -302,13 +334,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
         x: Math.cos((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
         y: Math.sin((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
       })),
-      links: cappedLinks.map(l => ({
+      links: displayLinks.map(l => ({
         ...l,
         curvature: (l.connectionCount ?? 1) > 1 ? 0.18 : 0.04,
       })),
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, filteredLinks])
+  }, [nodes, displayLinks])
 
   // ── Canvas 즉시 숨김 — 페인트 이전에 실행하여 ugly flash 차단 ─────────────
   // useEffect는 브라우저 페인트 후 실행 → 새 데이터가 이전 graphReady=true 상태로
@@ -1108,6 +1140,18 @@ export default function NetworkGraph({ nodes, links }: Props) {
                 </div>
               )}
             </div>
+
+            {/* ── 숨겨진 연결 안내 ── */}
+            {hiddenLinkCount > 0 && (
+              <>
+                <Divider />
+                <div style={{ padding: '8px 14px', fontSize: '10px', color: '#5A7090', lineHeight: 1.5 }}>
+                  ℹ 노드당 상위 {MAX_LINKS_PER_NODE}개 연결만 표시
+                  <br />
+                  <span style={{ color: '#485870' }}>{hiddenLinkCount}개 추가 연결은 상세 페이지에서 확인</span>
+                </div>
+              </>
+            )}
 
             {/* ── Legend ── */}
             <Divider />
