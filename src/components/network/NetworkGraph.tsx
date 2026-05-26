@@ -197,6 +197,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── View mode ─────────────────────────────────────────────────────────────
   const [viewMode, setViewMode] = useState<ViewMode>('mine')
+  const [focusFilterIds, setFocusFilterIds] = useState<Set<string> | null>(null)
 
   // ── Panel UI state ────────────────────────────────────────────────────────
   const [panelOpen, setPanelOpen] = useState(false)
@@ -348,6 +349,28 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const activeNodes = activeData.nodes
   const activeLinks = activeData.links
 
+  // ── 포커스 필터: 활성일 때 해당 인물 네트워크로 그래프 한정 ────────────────────────
+  // focusFilterIds가 설정되면 activeNodes 중 해당 IDs만 표시.
+  // 현재 뷰에 해당 노드가 없으면(viewMode 전환 등) 필터 무효화해 전체 표시 유지.
+  const focusNodeIds = useMemo(() => {
+    if (!focusFilterIds) return null
+    const matched = activeNodes.filter(n => focusFilterIds.has(n.id))
+    return matched.length > 0 ? focusFilterIds : null
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNodes, focusFilterIds])
+
+  const visNodes = focusNodeIds
+    ? activeNodes.filter(n => focusNodeIds.has(n.id))
+    : activeNodes
+
+  const visLinks = focusNodeIds
+    ? activeLinks.filter(l => {
+        const s = typeof l.source === 'string' ? l.source : (l.source as any).id
+        const t = typeof l.target === 'string' ? l.target : (l.target as any).id
+        return focusNodeIds.has(s) && focusNodeIds.has(t)
+      })
+    : activeLinks
+
   // ── Focus search: compute results as user types ───────────────────────────
   useEffect(() => {
     if (!focusSearch.trim()) { setFocusResults([]); return }
@@ -390,13 +413,13 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Filtered links ────────────────────────────────────────────────────────
   const filteredLinks = useMemo(
     () => viewMode === 'org'
-      ? activeLinks
-      : activeLinks.filter(l => (l.types ?? [l.type]).some(t => activeTypes.has(t))),
-    [activeLinks, activeTypes, viewMode]
+      ? visLinks
+      : visLinks.filter(l => (l.types ?? [l.type]).some(t => activeTypes.has(t))),
+    [visLinks, activeTypes, viewMode]
   )
 
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
-  const nodeCount = activeNodes.length
+  const nodeCount = visNodes.length
 
   // ── charge 공식 + 밀도 보정 ──────────────────────────────────────────────────
   // 계정마다 연결 수가 달라도 항상 퍼진 레이아웃을 유지하기 위해
@@ -421,7 +444,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
   }, [filteredLinks, perNodeCap])
 
   // 실제 표시되는 링크 수 기준으로 밀도 계산
-  const avgLinksPerNode = activeLinks.length / Math.max(nodeCount - 1, 1)
+  const avgLinksPerNode = visLinks.length / Math.max(nodeCount - 1, 1)
 
   // densityFactor는 이미 capLinksPerNode로 상한이 걸려 있어서 소폭만 보정
   const densityFactor = Math.max(1.0, avgLinksPerNode * 0.4)
@@ -440,12 +463,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   const graphData = useMemo(() => {
     return {
-      nodes: activeNodes.map((n, i) => ({
+      nodes: visNodes.map((n, i) => ({
         ...n,
         name: n.label,
         val: 1,
-        x: Math.cos((2 * Math.PI * i) / Math.max(activeNodes.length, 1)) * initRadius,
-        y: Math.sin((2 * Math.PI * i) / Math.max(activeNodes.length, 1)) * initRadius,
+        x: Math.cos((2 * Math.PI * i) / Math.max(visNodes.length, 1)) * initRadius,
+        y: Math.sin((2 * Math.PI * i) / Math.max(visNodes.length, 1)) * initRadius,
       })),
       links: displayLinks.map(l => ({
         ...l,
@@ -453,18 +476,18 @@ export default function NetworkGraph({ nodes, links }: Props) {
       })),
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNodes, displayLinks])
+  }, [visNodes, displayLinks])
 
   // ── Canvas 즉시 숨김 — 페인트 이전에 실행하여 ugly flash 차단 ─────────────
   // useEffect는 브라우저 페인트 후 실행 → 새 데이터가 이전 graphReady=true 상태로
   // 잠깐 노출됨. useLayoutEffect는 페인트 전 동기 실행 → flash 원천 차단
-  const firstNodeId = activeNodes[0]?.id ?? ''
+  const firstNodeId = visNodes[0]?.id ?? ''
   useLayoutEffect(() => {
     setGraphReady(false)
     revealPendingRef.current = false
     forcesAppliedRef.current = false   // 노드/링크가 바뀌면 반드시 다시 적용해야 함
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNodes.length, activeLinks.length, firstNodeId, viewMode])
+  }, [visNodes.length, visLinks.length, firstNodeId, viewMode])
 
   // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
@@ -548,7 +571,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
       if (fallbackTimer) clearTimeout(fallbackTimer)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNodes.length, activeLinks.length, firstNodeId, viewMode])
+  }, [visNodes.length, visLinks.length, firstNodeId, viewMode])
 
   // ── Auto-fit + reveal: simulation 틱마다, 종료 시 ─────────────────────────
   const tickCountRef = useRef(0)
@@ -582,6 +605,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
       if (n2) for (const id2 of n2) focusSet.add(id2)
     }
     focusMatchIdsRef.current = focusSet
+    setFocusFilterIds(focusSet)
     setFocusModeLabel(node.label)
     setFocusSearch('')
     setFocusResults([])
@@ -605,6 +629,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
       if (neighbors) for (const nid of neighbors) focusSet.add(nid)
     }
     focusMatchIdsRef.current = focusSet
+    setFocusFilterIds(focusSet)
     setFocusModeLabel(`내 취재원 (${ownerIds.length}명)`)
     setFocusSearch('')
     setFocusResults([])
@@ -615,6 +640,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   const clearFocus = useCallback(() => {
     focusMatchIdsRef.current = null
+    setFocusFilterIds(null)
     setFocusModeLabel(null)
     setFocusSearch('')
     setFocusResults([])
@@ -624,6 +650,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
     const orgNodes = nodes.filter(n => n.org === org)
     const focusSet = new Set<string>(orgNodes.map(n => n.id))
     focusMatchIdsRef.current = focusSet
+    setFocusFilterIds(focusSet)
     setFocusModeLabel(`${org} (${orgNodes.length}명)`)
     setFocusSearch('')
     setFocusResults([])
@@ -656,6 +683,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
     if (!ids || ids.size === 0) return
     const focusSet = new Set(ids)
     focusMatchIdsRef.current = focusSet
+    setFocusFilterIds(focusSet)
     setFocusModeLabel(`${exam} (${focusSet.size}명)`)
     setFocusSearch('')
     setFocusResults([])
@@ -872,6 +900,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
       const orgMembers = nodes.filter(nd => nd.org === orgName)
       const focusSet = new Set<string>(orgMembers.map(nd => nd.id))
       focusMatchIdsRef.current = focusSet
+      setFocusFilterIds(focusSet)
       setFocusModeLabel(`${orgName} (${orgMembers.length}명)`)
       setViewMode('all')
       setTimeout(() => {
@@ -1124,10 +1153,15 @@ export default function NetworkGraph({ nodes, links }: Props) {
                     fontSize: '11px', color: '#5EC88A', fontWeight: 600,
                     padding: '5px 8px', background: 'rgba(61,158,106,0.1)',
                     border: '1px solid rgba(61,158,106,0.25)', borderRadius: '6px',
-                    marginBottom: '6px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                   }}>
                     📍 {focusModeLabel}
                   </div>
+                  {focusNodeIds && (
+                    <p style={{ fontSize: '10px', color: '#3D9E6A', margin: '0 0 6px' }}>
+                      {visNodes.length}명 · {visLinks.length}쌍 연결 표시 중
+                    </p>
+                  )}
                   <button
                     type="button" onClick={clearFocus}
                     style={{ fontSize: '10px', color: '#7A8A9E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
@@ -1145,6 +1179,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
                     }}>
                     나를 중심으로
                   </button>
+                  <p style={{ fontSize: '10px', color: '#3A4A5E', marginTop: '3px', textAlign: 'center' }}>
+                    선택 시 해당 네트워크만 표시
+                  </p>
                   <div style={{ position: 'relative' }}>
                     <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#485870', pointerEvents: 'none' }}>📍</span>
                     <input
