@@ -223,11 +223,11 @@ export default async function DashboardPage() {
           <div key={stat.label} className="glass-card p-3">
             <div className="flex items-start justify-between">
               <div>
-                <p className="text-xs font-medium mb-1" style={{ color: '#8AAAC8' }}>{stat.label}</p>
+                <p className="text-xs font-medium mb-1" style={{ color: '#B8CCDE' }}>{stat.label}</p>
                 <p className="text-xl font-bold" style={{ color: stat.color }}>
                   {stat.value.toLocaleString()}
                 </p>
-                <p className="text-xs mt-0.5" style={{ color: '#607898' }}>{stat.unit}</p>
+                <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>{stat.unit}</p>
               </div>
               <span className="text-xl">{stat.icon}</span>
             </div>

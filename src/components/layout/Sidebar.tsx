@@ -206,11 +206,11 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             href={item.href}
             className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm font-medium transition-all"
             style={{
-              color: isActive(item.href) ? '#4A7CC0' : '#8AAAC8',
+              color: isActive(item.href) ? '#4A7CC0' : '#B8CCDE',
               background: isActive(item.href) ? 'rgba(30,144,255,0.1)' : 'transparent',
               border: isActive(item.href) ? '1px solid rgba(30,144,255,0.2)' : '1px solid transparent',
             }}>
-            <span style={{ color: isActive(item.href) ? '#4A7CC0' : '#607898' }}>
+            <span style={{ color: isActive(item.href) ? '#4A7CC0' : '#8AAAC8' }}>
               {item.icon}
             </span>
             {item.label}
@@ -220,7 +220,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
         {/* 어드민 메뉴 */}
         {(profile.role === 'admin' || profile.role === 'superadmin') && (
           <div className="mt-2 pt-2" style={{ borderTop: '1px solid #1A2838' }}>
-            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#607898' }}>
+            <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#8AAAC8' }}>
               관리자 메뉴
             </p>
             {adminNavItems.map(item => (
@@ -229,7 +229,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
                 href={item.href}
                 className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
                 style={{
-                  color: pathname === item.href ? '#7E6E48' : '#8AAAC8',
+                  color: pathname === item.href ? '#7E6E48' : '#B8CCDE',
                   background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
                 }}>
                 {item.label}
