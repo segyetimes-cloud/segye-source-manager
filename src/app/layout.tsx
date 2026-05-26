@@ -33,7 +33,7 @@ export default async function RootLayout({
 
   return (
     <html lang="ko" className="h-full">
-      <body className="min-h-full" style={{ background: '#0D1520', color: '#DCE8F4' }}>
+      <body className="min-h-full" style={{ background: '#0D1520', color: '#CDD5E0' }}>
         {/*
           __webpack_nonce__ 설정 스크립트:
           Next.js가 동적으로 로드하는 청크(chunk) 스크립트에 nonce를 적용하기 위해 필요.

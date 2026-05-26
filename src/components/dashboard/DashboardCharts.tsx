@@ -154,7 +154,7 @@ function DonutChart({ data, total }: { data: { name: string; count: number; colo
         {arcs.map((arc, i) => (
           <path key={i} d={sectorPath(arc.start, arc.end)} fill={arc.color} />
         ))}
-        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="13" fill="#DCE8F4" fontWeight="700">{total}</text>
+        <text x={cx} y={cy - 5} textAnchor="middle" fontSize="13" fill="#CDD5E0" fontWeight="700">{total}</text>
         <text x={cx} y={cy + 8} textAnchor="middle" fontSize="7.5" fill="#607898">건</text>
       </svg>
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '5px' }}>
@@ -162,7 +162,7 @@ function DonutChart({ data, total }: { data: { name: string; count: number; colo
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <div style={{ width: '8px', height: '8px', borderRadius: '2px', background: arc.color, flexShrink: 0 }} />
             <span style={{ fontSize: '11px', color: '#8899AA', flex: 1 }}>{arc.name}</span>
-            <span style={{ fontSize: '11px', color: '#DCE8F4', fontWeight: 600 }}>{arc.count}</span>
+            <span style={{ fontSize: '11px', color: '#CDD5E0', fontWeight: 600 }}>{arc.count}</span>
           </div>
         ))}
       </div>
@@ -188,7 +188,7 @@ function OrgBarChart({ data }: { data: { name: string; count: number }[] }) {
             {i + 1}
           </span>
           <span style={{
-            fontSize: '12px', color: '#DCE8F4',
+            fontSize: '12px', color: '#CDD5E0',
             width: '90px', flexShrink: 0,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>{d.name}</span>
@@ -261,7 +261,7 @@ export default function DashboardCharts({ data }: { data: ChartData }) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-      <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
         📊 통계 분석
       </h2>
 

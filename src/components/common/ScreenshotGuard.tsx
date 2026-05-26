@@ -84,7 +84,7 @@ export default function ScreenshotGuard({ children }: { children: React.ReactNod
         >
           <div style={{ textAlign: 'center', userSelect: 'none', pointerEvents: 'none' }}>
             <div style={{ fontSize: '52px', marginBottom: '16px' }}>🔒</div>
-            <p style={{ fontSize: '18px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>보안 화면 보호 중</p>
+            <p style={{ fontSize: '18px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>보안 화면 보호 중</p>
             <p style={{ fontSize: '13px', color: '#607898', marginTop: '8px', margin: '8px 0 0' }}>화면을 클릭하면 잠금이 해제됩니다</p>
           </div>
         </div>

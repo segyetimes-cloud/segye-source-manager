@@ -12,7 +12,7 @@ export default function ImportCardsPage() {
       {/* 헤더 */}
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px' }}>
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
             📇 명함 일괄 등록
           </h1>
           <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>

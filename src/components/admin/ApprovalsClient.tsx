@@ -31,7 +31,7 @@ interface RejectModal {
 
 const modalInput: React.CSSProperties = {
   width: '100%', background: '#131C2C', border: '1px solid #1A2838',
-  color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
+  color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
   fontSize: '13px', outline: 'none', boxSizing: 'border-box',
   resize: 'none',
 }
@@ -143,7 +143,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(192,64,64,0.06)', border: '1px solid rgba(192,64,64,0.2)' }}>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 4px' }}>거절 대상</p>
-                <p style={{ fontSize: '14px', fontWeight: 600, color: '#DCE8F4', margin: '0 0 2px' }}>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', margin: '0 0 2px' }}>
                   {rejectModal.requesterName} → {rejectModal.sourceName}
                 </p>
               </div>
@@ -182,7 +182,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
 
       {/* 대기 중 */}
       <section>
-        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#DCE8F4' }}>
+        <h2 className="text-sm font-semibold mb-3 flex items-center gap-2" style={{ color: '#CDD5E0' }}>
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full text-xs font-bold"
             style={{ background: '#A87228', color: 'white' }}>
             {pending.length}
@@ -201,7 +201,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                 <div className="flex items-start justify-between gap-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
+                      <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
                         {app.profiles?.full_name ?? '—'}
                       </span>
                       {app.profiles?.department && (
@@ -220,7 +220,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                     </p>
                     <div className="mt-2 p-3 rounded-lg" style={{ background: '#182035' }}>
                       <p className="text-xs font-medium mb-1" style={{ color: '#8AAAC8' }}>신청 사유</p>
-                      <p className="text-sm" style={{ color: '#DCE8F4' }}>{app.reason}</p>
+                      <p className="text-sm" style={{ color: '#CDD5E0' }}>{app.reason}</p>
                     </div>
                     <p className="text-xs mt-2" style={{ color: '#607898' }}>
                       신청일: {new Date(app.requested_at).toLocaleString('ko-KR')}
@@ -277,7 +277,7 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
                       }}>
                       {app.status === 'approved' ? '✅ 승인' : '✗ 거절'}
                     </span>
-                    <span className="text-sm" style={{ color: '#DCE8F4' }}>{app.profiles?.full_name ?? '—'}</span>
+                    <span className="text-sm" style={{ color: '#CDD5E0' }}>{app.profiles?.full_name ?? '—'}</span>
                     <span className="text-xs" style={{ color: '#607898' }}>→</span>
                     <Link href={`/sources/${app.source_id}`} className="text-sm" style={{ color: '#4A7CC0', textDecoration: 'none' }}>
                       {app.sources?.full_name ?? app.source_id}

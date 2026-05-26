@@ -275,7 +275,7 @@ export default function ExcelImporter() {
                 }}>
                 {['upload', 'mapping', 'done'].indexOf(step) > i ? '✓' : i + 1}
               </div>
-              <span className="text-sm" style={{ color: step === s.key ? '#DCE8F4' : '#607898' }}>
+              <span className="text-sm" style={{ color: step === s.key ? '#CDD5E0' : '#607898' }}>
                 {s.label}
               </span>
             </div>
@@ -290,7 +290,7 @@ export default function ExcelImporter() {
 
           {/* 헤더 여부 토글 */}
           <div className="p-4 rounded-xl" style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
-            <p className="text-sm font-semibold mb-3" style={{ color: '#DCE8F4' }}>📋 엑셀 형식 선택</p>
+            <p className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>📋 엑셀 형식 선택</p>
             <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -349,7 +349,7 @@ export default function ExcelImporter() {
               <path d="M16 16h16M16 22h16M16 28h10" stroke="#607898" strokeWidth="1.5" strokeLinecap="round"/>
               <path d="M28 36l4-4 4 4M32 32v8" stroke="#4A7CC0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            <p className="text-sm font-medium mb-1" style={{ color: '#DCE8F4' }}>클릭하여 엑셀 파일 선택</p>
+            <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>클릭하여 엑셀 파일 선택</p>
             <p className="text-xs" style={{ color: '#607898' }}>.xlsx · .xls · .csv 지원</p>
             <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} style={{ display: 'none' }} />
           </div>
@@ -372,7 +372,7 @@ export default function ExcelImporter() {
           {/* 요약 */}
           <div className="glass-card p-4 flex items-center justify-between flex-wrap gap-3">
             <div className="flex items-center gap-3 flex-wrap">
-              <span className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
+              <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
                 총 <span style={{ color: '#4A7CC0' }}>{totalRows}명</span> · {colCount}개 컬럼
               </span>
               {mappingSource === 'ai' && (
@@ -429,7 +429,7 @@ export default function ExcelImporter() {
                         )}
                         {hasHeader && (
                           <p className="text-xs font-semibold mb-1" style={{ color: '#8AAAC8' }}>
-                            헤더: <span style={{ color: '#DCE8F4' }}>{m.header}</span>
+                            헤더: <span style={{ color: '#CDD5E0' }}>{m.header}</span>
                           </p>
                         )}
                         <div className="flex gap-2 flex-wrap">
@@ -462,7 +462,7 @@ export default function ExcelImporter() {
                           style={{
                             background: '#0D1520',
                             border: `1px solid ${isSkip ? '#1A2838' : isLowConf ? '#A87228' : 'rgba(30,144,255,0.4)'}`,
-                            color: isSkip ? '#607898' : '#DCE8F4',
+                            color: isSkip ? '#607898' : '#CDD5E0',
                             borderRadius: '8px', padding: '5px 8px', fontSize: '13px',
                             minWidth: '130px',
                           }}>
@@ -486,7 +486,7 @@ export default function ExcelImporter() {
 
           {/* 목록 구분 */}
           <div className="glass-card p-5">
-            <h3 className="text-sm font-semibold mb-3" style={{ color: '#DCE8F4' }}>가져올 목록 구분</h3>
+            <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>가져올 목록 구분</h3>
             <div className="flex rounded-lg p-1 w-fit" style={{ background: '#0D1520', border: '1px solid #1A2838' }}>
               {[
                 { value: 'personal', label: '🔒 내 목록' },
@@ -535,7 +535,7 @@ export default function ExcelImporter() {
             style={{ background: 'rgba(0,204,102,0.15)', border: '2px solid rgba(0,204,102,0.3)' }}>
             <span style={{ fontSize: '32px' }}>✅</span>
           </div>
-          <h2 className="text-xl font-bold mb-2" style={{ color: '#DCE8F4' }}>가져오기 완료!</h2>
+          <h2 className="text-xl font-bold mb-2" style={{ color: '#CDD5E0' }}>가져오기 완료!</h2>
           <p className="text-sm" style={{ color: '#8AAAC8' }}>
             <span style={{ color: '#3D9E6A', fontWeight: 'bold' }}>{importCount}명</span>의 취재원이 등록되었습니다
           </p>

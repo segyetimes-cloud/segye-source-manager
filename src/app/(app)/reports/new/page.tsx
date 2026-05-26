@@ -10,7 +10,7 @@ import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/All
 const inputStyle: React.CSSProperties = {
   background: '#182035',
   border: '1px solid #1A2838',
-  color: '#DCE8F4',
+  color: '#CDD5E0',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -211,7 +211,7 @@ export default function NewReportPage() {
       <div className="flex items-center gap-3">
         <Link href="/reports" style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div style={{ flex: 1 }}>
-          <h1 className="text-lg font-bold" style={{ color: '#DCE8F4' }}>새 보고서 작성</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>새 보고서 작성</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
             <p className="text-xs" style={{ color: '#5A7099' }}>정보보고 작성</p>
             {isSaving && (
@@ -338,7 +338,7 @@ export default function NewReportPage() {
               lineHeight: 1.6,
               background: 'rgba(30,16,4,0.6)',
               border: '1px solid rgba(255,153,0,0.3)',
-              color: '#DCE8F4',
+              color: '#CDD5E0',
             }}
           />
         </div>
@@ -395,7 +395,7 @@ export default function NewReportPage() {
                   style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -440,7 +440,7 @@ export default function NewReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#DCE8F4', fontSize: '13px',
+                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
                       borderBottom: '1px solid #1A2838',
                     }}
                     onMouseEnter={e => (e.currentTarget.style.background = '#182035')}

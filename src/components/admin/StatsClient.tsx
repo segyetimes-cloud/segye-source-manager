@@ -258,7 +258,7 @@ export default function StatsClient() {
               style={{
                 background: '#131C2C',
                 border: '1px solid #1A2838',
-                color: '#DCE8F4',
+                color: '#CDD5E0',
                 borderRadius: '8px',
                 padding: '6px 10px',
                 fontSize: '13px',
@@ -273,7 +273,7 @@ export default function StatsClient() {
               style={{
                 background: '#131C2C',
                 border: '1px solid #1A2838',
-                color: '#DCE8F4',
+                color: '#CDD5E0',
                 borderRadius: '8px',
                 padding: '6px 10px',
                 fontSize: '13px',
@@ -322,7 +322,7 @@ export default function StatsClient() {
       {/* 사용자별 실적 테이블 */}
       <div className="glass-card overflow-hidden">
         <div className="px-5 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid #1A2838' }}>
-          <h2 className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>
+          <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
             사용자별 실적
           </h2>
           <button
@@ -414,7 +414,7 @@ export default function StatsClient() {
                     <td style={{ padding: '10px 14px', color: '#8AAAC8', textAlign: 'center', width: '48px' }}>
                       {rankEmoji(i)}
                     </td>
-                    <td style={{ padding: '10px 14px', color: '#DCE8F4', fontWeight: 500 }}>
+                    <td style={{ padding: '10px 14px', color: '#CDD5E0', fontWeight: 500 }}>
                       {row.full_name || '—'}
                     </td>
                     <td style={{ padding: '10px 14px', color: '#8AAAC8' }}>
@@ -423,13 +423,13 @@ export default function StatsClient() {
                     <td style={{ padding: '10px 14px', color: '#8AAAC8' }}>
                       {ROLE_LABEL[row.role] ?? row.role}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.sources_created === 0 ? '#2A4060' : '#DCE8F4', fontWeight: row.sources_created > 0 ? 600 : 400 }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.sources_created === 0 ? '#2A4060' : '#CDD5E0', fontWeight: row.sources_created > 0 ? 600 : 400 }}>
                       {row.sources_created}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.edits_made === 0 ? '#2A4060' : '#DCE8F4' }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.edits_made === 0 ? '#2A4060' : '#CDD5E0' }}>
                       {row.edits_made}
                     </td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.help_responses === 0 ? '#2A4060' : '#DCE8F4' }}>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: row.help_responses === 0 ? '#2A4060' : '#CDD5E0' }}>
                       {row.help_responses}
                     </td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: row.points_earned === 0 ? '#2A4060' : '#7E6E48', fontWeight: row.points_earned > 0 ? 600 : 400 }}>
@@ -445,9 +445,9 @@ export default function StatsClient() {
                     <td style={{ padding: '10px 14px', color: '#8AAAC8', fontWeight: 700 }}>TOTAL</td>
                     <td style={{ padding: '10px 14px' }} />
                     <td style={{ padding: '10px 14px' }} />
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalSources}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalEdits}</td>
-                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#DCE8F4', fontWeight: 700 }}>{totalHelp}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalSources}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalEdits}</td>
+                    <td style={{ padding: '10px 14px', textAlign: 'right', color: '#CDD5E0', fontWeight: 700 }}>{totalHelp}</td>
                     <td style={{ padding: '10px 14px', textAlign: 'right', color: '#7E6E48', fontWeight: 700 }}>+{totalPoints.toLocaleString()}</td>
                   </tr>
                 )}

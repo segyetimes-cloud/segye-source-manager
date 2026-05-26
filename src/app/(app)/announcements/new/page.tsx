@@ -32,14 +32,14 @@ export default function NewAnnouncementPage() {
   const inputStyle = {
     width: '100%', padding: '10px 12px',
     background: '#182035', border: '1px solid #1A2838',
-    borderRadius: '8px', color: '#DCE8F4', fontSize: '14px',
+    borderRadius: '8px', color: '#CDD5E0', fontSize: '14px',
     outline: 'none', boxSizing: 'border-box' as const,
   }
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>📢 새 공지 작성</h1>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>📢 새 공지 작성</h1>
         <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>작성한 공지는 전체 구성원에게 표시됩니다</p>
       </div>
 

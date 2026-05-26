@@ -57,7 +57,7 @@ export default function SidebarLayout({ profile, children }: Props) {
               style={{ filter: 'brightness(0) invert(1)', opacity: 0.9 }} />
           </div>
           <div>
-            <p style={{ color: '#DCE8F4', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
+            <p style={{ color: '#CDD5E0', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
             <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원 관리</p>
           </div>
         </div>

@@ -51,7 +51,7 @@ const ACTION_OPTIONS = ['', 'view', 'view_private', 'create', 'update', 'delete'
 const inputStyle = {
   background: '#182035',
   border: '1px solid #1A2838',
-  color: '#DCE8F4',
+  color: '#CDD5E0',
   borderRadius: '8px',
   padding: '8px 12px',
   fontSize: '13px',
@@ -278,7 +278,7 @@ export default function AuditClient({
                     </td>
 
                     <td style={{ padding: '10px 14px' }}>
-                      <div style={{ color: '#DCE8F4' }}>{log.user_email?.split('@')[0] ?? '—'}</div>
+                      <div style={{ color: '#CDD5E0' }}>{log.user_email?.split('@')[0] ?? '—'}</div>
                       <div style={{ color: '#607898', fontSize: '11px' }}>{log.user_role}</div>
                     </td>
 

@@ -54,7 +54,7 @@ export default async function SourceEditPage({ params }: Params) {
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>
             취재원 수정
           </h1>
           <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>

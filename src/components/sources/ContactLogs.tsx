@@ -94,14 +94,14 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
   }
 
   const inputStyle: React.CSSProperties = {
-    background: '#1A2838', border: '1px solid #202C3A', color: '#DCE8F4',
+    background: '#1A2838', border: '1px solid #202C3A', color: '#CDD5E0',
     borderRadius: '6px', padding: '7px 10px', fontSize: '13px', width: '100%',
   }
 
   return (
     <div className="glass-card p-5">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>📞 연락 이력</h2>
+        <h2 className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>📞 연락 이력</h2>
         <button
           type="button"
           onClick={() => setAdding(!adding)}
@@ -134,7 +134,7 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
             <span style={{ fontSize: '14px' }}>{urgent ? '🔔' : '📅'}</span>
             <div>
               <span style={{ fontSize: '11px', fontWeight: 600, color: urgent ? '#3D9E6A' : '#4A7CC0' }}>다음 팔로업</span>
-              <span style={{ fontSize: '12px', color: '#DCE8F4', marginLeft: '8px' }}>{label}</span>
+              <span style={{ fontSize: '12px', color: '#CDD5E0', marginLeft: '8px' }}>{label}</span>
             </div>
           </div>
         )
@@ -290,9 +290,9 @@ export default function ContactLogs({ sourceId, currentUserId, userRole }: { sou
                       </div>
                     </div>
                     {log.is_sensitive ? (
-                      <ProtectedText text={log.summary} fontSize={13} color="#DCE8F4" style={{ display: 'block', lineHeight: 1.5 }} />
+                      <ProtectedText text={log.summary} fontSize={13} color="#CDD5E0" style={{ display: 'block', lineHeight: 1.5 }} />
                     ) : (
-                      <p style={{ fontSize: '13px', color: '#DCE8F4', lineHeight: 1.5, margin: 0 }}>{log.summary}</p>
+                      <p style={{ fontSize: '13px', color: '#CDD5E0', lineHeight: 1.5, margin: 0 }}>{log.summary}</p>
                     )}
                     {log.result && (
                       log.is_sensitive ? (

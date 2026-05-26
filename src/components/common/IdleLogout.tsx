@@ -114,7 +114,7 @@ export default function IdleLogout() {
           fontSize: '28px',
         }}>⏰</div>
 
-        <p style={{ fontSize: '17px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 10px' }}>
+        <p style={{ fontSize: '17px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 10px' }}>
           세션이 곧 만료됩니다
         </p>
         <p style={{ fontSize: '13px', color: '#8AAAC8', margin: '0 0 6px', lineHeight: 1.6 }}>

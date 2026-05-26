@@ -775,7 +775,7 @@ export default async function NetworkPage() {
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
         <div className="min-w-0">
-          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>🕸️ 관계망 그래프</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>🕸️ 관계망 그래프</h1>
           {/* 통계: 모바일에서는 한 줄 요약만 */}
           <p className="text-xs mt-0.5" style={{ color: '#607898' }}>
             {nodes.length}명 · {visibleLinks.length}쌍 연결

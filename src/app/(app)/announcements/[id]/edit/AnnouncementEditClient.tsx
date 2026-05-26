@@ -17,7 +17,7 @@ export default function AnnouncementEditClient({
   const inputStyle = {
     width: '100%', padding: '10px 12px',
     background: '#182035', border: '1px solid #1A2838',
-    borderRadius: '8px', color: '#DCE8F4', fontSize: '14px',
+    borderRadius: '8px', color: '#CDD5E0', fontSize: '14px',
     outline: 'none', boxSizing: 'border-box' as const,
   }
 
@@ -43,7 +43,7 @@ export default function AnnouncementEditClient({
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>📢 공지 수정</h1>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>📢 공지 수정</h1>
       </div>
       <form onSubmit={handleSubmit} className="glass-card p-6 space-y-4">
         <div>

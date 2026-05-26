@@ -88,7 +88,7 @@ export default async function AdminAuditPage({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>접근 로그</h1>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>접근 로그</h1>
         <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
           시스템 내 모든 주요 동작을 기록합니다 · 최대 5,000건 Excel 내보내기 지원
         </p>

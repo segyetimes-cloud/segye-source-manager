@@ -133,7 +133,7 @@ export default function ReportListClient({
             placeholder="제목 내용 검색"
             style={{
               flex: 1, background: '#131C2C',
-              border: '1px solid #1A2838', color: '#DCE8F4',
+              border: '1px solid #1A2838', color: '#CDD5E0',
               borderRadius: '8px', padding: '9px 12px', fontSize: '14px', outline: 'none',
             }}
           />
@@ -261,7 +261,7 @@ export default function ReportListClient({
                       </span>
                     )}
                     <span style={{
-                      fontSize: '14px', fontWeight: 600, color: '#DCE8F4',
+                      fontSize: '14px', fontWeight: 600, color: '#CDD5E0',
                       lineHeight: 1.35, flex: 1, minWidth: 0,
                     }}>
                       <Highlight text={report.title} query={highlightQuery} />

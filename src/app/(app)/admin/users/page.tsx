@@ -38,7 +38,7 @@ export default async function AdminUsersPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>계정 관리</h1>
+        <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>계정 관리</h1>
         <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
           기자 계정의 권한 및 활성 상태를 관리합니다
         </p>

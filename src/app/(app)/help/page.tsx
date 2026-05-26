@@ -49,7 +49,7 @@ export default async function HelpPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>🙋 도움 요청</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>🙋 도움 요청</h1>
           <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
             연락처나 정보가 필요하면 동료에게 요청하세요. 도움을 주면 포인트를 받습니다!
           </p>

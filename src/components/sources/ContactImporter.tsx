@@ -210,7 +210,7 @@ export default function ContactImporter({ onImported }: Props) {
             style={{
               width: '100%', padding: '7px 10px',
               background: '#1A2838', border: '1px solid #202C3A',
-              borderRadius: '6px', color: '#DCE8F4', fontSize: '13px',
+              borderRadius: '6px', color: '#CDD5E0', fontSize: '13px',
               outline: 'none', boxSizing: 'border-box',
             }}
           />
@@ -246,7 +246,7 @@ export default function ContactImporter({ onImported }: Props) {
                   {c.full_name?.[0] ?? '?'}
                 </div>
                 <div>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', margin: 0 }}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0 }}>
                     {c.full_name}
                     {c.current_position && (
                       <span style={{ marginLeft: '6px', fontSize: '11px', color: '#607898', fontWeight: 400 }}>

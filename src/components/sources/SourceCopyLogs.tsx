@@ -43,7 +43,7 @@ export default function SourceCopyLogs({ sourceId }: Props) {
         style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
       >
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#DCE8F4' }}>🔍 복사 이력 추적</span>
+          <span style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>🔍 복사 이력 추적</span>
           <span style={{ fontSize: '11px', color: '#607898', background: 'rgba(255,68,68,0.08)', border: '1px solid rgba(255,68,68,0.2)', borderRadius: '4px', padding: '1px 7px' }}>데스크 전용</span>
         </div>
         <div className="flex items-center gap-3">

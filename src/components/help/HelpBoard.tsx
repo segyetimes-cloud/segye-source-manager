@@ -100,7 +100,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
           borderRadius: '8px',
           padding: '9px 14px',
           fontSize: '14px',
-          color: '#DCE8F4',
+          color: '#CDD5E0',
           outline: 'none',
           boxSizing: 'border-box',
         }}
@@ -148,7 +148,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                 fontSize: '12px',
                 fontWeight: 500,
                 background: typeFilter === t.value ? 'rgba(74,124,192,0.3)' : 'transparent',
-                color: typeFilter === t.value ? '#DCE8F4' : '#8AAAC8',
+                color: typeFilter === t.value ? '#CDD5E0' : '#8AAAC8',
                 cursor: 'pointer',
                 border: 'none',
                 whiteSpace: 'nowrap',
@@ -195,7 +195,7 @@ export default function HelpBoard({ requests: initialRequests, userId, responded
                   )}
                 </div>
 
-                <h3 className="text-sm font-semibold mb-1" style={{ color: '#DCE8F4' }}>
+                <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
                   {req.title}
                 </h3>
 

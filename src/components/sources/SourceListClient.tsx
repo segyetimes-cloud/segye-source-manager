@@ -200,7 +200,7 @@ export default function SourceListClient({
               flex: 1,
               background: '#131C2C',
               border: '1px solid #1A2838',
-              color: '#DCE8F4',
+              color: '#CDD5E0',
               borderRadius: '8px',
               padding: '9px 12px',
               fontSize: '14px',
@@ -366,7 +366,7 @@ export default function SourceListClient({
                       </div>
                       <div style={{ flex: 1, minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <p style={{ color: '#DCE8F4', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
@@ -427,7 +427,7 @@ export default function SourceListClient({
                       </div>
                       <div style={{ minWidth: 0 }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                          <p style={{ color: '#DCE8F4', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          <p style={{ color: '#CDD5E0', fontWeight: 600, fontSize: 14, margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             <Highlight text={source.full_name} query={currentQuery} />
                           </p>
                           {isMine && (
@@ -585,7 +585,7 @@ export default function SourceListClient({
                 placeholder="태그 입력 후 Enter"
                 autoFocus
                 style={{
-                  background: '#182035', border: '1px solid #2A4060', color: '#DCE8F4',
+                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
                   borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
                 }}
               />
@@ -607,7 +607,7 @@ export default function SourceListClient({
                 placeholder="제거할 태그 입력"
                 autoFocus
                 style={{
-                  background: '#182035', border: '1px solid #2A4060', color: '#DCE8F4',
+                  background: '#182035', border: '1px solid #2A4060', color: '#CDD5E0',
                   borderRadius: 6, padding: '5px 10px', fontSize: 12, width: 140,
                 }}
               />

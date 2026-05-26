@@ -406,7 +406,7 @@ function EditablePreviewRow({
           autoFocus
           style={{
             flex: 1, background: '#1A2838', border: '1px solid #4A7CC0',
-            color: '#DCE8F4', borderRadius: '4px', padding: '2px 8px',
+            color: '#CDD5E0', borderRadius: '4px', padding: '2px 8px',
             fontSize: '12px', outline: 'none', minWidth: 0,
           }}
           onKeyDown={e => {
@@ -522,7 +522,7 @@ export default function QuickFill({ onFill }: Props) {
             width: '100%', boxSizing: 'border-box',
             padding: '10px 12px', resize: 'vertical',
             background: '#1A2838', border: '1px solid #202C3A',
-            borderRadius: '8px', color: '#DCE8F4',
+            borderRadius: '8px', color: '#CDD5E0',
             fontSize: '13px', lineHeight: 1.6, outline: 'none',
             fontFamily: 'inherit',
           }}

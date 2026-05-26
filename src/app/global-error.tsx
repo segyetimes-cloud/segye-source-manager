@@ -27,7 +27,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
       <body
         style={{
           background: '#0D1520',
-          color: '#DCE8F4',
+          color: '#CDD5E0',
           fontFamily: 'system-ui, sans-serif',
           margin: 0,
           minHeight: '100vh',

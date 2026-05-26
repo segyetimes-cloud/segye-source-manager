@@ -73,7 +73,7 @@ function OTPContent() {
               <path d="M10 8h8M10 11h5" stroke="#A87228" strokeWidth="1.5" strokeLinecap="round"/>
             </svg>
           </div>
-          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>외부 접속 인증</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>외부 접속 인증</h1>
           <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
             사외 접속 시 휴대전화 인증이 필요합니다
           </p>
@@ -92,7 +92,7 @@ function OTPContent() {
                 placeholder="010-0000-0000"
                 style={{
                   background: '#182035', border: '1px solid #1A2838',
-                  color: '#DCE8F4', borderRadius: '8px',
+                  color: '#CDD5E0', borderRadius: '8px',
                   padding: '10px 14px', fontSize: '14px', width: '100%',
                 }}
               />
@@ -115,7 +115,7 @@ function OTPContent() {
           ) : (
             <>
               <p className="text-sm mb-4" style={{ color: '#8AAAC8' }}>
-                <span style={{ color: '#DCE8F4' }}>{phone}</span>으로<br/>
+                <span style={{ color: '#CDD5E0' }}>{phone}</span>으로<br/>
                 인증번호 6자리를 입력해주세요
               </p>
               <input
@@ -126,7 +126,7 @@ function OTPContent() {
                 maxLength={6}
                 style={{
                   background: '#182035', border: '1px solid #1A2838',
-                  color: '#DCE8F4', borderRadius: '8px',
+                  color: '#CDD5E0', borderRadius: '8px',
                   padding: '10px 14px', fontSize: '20px',
                   width: '100%', letterSpacing: '0.3em', textAlign: 'center',
                 }}

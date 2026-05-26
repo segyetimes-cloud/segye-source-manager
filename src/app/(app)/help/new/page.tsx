@@ -62,7 +62,7 @@ export default function NewHelpPage() {
   const inputStyle = {
     background: '#182035',
     border: '1px solid #1A2838',
-    color: '#DCE8F4',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '9px 12px',
     fontSize: '14px',
@@ -83,7 +83,7 @@ export default function NewHelpPage() {
       <div className="flex items-center gap-3">
         <Link href="/help" style={{ color: '#607898', textDecoration: 'none', fontSize: '20px' }}>←</Link>
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>도움 요청</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>도움 요청</h1>
           <p className="text-sm mt-0.5" style={{ color: '#8AAAC8' }}>
             동료 기자에게 취재 도움을 요청합니다. 채택 시 포인트가 지급됩니다.
           </p>
@@ -106,7 +106,7 @@ export default function NewHelpPage() {
                   border: `1px solid ${form.request_type === t.value ? 'rgba(30,144,255,0.4)' : '#1A2838'}`,
                   cursor: 'pointer',
                 }}>
-                <div className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>{t.label}</div>
+                <div className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{t.label}</div>
                 <div className="text-xs mt-0.5" style={{ color: '#607898' }}>{t.desc}</div>
               </button>
             ))}

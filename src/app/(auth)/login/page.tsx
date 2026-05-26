@@ -113,7 +113,7 @@ export default function LoginPage() {
   const inputStyle: React.CSSProperties = {
     background: '#0D1F3C',
     border: '1px solid #1A2838',
-    color: '#DCE8F4',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '10px 14px',
     fontSize: '14px',
@@ -269,7 +269,7 @@ export default function LoginPage() {
             >
               👤
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>취재원 관리</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원 관리</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
           </div>
 
@@ -302,7 +302,7 @@ export default function LoginPage() {
             >
               📋
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>정보보고 관리</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>정보보고 관리</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
           </div>
 
@@ -335,7 +335,7 @@ export default function LoginPage() {
             >
               🕸️
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 3px' }}>관계망 시각화</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>관계망 시각화</p>
             <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
           </div>
         </div>
@@ -355,7 +355,7 @@ export default function LoginPage() {
       >
         {/* 브랜드 헤더 */}
         <div className="mb-8">
-          <p style={{ fontSize: '16px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>
+          <p style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
             세계일보{' '}
             <span style={{ fontSize: '12px', fontWeight: 400, color: '#5A7099' }}>
               취재원 관리시스템
@@ -505,7 +505,7 @@ export default function LoginPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="font-semibold" style={{ color: '#DCE8F4' }}>가입 신청 완료!</p>
+                    <p className="font-semibold" style={{ color: '#CDD5E0' }}>가입 신청 완료!</p>
                     <p className="text-sm mt-2" style={{ color: '#8AAAC8' }}>
                       관리자 승인 후 이메일로 안내가 발송됩니다.
                     </p>

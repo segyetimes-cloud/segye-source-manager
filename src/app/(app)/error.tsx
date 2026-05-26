@@ -40,7 +40,7 @@ export default function AppError({ error, unstable_retry }: ErrorProps) {
       <div style={{ fontSize: '48px', lineHeight: 1 }}>⚠️</div>
 
       <div>
-        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 8px' }}>
+        <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 8px' }}>
           페이지를 불러오는 중 오류가 발생했습니다
         </h2>
         <p style={{ fontSize: '13px', color: '#5A7099', margin: 0 }}>

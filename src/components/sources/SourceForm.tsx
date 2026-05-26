@@ -505,7 +505,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const inputStyle = {
     background: '#182035',
     border: '1px solid #1A2838',
-    color: '#DCE8F4',
+    color: '#CDD5E0',
     borderRadius: '8px',
     padding: '9px 12px',
     fontSize: '14px',
@@ -625,7 +625,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                   📊 엑셀 셀 붙여넣기
                 </p>
                 <p style={{ fontSize: '11px', color: '#607898', lineHeight: 1.6 }}>
-                  Excel·Numbers·Google Sheets에서 <b style={{ color: '#DCE8F4' }}>헤더 포함 셀을 선택</b>해 복사(Ctrl+C) 후 아래에 붙여넣으세요.<br />
+                  Excel·Numbers·Google Sheets에서 <b style={{ color: '#CDD5E0' }}>헤더 포함 셀을 선택</b>해 복사(Ctrl+C) 후 아래에 붙여넣으세요.<br />
                   인식 가능한 헤더: <span style={{ color: '#A8B8C8' }}>이름, 소속, 직책, 부서, 전화, 이메일, 대학, 전공, 기수, 생년월일 등</span>
                 </p>
               </div>
@@ -651,7 +651,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                     width: '100%', boxSizing: 'border-box',
                     padding: '10px 12px', resize: 'vertical',
                     background: '#1A2838', border: '1px solid #202C3A',
-                    borderRadius: '8px', color: '#DCE8F4',
+                    borderRadius: '8px', color: '#CDD5E0',
                     fontSize: '13px', lineHeight: 1.6, outline: 'none',
                     fontFamily: 'ui-monospace, SFMono-Regular, monospace',
                   }}
@@ -781,7 +781,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 기본 정보 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#DCE8F4' }}>👤 기본 정보</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>👤 기본 정보</h3>
         <div className="grid grid-cols-2 gap-4">
           <div className="col-span-2">
             <label style={labelStyle}>이름 <span style={{ color: '#C04040' }}>*</span> <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
@@ -838,7 +838,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 연락처 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#DCE8F4' }}>📞 연락처</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>📞 연락처</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label style={labelStyle}>주 전화번호 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
@@ -883,7 +883,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 학력 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-4" style={{ color: '#DCE8F4' }}>🎓 학력</h3>
+        <h3 className="text-sm font-semibold mb-4" style={{ color: '#CDD5E0' }}>🎓 학력</h3>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <label style={labelStyle}>출신 고교 <span style={{ color: '#7E6E48', fontSize: '11px' }}>+1pt</span></label>
@@ -915,7 +915,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 태그 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: '#DCE8F4' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
           🏷️ 태그 / 키워드 <span style={{ color: '#8AAAC8', fontSize: '11px', fontWeight: 400 }}>+0.5pt</span>
         </h3>
         <p className="text-xs mb-3" style={{ color: '#607898' }}>공개 정보 — 모두에게 보임</p>
@@ -946,7 +946,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 공개 정보 */}
       <div className="glass-card p-5">
-        <h3 className="text-sm font-semibold mb-1" style={{ color: '#DCE8F4' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
           📝 공개 정보
           <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
         </h3>
@@ -970,7 +970,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
       {/* 민감 정보 */}
       <div className="glass-card p-5" style={{ border: '1px solid rgba(255,153,0,0.2)' }}>
-        <h3 className="text-sm font-semibold mb-1" style={{ color: '#DCE8F4' }}>
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
           🔒 민감 정보
           <span className="text-xs ml-2 font-normal" style={{ color: '#A87228' }}>차장 이상만 열람 · 기자는 승인 필요</span>
         </h3>
@@ -1040,7 +1040,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
             <div className="px-6 py-4 flex items-center justify-between flex-shrink-0"
               style={{ borderBottom: '1px solid #1A2838' }}>
               <div>
-                <h3 className="text-base font-bold" style={{ color: '#DCE8F4' }}>✏️ 수정 내용 확인</h3>
+                <h3 className="text-base font-bold" style={{ color: '#CDD5E0' }}>✏️ 수정 내용 확인</h3>
                 <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>
                   아래 항목이 변경됩니다. 저장하시겠습니까?
                 </p>

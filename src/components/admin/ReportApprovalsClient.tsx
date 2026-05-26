@@ -138,7 +138,7 @@ export default function ReportApprovalsClient({ reports: initialReports }: Props
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(192,64,64,0.06)', border: '1px solid rgba(192,64,64,0.2)' }}>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 3px' }}>반려 대상 보고서</p>
-                <p style={{ fontSize: '14px', fontWeight: 600, color: '#DCE8F4', margin: '0 0 2px' }}>{rejectModal.title}</p>
+                <p style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', margin: '0 0 2px' }}>{rejectModal.title}</p>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: 0 }}>작성자: {rejectModal.author}</p>
               </div>
 
@@ -154,7 +154,7 @@ export default function ReportApprovalsClient({ reports: initialReports }: Props
                   autoFocus
                   style={{
                     width: '100%', background: '#131C2C', border: '1px solid #1A2838',
-                    color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
+                    color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
                     fontSize: '13px', outline: 'none', boxSizing: 'border-box', resize: 'none',
                   }}
                 />
@@ -206,7 +206,7 @@ export default function ReportApprovalsClient({ reports: initialReports }: Props
                   </span>
                 </div>
                 <Link href={`/reports/${report.id}`} style={{ textDecoration: 'none' }}>
-                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#DCE8F4', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <p style={{ fontSize: '15px', fontWeight: 600, color: '#CDD5E0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {report.title}
                   </p>
                 </Link>

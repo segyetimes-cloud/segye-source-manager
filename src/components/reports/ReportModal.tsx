@@ -119,7 +119,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
           }}
           onMouseEnter={e => {
             ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.13)'
-            ;(e.currentTarget as HTMLButtonElement).style.color = '#DCE8F4'
+            ;(e.currentTarget as HTMLButtonElement).style.color = '#CDD5E0'
           }}
           onMouseLeave={e => {
             ;(e.currentTarget as HTMLButtonElement).style.background = 'rgba(255,255,255,0.06)'
@@ -158,7 +158,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                            report.category === '인터뷰' ? '#3D9E6A' : '#4A7CC0',
                   }}>{report.category}</span>
                 )}
-                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#DCE8F4', lineHeight: 1.35, flex: 1, margin: 0 }}>
+                <h2 style={{ fontSize: 18, fontWeight: 700, color: '#CDD5E0', lineHeight: 1.35, flex: 1, margin: 0 }}>
                   {report.title}
                 </h2>
               </div>
@@ -207,7 +207,7 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   <p style={{ fontSize: 11, fontWeight: 600, color: '#A87228', marginBottom: 6, margin: '0 0 6px' }}>
                     ⚠️ 민감정보
                   </p>
-                  <p style={{ fontSize: 13, color: '#DCE8F4', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+                  <p style={{ fontSize: 13, color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
                     {report.sensitive_content}
                   </p>
                 </div>

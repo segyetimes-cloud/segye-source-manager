@@ -91,7 +91,7 @@ export default async function SourcesPage({
     <div className="space-y-6">
       <div className="flex items-center justify-between gap-3">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#DCE8F4' }}>취재원 목록</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>취재원 목록</h1>
           <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>편집국 공유 취재원 데이터베이스</p>
         </div>
         <div className="source-header-actions">

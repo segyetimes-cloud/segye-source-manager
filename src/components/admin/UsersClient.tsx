@@ -289,7 +289,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
   const inputStyle: React.CSSProperties = {
     width: '100%', background: '#0D1520', border: '1px solid #1A2838',
-    color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
+    color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
     fontSize: '13px', outline: 'none', boxSizing: 'border-box',
   }
   const labelStyle: React.CSSProperties = {
@@ -322,7 +322,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
   }
   const modalSelect: React.CSSProperties = {
     width: '100%', background: '#131C2C', border: '1px solid #1A2838',
-    color: '#DCE8F4', borderRadius: '8px', padding: '9px 12px',
+    color: '#CDD5E0', borderRadius: '8px', padding: '9px 12px',
     fontSize: '13px', outline: 'none', cursor: 'pointer',
   }
 
@@ -334,13 +334,13 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
         <div onClick={closeRoleModal} style={modalOverlay}>
           <div onClick={e => e.stopPropagation()} style={modalBox}>
             <div style={modalHeader}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>역할 변경</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>역할 변경</h3>
               <button onClick={closeRoleModal} aria-label="닫기" style={closeBtn}>×</button>
             </div>
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>대상 사용자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>{roleModal.userName}</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{roleModal.userName}</p>
               </div>
               <div>
                 <label style={labelStyle}>새 역할</label>
@@ -379,13 +379,13 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
         <div onClick={closeRankModal} style={modalOverlay}>
           <div onClick={e => e.stopPropagation()} style={modalBox}>
             <div style={modalHeader}>
-              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>직급 변경</h3>
+              <h3 style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>직급 변경</h3>
               <button onClick={closeRankModal} aria-label="닫기" style={closeBtn}>×</button>
             </div>
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.2)' }}>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>대상 사용자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: 0 }}>{rankModal.userName}</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{rankModal.userName}</p>
               </div>
               <div>
                 <label style={labelStyle}>새 직급</label>
@@ -425,7 +425,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
             <div style={modalBody}>
               <div style={{ padding: '10px 14px', borderRadius: '8px', background: 'rgba(61,158,106,0.06)', border: '1px solid rgba(61,158,106,0.2)' }}>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '0 0 2px' }}>신청자</p>
-                <p style={{ fontSize: '15px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 2px' }}>{approveModal.userName}</p>
+                <p style={{ fontSize: '15px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 2px' }}>{approveModal.userName}</p>
                 <p style={{ fontSize: '12px', color: '#8AAAC8', margin: 0 }}>{approveModal.email}</p>
               </div>
               <div>
@@ -498,7 +498,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
               flex: 1, padding: '8px 14px', borderRadius: '9px', fontSize: '13px', fontWeight: 600,
               border: 'none', cursor: 'pointer', transition: 'all 0.15s',
               background: tab === t.key ? '#182035' : 'transparent',
-              color: tab === t.key ? '#DCE8F4' : '#607898',
+              color: tab === t.key ? '#CDD5E0' : '#607898',
               outline: tab === t.key ? '1px solid #1A2838' : 'none',
             }}>
             {t.label}
@@ -515,7 +515,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
       <input
         type="text" value={search} onChange={e => setSearch(e.target.value)}
         placeholder="이름, 이메일, 부서로 검색..."
-        style={{ width: '100%', background: '#131C2C', border: '1px solid #1A2838', color: '#DCE8F4', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', outline: 'none' }}
+        style={{ width: '100%', background: '#131C2C', border: '1px solid #1A2838', color: '#CDD5E0', borderRadius: '8px', padding: '10px 14px', fontSize: '14px', outline: 'none' }}
       />
 
       {/* ── 활성 계정 탭 ── */}
@@ -532,7 +532,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
 
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'nowrap', overflow: 'hidden' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', flexShrink: 0 }}>{u.full_name}</span>
+                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', flexShrink: 0 }}>{u.full_name}</span>
                     {u.id === currentUserId && (
                       <span style={{ fontSize: '10px', padding: '0 5px', borderRadius: '4px', background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', flexShrink: 0 }}>나</span>
                     )}
@@ -616,7 +616,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
           {filteredPending.length === 0 ? (
             <div className="glass-card p-10 text-center">
               <p className="text-2xl mb-3">✅</p>
-              <p className="text-sm font-medium" style={{ color: '#DCE8F4' }}>대기 중인 가입 신청이 없습니다</p>
+              <p className="text-sm font-medium" style={{ color: '#CDD5E0' }}>대기 중인 가입 신청이 없습니다</p>
               <p className="text-xs mt-1" style={{ color: '#607898' }}>자가 가입 신청 시 이곳에 표시됩니다</p>
             </div>
           ) : (
@@ -633,7 +633,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-semibold" style={{ color: '#DCE8F4' }}>{u.full_name}</span>
+                          <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>{u.full_name}</span>
                           <span className="text-xs px-1.5 py-0.5 rounded"
                             style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)' }}>
                             승인 대기
@@ -679,7 +679,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
           <div className="glass-card"
             style={{ width: '100%', maxWidth: '560px', background: '#131C2C', border: '1px solid #1A2838', borderRadius: '12px', overflow: 'hidden' }}>
             <div style={{ padding: '20px 24px 16px', borderBottom: '1px solid #1A2838', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#DCE8F4' }}>새 계정 생성</h2>
+              <h2 style={{ fontSize: '16px', fontWeight: 700, color: '#CDD5E0' }}>새 계정 생성</h2>
               <button onClick={closeCreateModal}
                 style={{ background: 'none', border: 'none', color: '#607898', cursor: 'pointer', fontSize: '20px', lineHeight: 1 }}>
                 ×

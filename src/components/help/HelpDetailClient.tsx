@@ -199,11 +199,11 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               </span>
             </div>
 
-            <h1 className="text-xl font-bold mb-2" style={{ color: '#DCE8F4' }}>{help.title}</h1>
+            <h1 className="text-xl font-bold mb-2" style={{ color: '#CDD5E0' }}>{help.title}</h1>
 
             {(help.target_name || help.target_org) && (
               <p className="text-sm mb-3" style={{ color: '#8AAAC8' }}>
-                📍 대상: <span style={{ color: '#DCE8F4' }}>{help.target_name}</span>
+                📍 대상: <span style={{ color: '#CDD5E0' }}>{help.target_name}</span>
                 {help.target_org && <span> ({help.target_org})</span>}
               </p>
             )}
@@ -276,7 +276,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
                     </div>
                   )}
 
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#DCE8F4' }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#CDD5E0' }}>
                     {resp.body}
                   </p>
 
@@ -360,7 +360,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
       {/* 응답 작성 */}
       {help.status === 'open' && !isRequester && (
         <div className="glass-card p-5" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: '#DCE8F4' }}>
+          <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
             💡 응답하기
             <span className="text-xs ml-2 font-normal" style={{ color: '#607898' }}>
               채택 시 {help.reward_points}pt + 작성만 해도 1pt
@@ -375,7 +375,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               width: '100%',
               background: '#182035',
               border: '1px solid #1A2838',
-              color: '#DCE8F4',
+              color: '#CDD5E0',
               borderRadius: '8px',
               padding: '10px 12px',
               fontSize: '14px',

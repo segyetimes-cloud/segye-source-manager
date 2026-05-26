@@ -72,7 +72,7 @@ export default function DeviceGuard() {
     >
       <span style={{ fontSize: '22px', flexShrink: 0, marginTop: '1px' }}>🔔</span>
       <div>
-        <p style={{ fontSize: '13px', fontWeight: 700, color: '#DCE8F4', margin: '0 0 4px' }}>
+        <p style={{ fontSize: '13px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 4px' }}>
           새 기기에서 접속
         </p>
         <p style={{ fontSize: '12px', color: '#8AAAC8', margin: 0, lineHeight: 1.5 }}>

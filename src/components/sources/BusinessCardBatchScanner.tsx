@@ -587,7 +587,7 @@ export default function BusinessCardBatchScanner() {
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
             marginBottom: '10px',
           }}>
-            <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>
+            <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>
               📋 분석 대기 — {pendingCount}장
             </p>
             <button
@@ -675,7 +675,7 @@ export default function BusinessCardBatchScanner() {
             marginBottom: '12px', flexWrap: 'wrap', gap: '8px',
           }}>
             <div>
-              <p style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4', margin: 0 }}>
+              <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', margin: 0 }}>
                 📝 추출 결과 확인 · 수정
               </p>
               {checkedCount > 0 && (
@@ -828,7 +828,7 @@ function ResultCard({
 
         {/* 요약 정보 */}
         <div style={{ flex: 1, minWidth: 0 }}>
-          <p style={{ fontSize: '14px', fontWeight: 700, color: '#DCE8F4', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <p style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {d.full_name || <span style={{ color: '#C04040' }}>이름 없음 ← 필수 입력</span>}
           </p>
           <p style={{ fontSize: '12px', color: '#8AAAC8', margin: '2px 0 0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -863,7 +863,7 @@ function ResultCard({
                 width: '100%', padding: '6px 9px', fontSize: '12px',
                 background: '#182035',
                 border: `1px solid ${REQUIRED_FIELDS.includes(field) && !d[field] ? 'rgba(192,64,64,0.5)' : '#1A2838'}`,
-                borderRadius: '6px', color: '#DCE8F4', outline: 'none',
+                borderRadius: '6px', color: '#CDD5E0', outline: 'none',
               }}
             />
           </div>

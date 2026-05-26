@@ -48,7 +48,7 @@ export default async function NewSourcePage({
     <div className="max-w-5xl mx-auto space-y-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
-          <h1 className="text-2xl font-bold" style={{ color: '#DCE8F4' }}>새 취재원 등록</h1>
+          <h1 className="text-2xl font-bold" style={{ color: '#CDD5E0' }}>새 취재원 등록</h1>
           <p className="text-sm mt-1" style={{ color: '#8AAAC8' }}>
             항목을 많이 채울수록 더 많은 포인트를 획득할 수 있습니다
           </p>
@@ -87,7 +87,7 @@ export default async function NewSourcePage({
       {helpContext && (
         <div className="glass-card p-4" style={{ border: '1px solid rgba(0,204,102,0.2)', background: 'rgba(0,204,102,0.03)' }}>
           <p className="text-xs font-semibold mb-2" style={{ color: '#3D9E6A' }}>📋 도움 게시판에서 가져온 정보</p>
-          <p className="text-sm font-medium mb-1" style={{ color: '#DCE8F4' }}>{helpContext.title}</p>
+          <p className="text-sm font-medium mb-1" style={{ color: '#CDD5E0' }}>{helpContext.title}</p>
           {helpContext.target_name && (
             <p className="text-xs" style={{ color: '#8AAAC8' }}>대상: {helpContext.target_name} {helpContext.target_org && `(${helpContext.target_org})`}</p>
           )}

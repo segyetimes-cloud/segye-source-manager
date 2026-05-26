@@ -137,7 +137,7 @@ export default function NotificationBell() {
             borderBottom: '1px solid #1A2838',
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           }}>
-            <span style={{ fontSize: '13px', fontWeight: 600, color: '#DCE8F4' }}>알림</span>
+            <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>알림</span>
             {notifications.some(n => !n.is_read) && (
               <button
                 type="button"
@@ -180,7 +180,7 @@ export default function NotificationBell() {
                       {TYPE_ICONS[n.type] ?? '🔔'}
                     </span>
                     <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontSize: '13px', color: '#DCE8F4', fontWeight: n.is_read ? 400 : 600, margin: 0, lineHeight: 1.4 }}>
+                      <p style={{ fontSize: '13px', color: '#CDD5E0', fontWeight: n.is_read ? 400 : 600, margin: 0, lineHeight: 1.4 }}>
                         {n.title}
                       </p>
                       {n.body && (

@@ -174,7 +174,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
             />
           </div>
           <div>
-            <p className="text-sm font-bold leading-tight" style={{ color: '#DCE8F4' }}>세계일보</p>
+            <p className="text-sm font-bold leading-tight" style={{ color: '#CDD5E0' }}>세계일보</p>
             <p className="text-xs leading-tight" style={{ color: '#5A7099' }}>취재원 관리</p>
           </div>
         </div>
@@ -183,7 +183,7 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
       {/* 내 정보 */}
       <div className="px-3 py-2 mx-3 mt-2 rounded-lg"
         style={{ background: '#131C2C', border: '1px solid #1A2838' }}>
-        <p className="text-sm font-semibold truncate" style={{ color: '#DCE8F4' }}>
+        <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
           {profile.full_name || profile.email}
         </p>
         <div className="flex items-center gap-2 mt-1">

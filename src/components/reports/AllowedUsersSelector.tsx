@@ -54,7 +54,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
           placeholder="기자 이름 또는 부서 검색"
           style={{
             background: '#182035', border: '1px solid #1A2838',
-            color: '#DCE8F4', borderRadius: '8px',
+            color: '#CDD5E0', borderRadius: '8px',
             padding: '9px 12px', fontSize: '14px', width: '100%',
           }}
         />
@@ -74,7 +74,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
                   display: 'flex', alignItems: 'center', gap: '10px',
                   width: '100%', textAlign: 'left',
                   padding: '9px 12px', background: 'none', border: 'none',
-                  cursor: 'pointer', color: '#DCE8F4', fontSize: '13px',
+                  cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
                   borderBottom: '1px solid #1A2838',
                 }}
                 onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
