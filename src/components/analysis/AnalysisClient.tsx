@@ -37,14 +37,11 @@ const RELATION_LABELS: Record<string, string> = {
 // ── 서브그룹 정렬 헬퍼 ────────────────────────────────────────────────────────
 function sortedSubGroups(map: Map<string, any[]>): [string, any[]][] {
   return [...map.entries()].sort(([aKey, aItems], [bKey, bItems]) => {
-    // 숫자 키면 숫자 정렬 (17회, 34회, 87학번 등)
     const numA = parseInt(aKey)
     const numB = parseInt(bKey)
     if (!isNaN(numA) && !isNaN(numB)) return numA - numB
-    // 미입력은 마지막
     if (aKey.includes('미입력')) return 1
     if (bKey.includes('미입력')) return -1
-    // 나머지는 count 내림차순
     return bItems.length - aItems.length
   })
 }
@@ -54,17 +51,42 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
+  // null = 아직 검색 안 함, [] = 검색했으나 0건, [...] = 검색 결과
+  const [searchResults, setSearchResults] = useState<SourceListItem[] | null>(null)
 
+  // 라이브 자동완성용 (드롭다운)
   const filteredSources = useMemo(() => {
     if (!searchQuery.trim()) return []
     const q = searchQuery.trim().toLowerCase()
     return allSources
       .filter(s => s.full_name.toLowerCase().includes(q) || (s.current_organization ?? '').toLowerCase().includes(q))
-      .slice(0, 10)
+      .slice(0, 8)
   }, [searchQuery, allSources])
 
+  // 검색 실행 (버튼 클릭 또는 Enter)
+  function doSearch() {
+    const q = searchQuery.trim().toLowerCase()
+    if (!q) return
+    setShowDropdown(false)
+
+    const results = allSources.filter(s =>
+      s.full_name.toLowerCase().includes(q) ||
+      (s.current_organization ?? '').toLowerCase().includes(q)
+    )
+
+    if (results.length === 1) {
+      // 단 1명이면 바로 이동
+      router.push(`/analysis?id=${results[0].id}`)
+      setSearchResults(null)
+    } else {
+      setSearchResults(results)
+    }
+  }
+
   function selectSource(id: string) {
-    setSearchQuery(''); setShowDropdown(false)
+    setSearchQuery('')
+    setShowDropdown(false)
+    setSearchResults(null)
     router.push(`/analysis?id=${id}`)
   }
 
@@ -85,7 +107,8 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
 
       {/* 검색창 */}
       <div style={{ padding: '20px 32px 0' }}>
-        <div style={{ position: 'relative', maxWidth: '480px' }}>
+        <div style={{ position: 'relative', maxWidth: '560px' }}>
+          {/* 입력 + 검색 버튼 */}
           <div style={{ display: 'flex', gap: '8px' }}>
             <div style={{ position: 'relative', flex: 1 }}>
               <span style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#607898' }}>
@@ -97,7 +120,12 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
               <input
                 type="text"
                 value={searchQuery}
-                onChange={e => { setSearchQuery(e.target.value); setShowDropdown(true) }}
+                onChange={e => {
+                  setSearchQuery(e.target.value)
+                  setShowDropdown(true)
+                  setSearchResults(null) // 새로 타이핑하면 이전 결과 초기화
+                }}
+                onKeyDown={e => { if (e.key === 'Enter') doSearch() }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
                 placeholder="이름 또는 소속으로 검색..."
@@ -110,11 +138,27 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
                 }}
               />
             </div>
+            {/* 검색 버튼 */}
+            <button
+              type="button"
+              onClick={doSearch}
+              style={{
+                padding: '0 20px', borderRadius: '8px', flexShrink: 0,
+                background: 'linear-gradient(135deg, #4A7CC0, #2A5CA0)',
+                border: 'none', color: 'white', fontSize: '13px',
+                fontWeight: 600, cursor: 'pointer', letterSpacing: '0.02em',
+              }}
+              onMouseEnter={e => (e.currentTarget.style.opacity = '0.85')}
+              onMouseLeave={e => (e.currentTarget.style.opacity = '1')}
+            >
+              검색
+            </button>
           </div>
 
-          {showDropdown && filteredSources.length > 0 && (
+          {/* 라이브 자동완성 드롭다운 (searchResults가 없을 때만 표시) */}
+          {showDropdown && filteredSources.length > 0 && !searchResults && (
             <div style={{
-              position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+              position: 'absolute', top: '100%', left: 0, right: '80px', zIndex: 50,
               marginTop: '4px', background: '#131C2C',
               border: '1px solid #1A2838', borderRadius: '8px',
               boxShadow: '0 8px 32px rgba(0,0,0,0.5)', overflow: 'hidden',
@@ -125,9 +169,9 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
                   onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.08)')}
                   onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                   <div style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>{s.full_name}</div>
-                  {s.current_organization && (
+                  {(s.current_organization || s.current_position) && (
                     <div style={{ fontSize: '12px', color: '#607898', marginTop: '2px' }}>
-                      {s.current_organization}{s.current_position ? ` · ${s.current_position}` : ''}
+                      {[s.current_organization, s.current_position].filter(Boolean).join(' · ')}
                     </div>
                   )}
                 </button>
@@ -135,10 +179,72 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
             </div>
           )}
         </div>
+
+        {/* ── 검색 결과 선택 패널 (Enter / 버튼 클릭 후) ── */}
+        {searchResults !== null && (
+          <div style={{ marginTop: '14px', maxWidth: '560px' }}>
+            {searchResults.length === 0 ? (
+              <div style={{ padding: '20px', background: '#131C2C', border: '1px solid #1A2838', borderRadius: '10px', textAlign: 'center' }}>
+                <p style={{ color: '#607898', fontSize: '13px', margin: 0 }}>
+                  &ldquo;{searchQuery}&rdquo;에 해당하는 취재원이 없습니다
+                </p>
+              </div>
+            ) : searchResults.length === 1 ? null /* 1명이면 바로 이동하므로 표시 안 함 */ : (
+              <div style={{ background: '#131C2C', border: '1px solid #1A2838', borderRadius: '10px', overflow: 'hidden' }}>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid #1A2838', background: 'rgba(30,144,255,0.06)' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#8AAAC8' }}>
+                    <span style={{ color: '#4A7CC0', fontWeight: 700 }}>{searchResults.length}명</span>이 검색되었습니다 — 분석할 취재원을 선택하세요
+                  </p>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {searchResults.map((s, i) => (
+                    <button
+                      key={s.id}
+                      type="button"
+                      onClick={() => selectSource(s.id)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '11px 16px', background: 'none', border: 'none',
+                        borderBottom: i < searchResults.length - 1 ? '1px solid #1A2838' : 'none',
+                        cursor: 'pointer', textAlign: 'left', width: '100%',
+                        transition: 'background 0.15s',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.07)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    >
+                      {/* 아바타 */}
+                      <div style={{
+                        width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 700,
+                      }}>
+                        {s.full_name[0]}
+                      </div>
+                      {/* 이름 + 소속 */}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>{s.full_name}</div>
+                        {(s.current_organization || s.current_position) && (
+                          <div style={{ fontSize: '12px', color: '#607898', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {[s.current_organization, s.current_position].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
+                      </div>
+                      {/* 화살표 */}
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                        <path d="M5 2.5l4.5 4.5L5 11.5" stroke="#4A7CC0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 빈 상태 */}
-      {!analysisData && (
+      {!analysisData && !searchResults && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 32px', gap: '12px' }}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <circle cx="20" cy="20" r="13" stroke="#2A3848" strokeWidth="2.5"/>
@@ -279,7 +385,7 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
                         </span>
                       )}
                       {rel.relation_label && (
-                        <span style={{ fontSize: '11px', color: '#607898', marginLeft: 'auto', fontStyle: 'italic' }}>"{rel.relation_label}"</span>
+                        <span style={{ fontSize: '11px', color: '#607898', marginLeft: 'auto', fontStyle: 'italic' }}>&ldquo;{rel.relation_label}&rdquo;</span>
                       )}
                     </div>
                   )
@@ -401,7 +507,6 @@ function DrillGroup({ label, topKey, items, getSubKey, renderItem }: {
     })
   }, [])
 
-  // 서브그룹이 1개뿐이면 단순 목록으로 표시
   const isSingleGroup = subGroups.length <= 1
 
   return (
@@ -423,7 +528,6 @@ function DrillGroup({ label, topKey, items, getSubKey, renderItem }: {
         <div style={{ marginTop: '6px', paddingLeft: '100px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
           {subGroups.map(([subKey, subItems]) => (
             <div key={subKey}>
-              {/* 서브그룹 헤더 */}
               <button
                 type="button"
                 onClick={() => toggleSub(subKey)}
@@ -434,7 +538,6 @@ function DrillGroup({ label, topKey, items, getSubKey, renderItem }: {
                   {expandedSubs.has(subKey) ? '▲' : '▼'}
                 </span>
               </button>
-              {/* 서브그룹 인물 목록 */}
               {expandedSubs.has(subKey) && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', marginLeft: '12px', marginBottom: '6px' }}>
                   {subItems.map(renderItem)}

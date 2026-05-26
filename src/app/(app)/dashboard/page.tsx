@@ -16,7 +16,6 @@ export default async function DashboardPage() {
   type FollowupRow = { id: string; next_followup_at: string; summary: string | null; source_id: string; sources: { id: string; full_name: string; current_organization: string | null } | null }
 
   const [
-    { count: mySourceCount },
     { count: sharedSourceCount },
     { data: myPointsRaw },
     { data: leaderboardRaw },
@@ -28,8 +27,6 @@ export default async function DashboardPage() {
     { data: followupRaw },
     { data: recentViewLogsRaw },
   ] = await Promise.all([
-    supabase.from('sources').select('*', { count: 'exact', head: true })
-      .eq('owner_id', user.id).eq('is_deleted', false),
     supabase.from('sources').select('*', { count: 'exact', head: true })
       .eq('visibility', 'shared').eq('is_deleted', false),
     supabase.from('user_points_summary').select('*').eq('user_id', user.id).single(),
@@ -212,10 +209,9 @@ export default async function DashboardPage() {
         </Link>
       </div>
 
-      {/* 통계 카드 4개 */}
+      {/* 통계 카드 3개 */}
       <div className="dashboard-stats-grid">
         {[
-          { label: '내 취재원', value: mySourceCount ?? 0, unit: '명', color: '#4A7CC0', icon: '👤' },
           { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#3A90A8', icon: '🌐' },
           { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#7E6E48', icon: '⭐' },
           { label: '내 정보보고', value: myReports.length, unit: '건', color: '#3D9E6A', icon: '📋' },
