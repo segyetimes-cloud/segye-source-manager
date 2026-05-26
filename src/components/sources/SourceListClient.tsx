@@ -496,6 +496,32 @@ export default function SourceListClient({
                     </div>
                   </div>
                 </a>
+
+                {/* 상세 열람 버튼 */}
+                <a
+                  href={`/analysis?id=${source.id}`}
+                  onClick={e => e.stopPropagation()}
+                  title="인맥 분석 보기"
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    flexShrink: 0, width: 36, textDecoration: 'none',
+                    color: '#607898', fontSize: 13, borderLeft: '1px solid #1A2838',
+                    transition: 'color 0.15s, background 0.15s',
+                  }}
+                  onMouseEnter={e => {
+                    (e.currentTarget as HTMLElement).style.color = '#4A7CC0'
+                    ;(e.currentTarget as HTMLElement).style.background = 'rgba(30,144,255,0.07)'
+                  }}
+                  onMouseLeave={e => {
+                    (e.currentTarget as HTMLElement).style.color = '#607898'
+                    ;(e.currentTarget as HTMLElement).style.background = 'transparent'
+                  }}>
+                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                    <circle cx="6" cy="6" r="4" stroke="currentColor" strokeWidth="1.4"/>
+                    <path d="M9.5 9.5L13 13" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round"/>
+                    <path d="M4 6h4M6 4v4" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
+                  </svg>
+                </a>
               </div>
             )
           })}
