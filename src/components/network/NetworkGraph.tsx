@@ -219,6 +219,26 @@ export default function NetworkGraph({ nodes, links }: Props) {
     return () => window.removeEventListener('resize', onResize)
   }, [])
 
+  // ── 마운트 시 내 네트워크 자동 포커스 ─────────────────────────────────────────
+  // 페이지를 열면 로그인한 사용자의 취재원 + 1촌 인맥만 먼저 표시.
+  // 이후 [인물 검색]으로 다른 취재원 중심 보기로 전환 가능.
+  const mountFocusApplied = useRef(false)
+  useEffect(() => {
+    if (mountFocusApplied.current) return
+    mountFocusApplied.current = true
+    const ownerIds = nodes.filter(n => n.isOwner).map(n => n.id)
+    if (ownerIds.length === 0) return   // 관리자 등 isOwner 없는 경우 → 기본 뷰 유지
+    const focusSet = new Set<string>(ownerIds)
+    for (const id of ownerIds) {
+      const nbrs = adjacencyMap.get(id)
+      if (nbrs) for (const nid of nbrs) focusSet.add(nid)
+    }
+    focusMatchIdsRef.current = focusSet
+    setFocusFilterIds(focusSet)
+    setFocusModeLabel('내 네트워크')
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   // ── Container sizing ──────────────────────────────────────────────────────
   useEffect(() => {
     const el = containerRef.current
@@ -597,6 +617,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Focus helpers ─────────────────────────────────────────────────────────
   const applyFocus = useCallback((node: Node) => {
+    // 검색한 인물이 현재 뷰(mine/org)에 없을 수 있으므로 전체 데이터로 전환 후 포커스
+    setViewMode('all')
     const focusSet = new Set<string>([node.id])
     const n1 = adjacencyMap.get(node.id)
     if (n1) for (const id of n1) {
@@ -1183,20 +1205,41 @@ export default function NetworkGraph({ nodes, links }: Props) {
                     선택 시 해당 네트워크만 표시
                   </p>
                   <div style={{ position: 'relative' }}>
-                    <span style={{ position: 'absolute', left: '9px', top: '50%', transform: 'translateY(-50%)', fontSize: '11px', color: '#485870', pointerEvents: 'none' }}>📍</span>
-                    <input
-                      type="text"
-                      value={focusSearch}
-                      onChange={e => setFocusSearch(e.target.value)}
-                      placeholder="인물 포커스..."
-                      style={{
-                        width: '100%', paddingLeft: '26px', paddingRight: '8px',
-                        paddingTop: '6px', paddingBottom: '6px',
-                        background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
-                        borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
-                        outline: 'none', boxSizing: 'border-box',
-                      }}
-                    />
+                    {/* 검색 입력 + 버튼 */}
+                    <div style={{ display: 'flex', gap: '5px' }}>
+                      <input
+                        type="text"
+                        value={focusSearch}
+                        onChange={e => setFocusSearch(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && focusResults.length > 0) applyFocus(focusResults[0])
+                        }}
+                        placeholder="취재원 이름 검색..."
+                        style={{
+                          flex: 1, paddingLeft: '10px', paddingRight: '8px',
+                          paddingTop: '6px', paddingBottom: '6px',
+                          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
+                          borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
+                          outline: 'none', boxSizing: 'border-box',
+                        }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => { if (focusResults.length > 0) applyFocus(focusResults[0]) }}
+                        disabled={!focusSearch.trim()}
+                        style={{
+                          padding: '0 10px', borderRadius: '6px', fontSize: '11px',
+                          cursor: focusSearch.trim() ? 'pointer' : 'not-allowed',
+                          background: focusSearch.trim() ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.04)',
+                          color: focusSearch.trim() ? '#88B8E8' : '#3A4A5E',
+                          border: focusSearch.trim() ? '1px solid rgba(74,124,192,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                          whiteSpace: 'nowrap', flexShrink: 0,
+                          transition: 'all 0.15s',
+                        }}>
+                        검색
+                      </button>
+                    </div>
+                    {/* 자동완성 드롭다운 */}
                     {focusResults.length > 0 && (
                       <div style={{
                         position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
@@ -1219,6 +1262,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
                           </button>
                         ))}
                       </div>
+                    )}
+                    {/* 검색어 입력했는데 결과 없을 때 */}
+                    {focusSearch.trim().length >= 1 && focusResults.length === 0 && (
+                      <p style={{ fontSize: '10px', color: '#5A4A3A', marginTop: '4px' }}>
+                        일치하는 취재원이 없습니다
+                      </p>
                     )}
                   </div>
                 </div>
