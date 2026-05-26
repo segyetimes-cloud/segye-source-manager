@@ -1169,109 +1169,118 @@ export default function NetworkGraph({ nodes, links }: Props) {
             <div style={{ padding: '10px 14px' }}>
               <p style={sectionLabel}>중심 보기</p>
 
-              {focusModeLabel ? (
-                <div>
-                  <div style={{
-                    fontSize: '11px', color: '#5EC88A', fontWeight: 600,
-                    padding: '5px 8px', background: 'rgba(61,158,106,0.1)',
-                    border: '1px solid rgba(61,158,106,0.25)', borderRadius: '6px',
-                    marginBottom: '4px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                  }}>
-                    📍 {focusModeLabel}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+
+                {/* 검색창 — 항상 표시 (포커스 활성 여부 무관) */}
+                <div style={{ position: 'relative' }}>
+                  <div style={{ display: 'flex', gap: '5px' }}>
+                    <input
+                      type="text"
+                      value={focusSearch}
+                      onChange={e => setFocusSearch(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && focusResults.length > 0) applyFocus(focusResults[0])
+                      }}
+                      placeholder="취재원 이름 검색..."
+                      style={{
+                        flex: 1, paddingLeft: '10px', paddingRight: '8px',
+                        paddingTop: '7px', paddingBottom: '7px',
+                        background: 'rgba(255,255,255,0.07)', border: '1px solid rgba(255,255,255,0.14)',
+                        borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
+                        outline: 'none', boxSizing: 'border-box',
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { if (focusResults.length > 0) applyFocus(focusResults[0]) }}
+                      style={{
+                        padding: '0 11px', borderRadius: '6px', fontSize: '12px', fontWeight: 600,
+                        cursor: focusSearch.trim() ? 'pointer' : 'default',
+                        background: focusSearch.trim() && focusResults.length > 0
+                          ? 'rgba(74,124,192,0.35)'
+                          : focusSearch.trim()
+                            ? 'rgba(74,124,192,0.15)'
+                            : 'rgba(255,255,255,0.05)',
+                        color: focusSearch.trim() ? '#A8C8E8' : '#607898',
+                        border: focusSearch.trim() ? '1px solid rgba(74,124,192,0.5)' : '1px solid rgba(255,255,255,0.08)',
+                        whiteSpace: 'nowrap', flexShrink: 0,
+                        transition: 'all 0.15s',
+                      }}>
+                      검색
+                    </button>
                   </div>
-                  {focusNodeIds && (
-                    <p style={{ fontSize: '10px', color: '#3D9E6A', margin: '0 0 6px' }}>
-                      {visNodes.length}명 · {visLinks.length}쌍 연결 표시 중
+
+                  {/* 자동완성 드롭다운 */}
+                  {focusResults.length > 0 && (
+                    <div style={{
+                      position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
+                      background: 'rgba(8,16,30,0.98)', border: '1px solid rgba(255,255,255,0.14)',
+                      borderRadius: '6px', marginTop: '3px', overflow: 'hidden',
+                      boxShadow: '0 4px 16px rgba(0,0,0,0.5)',
+                    }}>
+                      {focusResults.map(n => (
+                        <button
+                          key={n.id} type="button" onClick={() => applyFocus(n)}
+                          style={{
+                            display: 'block', width: '100%', textAlign: 'left',
+                            padding: '8px 10px', background: 'none', border: 'none',
+                            cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)',
+                          }}
+                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.12)')}
+                          onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                        >
+                          <div style={{ fontSize: '13px', color: '#CDD5E0', fontWeight: 600 }}>{n.label}</div>
+                          {n.org && <div style={{ fontSize: '10px', color: '#8AAAC8', marginTop: '1px' }}>{n.org}</div>}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 검색어 있는데 결과 없을 때 */}
+                  {focusSearch.trim().length >= 1 && focusResults.length === 0 && (
+                    <p style={{ fontSize: '10px', color: '#806050', marginTop: '4px' }}>
+                      일치하는 취재원이 없습니다
                     </p>
                   )}
-                  <button
-                    type="button" onClick={clearFocus}
-                    style={{ fontSize: '10px', color: '#7A8A9E', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
-                    포커스 해제
-                  </button>
                 </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                  <button
-                    type="button" onClick={applyMyFocus}
-                    style={{
-                      padding: '5px 0', borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
-                      background: 'rgba(56,200,184,0.1)', color: '#38C8B8',
-                      border: '1px solid rgba(56,200,184,0.3)',
+
+                {/* 나를 중심으로 버튼 */}
+                <button
+                  type="button" onClick={applyMyFocus}
+                  style={{
+                    padding: '5px 0', borderRadius: '6px', fontSize: '11px', cursor: 'pointer',
+                    background: 'rgba(56,200,184,0.1)', color: '#38C8B8',
+                    border: '1px solid rgba(56,200,184,0.3)',
+                  }}>
+                  🙋 나를 중심으로
+                </button>
+
+                {/* 현재 포커스 활성 배지 */}
+                {focusModeLabel && (
+                  <div style={{
+                    padding: '5px 8px', borderRadius: '6px',
+                    background: 'rgba(61,158,106,0.1)', border: '1px solid rgba(61,158,106,0.25)',
+                  }}>
+                    <div style={{
+                      fontSize: '11px', color: '#5EC88A', fontWeight: 600,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                     }}>
-                    나를 중심으로
-                  </button>
-                  <p style={{ fontSize: '10px', color: '#3A4A5E', marginTop: '3px', textAlign: 'center' }}>
-                    선택 시 해당 네트워크만 표시
-                  </p>
-                  <div style={{ position: 'relative' }}>
-                    {/* 검색 입력 + 버튼 */}
-                    <div style={{ display: 'flex', gap: '5px' }}>
-                      <input
-                        type="text"
-                        value={focusSearch}
-                        onChange={e => setFocusSearch(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && focusResults.length > 0) applyFocus(focusResults[0])
-                        }}
-                        placeholder="취재원 이름 검색..."
-                        style={{
-                          flex: 1, paddingLeft: '10px', paddingRight: '8px',
-                          paddingTop: '6px', paddingBottom: '6px',
-                          background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.10)',
-                          borderRadius: '6px', fontSize: '12px', color: '#C8D8E8',
-                          outline: 'none', boxSizing: 'border-box',
-                        }}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => { if (focusResults.length > 0) applyFocus(focusResults[0]) }}
-                        disabled={!focusSearch.trim()}
-                        style={{
-                          padding: '0 10px', borderRadius: '6px', fontSize: '11px',
-                          cursor: focusSearch.trim() ? 'pointer' : 'not-allowed',
-                          background: focusSearch.trim() ? 'rgba(74,124,192,0.25)' : 'rgba(255,255,255,0.04)',
-                          color: focusSearch.trim() ? '#88B8E8' : '#3A4A5E',
-                          border: focusSearch.trim() ? '1px solid rgba(74,124,192,0.5)' : '1px solid rgba(255,255,255,0.06)',
-                          whiteSpace: 'nowrap', flexShrink: 0,
-                          transition: 'all 0.15s',
-                        }}>
-                        검색
-                      </button>
+                      📍 {focusModeLabel}
                     </div>
-                    {/* 자동완성 드롭다운 */}
-                    {focusResults.length > 0 && (
-                      <div style={{
-                        position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 50,
-                        background: 'rgba(8,16,30,0.98)', border: '1px solid rgba(255,255,255,0.12)',
-                        borderRadius: '6px', marginTop: '3px', overflow: 'hidden',
-                      }}>
-                        {focusResults.map(n => (
-                          <button
-                            key={n.id} type="button" onClick={() => applyFocus(n)}
-                            style={{
-                              display: 'block', width: '100%', textAlign: 'left',
-                              padding: '6px 10px', background: 'none', border: 'none',
-                              cursor: 'pointer', borderBottom: '1px solid rgba(255,255,255,0.06)',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(74,124,192,0.08)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'none')}
-                          >
-                            <div style={{ fontSize: '12px', color: '#C8D8E8', fontWeight: 500 }}>{n.label}</div>
-                            {n.org && <div style={{ fontSize: '10px', color: '#5A7090' }}>{n.org}</div>}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                    {/* 검색어 입력했는데 결과 없을 때 */}
-                    {focusSearch.trim().length >= 1 && focusResults.length === 0 && (
-                      <p style={{ fontSize: '10px', color: '#5A4A3A', marginTop: '4px' }}>
-                        일치하는 취재원이 없습니다
+                    {focusNodeIds && (
+                      <p style={{ fontSize: '10px', color: '#3D9E6A', margin: '2px 0 4px' }}>
+                        {visNodes.length}명 · {visLinks.length}쌍 표시 중
                       </p>
                     )}
+                    <button
+                      type="button" onClick={clearFocus}
+                      style={{ fontSize: '10px', color: '#607898', background: 'none', border: 'none', cursor: 'pointer', padding: 0, textDecoration: 'underline' }}>
+                      포커스 해제 (전체 보기)
+                    </button>
                   </div>
-                </div>
-              )}
+                )}
+
+              </div>
             </div>
 
             <Divider />
