@@ -5,8 +5,13 @@ import { createClient } from '@/lib/supabase/server'
 import { can, CAN_VIEW_SENSITIVE_SOURCE } from '@/lib/permissions'
 import AnalysisClient from '@/components/analysis/AnalysisClient'
 
-interface SearchParams {
-  id?: string
+interface SearchParams { id?: string }
+
+/** "사법고시 17회" → "사법고시" / "세계일보 13기" → "세계일보" / "수능" → null */
+function extractExamType(batch: string): string | null {
+  const parts = batch.trim().split(/\s+/)
+  if (parts.length < 2) return null
+  return parts.slice(0, -1).join(' ')
 }
 
 export default async function AnalysisPage({
@@ -22,13 +27,13 @@ export default async function AnalysisPage({
 
   const { data: profileRaw } = await supabase
     .from('profiles')
-    .select('role, full_name, department')
+    .select('role')
     .eq('id', user.id)
     .single()
   const userRole = (profileRaw as any)?.role ?? 'reporter'
   const canSeeSensitive = can(userRole, CAN_VIEW_SENSITIVE_SOURCE)
 
-  // 검색용 경량 목록 (전체 취재원 이름·소속)
+  // 검색용 경량 목록
   let listQuery = supabase
     .from('sources')
     .select('id, full_name, current_organization, current_position, owner_id')
@@ -41,23 +46,23 @@ export default async function AnalysisPage({
 
   const { data: sourceList } = await listQuery
   const allSources = (sourceList ?? []) as {
-    id: string
-    full_name: string
-    current_organization: string | null
-    current_position: string | null
-    owner_id: string
+    id: string; full_name: string
+    current_organization: string | null; current_position: string | null; owner_id: string
   }[]
 
-  // 선택된 취재원의 상세 분석 데이터
   let analysisData = null
+
   if (selectedId) {
     const [srcRes, relsRes] = await Promise.all([
       supabase
         .from('sources')
         .select(`
           id, full_name, current_organization, current_position,
-          phone_primary, email_primary, university, university_major,
-          high_school, exam_batch, hometown_province, hometown_city,
+          phone_primary, email_primary,
+          university, university_major, university_year,
+          high_school, high_school_year,
+          exam_batch,
+          hometown_province, hometown_city,
           tags, specialty_areas, visibility, sensitivity,
           owner_id, created_at, updated_at,
           profiles!owner_id(full_name, department, role)
@@ -66,7 +71,6 @@ export default async function AnalysisPage({
         .eq('is_deleted', false)
         .maybeSingle(),
 
-      // 이 취재원이 포함된 모든 관계 (source_a 또는 source_b)
       supabase
         .from('source_relationships')
         .select(`
@@ -80,67 +84,61 @@ export default async function AnalysisPage({
 
     const src = srcRes.data as any
     if (src) {
-      // 같은 소속 동료
+      const visFilter = `visibility.eq.shared,owner_id.eq.${user.id}`
+
+      // 소속 동료
       const { data: sameOrgRaw } = src.current_organization
-        ? await supabase
-            .from('sources')
+        ? await supabase.from('sources')
             .select('id, full_name, current_position, owner_id')
             .eq('current_organization', src.current_organization)
-            .eq('is_deleted', false)
-            .neq('id', selectedId)
-            .or(`visibility.eq.shared,owner_id.eq.${user.id}`)
-            .limit(30)
+            .eq('is_deleted', false).neq('id', selectedId)
+            .or(visFilter).limit(50)
         : { data: [] }
 
-      // 같은 대학 동문
+      // 대학 동문 (학과·학번 포함)
       const { data: sameUniRaw } = src.university
-        ? await supabase
-            .from('sources')
-            .select('id, full_name, current_organization, current_position, owner_id')
+        ? await supabase.from('sources')
+            .select('id, full_name, current_organization, current_position, university_major, university_year, owner_id')
             .eq('university', src.university)
-            .eq('is_deleted', false)
-            .neq('id', selectedId)
-            .or(`visibility.eq.shared,owner_id.eq.${user.id}`)
-            .limit(30)
+            .eq('is_deleted', false).neq('id', selectedId)
+            .or(visFilter).limit(60)
         : { data: [] }
 
-      // 같은 고교 동문
+      // 고교 동문 (학번 포함)
       const { data: sameHsRaw } = src.high_school
-        ? await supabase
-            .from('sources')
-            .select('id, full_name, current_organization, current_position, owner_id')
+        ? await supabase.from('sources')
+            .select('id, full_name, current_organization, current_position, high_school_year, owner_id')
             .eq('high_school', src.high_school)
-            .eq('is_deleted', false)
-            .neq('id', selectedId)
-            .or(`visibility.eq.shared,owner_id.eq.${user.id}`)
-            .limit(30)
+            .eq('is_deleted', false).neq('id', selectedId)
+            .or(visFilter).limit(60)
         : { data: [] }
 
-      // 같은 시험·기수
+      // 시험·기수: 같은 시험 유형 전체 (예: "사법고시" 전체, 그 안에서 기수별 분류)
+      const examType = src.exam_batch ? extractExamType(src.exam_batch) : null
       const { data: sameExamRaw } = src.exam_batch
-        ? await supabase
-            .from('sources')
-            .select('id, full_name, current_organization, current_position, owner_id')
-            .eq('exam_batch', src.exam_batch)
-            .eq('is_deleted', false)
-            .neq('id', selectedId)
-            .or(`visibility.eq.shared,owner_id.eq.${user.id}`)
-            .limit(30)
+        ? examType
+          ? await supabase.from('sources')
+              .select('id, full_name, current_organization, current_position, exam_batch, owner_id')
+              .ilike('exam_batch', `${examType} %`)
+              .eq('is_deleted', false).neq('id', selectedId)
+              .or(visFilter).limit(60)
+          : await supabase.from('sources')
+              .select('id, full_name, current_organization, current_position, exam_batch, owner_id')
+              .eq('exam_batch', src.exam_batch)
+              .eq('is_deleted', false).neq('id', selectedId)
+              .or(visFilter).limit(60)
         : { data: [] }
 
-      // 같은 출신 지역
+      // 출신 지역 (시/군/구 포함)
       const { data: sameTownRaw } = src.hometown_province
-        ? await supabase
-            .from('sources')
-            .select('id, full_name, current_organization, current_position, owner_id')
+        ? await supabase.from('sources')
+            .select('id, full_name, current_organization, current_position, hometown_city, owner_id')
             .eq('hometown_province', src.hometown_province)
-            .eq('is_deleted', false)
-            .neq('id', selectedId)
-            .or(`visibility.eq.shared,owner_id.eq.${user.id}`)
-            .limit(30)
+            .eq('is_deleted', false).neq('id', selectedId)
+            .or(visFilter).limit(60)
         : { data: [] }
 
-      // 이 취재원을 등록한 기자 목록 (중복 등록 확인)
+      // 등록 기자
       const { data: registrantsRaw } = await supabase
         .from('sources')
         .select('owner_id, visibility, profiles!owner_id(full_name, department, role)')
@@ -156,6 +154,7 @@ export default async function AnalysisPage({
         sameExam: (sameExamRaw ?? []) as any[],
         sameTown: (sameTownRaw ?? []) as any[],
         registrants: (registrantsRaw ?? []) as any[],
+        examType,
       }
     }
   }

@@ -39,7 +39,7 @@ const navItems = [
         <path d="M5 7h4M7 5v4" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round"/>
       </svg>
     ),
-    label: '취재원 상세 열람',
+    label: '취재원 관계 분석',
   },
   {
     href: '/reports',
