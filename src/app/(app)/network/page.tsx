@@ -766,20 +766,7 @@ export default async function NetworkPage() {
   }
   const visibleLinks = [...linkMergeMap.values()]
 
-  // ── 그래프 표시 상한 ────────────────────────────────────────────────────────
-  // 노드가 너무 많으면 force-directed layout이 느려지고 가독성 저하
-  // 연결 강도 상위 MAX_GRAPH_NODES명만 표시 → 핵심 취재원망 집중 표현
-  const MAX_GRAPH_NODES = 150
-  const graphNodes = nodes.length > MAX_GRAPH_NODES
-    ? [...nodes].sort((a, b) => b.degree - a.degree).slice(0, MAX_GRAPH_NODES)
-    : nodes
-  const graphNodeIds = new Set(graphNodes.map(n => n.id))
-  const graphLinks = nodes.length > MAX_GRAPH_NODES
-    ? visibleLinks.filter(l => graphNodeIds.has(l.source) && graphNodeIds.has(l.target))
-    : visibleLinks
-  const isTruncated = nodes.length > MAX_GRAPH_NODES
-
-  const linkTypeCounts = graphLinks.reduce((acc, l) => {
+  const linkTypeCounts = visibleLinks.reduce((acc, l) => {
     for (const t of l.types) acc[t] = (acc[t] ?? 0) + 1
     return acc
   }, {} as Record<string, number>)
@@ -791,7 +778,7 @@ export default async function NetworkPage() {
           <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>🕸️ 관계망 그래프</h1>
           {/* 통계: 모바일에서는 한 줄 요약만 */}
           <p className="text-xs mt-0.5" style={{ color: '#485870' }}>
-            {isTruncated ? `${nodes.length}명 중 상위 ${graphNodes.length}명` : `${graphNodes.length}명`} · {graphLinks.length}쌍 연결
+            {nodes.length}명 · {visibleLinks.length}쌍 연결
           </p>
         </div>
         {/* PC에서만 상세 통계 표시 */}
@@ -816,19 +803,8 @@ export default async function NetworkPage() {
         </div>
       )}
 
-      {/* 그래프 노드 수 상한 초과 안내 */}
-      {isTruncated && (
-        <div style={{
-          padding: '8px 14px', borderRadius: '8px', fontSize: '12px',
-          background: 'rgba(74,124,192,0.08)', border: '1px solid rgba(74,124,192,0.25)',
-          color: '#4A7CC0',
-        }}>
-          📊 연결 취재원 {nodes.length}명 중 연결 강도 상위 {MAX_GRAPH_NODES}명만 그래프에 표시됩니다.
-        </div>
-      )}
-
       <div className="graph-container" style={{ height: 'calc(100vh - 140px)', minHeight: '420px' }}>
-        <NetworkGraph nodes={graphNodes} links={graphLinks} />
+        <NetworkGraph nodes={nodes} links={visibleLinks} />
       </div>
     </div>
   )

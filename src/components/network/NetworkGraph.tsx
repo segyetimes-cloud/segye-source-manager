@@ -95,6 +95,13 @@ function nodeRadius(degree: number): number {
   return Math.max(3.5, Math.min(3.5 + Math.log2(degree + 1) * 2.2, 13))
 }
 
+type ViewMode = 'mine' | 'org' | 'all'
+
+// 조직 클러스터 노드 반지름 — 소속 인원 수 기반
+function orgNodeRadius(count: number): number {
+  return Math.max(18, Math.min(18 + Math.log2(count + 1) * 5, 52))
+}
+
 // 노드당 표시할 최대 링크 수 — 이 값이 일관된 레이아웃의 핵심
 const MAX_LINKS_PER_NODE = 5
 
@@ -188,6 +195,9 @@ export default function NetworkGraph({ nodes, links }: Props) {
   const [colorMode, setColorMode] = useState<'org' | 'degree'>('org')
   const colorModeRef = useRef<'org' | 'degree'>('org')
 
+  // ── View mode ─────────────────────────────────────────────────────────────
+  const [viewMode, setViewMode] = useState<ViewMode>('mine')
+
   // ── Panel UI state ────────────────────────────────────────────────────────
   const [panelOpen, setPanelOpen] = useState(false)
   const [filtersOpen, setFiltersOpen] = useState(false)
@@ -239,6 +249,105 @@ export default function NetworkGraph({ nodes, links }: Props) {
     return map
   }, [links])
 
+  // ── 내 네트워크 데이터 (isOwner 노드 + 1촌) ──────────────────────────────────
+  const myNetworkData = useMemo(() => {
+    const ownerIds = new Set(nodes.filter(n => n.isOwner).map(n => n.id))
+    if (ownerIds.size === 0) return { nodes: [] as Node[], links: [] as Link[] }
+    const ids = new Set(ownerIds)
+    for (const id of ownerIds) {
+      const nbrs = adjacencyMap.get(id)
+      if (nbrs) for (const nid of nbrs) ids.add(nid)
+    }
+    return {
+      nodes: nodes.filter(n => ids.has(n.id)),
+      links: links.filter(l => {
+        const s = typeof l.source === 'string' ? l.source : (l.source as any).id
+        const t = typeof l.target === 'string' ? l.target : (l.target as any).id
+        return ids.has(s) && ids.has(t)
+      }),
+    }
+  }, [nodes, links, adjacencyMap])
+
+  // ── 조직 클러스터 데이터 ──────────────────────────────────────────────────────
+  // 개인 노드 → 기관 노드로 집계. 1만명도 기관 수는 수백 개 이내 → 항상 깔끔
+  const orgClusterData = useMemo(() => {
+    const orgMap = new Map<string, Node[]>()
+    for (const n of nodes) {
+      const org = n.org || '소속 없음'
+      if (!orgMap.has(org)) orgMap.set(org, [])
+      orgMap.get(org)!.push(n)
+    }
+
+    const orgNodes: Node[] = [...orgMap.entries()].map(([org, members]) => ({
+      id: `_org_::${org}`,
+      label: org,
+      org,
+      position: `${members.length}명`,
+      tags: [],
+      isOwner: members.some(m => m.isOwner),
+      degree: members.length,   // degree = 인원수 (노드 크기 결정)
+      isDuplicate: false,
+    }))
+
+    // 기관 간 연결: 두 기관 소속 인물이 연결되어 있으면 기관 간 선 생성
+    const nodeToOrgId = new Map<string, string>()
+    for (const n of nodes) nodeToOrgId.set(n.id, `_org_::${n.org || '소속 없음'}`)
+
+    const orgLinkMap = new Map<string, { weight: number; types: Set<string> }>()
+    for (const l of links) {
+      const s = typeof l.source === 'string' ? l.source : (l.source as any).id
+      const t = typeof l.target === 'string' ? l.target : (l.target as any).id
+      const so = nodeToOrgId.get(s)
+      const to = nodeToOrgId.get(t)
+      if (!so || !to || so === to) continue
+      const key = [so, to].sort().join('|||')
+      if (!orgLinkMap.has(key)) orgLinkMap.set(key, { weight: 0, types: new Set() })
+      const e = orgLinkMap.get(key)!
+      e.weight++
+      for (const tp of (l.types ?? [l.type])) e.types.add(tp)
+    }
+
+    const orgLinks: Link[] = [...orgLinkMap.entries()].map(([key, { weight, types }]) => {
+      const [s, t] = key.split('|||')
+      const typeArr = [...types]
+      return {
+        source: s, target: t,
+        type: typeArr[0] ?? 'same_org',
+        types: typeArr,
+        label: `${weight}개 연결`,
+        strength: Math.log2(weight + 1) * 2,
+        connectionCount: weight,
+      }
+    })
+
+    return { nodes: orgNodes, links: orgLinks }
+  }, [nodes, links])
+
+  // ── 전체 보기 데이터 (상위 150명) ────────────────────────────────────────────
+  const allNetworkData = useMemo(() => {
+    const MAX = 150
+    const top = nodes.length > MAX
+      ? [...nodes].sort((a, b) => b.degree - a.degree).slice(0, MAX)
+      : nodes
+    const topIds = new Set(top.map(n => n.id))
+    return {
+      nodes: top,
+      links: links.filter(l => {
+        const s = typeof l.source === 'string' ? l.source : (l.source as any).id
+        const t = typeof l.target === 'string' ? l.target : (l.target as any).id
+        return topIds.has(s) && topIds.has(t)
+      }),
+    }
+  }, [nodes, links])
+
+  // 현재 뷰 모드에 따른 활성 데이터
+  const activeData = viewMode === 'mine' ? myNetworkData
+    : viewMode === 'org' ? orgClusterData
+    : allNetworkData
+
+  const activeNodes = activeData.nodes
+  const activeLinks = activeData.links
+
   // ── Focus search: compute results as user types ───────────────────────────
   useEffect(() => {
     if (!focusSearch.trim()) { setFocusResults([]); return }
@@ -280,12 +389,14 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── Filtered links ────────────────────────────────────────────────────────
   const filteredLinks = useMemo(
-    () => links.filter(l => (l.types ?? [l.type]).some(t => activeTypes.has(t))),
-    [links, activeTypes]
+    () => viewMode === 'org'
+      ? activeLinks
+      : activeLinks.filter(l => (l.types ?? [l.type]).some(t => activeTypes.has(t))),
+    [activeLinks, activeTypes, viewMode]
   )
 
   // ── graphData: memoized so react-force-graph doesn't re-init on every render ─
-  const nodeCount = nodes.length
+  const nodeCount = activeNodes.length
 
   // ── charge 공식 + 밀도 보정 ──────────────────────────────────────────────────
   // 계정마다 연결 수가 달라도 항상 퍼진 레이아웃을 유지하기 위해
@@ -301,14 +412,16 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   // ── 노드당 링크 상한 ─────────────────────────────────────────────────────────
   // MAX_LINKS_PER_NODE: 컴포넌트 바깥 상수 (아래 패널 렌더에서도 참조)
+  // org 클러스터 뷰는 기관 수가 적고 링크도 많지 않으므로 더 많은 연결 허용
+  const perNodeCap = viewMode === 'org' ? 20 : MAX_LINKS_PER_NODE
 
   const [displayLinks, hiddenLinkCount] = useMemo(() => {
-    const { capped, hiddenCount } = capLinksPerNode(filteredLinks, MAX_LINKS_PER_NODE)
+    const { capped, hiddenCount } = capLinksPerNode(filteredLinks, perNodeCap)
     return [capped, hiddenCount]
-  }, [filteredLinks])
+  }, [filteredLinks, perNodeCap])
 
   // 실제 표시되는 링크 수 기준으로 밀도 계산
-  const avgLinksPerNode = displayLinks.length / Math.max(nodeCount - 1, 1)
+  const avgLinksPerNode = activeLinks.length / Math.max(nodeCount - 1, 1)
 
   // densityFactor는 이미 capLinksPerNode로 상한이 걸려 있어서 소폭만 보정
   const densityFactor = Math.max(1.0, avgLinksPerNode * 0.4)
@@ -327,12 +440,12 @@ export default function NetworkGraph({ nodes, links }: Props) {
 
   const graphData = useMemo(() => {
     return {
-      nodes: nodes.map((n, i) => ({
+      nodes: activeNodes.map((n, i) => ({
         ...n,
         name: n.label,
         val: 1,
-        x: Math.cos((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
-        y: Math.sin((2 * Math.PI * i) / Math.max(nodes.length, 1)) * initRadius,
+        x: Math.cos((2 * Math.PI * i) / Math.max(activeNodes.length, 1)) * initRadius,
+        y: Math.sin((2 * Math.PI * i) / Math.max(activeNodes.length, 1)) * initRadius,
       })),
       links: displayLinks.map(l => ({
         ...l,
@@ -340,18 +453,18 @@ export default function NetworkGraph({ nodes, links }: Props) {
       })),
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes, displayLinks])
+  }, [activeNodes, displayLinks])
 
   // ── Canvas 즉시 숨김 — 페인트 이전에 실행하여 ugly flash 차단 ─────────────
   // useEffect는 브라우저 페인트 후 실행 → 새 데이터가 이전 graphReady=true 상태로
   // 잠깐 노출됨. useLayoutEffect는 페인트 전 동기 실행 → flash 원천 차단
-  const firstNodeId = nodes[0]?.id ?? ''
+  const firstNodeId = activeNodes[0]?.id ?? ''
   useLayoutEffect(() => {
     setGraphReady(false)
     revealPendingRef.current = false
     forcesAppliedRef.current = false   // 노드/링크가 바뀌면 반드시 다시 적용해야 함
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, links.length, firstNodeId])
+  }, [activeNodes.length, activeLinks.length, firstNodeId, viewMode])
 
   // ── Force configuration ───────────────────────────────────────────────────
   useEffect(() => {
@@ -370,21 +483,26 @@ export default function NetworkGraph({ nodes, links }: Props) {
         // 1. Force 구성
         //    react-force-graph 기본 force: 'center'(ForceCenter), 'charge', 'link'
         //    centerX/centerY 없음 → 'x'/'y' 이름으로 forceX/forceY 직접 추가
+        // org 클러스터 뷰: 큰 노드들이므로 collide 반경 조정
+        const isOrgView = viewMode === 'org'
+
         fg.d3Force('x', forceX(0).strength(CENTER_STR))
         fg.d3Force('y', forceY(0).strength(CENTER_STR))
         fg.d3Force('charge')?.strength(chargeStrength)
         fg.d3Force('link')
           // adaptiveLinkStrength: 연결 밀도에 반비례 → 연결 많은 계정도 퍼진 레이아웃 유지
           // distance +280: 연결된 노드 간 기본 간격을 충분히 확보
-          ?.strength(adaptiveLinkStrength)
+          ?.strength(isOrgView ? 0.02 : adaptiveLinkStrength)
           .distance((link: any) => {
-            const srcR = nodeRadius((link.source as Node)?.degree ?? 1)
-            const tgtR = nodeRadius((link.target as Node)?.degree ?? 1)
-            return srcR + tgtR + 280
+            const srcR = isOrgView ? orgNodeRadius((link.source as Node)?.degree ?? 1) : nodeRadius((link.source as Node)?.degree ?? 1)
+            const tgtR = isOrgView ? orgNodeRadius((link.target as Node)?.degree ?? 1) : nodeRadius((link.target as Node)?.degree ?? 1)
+            return srcR + tgtR + (isOrgView ? 60 : 280)
           })
           .iterations(1)
         fg.d3Force('collide', forceCollide((n: any) => {
-          return nodeRadius(n.degree ?? 1) + 22
+          return isOrgView
+            ? orgNodeRadius(n.degree ?? 1) + 15
+            : nodeRadius(n.degree ?? 1) + 22
         }).iterations(3))
 
         // 2. 노드 위치를 원형 배치로 리셋 — 기본 force가 이미 노드를 뭉쳤을 수 있으므로
@@ -430,7 +548,7 @@ export default function NetworkGraph({ nodes, links }: Props) {
       if (fallbackTimer) clearTimeout(fallbackTimer)
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [nodes.length, links.length, firstNodeId])
+  }, [activeNodes.length, activeLinks.length, firstNodeId, viewMode])
 
   // ── Auto-fit + reveal: simulation 틱마다, 종료 시 ─────────────────────────
   const tickCountRef = useRef(0)
@@ -599,7 +717,8 @@ export default function NetworkGraph({ nodes, links }: Props) {
     if (n.x === undefined || n.y === undefined) return
 
     const degree = n.degree ?? 1
-    const r = nodeRadius(degree)
+    const isOrgNode = n.id.startsWith('_org_::')
+    const r = isOrgNode ? orgNodeRadius(degree) : nodeRadius(degree)
     const isHovered = hoveredIdRef.current === n.id
     const hasHoverActive = hoveredIdRef.current !== null
     const isHighlighted = highlightIdsRef.current.has(n.id)
@@ -690,6 +809,17 @@ export default function NetworkGraph({ nodes, links }: Props) {
           : degree >= 5 ? '#9ABCD8' : '#607890'
       ctx.fillText(n.label, n.x, n.y + rDraw + 2)
 
+      // org 노드: 원 안에 인원수 표시
+      if (isOrgNode && globalScale > 0.15) {
+        const countFontSize = Math.max(rDraw * 0.5, 7) / globalScale
+        ctx.font = `700 ${countFontSize}px -apple-system, sans-serif`
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'middle'
+        ctx.globalAlpha = isFaded ? 0.06 : 0.9
+        ctx.fillStyle = '#FFFFFF'
+        ctx.fillText(degree > 999 ? '999+' : String(degree), n.x, n.y)
+      }
+
       if (n.isDuplicate && globalScale > 0.65) {
         ctx.font = `${fontSize * 0.8}px -apple-system, sans-serif`
         ctx.fillStyle = '#E8A030'
@@ -736,8 +866,21 @@ export default function NetworkGraph({ nodes, links }: Props) {
   // ── Click to navigate ─────────────────────────────────────────────────────
   const handleNodeClick = useCallback((node: unknown) => {
     const n = node as Node
-    if (n.id) router.push(`/sources/${n.id}`)
-  }, [router])
+    if (n.id.startsWith('_org_::')) {
+      // 조직 클러스터 → 드릴다운: 해당 기관 소속 인물들만 전체 보기로 전환
+      const orgName = n.org || n.label
+      const orgMembers = nodes.filter(nd => nd.org === orgName)
+      const focusSet = new Set<string>(orgMembers.map(nd => nd.id))
+      focusMatchIdsRef.current = focusSet
+      setFocusModeLabel(`${orgName} (${orgMembers.length}명)`)
+      setViewMode('all')
+      setTimeout(() => {
+        try { fgRef.current?.zoomToFit(500, 60, (nd: any) => focusSet.has(nd.id)) } catch {}
+      }, 300)
+    } else {
+      if (n.id) router.push(`/sources/${n.id}`)
+    }
+  }, [router, nodes])
 
   // ── All types present in current links ───────────────────────────────────
   const allTypes = useMemo(
@@ -759,6 +902,50 @@ export default function NetworkGraph({ nodes, links }: Props) {
     })
     orgColorMapRef.current = map
   }, [uniqueOrgs])
+
+  // ── 뷰 모드 탭 바 (재사용) ────────────────────────────────────────────────
+  const viewTabBar = (
+    <div style={{
+      position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+      zIndex: 25, display: 'flex', gap: '3px',
+      background: 'rgba(6,12,24,0.92)', padding: '4px',
+      borderRadius: '10px', border: '1px solid rgba(255,255,255,0.10)',
+      backdropFilter: 'blur(12px)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+    }}>
+      {([
+        { id: 'mine' as ViewMode, icon: '🙋', label: '내 네트워크',
+          disabled: myNetworkData.nodes.length === 0 },
+        { id: 'org' as ViewMode, icon: '🏢', label: '조직 클러스터',
+          disabled: false },
+        { id: 'all' as ViewMode, icon: '🌐', label: '전체',
+          disabled: false },
+      ]).map(tab => (
+        <button
+          key={tab.id}
+          type="button"
+          disabled={tab.disabled}
+          onClick={() => setViewMode(tab.id)}
+          title={tab.disabled ? '내 취재원을 등록하면 활성화됩니다' : undefined}
+          style={{
+            padding: '5px 11px', borderRadius: '7px',
+            fontSize: isMobile ? '10px' : '11px',
+            cursor: tab.disabled ? 'not-allowed' : 'pointer',
+            display: 'flex', alignItems: 'center', gap: '4px',
+            background: viewMode === tab.id ? 'rgba(74,124,192,0.35)' : 'transparent',
+            color: tab.disabled ? '#3A4A5E' : viewMode === tab.id ? '#88B8E8' : '#5A7090',
+            border: viewMode === tab.id ? '1px solid rgba(74,124,192,0.5)' : '1px solid transparent',
+            transition: 'all 0.15s', whiteSpace: 'nowrap',
+            opacity: tab.disabled ? 0.4 : 1,
+          }}
+        >
+          <span style={{ fontSize: '12px' }}>{tab.icon}</span>
+          {!isMobile && <span>{tab.label}</span>}
+          {isMobile && <span style={{ fontSize: '9px' }}>{tab.label}</span>}
+        </button>
+      ))}
+    </div>
+  )
 
   // ── Empty state ───────────────────────────────────────────────────────────
   if (nodes.length === 0) {
@@ -783,8 +970,24 @@ export default function NetworkGraph({ nodes, links }: Props) {
     )
   }
 
+  // 내 네트워크 뷰이고 owner 노드 없을 때 (전체 데이터는 있지만 본인 소유 없음)
+  if (viewMode === 'mine' && myNetworkData.nodes.length === 0 && nodes.length > 0) {
+    return (
+      <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520' }}>
+        {viewTabBar}
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', gap: '12px' }}>
+          <p style={{ fontSize: '14px', color: '#687898' }}>아직 등록한 취재원이 없습니다</p>
+          <p style={{ fontSize: '12px', color: '#485870' }}>조직 클러스터 또는 전체 보기를 선택하세요</p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%', background: '#0D1520', overflow: 'hidden' }}>
+
+      {/* ── 뷰 모드 탭 (상단 중앙) ──────────────────────────────────────── */}
+      {viewTabBar}
 
       {/* ── Canvas — force 설정 완료 전 숨김으로 ugly flash 방지 ──────────── */}
       <div ref={containerRef} style={{ width: '100%', height: '100%', opacity: graphReady ? 1 : 0, transition: 'opacity 0.25s ease' }}>
@@ -1091,55 +1294,58 @@ export default function NetworkGraph({ nodes, links }: Props) {
               </>
             )}
 
-            <Divider />
+            {/* ── Link type filters — org 뷰에서는 기관간 집계 링크에 의미없으므로 숨김 ── */}
+            {viewMode !== 'org' && (
+              <>
+                <Divider />
+                <div style={{ padding: '10px 14px 12px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setFiltersOpen(p => !p)}
+                    style={{
+                      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                      width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
+                    }}>
+                    <p style={sectionLabel}>관계 유형 필터</p>
+                    <span style={{ fontSize: '10px', color: '#485870' }}>{filtersOpen ? '▲' : '▼'}</span>
+                  </button>
 
-            {/* ── Link type filters ── */}
-            <div style={{ padding: '10px 14px 12px' }}>
-              <button
-                type="button"
-                onClick={() => setFiltersOpen(p => !p)}
-                style={{
-                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                  width: '100%', background: 'none', border: 'none', cursor: 'pointer', padding: 0,
-                }}>
-                <p style={sectionLabel}>관계 유형 필터</p>
-                <span style={{ fontSize: '10px', color: '#485870' }}>{filtersOpen ? '▲' : '▼'}</span>
-              </button>
-
-              {filtersOpen && (
-                <div style={{ marginTop: '8px' }}>
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                    <button type="button" onClick={() => setActiveTypes(new Set(allTypes))}
-                      style={smallBtn('#4A7CC0')}>전체 선택</button>
-                    <button type="button" onClick={() => setActiveTypes(new Set())}
-                      style={smallBtn('#485870')}>전체 해제</button>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
-                    {allTypes.map(type => (
-                      <button
-                        key={type}
-                        type="button"
-                        onClick={() => setActiveTypes(prev => {
-                          const next = new Set(prev)
-                          next.has(type) ? next.delete(type) : next.add(type)
-                          return next
-                        })}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: '10px',
-                          background: 'none', border: 'none', cursor: 'pointer',
-                          padding: '1px 0', opacity: activeTypes.has(type) ? 1 : 0.28,
-                          transition: 'opacity 0.15s',
-                        }}>
-                        <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#687898', flexShrink: 0 }} />
-                        <span style={{ fontSize: '11px', color: '#C8D8E8', textAlign: 'left' }}>
-                          {LINK_LABELS[type] ?? type}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                  {filtersOpen && (
+                    <div style={{ marginTop: '8px' }}>
+                      <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <button type="button" onClick={() => setActiveTypes(new Set(allTypes))}
+                          style={smallBtn('#4A7CC0')}>전체 선택</button>
+                        <button type="button" onClick={() => setActiveTypes(new Set())}
+                          style={smallBtn('#485870')}>전체 해제</button>
+                      </div>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '7px' }}>
+                        {allTypes.map(type => (
+                          <button
+                            key={type}
+                            type="button"
+                            onClick={() => setActiveTypes(prev => {
+                              const next = new Set(prev)
+                              next.has(type) ? next.delete(type) : next.add(type)
+                              return next
+                            })}
+                            style={{
+                              display: 'flex', alignItems: 'center', gap: '10px',
+                              background: 'none', border: 'none', cursor: 'pointer',
+                              padding: '1px 0', opacity: activeTypes.has(type) ? 1 : 0.28,
+                              transition: 'opacity 0.15s',
+                            }}>
+                            <span style={{ width: '18px', height: '3px', borderRadius: '2px', background: LINK_COLORS[type] ?? '#687898', flexShrink: 0 }} />
+                            <span style={{ fontSize: '11px', color: '#C8D8E8', textAlign: 'left' }}>
+                              {LINK_LABELS[type] ?? type}
+                            </span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
 
             {/* ── 숨겨진 연결 안내 ── */}
             {hiddenLinkCount > 0 && (
