@@ -22,6 +22,29 @@ interface AnalysisData {
   examType: string | null
 }
 
+interface NLSearchResult {
+  sourceId: string
+  sourceName: string
+  description: string
+  results: Array<{
+    id: string
+    full_name: string
+    current_organization: string | null
+    current_position: string | null
+    relation_type: string
+    relation_label: string | null
+    strength: number
+    is_bidirectional: boolean
+  }>
+}
+
+interface NLCandidate {
+  id: string
+  full_name: string
+  current_organization: string | null
+  current_position: string | null
+}
+
 interface Props {
   allSources: SourceListItem[]
   selectedId: string | null
@@ -32,6 +55,18 @@ interface Props {
 const RELATION_LABELS: Record<string, string> = {
   direct_mention: '직접 언급', acquaintance: '지인', colleague: '동료',
   alumni: '동문', family: '가족', other: '기타',
+}
+
+// ── 자연어 쿼리 감지 ──────────────────────────────────────────────────────────
+const NL_KEYWORDS = [
+  '과 친한', '와 친한', '이랑', '랑', '의 동문', '동창', '같은 학교',
+  '같은 학번', '출신', '동료', '친구', '아는 사람', '관계', '연결', '인맥',
+]
+
+function isNaturalLanguageQuery(query: string): boolean {
+  if (!query.includes(' ')) return false
+  const lower = query.toLowerCase()
+  return NL_KEYWORDS.some(kw => lower.includes(kw))
 }
 
 // ── 서브그룹 정렬 헬퍼 ────────────────────────────────────────────────────────
@@ -54,6 +89,13 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
   // null = 아직 검색 안 함, [] = 검색했으나 0건, [...] = 검색 결과
   const [searchResults, setSearchResults] = useState<SourceListItem[] | null>(null)
 
+  // NL 검색 상태
+  const [nlResults, setNlResults] = useState<NLSearchResult | null>(null)
+  const [nlLoading, setNlLoading] = useState(false)
+  const [nlError, setNlError] = useState('')
+  const [nlCandidates, setNlCandidates] = useState<NLCandidate[] | null>(null)
+  const [nlDescription, setNlDescription] = useState('')
+
   // 라이브 자동완성용 (드롭다운)
   const filteredSources = useMemo(() => {
     if (!searchQuery.trim()) return []
@@ -63,15 +105,89 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
       .slice(0, 8)
   }, [searchQuery, allSources])
 
+  // NL 검색 실행
+  async function doNLSearch(query: string) {
+    setNlLoading(true)
+    setNlError('')
+    setNlResults(null)
+    setNlCandidates(null)
+    setSearchResults(null)
+
+    try {
+      const res = await fetch('/api/analysis/search-nl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setNlError(data.error ?? '검색 중 오류가 발생했습니다.')
+        return
+      }
+
+      if (data.needSelection) {
+        setNlCandidates(data.candidates)
+        setNlDescription(data.description ?? query)
+      } else {
+        setNlResults(data as NLSearchResult)
+      }
+    } catch {
+      setNlError('서버와 통신 중 오류가 발생했습니다.')
+    } finally {
+      setNlLoading(false)
+    }
+  }
+
+  // NL 후보 중 하나 선택 시 해당 인물로 재검색
+  async function selectNLCandidate(candidateId: string, candidateName: string) {
+    setNlCandidates(null)
+    setNlLoading(true)
+    setNlError('')
+
+    try {
+      const res = await fetch('/api/analysis/search-nl', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        // 정확한 이름으로 재요청하면 Claude가 exact match로 반환
+        body: JSON.stringify({ query: candidateName }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setNlError(data.error ?? '검색 중 오류가 발생했습니다.')
+        return
+      }
+
+      if (data.needSelection) {
+        // 여전히 여러 명이면 ID로 직접 이동
+        router.push(`/analysis?id=${candidateId}`)
+      } else {
+        setNlResults(data as NLSearchResult)
+      }
+    } catch {
+      setNlError('서버와 통신 중 오류가 발생했습니다.')
+    } finally {
+      setNlLoading(false)
+    }
+  }
+
   // 검색 실행 (버튼 클릭 또는 Enter)
   function doSearch() {
-    const q = searchQuery.trim().toLowerCase()
+    const q = searchQuery.trim()
     if (!q) return
     setShowDropdown(false)
 
+    // 자연어 쿼리 감지
+    if (isNaturalLanguageQuery(q)) {
+      doNLSearch(q)
+      return
+    }
+
+    const ql = q.toLowerCase()
     const results = allSources.filter(s =>
-      s.full_name.toLowerCase().includes(q) ||
-      (s.current_organization ?? '').toLowerCase().includes(q)
+      s.full_name.toLowerCase().includes(ql) ||
+      (s.current_organization ?? '').toLowerCase().includes(ql)
     )
 
     if (results.length === 1) {
@@ -123,12 +239,17 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
                 onChange={e => {
                   setSearchQuery(e.target.value)
                   setShowDropdown(true)
-                  setSearchResults(null) // 새로 타이핑하면 이전 결과 초기화
+                  setSearchResults(null)
+                  // 새로 타이핑하면 NL 결과도 초기화
+                  setNlResults(null)
+                  setNlLoading(false)
+                  setNlError('')
+                  setNlCandidates(null)
                 }}
                 onKeyDown={e => { if (e.key === 'Enter') doSearch() }}
                 onFocus={() => setShowDropdown(true)}
                 onBlur={() => setTimeout(() => setShowDropdown(false), 150)}
-                placeholder="이름 또는 소속으로 검색..."
+                placeholder="이름 검색 또는 '한동훈과 친한 사람' 등 자연어로 검색..."
                 style={{
                   width: '100%', paddingLeft: '36px', paddingRight: '12px',
                   paddingTop: '10px', paddingBottom: '10px',
@@ -155,8 +276,8 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
             </button>
           </div>
 
-          {/* 라이브 자동완성 드롭다운 (searchResults가 없을 때만 표시) */}
-          {showDropdown && filteredSources.length > 0 && !searchResults && (
+          {/* 라이브 자동완성 드롭다운 (searchResults·nlResults가 없을 때만 표시) */}
+          {showDropdown && filteredSources.length > 0 && !searchResults && !nlResults && !nlLoading && (
             <div style={{
               position: 'absolute', top: '100%', left: 0, right: '80px', zIndex: 50,
               marginTop: '4px', background: '#131C2C',
@@ -180,7 +301,7 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
           )}
         </div>
 
-        {/* ── 검색 결과 선택 패널 (Enter / 버튼 클릭 후) ── */}
+        {/* ── 검색 결과 선택 패널 (Enter / 버튼 클릭 후, 일반 검색) ── */}
         {searchResults !== null && (
           <div style={{ marginTop: '14px', maxWidth: '560px' }}>
             {searchResults.length === 0 ? (
@@ -241,10 +362,197 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
             )}
           </div>
         )}
+
+        {/* ── AI 자연어 검색 결과 패널 ── */}
+        {(nlLoading || nlError || nlCandidates || nlResults) && (
+          <div style={{ marginTop: '14px', maxWidth: '560px', background: '#131C2C', border: '1px solid #1A2838', borderRadius: '12px', overflow: 'hidden' }}>
+
+            {/* 패널 헤더 */}
+            <div style={{ padding: '10px 16px', borderBottom: '1px solid #1A2838', background: 'rgba(30,144,255,0.06)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '13px', fontWeight: 700, color: '#8AAAC8' }}>AI 분석 결과</span>
+              {/* 쿼리 배지 */}
+              <span style={{
+                padding: '2px 8px', borderRadius: '4px', fontSize: '11px',
+                background: 'rgba(74,124,192,0.15)', color: '#7AADE0',
+                border: '1px solid rgba(74,124,192,0.25)',
+              }}>
+                {searchQuery}
+              </span>
+            </div>
+
+            {/* 로딩 */}
+            {nlLoading && (
+              <div style={{ padding: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style={{ animation: 'spin 1s linear infinite' }}>
+                  <circle cx="12" cy="12" r="10" stroke="#2A3848" strokeWidth="2.5"/>
+                  <path d="M12 2a10 10 0 0 1 10 10" stroke="#4A7CC0" strokeWidth="2.5" strokeLinecap="round"/>
+                </svg>
+                <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+                <span style={{ fontSize: '13px', color: '#607898' }}>AI가 검색 의도를 분석 중입니다…</span>
+              </div>
+            )}
+
+            {/* 에러 */}
+            {!nlLoading && nlError && (
+              <div style={{ padding: '20px', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: '#E05050', margin: 0 }}>{nlError}</p>
+              </div>
+            )}
+
+            {/* 동명이인 선택 */}
+            {!nlLoading && !nlError && nlCandidates && (
+              <div>
+                <div style={{ padding: '10px 16px', borderBottom: '1px solid #1A2838' }}>
+                  <p style={{ margin: 0, fontSize: '12px', color: '#8AAAC8' }}>
+                    동명이인이 있습니다 — 분석할 취재원을 선택하세요
+                  </p>
+                  {nlDescription && (
+                    <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#607898', fontStyle: 'italic' }}>{nlDescription}</p>
+                  )}
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  {nlCandidates.map((c, i) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      onClick={() => selectNLCandidate(c.id, c.full_name)}
+                      style={{
+                        display: 'flex', alignItems: 'center', gap: '12px',
+                        padding: '11px 16px', background: 'none', border: 'none',
+                        borderBottom: i < nlCandidates.length - 1 ? '1px solid #1A2838' : 'none',
+                        cursor: 'pointer', textAlign: 'left', width: '100%',
+                      }}
+                      onMouseEnter={e => (e.currentTarget.style.background = 'rgba(30,144,255,0.07)')}
+                      onMouseLeave={e => (e.currentTarget.style.background = 'none')}
+                    >
+                      <div style={{
+                        width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                        background: 'rgba(74,124,192,0.15)', color: '#7AADE0',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        fontSize: 13, fontWeight: 700,
+                      }}>
+                        {c.full_name[0]}
+                      </div>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0' }}>{c.full_name}</div>
+                        {(c.current_organization || c.current_position) && (
+                          <div style={{ fontSize: '12px', color: '#607898', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {[c.current_organization, c.current_position].filter(Boolean).join(' · ')}
+                          </div>
+                        )}
+                      </div>
+                      <svg width="14" height="14" viewBox="0 0 14 14" fill="none" style={{ flexShrink: 0 }}>
+                        <path d="M5 2.5l4.5 4.5L5 11.5" stroke="#4A7CC0" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                      </svg>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* NL 검색 결과 */}
+            {!nlLoading && !nlError && !nlCandidates && nlResults && (
+              <div>
+                {/* 설명 + 취재원 배지 */}
+                <div style={{ padding: '12px 16px', borderBottom: '1px solid #1A2838', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    padding: '3px 10px', borderRadius: '20px', fontSize: '12px', fontWeight: 700,
+                    background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+                    border: '1px solid rgba(30,144,255,0.2)', flexShrink: 0,
+                  }}>
+                    {nlResults.sourceName}
+                  </span>
+                  <span style={{ fontSize: '12px', color: '#8AAAC8' }}>{nlResults.description}</span>
+                </div>
+
+                {/* 결과 없음 */}
+                {nlResults.results.length === 0 && (
+                  <div style={{ padding: '24px 20px', textAlign: 'center' }}>
+                    <p style={{ fontSize: '13px', color: '#607898', margin: '0 0 12px' }}>
+                      직접 입력된 관계가 없습니다. 취재원 관계 메뉴에서 관계를 입력해주세요.
+                    </p>
+                    <Link
+                      href={`/analysis?id=${nlResults.sourceId}`}
+                      style={{
+                        display: 'inline-block', padding: '7px 16px', borderRadius: '7px',
+                        fontSize: '13px', background: 'rgba(30,144,255,0.12)',
+                        color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)',
+                        textDecoration: 'none',
+                      }}
+                    >
+                      전체 프로필 분석 보기
+                    </Link>
+                  </div>
+                )}
+
+                {/* 결과 목록 */}
+                {nlResults.results.length > 0 && (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+                    {nlResults.results.map((r, i) => (
+                      <div
+                        key={r.id}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '10px',
+                          padding: '10px 16px',
+                          borderBottom: i < nlResults.results.length - 1 ? '1px solid #1A2838' : 'none',
+                        }}
+                      >
+                        {/* 관계 유형 배지 */}
+                        <span style={{
+                          padding: '2px 8px', borderRadius: '4px', fontSize: '11px', flexShrink: 0,
+                          background: 'rgba(184,148,40,0.12)', color: '#C8A840',
+                          border: '1px solid rgba(184,148,40,0.2)',
+                        }}>
+                          {r.relation_label ?? RELATION_LABELS[r.relation_type] ?? r.relation_type}
+                        </span>
+
+                        {/* 이름 (링크) */}
+                        <Link
+                          href={`/sources/${r.id}`}
+                          style={{ color: '#B8CCDE', textDecoration: 'none', fontWeight: 600, fontSize: '14px', flexShrink: 0 }}
+                        >
+                          {r.full_name}
+                        </Link>
+
+                        {/* 소속·직위 */}
+                        {(r.current_organization || r.current_position) && (
+                          <span style={{ fontSize: '12px', color: '#607898', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
+                            {[r.current_organization, r.current_position].filter(Boolean).join(' · ')}
+                          </span>
+                        )}
+
+                        {/* 친밀도 별 (★ 1-5) */}
+                        <span style={{ marginLeft: 'auto', flexShrink: 0, display: 'flex', gap: '1px' }} aria-label={`친밀도 ${r.strength}점`}>
+                          {[1, 2, 3, 4, 5].map(n => (
+                            <span key={n} style={{ fontSize: '12px', color: n <= r.strength ? '#C8A840' : '#2A3848' }}>★</span>
+                          ))}
+                        </span>
+                      </div>
+                    ))}
+
+                    {/* 전체 분석 보기 버튼 */}
+                    <div style={{ padding: '12px 16px', borderTop: '1px solid #1A2838', display: 'flex', justifyContent: 'flex-end' }}>
+                      <Link
+                        href={`/analysis?id=${nlResults.sourceId}`}
+                        style={{
+                          padding: '6px 14px', borderRadius: '7px', fontSize: '13px',
+                          background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+                          border: '1px solid rgba(30,144,255,0.2)', textDecoration: 'none',
+                        }}
+                      >
+                        전체 프로필 분석 보기
+                      </Link>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* 빈 상태 */}
-      {!analysisData && !searchResults && (
+      {!analysisData && !searchResults && !nlResults && !nlLoading && !nlCandidates && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 32px', gap: '12px' }}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <circle cx="20" cy="20" r="13" stroke="#2A3848" strokeWidth="2.5"/>

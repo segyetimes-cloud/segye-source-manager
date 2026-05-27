@@ -706,6 +706,54 @@ export type Database = {
           },
         ]
       }
+      report_attachments: {
+        Row: {
+          id: string
+          report_id: string
+          filename: string
+          storage_path: string
+          file_size: number
+          mime_type: string
+          uploaded_by: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          report_id: string
+          filename: string
+          storage_path: string
+          file_size?: number
+          mime_type?: string
+          uploaded_by: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          report_id?: string
+          filename?: string
+          storage_path?: string
+          file_size?: number
+          mime_type?: string
+          uploaded_by?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "report_attachments_report_id_fkey"
+            columns: ["report_id"]
+            isOneToOne: false
+            referencedRelation: "information_reports"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "report_attachments_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       report_copy_logs: {
         Row: {
           copied_length: number | null

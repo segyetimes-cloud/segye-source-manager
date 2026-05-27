@@ -51,6 +51,37 @@ export default function NewReportPage() {
   const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // 첨부파일
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([])
+  const [uploadingFiles, setUploadingFiles] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const newFiles = Array.from(e.target.files ?? [])
+    setSelectedFiles(prev => {
+      const combined = [...prev]
+      for (const f of newFiles) {
+        // Deduplicate by name+size
+        if (!combined.find(x => x.name === f.name && x.size === f.size)) {
+          combined.push(f)
+        }
+      }
+      return combined.slice(0, 5) // max 5 files
+    })
+    // Reset input so the same file can be re-added after removal
+    e.target.value = ''
+  }
+
+  function removeFile(index: number) {
+    setSelectedFiles(prev => prev.filter((_, i) => i !== index))
+  }
+
+  function formatSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`
+  }
+
   // 취재원 연결
   const [sourceQuery, setSourceQuery] = useState('')
   const [sourceResults, setSourceResults] = useState<SourceResult[]>([])
@@ -189,6 +220,21 @@ export default function NewReportPage() {
       if (!res.ok) {
         setError(data.error ?? '저장에 실패했습니다.')
         return
+      }
+
+      // 첨부파일 업로드 (순차)
+      if (selectedFiles.length > 0) {
+        setUploadingFiles(true)
+        for (const file of selectedFiles) {
+          const fd = new FormData()
+          fd.append('file', file)
+          await fetch(`/api/reports/${data.id}/attachments`, {
+            method: 'POST',
+            body: fd,
+          })
+          // 개별 파일 업로드 실패는 무시하고 계속 진행 (보고서 자체는 저장됨)
+        }
+        setUploadingFiles(false)
       }
 
       fetch('/api/reports/draft', { method: 'DELETE' }).catch(() => {}) // 임시저장 삭제는 비동기 처리 (탐색 차단 방지)
@@ -479,6 +525,87 @@ export default function NewReportPage() {
           )}
         </div>
 
+        {/* 첨부파일 */}
+        <div>
+          <label style={labelStyle}>
+            첨부파일{' '}
+            <span style={{ color: '#607898', fontWeight: 400 }}>(선택 — 최대 5개, 파일당 20MB)</span>
+          </label>
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            style={{
+              ...inputStyle,
+              padding: '10px 14px',
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', gap: '8px',
+              color: '#607898',
+              userSelect: 'none',
+            }}
+          >
+            <span style={{ fontSize: '16px' }}>📎</span>
+            <span style={{ fontSize: '13px' }}>
+              {selectedFiles.length < 5
+                ? '파일을 선택하세요 (이미지, PDF, Word, Excel, HWP)'
+                : '최대 5개 파일을 선택했습니다'}
+            </span>
+          </div>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.hwp"
+            onChange={handleFileChange}
+            style={{ display: 'none' }}
+          />
+
+          {selectedFiles.length > 0 && (
+            <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              {selectedFiles.map((file, idx) => (
+                <div
+                  key={`${file.name}-${file.size}`}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '8px',
+                    background: '#131C2C', border: '1px solid #1A2838',
+                    borderRadius: '6px', padding: '6px 10px',
+                  }}
+                >
+                  <span style={{ fontSize: '14px', flexShrink: 0 }}>📎</span>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{
+                      fontSize: '13px', color: '#CDD5E0', margin: 0,
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {file.name}
+                    </p>
+                    <p style={{ fontSize: '11px', color: '#607898', margin: '1px 0 0' }}>
+                      {formatSize(file.size)}
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeFile(idx)}
+                    style={{
+                      background: 'none', border: 'none',
+                      color: '#607898', cursor: 'pointer',
+                      fontSize: '16px', lineHeight: 1, padding: '0 2px',
+                      flexShrink: 0,
+                    }}
+                    aria-label={`${file.name} 제거`}
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          {uploadingFiles && (
+            <p style={{ fontSize: '12px', color: '#4A7CC0', marginTop: '6px' }}>
+              첨부파일 업로드 중...
+            </p>
+          )}
+        </div>
+
         {/* 버튼 */}
         <div className="flex gap-3 pt-2">
           <button
@@ -494,16 +621,16 @@ export default function NewReportPage() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || uploadingFiles}
             style={{
               flex: 1,
-              background: submitting ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+              background: (submitting || uploadingFiles) ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               borderRadius: '8px', padding: '11px',
               fontSize: '14px', fontWeight: 600,
-              cursor: submitting ? 'not-allowed' : 'pointer',
+              cursor: (submitting || uploadingFiles) ? 'not-allowed' : 'pointer',
             }}>
-            {submitting ? '저장 중...' : '보고서 저장'}
+            {uploadingFiles ? '파일 업로드 중...' : submitting ? '저장 중...' : '보고서 저장'}
           </button>
           <Link href="/reports" style={{
             padding: '11px 20px', background: '#182035',

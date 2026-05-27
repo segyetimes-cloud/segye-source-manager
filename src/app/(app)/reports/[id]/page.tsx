@@ -10,6 +10,7 @@ import ReportAllowedUsers from '@/components/reports/ReportAllowedUsers'
 import VisibilityBadge from '@/components/reports/VisibilityBadge'
 import ReportReviewActions from '@/components/reports/ReportReviewActions'
 import ReportFieldEditor from '@/components/reports/ReportFieldEditor'
+import ReportAttachments, { type AttachmentRow } from '@/components/reports/ReportAttachments'
 import { isDesk as isDeskRole } from '@/lib/roles'
 
 interface Params {
@@ -36,8 +37,8 @@ export default async function ReportDetailPage({ params }: Params) {
   const myProfile = myProfileRaw as { role: string; full_name: string; department: string | null } | null
   const isDesk = isDeskRole(myProfile?.role)
 
-  // 보고서 + 수정이력 병렬 조회
-  const [reportResult, revisionsResult] = await Promise.all([
+  // 보고서 + 수정이력 + 첨부파일 병렬 조회
+  const [reportResult, revisionsResult, attachmentsResult] = await Promise.all([
     supabase
       .from('information_reports')
       .select(`
@@ -51,6 +52,11 @@ export default async function ReportDetailPage({ params }: Params) {
     supabase
       .from('report_revisions')
       .select('id, author_id, content, created_at, profiles!author_id(full_name, department)')
+      .eq('report_id', id)
+      .order('created_at', { ascending: true }),
+    supabase
+      .from('report_attachments')
+      .select('*')
       .eq('report_id', id)
       .order('created_at', { ascending: true }),
   ])
@@ -68,6 +74,7 @@ export default async function ReportDetailPage({ params }: Params) {
     id: string; author_id: string; content: string; created_at: string;
     profiles: { full_name: string; department: string | null } | null;
   }> | null
+  const attachments = (attachmentsResult.data ?? []) as AttachmentRow[]
 
   if (!report) notFound()
 
@@ -110,13 +117,13 @@ export default async function ReportDetailPage({ params }: Params) {
   const hasRevisions = revisions.length > 1
 
   return (
-    <div className="content-page max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
+    <div className="max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
 
       {/* 뒤로가기 */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Link href="/reports" style={{ color: '#7A8A9E', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
-          <span style={{ fontSize: '13px', color: '#7A8A9E' }}>정보보고 목록</span>
+          <Link href="/reports" style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
+          <span style={{ fontSize: '13px', color: '#607898' }}>정보보고 목록</span>
         </div>
         <Link
           href="/reports"
@@ -124,8 +131,8 @@ export default async function ReportDetailPage({ params }: Params) {
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             width: '32px', height: '32px', borderRadius: '8px',
-            background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            color: '#8A9AB0', textDecoration: 'none', fontSize: '20px', lineHeight: 1,
+            background: 'rgba(255,255,255,0.04)', border: '1px solid #1A2838',
+            color: '#607898', textDecoration: 'none', fontSize: '20px', lineHeight: 1,
           }}>
           ×
         </Link>
@@ -135,7 +142,7 @@ export default async function ReportDetailPage({ params }: Params) {
       <div className="glass-card p-5">
         {/* 제목 + 배지 */}
         <div className="flex items-start justify-between gap-3 mb-3">
-          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#1C2B3A', lineHeight: 1.35, flex: 1 }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#CDD5E0', lineHeight: 1.35, flex: 1 }}>
             {report.title}
             {hasRevisions && (
               <span style={{
@@ -166,12 +173,12 @@ export default async function ReportDetailPage({ params }: Params) {
         </div>
 
         {/* 작성자 + 날짜 메타 */}
-        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #DDE5EF', paddingBottom: '12px' }}>
-          <span style={{ fontSize: '13px', color: '#526070' }}>
+        <div className="flex flex-wrap items-center gap-3 mb-4" style={{ borderBottom: '1px solid #1A2838', paddingBottom: '12px' }}>
+          <span style={{ fontSize: '13px', color: '#8AAAC8' }}>
             ✍️ {author?.full_name ?? '—'}
             {author?.department ? ` · ${author.department}` : ''}
           </span>
-          <span style={{ fontSize: '12px', color: '#7A8A9E' }}>
+          <span style={{ fontSize: '12px', color: '#607898' }}>
             🕐 {formatDateTime(report.created_at)}
           </span>
         </div>
@@ -209,7 +216,7 @@ export default async function ReportDetailPage({ params }: Params) {
                       display: 'flex', alignItems: 'center', gap: '8px',
                       margin: '14px 0 12px',
                     }}>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #DDE5EF, transparent)' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to right, transparent, #1A2838, transparent)' }} />
                       <span style={{
                         fontSize: '11px', color: '#4A7CC0',
                         background: 'rgba(30,144,255,0.08)',
@@ -219,7 +226,7 @@ export default async function ReportDetailPage({ params }: Params) {
                       }}>
                         수정 {idx}
                       </span>
-                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #DDE5EF, transparent)' }} />
+                      <div style={{ flex: 1, height: '1px', background: 'linear-gradient(to left, transparent, #1A2838, transparent)' }} />
                     </div>
                   )}
 
@@ -230,17 +237,17 @@ export default async function ReportDetailPage({ params }: Params) {
                   }}>
                     <span style={{
                       fontSize: '11px', fontWeight: 600,
-                      color: isFirst ? '#526070' : (isSameAuthor ? '#526070' : '#3A90A8'),
+                      color: isFirst ? '#8AAAC8' : (isSameAuthor ? '#8AAAC8' : '#3A90A8'),
                     }}>
                       {isFirst ? '최초 작성' : '수정'}
                     </span>
-                    <span style={{ fontSize: '12px', color: isFirst ? '#526070' : '#3A90A8', fontWeight: 600 }}>
+                    <span style={{ fontSize: '12px', color: isFirst ? '#8AAAC8' : '#3A90A8', fontWeight: 600 }}>
                       {revAuthor?.full_name ?? '—'}
                     </span>
                     {revAuthor?.department && (
-                      <span style={{ fontSize: '11px', color: '#7A8A9E' }}>{revAuthor.department}</span>
+                      <span style={{ fontSize: '11px', color: '#607898' }}>{revAuthor.department}</span>
                     )}
-                    <span style={{ fontSize: '11px', color: '#7A8A9E', marginLeft: '2px' }}>
+                    <span style={{ fontSize: '11px', color: '#607898', marginLeft: '2px' }}>
                       · {formatDateTime(rev.created_at)}
                     </span>
                   </div>
@@ -279,6 +286,15 @@ export default async function ReportDetailPage({ params }: Params) {
             ))}
           </div>
         )}
+
+        {/* 첨부파일 */}
+        {attachments.length > 0 && (
+          <ReportAttachments
+            reportId={id}
+            attachments={attachments}
+            canDelete={isAuthor || isDesk}
+          />
+        )}
       </div>
 
       {/* 민감정보 (작성자·데스크만 열람·편집) */}
@@ -297,11 +313,11 @@ export default async function ReportDetailPage({ params }: Params) {
             canEdit={canEdit}
           >
             {sensitiveContent ? (
-              <p style={{ fontSize: '14px', color: '#1C2B3A', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
+              <p style={{ fontSize: '14px', color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
                 {sensitiveContent}
               </p>
             ) : (
-              <p style={{ fontSize: '13px', color: '#7A8A9E', fontStyle: 'italic' }}>
+              <p style={{ fontSize: '13px', color: '#607898', fontStyle: 'italic' }}>
                 민감정보 없음 — 수정 버튼으로 추가할 수 있습니다
               </p>
             )}
@@ -312,21 +328,21 @@ export default async function ReportDetailPage({ params }: Params) {
       {/* 연결된 취재원 */}
       {linkedSources.length > 0 && (
         <div className="glass-card p-4">
-          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#1C2B3A', marginBottom: '10px' }}>
+          <h2 style={{ fontSize: '14px', fontWeight: 600, color: '#CDD5E0', marginBottom: '10px' }}>
             👤 연결된 취재원 ({linkedSources.length}명)
           </h2>
           <div className="flex flex-wrap gap-2">
             {linkedSources.map((src: any) => (
               <Link key={src.id} href={`/sources/${src.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{
-                  background: '#EEF2F7', border: '1px solid #DDE5EF',
+                  background: '#182035', border: '1px solid #1A2838',
                   borderRadius: '8px', padding: '8px 14px', cursor: 'pointer',
                 }}
                   onMouseEnter={e => (e.currentTarget.style.borderColor = '#4A7CC0')}
-                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#DDE5EF')}>
-                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#1C2B3A' }}>{src.full_name}</p>
+                  onMouseLeave={e => (e.currentTarget.style.borderColor = '#1A2838')}>
+                  <p style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{src.full_name}</p>
                   {src.current_organization && (
-                    <p style={{ fontSize: '12px', color: '#6B7D92', marginTop: '2px' }}>{src.current_organization}</p>
+                    <p style={{ fontSize: '12px', color: '#607898', marginTop: '2px' }}>{src.current_organization}</p>
                   )}
                 </div>
               </Link>
@@ -356,7 +372,7 @@ export default async function ReportDetailPage({ params }: Params) {
       {/* ── 검토 요청 / 승인 / 반려 ── */}
       {(isAuthor || isDesk) && (
         <div className="glass-card p-4">
-          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#526070', marginBottom: '12px' }}>
+          <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#8AAAC8', marginBottom: '12px' }}>
             보고서 검토
           </h2>
           <ReportReviewActions
@@ -375,8 +391,8 @@ export default async function ReportDetailPage({ params }: Params) {
           <Link
             href={`/reports/${id}/edit`}
             style={{
-              padding: '9px 20px', background: '#EEF2F7',
-              border: '1px solid #DDE5EF', color: '#526070',
+              padding: '9px 20px', background: '#182035',
+              border: '1px solid #1A2838', color: '#8AAAC8',
               borderRadius: '8px', fontSize: '13px', textDecoration: 'none',
             }}>
             수정
