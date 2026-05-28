@@ -235,6 +235,10 @@ export default function SourceDetailClient({
   const [showPosForm, setShowPosForm] = useState(false)
   const [posForm, setPosForm] = useState(EMPTY_POS)
   const [posSubmitting, setPosSubmitting] = useState(false)
+  const [editingPosId, setEditingPosId] = useState<string | null>(null)
+  const [editPosForm, setEditPosForm] = useState(EMPTY_POS)
+  const [editPosSubmitting, setEditPosSubmitting] = useState(false)
+  const [deletingPosId, setDeletingPosId] = useState<string | null>(null)
   const [notes, setNotes] = useState<SourceNote[]>(initialNotes)
   const [extractApplied, setExtractApplied] = useState(false)
   const [extracting, setExtracting] = useState(false)
@@ -253,6 +257,8 @@ export default function SourceDetailClient({
   const noteFormRef = useRef<HTMLFormElement>(null)
 
   const canEdit = isOwner || isAdmin
+  // 직책 이력: 공유 취재원이면 모든 로그인 사용자가 관리 가능 (직책/소속은 공개 정보)
+  const canEditPositions = canEdit || source.visibility === 'shared'
   const showPrivate = hasPrivateAccess || isOwner
 
   // 정보(source_notes)와 notes 필드에서 구조화 가능한 항목 자동 감지
@@ -316,6 +322,32 @@ export default function SourceDetailClient({
     }
   }
 
+  async function handleMoveToPublic() {
+    if (!editingValue.trim()) return
+    setFieldSaving(true)
+    setFieldSaveError('')
+    try {
+      // 기존 공개 정보에 이어붙이기
+      const merged = source.public_notes
+        ? source.public_notes + '\n' + editingValue.trim()
+        : editingValue.trim()
+      const res = await fetch(`/api/sources/${source.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ public_notes: merged, personal_notes: null }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setFieldSaveError(data.error ?? '저장 실패'); return }
+      setEditingField(null)
+      setEditingValue('')
+      router.refresh()
+    } catch {
+      setFieldSaveError('오류가 발생했습니다.')
+    } finally {
+      setFieldSaving(false)
+    }
+  }
+
   async function handleAddPosition(e: React.FormEvent) {
     e.preventDefault()
     if (!posForm.organization || !posForm.position || !posForm.started_at) return
@@ -337,6 +369,34 @@ export default function SourceDetailClient({
       router.refresh()
     }
     setPosSubmitting(false)
+  }
+
+  async function handleEditPosition(posId: string) {
+    setEditPosSubmitting(true)
+    const res = await fetch(`/api/sources/${source.id}/positions?posId=${posId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(editPosForm),
+    })
+    if (res.ok) {
+      const updated = await res.json()
+      setPositions(prev => prev.map(p => p.id === posId ? updated : p))
+      setEditingPosId(null)
+      router.refresh()
+    }
+    setEditPosSubmitting(false)
+  }
+
+  async function handleDeletePosition(posId: string) {
+    setDeletingPosId(posId)
+    const res = await fetch(`/api/sources/${source.id}/positions?posId=${posId}`, {
+      method: 'DELETE',
+    })
+    if (res.ok) {
+      setPositions(prev => prev.filter(p => p.id !== posId))
+      router.refresh()
+    }
+    setDeletingPosId(null)
   }
 
   async function handleRate(r: number) {
@@ -791,7 +851,7 @@ export default function SourceDetailClient({
             <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>💼 직책 이력</h2>
             <p className="text-xs mt-0.5" style={{ color: '#7A8A9E' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
           </div>
-          {canEdit && (
+          {canEditPositions && (
             <button onClick={() => setShowPosForm(v => !v)}
               className="text-xs px-3 py-1.5 rounded-lg"
               style={{ background: 'rgba(30,144,255,0.1)', color: '#4A7CC0',
@@ -828,21 +888,123 @@ export default function SourceDetailClient({
                         background: pos.is_current ? 'rgba(30,144,255,0.05)' : '#F0F3F7',
                         border: `1px solid ${pos.is_current ? 'rgba(30,144,255,0.2)' : '#DDE5EF'}`,
                       }}>
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>{pos.organization}</span>
-                        {pos.is_current && (
-                          <span className="text-xs px-1.5 py-0.5 rounded"
-                            style={{ background: 'rgba(0,204,102,0.15)', color: '#3D9E6A' }}>현직</span>
-                        )}
-                      </div>
-                      <p className="text-sm" style={{ color: '#526070' }}>
-                        {pos.department && `${pos.department} · `}{pos.position}
-                        {pos.rank && ` (${pos.rank})`}
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: '#7A8A9E' }}>
-                        {pos.started_at} ~ {pos.ended_at ?? '현재'}
-                        {pos.change_source && ` · ${pos.change_source === 'crawl' ? '🤖 자동감지' : '✏️ 수동입력'}`}
-                      </p>
+                      {editingPosId === pos.id ? (
+                        /* ── 인라인 수정 폼 ── */
+                        <div className="space-y-2">
+                          <div className="grid grid-cols-2 gap-2">
+                            {([
+                              { key: 'organization', label: '조직명 *', placeholder: '외교부' },
+                              { key: 'position',     label: '직책 *',   placeholder: '제1차관' },
+                              { key: 'department',   label: '부서',     placeholder: '' },
+                              { key: 'rank',         label: '직급',     placeholder: '' },
+                            ] as const).map(f => (
+                              <div key={f.key}>
+                                <label className="block text-xs mb-0.5" style={{ color: '#526070' }}>{f.label}</label>
+                                <input
+                                  value={(editPosForm as unknown as Record<string, string>)[f.key]}
+                                  onChange={e => setEditPosForm(p => ({ ...p, [f.key]: e.target.value }))}
+                                  placeholder={f.placeholder}
+                                  style={{ width: '100%', background: '#fff', border: '1px solid #DDE5EF',
+                                    color: '#1C2B3A', borderRadius: '5px', padding: '5px 8px', fontSize: '12px' }}
+                                />
+                              </div>
+                            ))}
+                            <div>
+                              <label className="block text-xs mb-0.5" style={{ color: '#526070' }}>시작일</label>
+                              <input type="date" value={editPosForm.started_at}
+                                onChange={e => setEditPosForm(p => ({ ...p, started_at: e.target.value }))}
+                                style={{ width: '100%', background: '#fff', border: '1px solid #DDE5EF',
+                                  color: '#1C2B3A', borderRadius: '5px', padding: '5px 8px', fontSize: '12px' }} />
+                            </div>
+                            <div>
+                              <label className="block text-xs mb-0.5" style={{ color: '#526070' }}>종료일</label>
+                              <input type="date" value={editPosForm.ended_at}
+                                onChange={e => setEditPosForm(p => ({ ...p, ended_at: e.target.value }))}
+                                style={{ width: '100%', background: '#fff', border: '1px solid #DDE5EF',
+                                  color: '#1C2B3A', borderRadius: '5px', padding: '5px 8px', fontSize: '12px' }} />
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <input type="checkbox" id={`is_current_${pos.id}`} checked={editPosForm.is_current}
+                              onChange={e => setEditPosForm(p => ({ ...p, is_current: e.target.checked }))}
+                              style={{ accentColor: '#4A7CC0' }} />
+                            <label htmlFor={`is_current_${pos.id}`} className="text-xs" style={{ color: '#526070', cursor: 'pointer' }}>현직</label>
+                          </div>
+                          <div className="flex gap-2 mt-1">
+                            <button type="button" onClick={() => handleEditPosition(pos.id)} disabled={editPosSubmitting}
+                              className="px-3 py-1 rounded text-xs font-semibold"
+                              style={{ background: editPosSubmitting ? '#DDE5EF' : 'rgba(30,144,255,0.15)',
+                                color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.3)', cursor: editPosSubmitting ? 'not-allowed' : 'pointer' }}>
+                              {editPosSubmitting ? '저장 중...' : '저장'}
+                            </button>
+                            <button type="button" onClick={() => setEditingPosId(null)}
+                              className="px-3 py-1 rounded text-xs"
+                              style={{ background: '#EEF2F7', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
+                              취소
+                            </button>
+                          </div>
+                        </div>
+                      ) : (
+                        /* ── 읽기 모드 ── */
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>{pos.organization}</span>
+                              {pos.is_current && (
+                                <span className="text-xs px-1.5 py-0.5 rounded"
+                                  style={{ background: 'rgba(0,204,102,0.15)', color: '#3D9E6A' }}>현직</span>
+                              )}
+                            </div>
+                            <p className="text-sm" style={{ color: '#526070' }}>
+                              {pos.department && `${pos.department} · `}{pos.position}
+                              {pos.rank && ` (${pos.rank})`}
+                            </p>
+                            <p className="text-xs mt-1" style={{ color: '#7A8A9E' }}>
+                              {pos.started_at} ~ {pos.ended_at ?? '현재'}
+                              {pos.change_source && ` · ${pos.change_source === 'crawl' ? '🤖 자동감지' : '✏️ 수동입력'}`}
+                            </p>
+                          </div>
+                          {canEditPositions && (
+                            <div className="flex gap-1 flex-shrink-0">
+                              <button type="button"
+                                onClick={() => {
+                                  setEditingPosId(pos.id)
+                                  setEditPosForm({
+                                    organization: pos.organization,
+                                    department:   pos.department ?? '',
+                                    position:     pos.position,
+                                    rank:         pos.rank ?? '',
+                                    started_at:   pos.started_at ?? '',
+                                    ended_at:     pos.ended_at ?? '',
+                                    is_current:   pos.is_current,
+                                    change_note:  '',
+                                  })
+                                }}
+                                title="수정"
+                                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '5px',
+                                  background: 'rgba(30,144,255,0.1)', color: '#4A7CC0',
+                                  border: '1px solid rgba(30,144,255,0.3)', cursor: 'pointer', fontWeight: 600 }}>
+                                수정
+                              </button>
+                              <button type="button"
+                                onClick={() => {
+                                  if (window.confirm(`"${pos.organization} ${pos.position}" 이력을 삭제하시겠습니까?`)) {
+                                    handleDeletePosition(pos.id)
+                                  }
+                                }}
+                                disabled={deletingPosId === pos.id}
+                                title="삭제"
+                                style={{ fontSize: '11px', padding: '4px 10px', borderRadius: '5px',
+                                  background: 'rgba(192,64,64,0.08)', color: '#C04040',
+                                  border: '1px solid rgba(192,64,64,0.25)', fontWeight: 600,
+                                  cursor: deletingPosId === pos.id ? 'not-allowed' : 'pointer',
+                                  opacity: deletingPosId === pos.id ? 0.5 : 1 }}>
+                                {deletingPosId === pos.id ? '삭제 중…' : '삭제'}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -853,7 +1015,7 @@ export default function SourceDetailClient({
         )}
 
         {/* 직책 추가 폼 */}
-        {showPosForm && canEdit && (
+        {showPosForm && canEditPositions && (
           <form onSubmit={handleAddPosition} className="mt-4 pt-4 space-y-3" style={{ borderTop: '1px solid #DDE5EF' }}>
             <p className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>새 직책 추가</p>
             <div className="grid grid-cols-2 gap-3">
@@ -982,10 +1144,15 @@ export default function SourceDetailClient({
                     color: '#1C2B3A', fontSize: '13px', resize: 'vertical',
                   }}
                 />
-                <div style={{ display: 'flex', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
                     style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {fieldSaving ? '저장 중...' : '저장'}
+                  </button>
+                  <button type="button" onClick={handleMoveToPublic} disabled={fieldSaving || !editingValue.trim()}
+                    title="이 내용을 공개 정보로 이동하고 민감 정보를 비웁니다"
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(61,158,106,0.12)', color: '#3D9E6A', border: '1px solid rgba(61,158,106,0.35)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: fieldSaving ? 'not-allowed' : 'pointer' }}>
+                    📤 공개 정보로 이동
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
                     style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>

@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { can, CAN_VIEW_ALL_REPORTS } from '@/lib/permissions'
 import { isDesk } from '@/lib/roles'
 import type { Database } from '@/types/database'
 import { auditLog } from '@/lib/audit'
+import { extractAndStoreRelations } from '@/lib/extractReportRelations'
 
 type ReportUpdate = Database['public']['Tables']['information_reports']['Update']
 
@@ -100,16 +101,30 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, content, sensitive_content, tags, visibility, category, source_ids, allowed_user_ids } = body
+  const { title, content, sensitive_content, tags, visibility, category, source_ids, allowed_user_ids, created_at } = body
 
   const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
 
+  // ── created_at 수정은 superadmin 전용 ───────────────────────────────────────
+  if (created_at !== undefined) {
+    if (profile?.role !== 'superadmin') {
+      return NextResponse.json({ error: '작성 날짜 수정은 최고관리자만 가능합니다.' }, { status: 403 })
+    }
+    const parsed = new Date(created_at)
+    if (isNaN(parsed.getTime())) {
+      return NextResponse.json({ error: '날짜 형식이 올바르지 않습니다.' }, { status: 400 })
+    }
+  }
+
   const updateData: ReportUpdate = {}
-  if (title?.trim())   updateData.title      = title.trim()
-  if (content?.trim()) updateData.content    = content.trim()
-  if (tags)            updateData.tags       = tags
-  if (visibility)      updateData.visibility = visibility
-  if (category)        updateData.category   = VALID_CATEGORIES.includes(category) ? category : '일반'
+  if (title?.trim())        updateData.title      = title.trim()
+  if (content?.trim())      updateData.content    = content.trim()
+  if (tags)                 updateData.tags       = tags
+  if (visibility)           updateData.visibility = visibility
+  if (category)             updateData.category   = VALID_CATEGORIES.includes(category) ? category : '일반'
+  if (created_at !== undefined && profile?.role === 'superadmin') {
+    (updateData as any).created_at = new Date(created_at).toISOString()
+  }
   // sensitive_content: 명시적으로 전달될 때만 업데이트 (빈 문자열은 null로 정규화)
   if (sensitive_content !== undefined) {
     updateData.sensitive_content = sensitive_content?.trim() || null
@@ -151,6 +166,18 @@ export async function PATCH(
       resource_id:   id,
       metadata:      { fields: Object.keys(updateData) },
     })
+
+    // 본문 변경 시 응답 후 백그라운드 재추출
+    if (content?.trim()) {
+      const _id = id
+      const _title = updated.title
+      const _content = updated.content
+      const _sensitive = updated.sensitive_content ?? null
+      after(async () => {
+        const bgSupabase = await createClient()
+        await extractAndStoreRelations(bgSupabase, _id, _title, _content, _sensitive)
+      })
+    }
 
     // source_ids / allowed_user_ids 관계 업데이트가 없으면 바로 반환
     if (!hasRelationUpdate) return NextResponse.json({ report: updated })

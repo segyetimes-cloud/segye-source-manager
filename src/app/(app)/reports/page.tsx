@@ -2,6 +2,7 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { can, CAN_APPROVE_REPORT } from '@/lib/permissions'
+import { isDesk as isDeskFn } from '@/lib/roles'
 import ReportListClient from '@/components/reports/ReportListClient'
 
 interface SearchParams {
@@ -41,6 +42,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
   const myRole: string = myProfile?.role ?? 'reporter'
   const isAboveAdmin = can(myRole, CAN_APPROVE_REPORT)
   const isAdminRole = myRole === 'admin'
+  const isDeskUser = isDeskFn(myRole)
 
   const pageSize = 20
   const pageNum = parseInt(page)
@@ -109,12 +111,17 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       matchingReportIds = [...new Set<string>((links ?? []).map((l) => l.report_id))]
     }
 
-    // SQL injection 방지: or() 인터폴레이션 대신 별도 쿼리로 분리
+    // 특수문자 이스케이프 (%, _, \)
+    const qEsc = q.replace(/[%_\\]/g, '\\$&')
+    // 데스크 이상은 민감정보(sensitive_content)도 검색 범위에 포함
+    const searchFields = isDeskUser
+      ? `title.ilike.%${qEsc}%,content.ilike.%${qEsc}%,sensitive_content.ilike.%${qEsc}%`
+      : `title.ilike.%${qEsc}%,content.ilike.%${qEsc}%`
     const { data: textMatches } = await supabase
       .from('information_reports')
       .select('id')
       .eq('is_deleted', false)
-      .or(`title.ilike.%${q}%,content.ilike.%${q}%`)
+      .or(searchFields)
     const textMatchIds: string[] = (textMatches ?? []).map((r) => r.id)
     const allMatchIds = [...new Set<string>([...textMatchIds, ...matchingReportIds])]
     if (allMatchIds.length > 0) {

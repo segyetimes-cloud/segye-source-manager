@@ -18,8 +18,29 @@ interface AnalysisData {
   sameHighSchool: any[]
   sameExam: any[]
   sameTown: any[]
+  sameAffiliation: any[]
+  reportMentions: Array<{
+    id: string
+    title: string
+    status: string
+    visibility: string
+    created_at: string
+    authorName: string | null
+    authorDept: string | null
+    contentSnippet: { before: string; match: string; after: string } | null
+    sensitiveSnippet: { before: string; match: string; after: string } | null
+    hasSensitiveMatch: boolean
+    canSeeSensitive: boolean
+  }>
+  coMentionedViaReports: Array<{
+    source: { id: string; full_name: string; current_organization: string | null; current_position: string | null }
+    reportCount: number
+  }>
   registrants: any[]
   examType: string | null
+  // AI 추출 관계망
+  extractedCoEntities?: Array<{ name: string; role: string | null; reportCount: number }>
+  extractedDirectRelations?: Array<{ fromName: string; toName: string; relType: string; detail: string | null; reportId: string }>
 }
 
 interface NLSearchResult {
@@ -45,10 +66,19 @@ interface NLCandidate {
   current_position: string | null
 }
 
+interface QueryAnalysis {
+  queryName: string
+  coEntities: Array<{ name: string; role: string | null; reportCount: number }>
+  directRelations: Array<{ fromName: string; toName: string; relType: string; detail: string | null; reportId: string }>
+  reportIds: string[]
+}
+
 interface Props {
   allSources: SourceListItem[]
   selectedId: string | null
   analysisData: AnalysisData | null
+  queryName?: string | null
+  queryAnalysis?: QueryAnalysis | null
 }
 
 // ── 관계 유형 레이블 ──────────────────────────────────────────────────────────
@@ -82,7 +112,7 @@ function sortedSubGroups(map: Map<string, any[]>): [string, any[]][] {
 }
 
 // ── 메인 컴포넌트 ─────────────────────────────────────────────────────────────
-export default function AnalysisClient({ allSources, selectedId, analysisData }: Props) {
+export default function AnalysisClient({ allSources, selectedId, analysisData, queryName, queryAnalysis }: Props) {
   const router = useRouter()
   const [searchQuery, setSearchQuery] = useState('')
   const [showDropdown, setShowDropdown] = useState(false)
@@ -551,8 +581,114 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
         )}
       </div>
 
+      {/* ?q=name 모드 — 취재원 DB 미등록 인물 AI 추출 결과 */}
+      {queryAnalysis && !selectedId && (
+        <div style={{ padding: '20px 32px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <div style={{
+            background: 'rgba(100,70,200,0.06)', border: '1px solid rgba(100,70,200,0.2)',
+            borderRadius: '12px', padding: '16px 20px',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '18px' }}>🤖</span>
+              <h2 style={{ fontSize: '17px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>
+                "{queryAnalysis.queryName}"
+              </h2>
+              <span style={{
+                fontSize: '11px', fontWeight: 600,
+                background: 'rgba(100,70,200,0.15)', color: '#9B7DE8',
+                border: '1px solid rgba(100,70,200,0.3)',
+                borderRadius: '4px', padding: '1px 7px',
+              }}>
+                AI 추출 관계망
+              </span>
+            </div>
+            <p style={{ fontSize: '12px', color: '#607898', margin: 0 }}>
+              취재원 DB 미등록 인물 · 보고서 본문에서 AI가 추출한 관계입니다
+            </p>
+          </div>
+
+          {queryAnalysis.directRelations.length > 0 && (
+            <SectionCard title="🔗 추출된 관계">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                {queryAnalysis.directRelations.map((r, i) => {
+                  const isFrom = r.fromName.toLowerCase().includes(queryAnalysis.queryName.toLowerCase())
+                  const other  = isFrom ? r.toName : r.fromName
+                  return (
+                    <div key={i} style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      background: '#182035', borderRadius: '6px', padding: '8px 12px',
+                      border: '1px solid #1A2838', fontSize: '12px', flexWrap: 'wrap',
+                    }}>
+                      <span style={{ fontWeight: 700, color: '#9B7DE8' }}>{queryAnalysis.queryName}</span>
+                      <span style={{ color: '#3A4A5E' }}>—</span>
+                      <span style={{
+                        fontSize: '10px', fontWeight: 700,
+                        background: 'rgba(100,70,200,0.12)', color: '#9B7DE8',
+                        border: '1px solid rgba(100,70,200,0.28)',
+                        borderRadius: '4px', padding: '1px 6px',
+                      }}>{r.relType}</span>
+                      <span style={{ color: '#3A4A5E' }}>—</span>
+                      <button
+                        type="button"
+                        onClick={() => router.push(`/analysis?q=${encodeURIComponent(other)}`)}
+                        style={{
+                          fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none',
+                          cursor: 'pointer', padding: 0, fontSize: '12px',
+                          textDecoration: 'underline', textDecorationColor: 'rgba(74,124,192,0.4)',
+                        }}
+                      >
+                        {other}
+                      </button>
+                      {r.detail && (
+                        <span style={{ fontSize: '10px', color: '#5A7099', marginLeft: 'auto' }}>{r.detail}</span>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </SectionCard>
+          )}
+
+          {queryAnalysis.coEntities.length > 0 && (
+            <SectionCard title="👥 같은 보고서에 등장한 인물">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '7px' }}>
+                {queryAnalysis.coEntities.map((e, i) => (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => router.push(`/analysis?q=${encodeURIComponent(e.name)}`)}
+                    style={{
+                      background: '#182035', border: '1px solid #1A2838',
+                      color: '#CDD5E0', borderRadius: '7px', padding: '6px 12px',
+                      fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '5px',
+                    }}
+                    onMouseEnter={e2 => (e2.currentTarget.style.borderColor = '#4A7CC0')}
+                    onMouseLeave={e2 => (e2.currentTarget.style.borderColor = '#1A2838')}
+                  >
+                    {e.name}
+                    {e.role && <span style={{ fontSize: '10px', color: '#607898' }}>({e.role})</span>}
+                    <span style={{
+                      fontSize: '10px', background: 'rgba(100,70,200,0.12)', color: '#8060C0',
+                      borderRadius: '3px', padding: '0 4px',
+                    }}>{e.reportCount}건</span>
+                  </button>
+                ))}
+              </div>
+            </SectionCard>
+          )}
+
+          {queryAnalysis.directRelations.length === 0 && queryAnalysis.coEntities.length === 0 && (
+            <div style={{ textAlign: 'center', padding: '40px', color: '#607898', fontSize: '13px' }}>
+              보고서 내 AI 추출 관계 데이터가 없습니다.<br />
+              정보보고 저장 시 자동으로 추출됩니다.
+            </div>
+          )}
+        </div>
+      )}
+
       {/* 빈 상태 */}
-      {!analysisData && !searchResults && !nlResults && !nlLoading && !nlCandidates && (
+      {!analysisData && !queryAnalysis && !searchResults && !nlResults && !nlLoading && !nlCandidates && (
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '80px 32px', gap: '12px' }}>
           <svg width="48" height="48" viewBox="0 0 48 48" fill="none">
             <circle cx="20" cy="20" r="13" stroke="#2A3848" strokeWidth="2.5"/>
@@ -597,6 +733,13 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
                 {src.tags.map((tag: string) => (
                   <span key={tag} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(30,144,255,0.08)', color: '#6A9AC8', border: '1px solid rgba(30,144,255,0.15)' }}>{tag}</span>
+                ))}
+              </div>
+            )}
+            {src.affiliations && src.affiliations.length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+                {src.affiliations.map((aff: string) => (
+                  <span key={aff} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(61,158,106,0.08)', color: '#4DAA82', border: '1px solid rgba(61,158,106,0.2)' }}>🤝 {aff}</span>
                 ))}
               </div>
             )}
@@ -669,7 +812,138 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
               )}
             />
 
+            {/* 동호회·단체 — 단체별 */}
+            <DrillGroup
+              label="동호회 · 단체"
+              topKey={src.affiliations?.length > 0 ? src.affiliations.join(', ') : null}
+              items={analysisData.sameAffiliation}
+              getSubKey={(s: any) => {
+                const shared = (s.affiliations ?? []).filter((a: string) => src.affiliations?.includes(a))
+                return shared.length > 0 ? shared.join(' · ') : '기타'
+              }}
+              renderItem={(s: any) => (
+                <PersonRow key={s.id} id={s.id} name={s.full_name}
+                  sub={s.current_organization || s.current_position || ''} />
+              )}
+            />
+
           </SectionCard>
+
+          {/* 정보보고 언급 */}
+          {(analysisData.reportMentions.length > 0 || analysisData.coMentionedViaReports.length > 0) && (
+            <SectionCard title="📰 정보보고 언급">
+              {analysisData.reportMentions.map(mention => (
+                <ReportMentionCard key={mention.id} mention={mention} sourceName={src.full_name} />
+              ))}
+
+              {analysisData.coMentionedViaReports.length > 0 && (
+                <div style={{
+                  marginTop: analysisData.reportMentions.length > 0 ? '12px' : '0',
+                  paddingTop: analysisData.reportMentions.length > 0 ? '12px' : '0',
+                  borderTop: analysisData.reportMentions.length > 0 ? '1px solid #1A2838' : 'none',
+                }}>
+                  <p style={{ fontSize: '12px', color: '#8AAAC8', fontWeight: 600, marginBottom: '8px' }}>
+                    같은 보고서에 함께 언급된 인물
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    {analysisData.coMentionedViaReports.map(({ source: s, reportCount }) => (
+                      <PersonRow
+                        key={s.id}
+                        id={s.id}
+                        name={s.full_name}
+                        sub={[s.current_organization, s.current_position].filter(Boolean).join(' · ')}
+                        badge={`보고서 ${reportCount}건`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+          )}
+
+          {/* AI 추출 관계망 (보고서 본문 기반) */}
+          {((analysisData.extractedDirectRelations?.length ?? 0) > 0 ||
+            (analysisData.extractedCoEntities?.length ?? 0) > 0) && (
+            <SectionCard title="🤖 AI 추출 관계망 (보고서 본문 기반)">
+              {/* 직접 관계 */}
+              {(analysisData.extractedDirectRelations?.length ?? 0) > 0 && (
+                <div style={{ marginBottom: (analysisData.extractedCoEntities?.length ?? 0) > 0 ? '14px' : '0' }}>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#7A60C0', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                    관계망
+                  </p>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                    {analysisData.extractedDirectRelations!.map((r, i) => {
+                      const isSrc = r.fromName.includes(src.full_name) || src.full_name.includes(r.fromName)
+                      const otherName = isSrc ? r.toName : r.fromName
+                      return (
+                        <div key={i} style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          background: '#182035', borderRadius: '6px', padding: '7px 10px',
+                          border: '1px solid #1A2838', fontSize: '12px',
+                        }}>
+                          <span style={{ fontWeight: 700, color: '#4A7CC0', flexShrink: 0 }}>{src.full_name}</span>
+                          <span style={{ color: '#3A4A5E' }}>—</span>
+                          <span style={{
+                            fontSize: '10px', fontWeight: 700,
+                            background: 'rgba(100,70,200,0.12)', color: '#9B7DE8',
+                            border: '1px solid rgba(100,70,200,0.28)',
+                            borderRadius: '4px', padding: '1px 6px', flexShrink: 0,
+                          }}>{r.relType}</span>
+                          <span style={{ color: '#3A4A5E' }}>—</span>
+                          <button
+                            type="button"
+                            onClick={() => router.push(`/analysis?q=${encodeURIComponent(otherName)}`)}
+                            style={{
+                              fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none',
+                              cursor: 'pointer', padding: 0, fontSize: '12px',
+                              textDecoration: 'underline', textDecorationColor: 'rgba(74,124,192,0.4)',
+                            }}
+                          >
+                            {otherName}
+                          </button>
+                          {r.detail && (
+                            <span style={{ fontSize: '10px', color: '#5A7099', marginLeft: 'auto', textAlign: 'right' }}>
+                              {r.detail}
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              {/* 함께 언급된 인물 (보고서 내 co-entity) */}
+              {(analysisData.extractedCoEntities?.length ?? 0) > 0 && (
+                <>
+                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#7A60C0', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                    같은 보고서에 등장한 인물
+                  </p>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {analysisData.extractedCoEntities!.map((e, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => router.push(`/analysis?q=${encodeURIComponent(e.name)}`)}
+                        style={{
+                          background: 'rgba(100,70,200,0.08)', border: '1px solid rgba(100,70,200,0.22)',
+                          color: '#9B7DE8', borderRadius: '6px', padding: '4px 10px',
+                          fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                          display: 'flex', alignItems: 'center', gap: '5px',
+                        }}
+                      >
+                        {e.name}
+                        {e.role && <span style={{ fontSize: '10px', opacity: 0.7 }}>({e.role})</span>}
+                        <span style={{
+                          fontSize: '10px', background: 'rgba(100,70,200,0.15)',
+                          borderRadius: '3px', padding: '0 4px', color: '#8060C0',
+                        }}>{e.reportCount}건</span>
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </SectionCard>
+          )}
 
           {/* 직접 입력 관계 */}
           {analysisData.relationships.length > 0 && (
@@ -724,6 +998,106 @@ export default function AnalysisClient({ allSources, selectedId, analysisData }:
             )}
           </SectionCard>
 
+        </div>
+      )}
+    </div>
+  )
+}
+
+function ReportMentionCard({ mention, sourceName }: {
+  mention: AnalysisData['reportMentions'][0]
+  sourceName: string
+}) {
+  return (
+    <div style={{
+      background: '#0D1520', border: '1px solid #1A2838', borderRadius: '8px',
+      padding: '12px 14px', marginBottom: '8px',
+    }}>
+      {/* Title + date */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '10px' }}>
+        <a
+          href={`/reports/${mention.id}`}
+          style={{ fontSize: '13px', fontWeight: 600, color: '#B8CCDE', textDecoration: 'none', flex: 1, lineHeight: 1.4 }}
+          onMouseEnter={e => (e.currentTarget.style.color = '#4A7CC0')}
+          onMouseLeave={e => (e.currentTarget.style.color = '#B8CCDE')}
+        >
+          {mention.title}
+        </a>
+        <span style={{ fontSize: '11px', color: '#607898', flexShrink: 0 }}>
+          {new Date(mention.created_at).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' })}
+        </span>
+      </div>
+
+      {/* Author */}
+      {mention.authorName && (
+        <p style={{ fontSize: '11px', color: '#607898', marginTop: '3px' }}>
+          {mention.authorName}{mention.authorDept ? ` · ${mention.authorDept}` : ''}
+        </p>
+      )}
+
+      {/* Content snippet (regular content match) */}
+      {mention.contentSnippet && (
+        <div style={{ marginTop: '8px', fontSize: '12px', lineHeight: 1.8, color: '#8AAAC8', background: 'rgba(255,255,255,0.02)', borderRadius: '5px', padding: '6px 8px' }}>
+          <span>{mention.contentSnippet.before}</span>
+          <mark style={{
+            background: 'rgba(200,168,64,0.2)', color: '#D4A840',
+            padding: '0 3px', borderRadius: '3px', fontWeight: 600,
+          }}>
+            {mention.contentSnippet.match}
+          </mark>
+          <span>{mention.contentSnippet.after}</span>
+        </div>
+      )}
+
+      {/* Sensitive content match */}
+      {mention.hasSensitiveMatch && (
+        <div style={{
+          marginTop: '8px', padding: '8px 10px',
+          background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.18)',
+          borderRadius: '6px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '10px', fontWeight: 700, color: '#A87228', letterSpacing: '0.03em', flexShrink: 0 }}>
+              🔒 민감정보
+            </span>
+            <div style={{ flex: 1, minWidth: 0, fontSize: '12px', lineHeight: 1.8, userSelect: mention.canSeeSensitive ? 'auto' : 'none' }}>
+              <span style={{
+                color: '#A87228',
+                filter: mention.canSeeSensitive ? 'none' : 'blur(5px)',
+                display: 'inline',
+              }}>
+                {mention.sensitiveSnippet?.before}
+              </span>
+              <mark style={{
+                background: 'rgba(200,168,64,0.2)', color: '#D4A840',
+                padding: '0 3px', borderRadius: '3px', fontWeight: 600,
+                filter: 'none',
+              }}>
+                {mention.sensitiveSnippet?.match ?? sourceName}
+              </mark>
+              <span style={{
+                color: '#A87228',
+                filter: mention.canSeeSensitive ? 'none' : 'blur(5px)',
+                display: 'inline',
+              }}>
+                {mention.sensitiveSnippet?.after}
+              </span>
+            </div>
+            {!mention.canSeeSensitive && (
+              <a
+                href={`/reports/${mention.id}`}
+                style={{
+                  flexShrink: 0, padding: '4px 12px', borderRadius: '6px',
+                  fontSize: '11px', fontWeight: 600,
+                  background: 'rgba(255,153,0,0.12)', color: '#C88A20',
+                  border: '1px solid rgba(255,153,0,0.28)', textDecoration: 'none',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                열람 신청
+              </a>
+            )}
+          </div>
         </div>
       )}
     </div>

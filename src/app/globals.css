@@ -461,6 +461,4 @@ input:focus, textarea:focus, select:focus {
   border-color: var(--accent-blue);
   box-shadow: 0 0 0 2px rgba(74, 124, 192, 0.2);
 }
-input::placeholder, textarea::placeholder {
-  color: var(--text-muted);
-}
+/* placeholder 스타일은 layout.tsx <style> 태그에서 직접 주입 (Tailwind v4 레이어 우회) */

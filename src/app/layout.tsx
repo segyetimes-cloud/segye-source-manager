@@ -34,6 +34,22 @@ export default async function RootLayout({
   return (
     <html lang="ko" className="h-full">
       <body className="min-h-full" style={{ background: '#0D1520', color: '#CDD5E0' }}>
+        {/* placeholder 흐릿하게 — Tailwind v4 레이어 우회용 직접 주입 */}
+        <style dangerouslySetInnerHTML={{ __html: `
+          input::placeholder,textarea::placeholder,
+          input::-webkit-input-placeholder,textarea::-webkit-input-placeholder {
+            color:rgba(100,130,160,0.38)!important;
+            font-style:italic!important;
+            font-weight:300!important;
+            opacity:1!important;
+          }
+          input::-moz-placeholder,textarea::-moz-placeholder {
+            color:rgba(100,130,160,0.38)!important;
+            font-style:italic!important;
+            font-weight:300!important;
+            opacity:1!important;
+          }
+        ` }} />
         {/*
           __webpack_nonce__ 설정 스크립트:
           Next.js가 동적으로 로드하는 청크(chunk) 스크립트에 nonce를 적용하기 위해 필요.

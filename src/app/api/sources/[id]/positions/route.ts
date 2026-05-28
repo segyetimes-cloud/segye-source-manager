@@ -35,15 +35,17 @@ export async function POST(
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  // 소유자 또는 admin만 허용
+  // 소유자 또는 admin만 허용 (공유 취재원은 모든 인증된 사용자 허용)
   const [{ data: source }, { data: profile }] = await Promise.all([
-    supabase.from('sources').select('owner_id').eq('id', sourceId).single(),
+    supabase.from('sources').select('owner_id, visibility').eq('id', sourceId).single(),
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
   if (!source) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
-  if (source.owner_id !== user.id && !isAdmin) {
+  // 공유 취재원의 직책 이력은 모든 인증된 사용자가 관리 가능 (공개 정보)
+  const isShared = (source as any).visibility === 'shared'
+  if (source.owner_id !== user.id && !isAdmin && !isShared) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -110,12 +112,14 @@ export async function PATCH(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [{ data: source }, { data: profile }] = await Promise.all([
-    supabase.from('sources').select('owner_id').eq('id', sourceId).single(),
+    supabase.from('sources').select('owner_id, visibility').eq('id', sourceId).single(),
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
   const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
-  if (source?.owner_id !== user.id && !isAdmin) {
+  // 공유 취재원의 직책 이력은 모든 인증된 사용자가 관리 가능 (공개 정보)
+  const isShared = (source as any)?.visibility === 'shared'
+  if (source?.owner_id !== user.id && !isAdmin && !isShared) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
@@ -147,12 +151,14 @@ export async function DELETE(
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const [{ data: source }, { data: profile }] = await Promise.all([
-    supabase.from('sources').select('owner_id').eq('id', sourceId).single(),
+    supabase.from('sources').select('owner_id, visibility').eq('id', sourceId).single(),
     supabase.from('profiles').select('role').eq('id', user.id).single(),
   ])
 
   const isAdmin = ['admin', 'section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
-  if (source?.owner_id !== user.id && !isAdmin) {
+  // 공유 취재원의 직책 이력은 모든 인증된 사용자가 관리 가능 (공개 정보)
+  const isShared = (source as any)?.visibility === 'shared'
+  if (source?.owner_id !== user.id && !isAdmin && !isShared) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 

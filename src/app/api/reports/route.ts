@@ -1,8 +1,9 @@
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { parseBody, CreateReportSchema } from '@/lib/schemas'
 import { auditLog } from '@/lib/audit'
+import { extractAndStoreRelations } from '@/lib/extractReportRelations'
 
 // GET /api/reports — 목록 조회
 export async function GET(request: NextRequest) {
@@ -190,5 +191,16 @@ export async function POST(request: NextRequest) {
     resource_id:   report?.id ?? null,
     metadata:      { title },
   })
+
+  // 응답 전송 후 백그라운드에서 인물·관계 추출 (저장 지연 없음)
+  const _reportId = report.id
+  const _title    = report.title
+  const _content  = report.content
+  const _sensitive = report.sensitive_content ?? null
+  after(async () => {
+    const bgSupabase = await createClient()
+    await extractAndStoreRelations(bgSupabase, _reportId, _title, _content, _sensitive)
+  })
+
   return NextResponse.json(report, { status: 201 })
 }

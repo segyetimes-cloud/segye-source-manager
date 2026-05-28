@@ -30,6 +30,7 @@ export interface FillData {
   hometown_province?: string
   hometown_city?: string
   personal_notes?: string
+  public_notes?: string
 }
 
 interface Props {
@@ -38,7 +39,9 @@ interface Props {
 
 // ── 공유 텍스트 파싱 ──────────────────────────────────────────────────────────
 function parseContactText(raw: string): FillData {
-  const lines = raw.split(/[\n\r]/).map(l => l.trim()).filter(Boolean)
+  // ▲ 불릿 구분자를 줄바꿈으로 정규화
+  const normalized = raw.replace(/▲\s*/g, '\n')
+  const lines = normalized.split(/[\n\r]/).map(l => l.trim()).filter(Boolean)
 
   // ── 레이블 사전 ─────────────────────────────────────────────────────────────
   const LBLS: Record<string, string[]> = {
@@ -142,7 +145,7 @@ function parseContactText(raw: string): FillData {
   }
 
   // ── 전화번호 전체 추출 ───────────────────────────────────────────────────────
-  const allPhones = [...raw.matchAll(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g)]
+  const allPhones = [...normalized.matchAll(/0\d{1,2}[-.\s]?\d{3,4}[-.\s]?\d{4}/g)]
     .map(m => m[0].replace(/[-.\s]/g, '').replace(/(\d{3})(\d{3,4})(\d{4})/, '$1-$2-$3'))
   // 010 우선, 그 외 순
   const phones010 = allPhones.filter(p => p.startsWith('010'))
@@ -153,7 +156,7 @@ function parseContactText(raw: string): FillData {
   const phone_secondary = phonesSorted.length > 1 ? phonesSorted[1] : undefined
 
   // ── 이메일 ───────────────────────────────────────────────────────────────────
-  const emails = [...raw.matchAll(/[\w.+\-]+@[\w\-]+\.[\w.]{2,}/gi)].map(m => m[0].toLowerCase())
+  const emails = [...normalized.matchAll(/[\w.+\-]+@[\w\-]+\.[\w.]{2,}/gi)].map(m => m[0].toLowerCase())
   const email = emails[0]
   const email_secondary = emails.length > 1 ? emails[1] : undefined
 
@@ -163,7 +166,7 @@ function parseContactText(raw: string): FillData {
 
   if (!exam_batch) {
     // "사시 28회", "행시 32회", "외시 28기", "행정고시 28기" 등
-    const examPattern = raw.match(
+    const examPattern = normalized.match(
       /(행정고시|사법시험|외무고시|기술고시|행시|사시|외시|입법고시|회계사|변호사)[\s·]?(\d+)[회기]/
     )
     if (examPattern) {
@@ -197,8 +200,8 @@ function parseContactText(raw: string): FillData {
 
   // "[이름] 강찬우 평산" 에서 이름 추출 (별명 제거)
   if (!full_name) {
-    // raw 전체에서 "[이름] XXX" 패턴
-    const nameInBracket = raw.match(/\[이름\]\s*([가-힣]{2,5})/)
+    // normalized 전체에서 "[이름] XXX" 패턴
+    const nameInBracket = normalized.match(/\[이름\]\s*([가-힣]{2,5})/)
     if (nameInBracket) full_name = nameInBracket[1]
   }
 
@@ -242,24 +245,39 @@ function parseContactText(raw: string): FillData {
   // ── 대학 / 전공 / 대학원 ─────────────────────────────────────────────────────
   let university: string | undefined = kv['univ']?.[0]
   if (!university) {
-    const univMatch = raw.match(/([가-힣]{2,10}(?:대학교|대학))/)
+    const univMatch = normalized.match(/([가-힣]{2,10}(?:대학교|대학))/)
     if (univMatch) university = univMatch[1]
+  }
+  if (!university) {
+    // 약칭 표기: 서울대, 고려대, 연세대 등
+    // 뒤에 학과·학부·전공이 오거나, 공백·쉼표·줄끝이 오는 경우
+    const abbrMatch = normalized.match(
+      /([가-힣]{2,5}대)(?=\s+[가-힣]{2,15}(?:학과|학부|전공|과)|\s*(?:,|\n|$|\(|\[))/
+    )
+    if (abbrMatch) university = abbrMatch[1]
   }
 
   // 전공: "서울대학교 법학과", "경제학부", "XX전공" 등에서 추출
   let university_major: string | undefined
   if (university) {
-    const majorMatch = raw.match(new RegExp(university + '\\s+([가-힣]{2,15}(?:학과|학부|전공|과))'))
+    const majorMatch = normalized.match(new RegExp(university + '\\s+([가-힣]{2,15}(?:학과|학부|전공|과))'))
     if (majorMatch) university_major = majorMatch[1]
   }
   if (!university_major) {
-    const majorMatch2 = raw.match(/([가-힣]{2,15}(?:학과|학부|전공))(?:\s|$|,|졸)/)
-    if (majorMatch2) university_major = majorMatch2[1]
+    const majorMatch2 = normalized.match(/([가-힣]{2,15}(?:학과|학부|전공))(?:\s|$|,|졸)/)
+    if (majorMatch2) {
+      let major = majorMatch2[1]
+      // 앞에 대학 약칭이 붙어있으면 제거 (예: "서울대외교학과" → "외교학과")
+      if (university && major.startsWith(university)) {
+        major = major.slice(university.length)
+      }
+      if (major.length >= 2) university_major = major
+    }
   }
 
   // 대학원
   let graduate_school: string | undefined
-  const gradMatch = raw.match(/([가-힣]{2,10}(?:대학원))/)
+  const gradMatch = normalized.match(/([가-힣]{2,10}(?:대학원))/)
   if (gradMatch) graduate_school = gradMatch[1]
   if (!graduate_school && kv['univ'] && kv['univ'].length > 1) {
     graduate_school = kv['univ'][1]
@@ -269,14 +287,14 @@ function parseContactText(raw: string): FillData {
   let high_school: string | undefined = kv['hs']?.[0]
   if (!high_school) {
     // "진주고", "서울고등학교" 등
-    const hsMatch = raw.match(/([가-힣]{2,10}(?:고등학교|고교|여고|남고|고(?!\s*시)))/)
+    const hsMatch = normalized.match(/([가-힣]{2,10}(?:고등학교|고교|여고|남고|고(?!\s*시)))/)
     if (hsMatch) high_school = hsMatch[1]
   }
 
   // ── 생년월일 ─────────────────────────────────────────────────────────────────
   let birthday: string | undefined = kv['birth']?.[0]
   if (!birthday) {
-    const bdMatch = raw.match(/(19|20)\d{2}[.\-/]?\d{1,2}[.\-/]?\d{1,2}/)
+    const bdMatch = normalized.match(/(19|20)\d{2}[.\-/]?\d{1,2}[.\-/]?\d{1,2}/)
     if (bdMatch) birthday = bdMatch[0]
   }
 
@@ -296,7 +314,7 @@ function parseContactText(raw: string): FillData {
   if (!hometown_province) {
     for (const line of lines) {
       if (labelOf(line)) continue
-      const trimLine = line.trim()
+      const trimLine = line.trim().replace(/\(\d+\)/g, '').trim()  // (55) 같은 숫자 제거
       if (trimLine.length > 35) continue
       // "1963 경상남도 하동" 같은 연도+지역 형식 처리
       const yearPrefix = trimLine.match(/^((19|20)\d{2})\s+/)
@@ -457,16 +475,38 @@ function EditablePreviewRow({
 // ══════════════════════════════════════════════════════════════════════════════
 export default function QuickFill({ onFill }: Props) {
   const textareaRef = useRef<HTMLTextAreaElement>(null)
-  const [open,    setOpen]    = useState(false)
-  const [text,    setText]    = useState('')
-  const [preview, setPreview] = useState<FillData | null>(null)
-  const [done,    setDone]    = useState(false)
-  const [doneLabel, setDoneLabel] = useState('')
+  const [open,       setOpen]       = useState(false)
+  const [text,       setText]       = useState('')
+  const [preview,    setPreview]    = useState<FillData | null>(null)
+  const [done,       setDone]       = useState(false)
+  const [doneLabel,  setDoneLabel]  = useState('')
+  const [compressing, setCompressing] = useState(false)
+  const [compressErr, setCompressErr] = useState('')
 
   function analyze() {
     if (!text.trim()) return
     const result = parseContactText(text)
     setPreview(result)
+  }
+
+  async function compressBio() {
+    if (!text.trim()) return
+    setCompressing(true)
+    setCompressErr('')
+    try {
+      const res = await fetch('/api/sources/compress-bio', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setCompressErr(data.error ?? '압축 실패'); return }
+      setPreview(prev => prev ? { ...prev, public_notes: data.memo, personal_notes: undefined } : prev)
+    } catch {
+      setCompressErr('네트워크 오류')
+    } finally {
+      setCompressing(false)
+    }
   }
 
   const updateField = useCallback((key: keyof FillData, val: string | undefined) => {
@@ -552,16 +592,38 @@ export default function QuickFill({ onFill }: Props) {
           <EditablePreviewRow label="고교"      fieldKey="high_school"         value={preview.high_school}         onUpdate={updateField} />
           <EditablePreviewRow label="생년월일"  fieldKey="birthday"            value={preview.birthday}            onUpdate={updateField} />
           <EditablePreviewRow label="출신지역"  fieldKey="hometown_province"   value={preview.hometown_province}   onUpdate={updateField} />
-          {preview.personal_notes && (
-            <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(30,144,255,0.15)' }}>
-              <p style={{ fontSize: '11px', color: '#607898', marginBottom: '3px' }}>📝 메모 (경력/주소)</p>
-              <p style={{ fontSize: '12px', color: '#8AAAC8', lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>
-                {preview.personal_notes.slice(0, 200)}{preview.personal_notes.length > 200 ? '…' : ''}
-              </p>
+          {/* 경력 메모 영역 + AI 압축 버튼 */}
+          <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(30,144,255,0.15)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+              <p style={{ fontSize: '11px', color: '#607898', margin: 0 }}>📝 경력 메모 (공개 정보에 저장)</p>
+              <button
+                type="button"
+                onClick={compressBio}
+                disabled={compressing}
+                style={{
+                  fontSize: '11px', fontWeight: 600, padding: '3px 9px',
+                  borderRadius: '5px', cursor: compressing ? 'default' : 'pointer',
+                  background: compressing ? 'rgba(100,70,200,0.08)' : 'rgba(100,70,200,0.12)',
+                  color: '#9B7DE8', border: '1px solid rgba(100,70,200,0.3)',
+                  opacity: compressing ? 0.6 : 1,
+                }}
+              >
+                {compressing ? '⚙️ 압축 중…' : '🤖 AI 메모 압축'}
+              </button>
             </div>
-          )}
+            {compressErr && <p style={{ fontSize: '11px', color: '#C04040', marginBottom: '4px' }}>{compressErr}</p>}
+            {(preview.public_notes ?? preview.personal_notes) ? (
+              <p style={{ fontSize: '12px', color: '#8AAAC8', lineHeight: 1.5, whiteSpace: 'pre-wrap', margin: 0 }}>
+                {(preview.public_notes ?? preview.personal_notes ?? '').slice(0, 300)}{(preview.public_notes ?? preview.personal_notes ?? '').length > 300 ? '…' : ''}
+              </p>
+            ) : (
+              <p style={{ fontSize: '11px', color: '#4A5A70', margin: 0 }}>
+                경력 텍스트가 없습니다 — AI 메모 압축을 누르면 붙여넣은 텍스트 전체에서 경력을 추출합니다.
+              </p>
+            )}
+          </div>
           {!preview.full_name && !preview.phone && !preview.email && countFields(preview) === 0 && (
-            <p style={{ fontSize: '12px', color: '#C07070' }}>⚠ 인식된 정보가 없습니다. 텍스트를 확인해주세요.</p>
+            <p style={{ fontSize: '12px', color: '#C07070', marginTop: '4px' }}>⚠ 인식된 정보가 없습니다. 텍스트를 확인해주세요.</p>
           )}
         </div>
       )}

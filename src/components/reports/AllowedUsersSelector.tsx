@@ -1,6 +1,6 @@
 ﻿'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 
 export interface AllowedUser {
   id: string
@@ -18,6 +18,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<AllowedUser[]>([])
   const [searching, setSearching] = useState(false)
+  const inputRef = useRef<HTMLInputElement>(null)
 
   const search = useCallback(async (q: string) => {
     if (!q.trim()) { setResults([]); return }
@@ -38,6 +39,14 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
     onChange([...selected, u])
     setQuery('')
     setResults([])
+    setTimeout(() => inputRef.current?.focus(), 0)
+  }
+
+  function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === ',' && results.length > 0) {
+      e.preventDefault()
+      add(results[0])
+    }
   }
 
   function remove(id: string) {
@@ -48,10 +57,12 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
     <div>
       <div style={{ position: 'relative' }}>
         <input
+          ref={inputRef}
           type="text"
           value={query}
           onChange={e => { setQuery(e.target.value); search(e.target.value) }}
-          placeholder="기자 이름 또는 부서 검색"
+          onKeyDown={handleKeyDown}
+          placeholder="기자 이름 또는 부서 검색 (쉼표로 첫 번째 결과 추가)"
           style={{
             background: '#182035', border: '1px solid #1A2838',
             color: '#CDD5E0', borderRadius: '8px',

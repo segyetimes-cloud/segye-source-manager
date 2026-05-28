@@ -135,36 +135,19 @@ export default function SecureContentViewer({
   }, [content])
 
   const watermarkLabel = userFullName + (userDepartment ? ` · ${userDepartment}` : '')
+  const safeLabel = watermarkLabel.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  const wmSvg = `<svg xmlns='http://www.w3.org/2000/svg' width='300' height='120'><text transform='rotate(-30 150 60)' x='50%' y='60%' text-anchor='middle' fill='rgba(210,230,255,0.11)' font-size='13' font-weight='700' font-family='monospace'>${safeLabel}</text><text transform='rotate(-30 150 60)' x='50%' y='60%' text-anchor='middle' fill='rgba(15,50,110,0.13)' font-size='13' font-weight='700' font-family='monospace'>${safeLabel}</text></svg>`
+  const wmUrl = `url("data:image/svg+xml;utf8,${encodeURIComponent(wmSvg)}")`
 
   return (
     <div ref={containerRef} style={{ position: 'relative', marginBottom: '4px', minHeight }}>
-      {/* 워터마크 오버레이 */}
-      <div aria-hidden="true" style={{
-        position: 'absolute', inset: 0,
-        pointerEvents: 'none', userSelect: 'none',
-        overflow: 'hidden', zIndex: 1,
-      }}>
-        {Array.from({ length: 10 }).map((_, row) => (
-          <div key={row} style={{
-            position: 'absolute',
-            top: `${row * 56 - 10}px`,
-            left: '-30px', right: '-30px',
-            display: 'flex', gap: '80px',
-            transform: 'rotate(-18deg)',
-            whiteSpace: 'nowrap',
-          }}>
-            {Array.from({ length: 6 }).map((_, col) => (
-              <span key={col} style={{
-                fontSize: '12px', fontWeight: 700,
-                color: '#7CA3D4', opacity: 0.07,
-                letterSpacing: '1.5px',
-              }}>
-                {watermarkLabel}
-              </span>
-            ))}
-          </div>
-        ))}
-      </div>
+      {/* 시각적 워터마크 오버레이 — 캡처 억제용 (사용자 이름 반복) */}
+      <div style={{
+        position: 'absolute', inset: 0, zIndex: 3, pointerEvents: 'none',
+        backgroundImage: wmUrl,
+        backgroundRepeat: 'repeat',
+        backgroundSize: '300px 120px',
+      }} />
       {/* Canvas 본문 */}
       <canvas
         ref={canvasRef}

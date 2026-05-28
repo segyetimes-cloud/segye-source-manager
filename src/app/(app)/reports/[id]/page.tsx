@@ -11,6 +11,9 @@ import VisibilityBadge from '@/components/reports/VisibilityBadge'
 import ReportReviewActions from '@/components/reports/ReportReviewActions'
 import ReportFieldEditor from '@/components/reports/ReportFieldEditor'
 import ReportAttachments, { type AttachmentRow } from '@/components/reports/ReportAttachments'
+import ReportCreatedAtEditor from '@/components/reports/ReportCreatedAtEditor'
+import PersonSearchPopover from '@/components/reports/PersonSearchPopover'
+import ReportRelationExtractor from '@/components/reports/ReportRelationExtractor'
 import { isDesk as isDeskRole } from '@/lib/roles'
 
 interface Params {
@@ -80,6 +83,7 @@ export default async function ReportDetailPage({ params }: Params) {
 
   const isAuthor = report.author_id === user.id
   const canEdit = isAuthor || isDesk
+  const isSuperAdmin = myProfile?.role === 'superadmin'
 
   // 열람 권한 체크
   const vis = report.visibility as string
@@ -118,6 +122,9 @@ export default async function ReportDetailPage({ params }: Params) {
 
   return (
     <div className="max-w-3xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
+
+      {/* 텍스트 선택 → 인물 검색 팝오버 (전역, 클라이언트 전용) */}
+      <PersonSearchPopover />
 
       {/* 뒤로가기 */}
       <div className="flex items-center justify-between">
@@ -295,6 +302,53 @@ export default async function ReportDetailPage({ params }: Params) {
             canDelete={isAuthor || isDesk}
           />
         )}
+
+        {/* ── 하단 서명 (작성자 · 작성일) ── */}
+        <div style={{
+          marginTop: '20px',
+          paddingTop: '14px',
+          borderTop: '1px solid #1A2838',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: 'wrap',
+          gap: '8px',
+        }}>
+          {/* 작성자 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{
+              width: '30px', height: '30px', borderRadius: '50%',
+              background: 'rgba(30,144,255,0.12)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '13px', fontWeight: 700, color: '#4A7CC0',
+              flexShrink: 0,
+            }}>
+              {(author?.full_name ?? '?')[0]}
+            </span>
+            <div>
+              <p style={{ margin: 0, fontSize: '13px', fontWeight: 600, color: '#8AAAC8' }}>
+                {author?.full_name ?? '—'}
+              </p>
+              {author?.department && (
+                <p style={{ margin: 0, fontSize: '11px', color: '#607898' }}>
+                  {author.department}
+                </p>
+              )}
+            </div>
+          </div>
+
+          {/* 작성일 (superadmin은 수정 가능) */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '2px' }}>
+            <span style={{ fontSize: '10px', color: '#3A4A5E', letterSpacing: '0.04em', textTransform: 'uppercase' }}>
+              최초 작성
+            </span>
+            <ReportCreatedAtEditor
+              reportId={id}
+              createdAt={report.created_at}
+              isSuperAdmin={isSuperAdmin}
+            />
+          </div>
+        </div>
       </div>
 
       {/* 민감정보 (작성자·데스크만 열람·편집) */}
@@ -350,6 +404,9 @@ export default async function ReportDetailPage({ params }: Params) {
           </div>
         </div>
       )}
+
+      {/* ── AI 인물 관계망 추출 ── */}
+      <ReportRelationExtractor reportId={id} />
 
       {/* ── 지정 열람자 (작성자 or 데스크만 표시) ── */}
       {(isAuthor || isDesk) && report.visibility !== 'all' && (

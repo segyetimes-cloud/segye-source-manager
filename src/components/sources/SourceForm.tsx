@@ -31,7 +31,7 @@ const FIELD_LABELS: Record<string, string> = {
   email_primary: '이메일(주)', email_secondary: '이메일(부)', birthday: '생년월일',
   hometown_province: '고향(광역)', hometown_city: '고향(시군구)',
   high_school: '고등학교', university: '대학', university_major: '전공',
-  graduate_school: '대학원', exam_batch: '시험/기수', tags: '태그',
+  graduate_school: '대학원', exam_batch: '시험/기수', tags: '태그', affiliations: '동호회·단체',
   visibility: '공개 범위', sensitivity: '민감도', on_record_status: '취재 동의', public_notes: '공개 정보', personal_notes: '민감 정보',
   sns_twitter: 'SNS(트위터)', sns_facebook: 'SNS(페이스북)',
 }
@@ -116,6 +116,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [tagInput, setTagInput] = useState('')
+  const [affiliationInput, setAffiliationInput] = useState('')
   const [showConfirm, setShowConfirm] = useState(false)
   const [pendingPayload, setPendingPayload] = useState<Record<string, unknown> | null>(null)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
@@ -149,6 +150,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     graduate_school: initialData?.graduate_school ?? '',
     exam_batch: initialData?.exam_batch ?? '',
     tags: initialData?.tags ?? [] as string[],
+    affiliations: (initialData as any)?.affiliations ?? [] as string[],
     visibility: 'shared' as 'personal' | 'shared',
     sensitivity: initialData?.sensitivity ?? 'public' as 'public' | 'private',
     on_record_status: (initialData?.on_record_status ?? '') as '' | 'on_record' | 'background_only' | 'anonymous',
@@ -214,6 +216,9 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       high_school:          data.high_school          ?? prev.high_school,
       birthday:             data.birthday             ?? prev.birthday,
       hometown_province:    data.hometown_province    ?? prev.hometown_province,
+      public_notes:         data.public_notes
+                              ? (prev.public_notes ? prev.public_notes + '\n' + data.public_notes : data.public_notes)
+                              : prev.public_notes,
       personal_notes:       data.personal_notes
                               ? (prev.personal_notes ? prev.personal_notes + '\n' + data.personal_notes : data.personal_notes)
                               : prev.personal_notes,
@@ -357,6 +362,14 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
     setTagInput('')
   }
 
+  function addAffiliation(aff: string) {
+    const trimmed = aff.trim()
+    if (trimmed && !form.affiliations.includes(trimmed)) {
+      set('affiliations', [...form.affiliations, trimmed])
+    }
+    setAffiliationInput('')
+  }
+
   function buildPayload() {
     const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/
     // exam_batch: 폼에서 string으로 관리 → 숫자 변환, 빈값/비숫자는 null
@@ -482,7 +495,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       'birthday', 'hometown_province', 'hometown_city',
       'high_school', 'university', 'university_major', 'graduate_school',
       'exam_batch', 'visibility', 'sensitivity', 'on_record_status', 'public_notes', 'personal_notes',
-      'sns_twitter', 'sns_facebook', 'tags',
+      'sns_twitter', 'sns_facebook', 'tags', 'affiliations',
     ]
     for (const key of checkKeys) {
       const before = key === 'tags'
@@ -921,7 +934,7 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
         <p className="text-xs mb-3" style={{ color: '#607898' }}>공개 정보 — 모두에게 보임</p>
         <div className="flex gap-2 mb-3">
           <input value={tagInput} onChange={e => setTagInput(e.target.value)}
-            onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTag(tagInput) } }}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addTag(tagInput) } }}
             placeholder="호암회, 삼성장학금, 검찰 출신..."
             style={{ ...inputStyle, flex: 1 }} />
           <button type="button" onClick={() => addTag(tagInput)}
@@ -937,6 +950,37 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
                 style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)' }}>
                 {tag}
                 <button type="button" onClick={() => set('tags', form.tags.filter(t => t !== tag))}
+                  style={{ color: '#607898', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 동호회·모임·단체 */}
+      <div className="glass-card p-5">
+        <h3 className="text-sm font-semibold mb-1" style={{ color: '#CDD5E0' }}>
+          🤝 동호회 · 모임 · 단체
+        </h3>
+        <p className="text-xs mb-3" style={{ color: '#607898' }}>해병대, ROTC, 인언회, 충남향우회, 서울대언론고시반 등 — 인맥 분석에 활용됩니다</p>
+        <div className="flex gap-2 mb-3">
+          <input value={affiliationInput} onChange={e => setAffiliationInput(e.target.value)}
+            onKeyDown={e => { if (e.key === 'Enter' || e.key === ',') { e.preventDefault(); addAffiliation(affiliationInput) } }}
+            placeholder="해병대, ROTC, 인언회, 충남향우회..."
+            style={{ ...inputStyle, flex: 1 }} />
+          <button type="button" onClick={() => addAffiliation(affiliationInput)}
+            className="px-3 py-2 rounded-lg text-sm"
+            style={{ background: '#3D7A5E', color: 'white', border: 'none', cursor: 'pointer' }}>
+            추가
+          </button>
+        </div>
+        {form.affiliations.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {form.affiliations.map((aff: string) => (
+              <span key={aff} className="flex items-center gap-1.5 text-sm px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(61,158,106,0.15)', color: '#4DAA82', border: '1px solid rgba(61,158,106,0.25)' }}>
+                {aff}
+                <button type="button" onClick={() => set('affiliations', form.affiliations.filter((a: string) => a !== aff))}
                   style={{ color: '#607898', background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1 }}>×</button>
               </span>
             ))}

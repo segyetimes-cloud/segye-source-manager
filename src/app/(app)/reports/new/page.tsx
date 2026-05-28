@@ -99,11 +99,21 @@ export default function NewReportPage() {
     setSourceSearching(false)
   }
 
+  const sourceInputRef = useRef<HTMLInputElement>(null)
+
   function addSource(s: SourceResult) {
     if (selectedSources.find(x => x.id === s.id)) return
     setSelectedSources(prev => [...prev, s])
     setSourceQuery('')
     setSourceResults([])
+    setTimeout(() => sourceInputRef.current?.focus(), 0)
+  }
+
+  function handleSourceKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
+    if (e.key === ',' && sourceResults.length > 0) {
+      e.preventDefault()
+      addSource(sourceResults[0])
+    }
   }
 
   function removeSource(id: string) {
@@ -465,10 +475,12 @@ export default function NewReportPage() {
           <label style={labelStyle}>취재원 연결 <span style={{ color: '#607898', fontWeight: 400 }}>(선택)</span></label>
           <div style={{ position: 'relative' }}>
             <input
+              ref={sourceInputRef}
               type="text"
               value={sourceQuery}
               onChange={e => { setSourceQuery(e.target.value); searchSources(e.target.value) }}
-              placeholder="취재원 이름 또는 소속 검색"
+              onKeyDown={handleSourceKeyDown}
+              placeholder="취재원 이름 또는 소속 검색 (쉼표로 첫 번째 결과 추가)"
               style={inputStyle}
             />
             {sourceResults.length > 0 && (
