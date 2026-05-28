@@ -33,26 +33,26 @@ export default function Watermark({ userId, userEmail, userName, department }: W
     const svgContent = encodeURIComponent(`
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="180">
   <text x="210" y="80"
-    font-family="monospace" font-size="12" font-weight="700"
-    fill="rgba(210,230,255,0.11)"
+    font-family="monospace" font-size="13" font-weight="700"
+    fill="rgba(220,235,255,0.18)"
     text-anchor="middle" dominant-baseline="middle"
     transform="rotate(-35, 210, 90)"
   >${line1}</text>
   <text x="210" y="100"
-    font-family="monospace" font-size="11"
-    fill="rgba(210,230,255,0.11)"
+    font-family="monospace" font-size="12"
+    fill="rgba(220,235,255,0.18)"
     text-anchor="middle" dominant-baseline="middle"
     transform="rotate(-35, 210, 90)"
   >${line2}</text>
   <text x="210" y="80"
-    font-family="monospace" font-size="12" font-weight="700"
-    fill="rgba(15,50,110,0.13)"
+    font-family="monospace" font-size="13" font-weight="700"
+    fill="rgba(15,50,110,0.20)"
     text-anchor="middle" dominant-baseline="middle"
     transform="rotate(-35, 210, 90)"
   >${line1}</text>
   <text x="210" y="100"
-    font-family="monospace" font-size="11"
-    fill="rgba(15,50,110,0.13)"
+    font-family="monospace" font-size="12"
+    fill="rgba(15,50,110,0.20)"
     text-anchor="middle" dominant-baseline="middle"
     transform="rotate(-35, 210, 90)"
   >${line2}</text>
