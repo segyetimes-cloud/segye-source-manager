@@ -961,7 +961,7 @@ export default function SourceDetailClient({
                             </p>
                             <p className="text-xs mt-1" style={{ color: '#7A8A9E' }}>
                               {pos.started_at} ~ {pos.ended_at ?? '현재'}
-                              {pos.change_source && ` · ${pos.change_source === 'crawl' ? '🤖 자동감지' : '✏️ 수동입력'}`}
+                              {pos.change_source === 'crawl' && ` · 🤖 자동감지`}
                             </p>
                           </div>
                           {canEditPositions && (
