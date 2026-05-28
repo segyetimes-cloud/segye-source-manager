@@ -1075,28 +1075,6 @@ export default function SourceDetailClient({
         )}
       </div>
 
-      {/* ── 공개 정보 섹션 (모든 사용자) ─────────────────────────────────────── */}
-      <div className="glass-card p-5">
-        <h2 className="text-sm font-semibold mb-3" style={{ color: '#1C2B3A' }}>
-          📝 공개 정보
-          <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
-        </h2>
-        {source.public_notes ? (
-          <SecureContentViewer
-            apiPath={`/api/sources/${source.id}/copy-log`}
-            content={source.public_notes}
-            userId={userId}
-            userFullName={userFullName}
-            userDepartment={userDepartment ?? null}
-          />
-        ) : (
-          <p className="text-sm" style={{ color: '#7A8A9E' }}>
-            등록된 공개 정보가 없습니다.
-            {canEdit && <span> <a href={`/sources/${source.id}/edit`} style={{ color: '#4A7CC0' }}>수정</a>에서 추가하세요.</span>}
-          </p>
-        )}
-      </div>
-
       {/* ── 정보 섹션 (민감 정보 포함 — 공유 취재원) ──────────────────────────── */}
       <div className="glass-card p-5">
         <div className="flex items-center justify-between mb-4">
@@ -1275,12 +1253,53 @@ export default function SourceDetailClient({
 
       </div>
 
-      {/* ── 정보 노트 섹션 (복수 작성자) ─────────────────────────────────────── */}
+      {/* ── 공개 정보 섹션 (복수 작성자 + 등록자 메모) ────────────────────────── */}
       <div className="glass-card p-5">
         <h2 className="text-sm font-semibold mb-4" style={{ color: '#1C2B3A' }}>
-          📝 정보 노트
-          <span className="text-xs ml-2 font-normal" style={{ color: '#7A8A9E' }}>여러 기자가 추가한 정보 · 공개/민감 구분</span>
+          📝 공개 정보
+          <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
+          <span className="text-xs ml-1 font-normal" style={{ color: '#7A8A9E' }}>· 여러 기자가 추가 가능</span>
         </h2>
+
+        {/* ── 등록자 메모 (public_notes) — 있을 때만 표시 ─────────────────── */}
+        {source.public_notes && (
+          <div className="mb-4 rounded-xl overflow-hidden"
+            style={{ border: '1px solid #DDE5EF', background: '#FFFFFF', boxShadow: '0 1px 4px rgba(0,0,0,0.05)' }}>
+            <div className="px-4 py-2.5 flex items-center gap-2"
+              style={{ background: '#F5F8FC', borderBottom: '1px solid #DDE5EF' }}>
+              <div style={{
+                width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
+                background: 'rgba(30,144,255,0.2)', display: 'flex', alignItems: 'center',
+                justifyContent: 'center', fontSize: '11px', fontWeight: 700, color: '#4A7CC0',
+                border: '1px solid rgba(30,144,255,0.35)',
+              }}>
+                {(source.profiles?.full_name ?? '?').slice(0, 1)}
+              </div>
+              <div>
+                <span className="text-xs font-semibold" style={{ color: '#374151' }}>
+                  {source.profiles?.full_name ?? '등록자'}
+                </span>
+                <span className="text-xs ml-2" style={{ color: '#9CA3AF' }}>등록자 메모</span>
+              </div>
+              {canEdit && (
+                <a href={`/sources/${source.id}/edit`}
+                  className="ml-auto text-xs"
+                  style={{ color: '#4A7CC0', textDecoration: 'none' }}>
+                  수정
+                </a>
+              )}
+            </div>
+            <div className="px-4 py-3">
+              <SecureContentViewer
+                apiPath={`/api/sources/${source.id}/copy-log`}
+                content={source.public_notes}
+                userId={userId}
+                userFullName={userFullName}
+                userDepartment={userDepartment ?? null}
+              />
+            </div>
+          </div>
+        )}
 
         {/* 잠긴 민감 노트 알림 (차장 미만에게 표시) */}
         {lockedNotesCount > 0 && !showPrivate && (
@@ -1369,7 +1388,7 @@ export default function SourceDetailClient({
           </div>
         ) : (
           <p className="text-sm" style={{ color: '#7A8A9E' }}>
-            아직 추가된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.
+            {source.public_notes ? '등록자 메모 외 추가 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.' : '아직 추가된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.'}
           </p>
         )}
 
