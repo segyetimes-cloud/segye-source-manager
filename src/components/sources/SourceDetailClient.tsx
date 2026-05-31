@@ -115,30 +115,30 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
   return (
     <div className="rounded-xl overflow-hidden group"
       style={{
-        border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.35)' : '#DDE5EF'}`,
-        background: note.is_sensitive ? 'rgba(255,153,0,0.04)' : '#FFFFFF',
+        border: `1px solid ${note.is_sensitive ? '#E8C97A' : '#DDE5EF'}`,
+        background: note.is_sensitive ? '#FFFBF0' : '#FFFFFF',
         boxShadow: '0 1px 4px rgba(0,0,0,0.05)',
       }}>
       {/* 카드 헤더: 작성자 정보 */}
       <div className="flex items-center justify-between px-4 py-2.5"
         style={{
-          background: note.is_sensitive ? 'rgba(255,153,0,0.07)' : '#F5F8FC',
-          borderBottom: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.2)' : '#DDE5EF'}`,
+          background: note.is_sensitive ? '#FFF4D6' : '#F5F8FC',
+          borderBottom: `1px solid ${note.is_sensitive ? '#E8C97A' : '#DDE5EF'}`,
         }}>
         <div className="flex items-center gap-2">
           {/* 아바타 */}
           <div style={{
             width: '26px', height: '26px', borderRadius: '50%', flexShrink: 0,
-            background: note.is_sensitive ? 'rgba(255,153,0,0.2)' : 'rgba(30,144,255,0.2)',
+            background: note.is_sensitive ? '#F5D87A' : 'rgba(30,144,255,0.15)',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
             fontSize: '11px', fontWeight: 700,
-            color: note.is_sensitive ? '#A87228' : '#4A7CC0',
-            border: `1px solid ${note.is_sensitive ? 'rgba(255,153,0,0.4)' : 'rgba(30,144,255,0.35)'}`,
+            color: note.is_sensitive ? '#7A4F00' : '#4A7CC0',
+            border: `1px solid ${note.is_sensitive ? '#D4A030' : 'rgba(30,144,255,0.35)'}`,
           }}>
             {initial}
           </div>
           <div>
-            <span className="text-xs font-semibold" style={{ color: note.is_sensitive ? '#A87228' : '#374151' }}>
+            <span className="text-xs font-semibold" style={{ color: note.is_sensitive ? '#5C3800' : '#374151' }}>
               {authorName}
             </span>
             {note.profiles?.department && (
@@ -149,7 +149,7 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
           </div>
           {note.is_sensitive && (
             <span className="text-xs px-1.5 py-0.5 rounded font-semibold"
-              style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)' }}>
+              style={{ background: '#FDEFC3', color: '#7A4F00', border: '1px solid #D4A030' }}>
               ⚠️ 민감
             </span>
           )}
@@ -603,7 +603,7 @@ export default function SourceDetailClient({
                   style={{
                     fontSize: '11px', fontWeight: 600, padding: '3px 9px', borderRadius: '12px',
                     border: 'none', cursor: visibilityChanging ? 'wait' : 'pointer',
-                    background: currentSensitivity === 'private' ? 'rgba(255,153,0,0.12)' : 'rgba(61,158,106,0.12)',
+                    background: currentSensitivity === 'private' ? '#FDEFC3' : 'rgba(61,158,106,0.12)',
                     color: currentSensitivity === 'private' ? '#A87228' : '#3D9E6A',
                   }}>
                   {currentSensitivity === 'private' ? '⚠️ 민감' : '✅ 공개'}
@@ -628,7 +628,7 @@ export default function SourceDetailClient({
                 const cfg = s === 'on_record'
                   ? { icon: '✅', label: '온더레코드', bg: 'rgba(61,158,106,0.12)', color: '#3D9E6A', border: 'rgba(61,158,106,0.3)' }
                   : s === 'background_only'
-                  ? { icon: '🟡', label: '백그라운드', bg: 'rgba(184,148,40,0.12)', color: '#A87228', border: 'rgba(184,148,40,0.3)' }
+                  ? { icon: '🟡', label: '백그라운드', bg: 'rgba(184,148,40,0.12)', color: '#7A4F00', border: 'rgba(184,148,40,0.3)' }
                   : { icon: '🔴', label: '오프더레코드', bg: 'rgba(192,64,64,0.12)', color: '#C04040', border: 'rgba(192,64,64,0.3)' }
                 return (
                   <span style={{
@@ -705,8 +705,8 @@ export default function SourceDetailClient({
 
       {/* 민감정보 안내 (공유+민감 취재원, 열람 승인 폐지로 안내만 표시) */}
       {source.visibility === 'shared' && source.sensitivity === 'private' && !showPrivate && (
-        <div className="glass-card p-4" style={{ border: '1px solid rgba(255,153,0,0.3)', background: 'rgba(255,153,0,0.05)' }}>
-          <p className="text-sm font-medium" style={{ color: '#A87228' }}>⚠️ 이 취재원은 민감 정보로 분류되어 있습니다</p>
+        <div className="glass-card p-4" style={{ border: '1px solid #D4A030', background: '#FFFBF0' }}>
+          <p className="text-sm font-medium" style={{ color: '#7A4F00' }}>⚠️ 이 취재원은 민감 정보로 분류되어 있습니다</p>
           <p className="text-xs mt-1" style={{ color: '#526070' }}>민감도 표시가 있는 취재원입니다. 내용은 아래에서 확인하세요.</p>
         </div>
       )}
@@ -724,8 +724,8 @@ export default function SourceDetailClient({
             }}
             style={{
               fontSize: '11px', fontWeight: 600, padding: '4px 10px', borderRadius: '6px',
-              background: 'rgba(255,153,0,0.1)', color: '#A87228',
-              border: '1px solid rgba(255,153,0,0.25)', cursor: 'pointer',
+              background: 'rgba(255,153,0,0.1)', color: '#7A4F00',
+              border: '1px solid #D4A030', cursor: 'pointer',
             }}>
             📝 내 정보 메모
           </button>
@@ -1081,7 +1081,7 @@ export default function SourceDetailClient({
           <div>
             <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>
               🔒 민감 정보
-              <span className="text-xs ml-2 font-normal" style={{ color: '#A87228' }}>차장 이상 열람 · 기자는 승인 필요</span>
+              <span className="text-xs ml-2 font-normal" style={{ color: '#7A4F00' }}>차장 이상 열람 · 기자는 승인 필요</span>
             </h2>
           </div>
         </div>
@@ -1091,19 +1091,19 @@ export default function SourceDetailClient({
           <SecureContainer
             className="mb-4 p-3 rounded-lg"
             style={{
-              background: 'rgba(255,153,0,0.04)',
-              border: '1px solid rgba(255,153,0,0.2)',
+              background: '#FFFBF0',
+              border: '1px solid #FDEFC3',
             }}
           >
             <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-semibold" style={{ color: '#A87228', userSelect: 'text' }}>
+              <p className="text-xs font-semibold" style={{ color: '#7A4F00', userSelect: 'text' }}>
                 {isOwner ? '📌 내 민감 정보 (등록자)' : '📌 민감 정보'}
               </p>
               {canEdit && editingField !== 'personal_notes' && (
                 <button
                   type="button"
                   onClick={() => { setEditingField('personal_notes'); setEditingValue(source.personal_notes ?? '') }}
-                  style={{ fontSize: '11px', color: '#A87228', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
+                  style={{ fontSize: '11px', color: '#7A4F00', background: 'none', border: 'none', cursor: 'pointer', padding: '2px 6px' }}>
                   ✏️ 수정
                 </button>
               )}
@@ -1118,13 +1118,13 @@ export default function SourceDetailClient({
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
                   style={{
                     width: '100%', padding: '8px 10px', background: '#EEF2F7',
-                    border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
+                    border: '1px solid #C8921A', borderRadius: '8px',
                     color: '#1C2B3A', fontSize: '13px', resize: 'vertical',
                   }}
                 />
                 <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                   <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
-                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : '#FDEFC3', color: '#7A4F00', border: '1px solid #C8921A', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {fieldSaving ? '저장 중...' : '저장'}
                   </button>
                   <button type="button" onClick={handleMoveToPublic} disabled={fieldSaving || !editingValue.trim()}
@@ -1164,13 +1164,13 @@ export default function SourceDetailClient({
                   placeholder="민감 정보 입력 (인사, 성향, 관계 등)..."
                   style={{
                     width: '100%', padding: '8px 10px', background: '#EEF2F7',
-                    border: '1px solid rgba(255,153,0,0.4)', borderRadius: '8px',
+                    border: '1px solid #C8921A', borderRadius: '8px',
                     color: '#1C2B3A', fontSize: '13px', resize: 'vertical',
                   }}
                 />
                 <div style={{ display: 'flex', gap: '6px' }}>
                   <button type="button" onClick={() => handleFieldSave('personal_notes')} disabled={fieldSaving || !editingValue.trim()}
-                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : 'rgba(255,153,0,0.2)', color: '#A87228', border: '1px solid rgba(255,153,0,0.4)', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                    style={{ padding: '6px 14px', background: fieldSaving ? '#EEF2F7' : '#FDEFC3', color: '#7A4F00', border: '1px solid #C8921A', borderRadius: '6px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     {fieldSaving ? '저장 중...' : '저장'}
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
@@ -1184,7 +1184,7 @@ export default function SourceDetailClient({
               <div className="mb-4">
                 <button type="button"
                   onClick={() => { setEditingField('personal_notes'); setEditingValue('') }}
-                  style={{ fontSize: '13px', color: '#A87228', background: 'rgba(255,153,0,0.08)', border: '1px solid rgba(255,153,0,0.2)', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer' }}>
+                  style={{ fontSize: '13px', color: '#7A4F00', background: '#FFF2CC', border: '1px solid #FDEFC3', borderRadius: '8px', padding: '8px 14px', cursor: 'pointer' }}>
                   + 민감 정보 입력
                 </button>
               </div>
@@ -1197,17 +1197,17 @@ export default function SourceDetailClient({
         {/* 기자가 민감 정보 열람 권한 없을 때 — 데스크 승인 신청 유도 */}
         {!isOwner && !canSeePersonalNotes && (
           <div className="mb-4 p-4 rounded-lg flex items-start gap-3"
-            style={{ background: 'rgba(255,153,0,0.04)', border: '1px solid rgba(255,153,0,0.2)' }}>
+            style={{ background: '#FFFBF0', border: '1px solid #FDEFC3' }}>
             <span style={{ fontSize: '18px' }}>🔒</span>
             <div className="flex-1">
-              <p className="text-xs font-semibold" style={{ color: '#A87228' }}>민감 정보는 데스크(부장+) 승인 후 열람 가능합니다</p>
+              <p className="text-xs font-semibold" style={{ color: '#7A4F00' }}>민감 정보는 데스크(부장+) 승인 후 열람 가능합니다</p>
               {personalNotesPreview && (
                 <div style={{ position: 'relative', marginBottom: '10px', overflow: 'hidden', borderRadius: '8px' }}>
                   <p style={{
                     fontSize: '13px', lineHeight: 1.7, color: '#1C2B3A',
                     filter: 'blur(4px)', userSelect: 'none', pointerEvents: 'none',
-                    padding: '10px 12px', background: 'rgba(255,153,0,0.04)',
-                    border: '1px solid rgba(255,153,0,0.15)', borderRadius: '8px',
+                    padding: '10px 12px', background: '#FFFBF0',
+                    border: '1px solid #FDEFC3', borderRadius: '8px',
                   }}>
                     {personalNotesPreview}
                   </p>
@@ -1218,7 +1218,7 @@ export default function SourceDetailClient({
                   }} />
                   <div style={{
                     position: 'absolute', bottom: '6px', left: '50%', transform: 'translateX(-50%)',
-                    fontSize: '11px', color: '#A87228', fontWeight: 600, whiteSpace: 'nowrap',
+                    fontSize: '11px', color: '#7A4F00', fontWeight: 600, whiteSpace: 'nowrap',
                   }}>
                     🔒 내용 일부 — 전체 열람은 아래에서 신청하세요
                   </div>
@@ -1228,7 +1228,7 @@ export default function SourceDetailClient({
                 <button
                   onClick={() => setShowApprovalForm(true)}
                   className="mt-2 px-3 py-1.5 rounded-lg text-xs font-medium"
-                  style={{ background: 'rgba(255,153,0,0.12)', color: '#A87228', border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                  style={{ background: '#FDEFC3', color: '#7A4F00', border: '1px solid #D4A030', cursor: 'pointer' }}>
                   민감 정보 열람 신청
                 </button>
               ) : (
@@ -1304,10 +1304,10 @@ export default function SourceDetailClient({
         {/* 잠긴 민감 노트 알림 (차장 미만에게 표시) */}
         {lockedNotesCount > 0 && !showPrivate && (
           <div className="mb-3 p-3 rounded-lg flex items-center gap-3"
-            style={{ background: 'rgba(255,153,0,0.05)', border: '1px solid rgba(255,153,0,0.2)' }}>
-            <span style={{ color: '#A87228' }}>🔒</span>
+            style={{ background: '#FFFBF0', border: '1px solid #FDEFC3' }}>
+            <span style={{ color: '#7A4F00' }}>🔒</span>
             <div>
-              <p className="text-xs font-semibold" style={{ color: '#A87228' }}>
+              <p className="text-xs font-semibold" style={{ color: '#7A4F00' }}>
                 민감 정보 {lockedNotesCount}건이 잠겨 있습니다
               </p>
               <p className="text-xs" style={{ color: '#526070' }}>
@@ -1317,8 +1317,8 @@ export default function SourceDetailClient({
             {!showApprovalForm && (
               <button onClick={() => setShowApprovalForm(true)}
                 className="ml-auto text-xs px-3 py-1.5 rounded-lg"
-                style={{ background: 'rgba(255,153,0,0.15)', color: '#A87228',
-                  border: '1px solid rgba(255,153,0,0.3)', cursor: 'pointer' }}>
+                style={{ background: '#FDEFC3', color: '#7A4F00',
+                  border: '1px solid #D4A030', cursor: 'pointer' }}>
                 열람 신청
               </button>
             )}
@@ -1417,7 +1417,7 @@ export default function SourceDetailClient({
                 onClick={() => setNoteSensitive(true)}
                 className="px-3 py-1 text-xs font-medium transition-all"
                 style={{
-                  background: noteSensitive ? 'rgba(255,153,0,0.15)' : 'transparent',
+                  background: noteSensitive ? '#FDEFC3' : 'transparent',
                   color: noteSensitive ? '#A87228' : '#7A8A9E',
                   border: 'none', cursor: 'pointer',
                 }}>
@@ -1441,7 +1441,7 @@ export default function SourceDetailClient({
               width: '100%', resize: 'vertical', outline: 'none', fontSize: '14px',
               padding: '10px 12px', borderRadius: '8px', color: '#1C2B3A',
               background: '#EEF2F7',
-              border: `1px solid ${noteSensitive ? 'rgba(255,153,0,0.3)' : '#DDE5EF'}`,
+              border: `1px solid ${noteSensitive ? '#D4A030' : '#DDE5EF'}`,
             }}
           />
           {noteError && (
@@ -1455,10 +1455,10 @@ export default function SourceDetailClient({
               className="px-4 py-1.5 rounded-lg text-xs font-semibold"
               style={{
                 background: (noteSubmitting || !noteContent.trim()) ? '#DDE5EF'
-                  : noteSensitive ? 'rgba(255,153,0,0.2)' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+                  : noteSensitive ? '#FDEFC3' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                 color: (noteSubmitting || !noteContent.trim()) ? '#7A8A9E'
                   : noteSensitive ? '#A87228' : 'white',
-                border: noteSensitive ? '1px solid rgba(255,153,0,0.4)' : 'none',
+                border: noteSensitive ? '1px solid #C8921A' : 'none',
                 cursor: (noteSubmitting || !noteContent.trim()) ? 'not-allowed' : 'pointer',
               }}>
               {noteSubmitting ? '저장 중...' : `${noteSensitive ? '🔒 민감 정보' : '📢 공개 정보'} 등록 (+10pt)`}
@@ -1630,8 +1630,8 @@ export default function SourceDetailClient({
             title="삭제 요청 (부장 승인 필요)"
             style={{
               padding: '8px 16px', borderRadius: '8px', fontSize: '13px',
-              background: 'rgba(255,153,0,0.08)', color: '#A87228',
-              border: '1px solid rgba(255,153,0,0.2)', cursor: 'pointer',
+              background: '#FFF2CC', color: '#7A4F00',
+              border: '1px solid #FDEFC3', cursor: 'pointer',
             }}
           >
             🗑️ 삭제 요청

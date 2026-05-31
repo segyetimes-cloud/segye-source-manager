@@ -122,7 +122,7 @@ export default function SecureContentViewer({
       const ctx = canvas.getContext('2d')!
       ctx.scale(dpr, dpr)
       ctx.font = fontStr
-      ctx.fillStyle = '#CDD5E0'
+      ctx.fillStyle = '#2D3748'
       ctx.textBaseline = 'alphabetic'
       drawWrappedText(ctx, content, containerWidth, lineHeight, fontSize + 4)
     }
