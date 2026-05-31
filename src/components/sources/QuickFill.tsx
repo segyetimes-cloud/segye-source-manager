@@ -18,24 +18,30 @@ function isMultiTabRow(raw: string): boolean {
   return lines.length >= 2 && lines.filter(l => l.includes('\t')).length >= 2
 }
 
+/** 핸드폰(01x) 여부 */
+function isMobileNumber(p: string): boolean {
+  return /^01[0-9]/.test(p.replace(/[-\s]/g, ''))
+}
+
 /** 탭 구분 단일 행 → FillData 파싱 */
 function parseTabRow(line: string): FillData {
   const cols = line.split('\t')
-  const org   = cols[0]?.trim() || undefined
-  const pos   = cols[1]?.trim() || undefined
+  const org     = cols[0]?.trim() || undefined
+  const pos     = cols[1]?.trim() || undefined
   const nameRaw = cols[2]?.trim() || ''
-  // 한자 괄호 제거: 金渡坤, 全氏 등
-  const name  = nameRaw.replace(/\([一-鿿·\s]+\)/g, '').trim() || undefined
+  const name    = nameRaw.replace(/\([一-鿿·\s]+\)/g, '').trim() || undefined
   const phoneRaw = (cols[3] ?? '').replace(/^,+/, '').trim()
   const phones = phoneRaw.split(',').map(p => p.trim()).filter(Boolean)
   const unique = [...new Set(phones)]
+  // 핸드폰(01x)을 주요번호로 우선 배치
+  const sorted = [...unique].sort((a, b) => +isMobileNumber(b) - +isMobileNumber(a))
   const notes = cols[4]?.trim() || undefined
   return {
     current_organization: org,
     current_position:     pos,
     full_name:            name,
-    phone:                unique[0],
-    phone_secondary:      unique[1] !== unique[0] ? unique[1] : undefined,
+    phone:                sorted[0],
+    phone_secondary:      sorted.length > 1 ? sorted[1] : undefined,
     public_notes:         notes,
   }
 }
