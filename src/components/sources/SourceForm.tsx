@@ -31,7 +31,7 @@ const FIELD_LABELS: Record<string, string> = {
   email_primary: '이메일(주)', email_secondary: '이메일(부)', birthday: '생년월일',
   hometown_province: '고향(광역)', hometown_city: '고향(시군구)',
   high_school: '고등학교', university: '대학', university_major: '전공',
-  graduate_school: '대학원', exam_batch: '시험/기수', tags: '태그', affiliations: '동호회·단체',
+  graduate_school: '대학원', exam_batch: '시험·기수·학번', tags: '태그', affiliations: '동호회·단체',
   visibility: '공개 범위', sensitivity: '민감도', on_record_status: '취재 동의', public_notes: '공개 정보', personal_notes: '민감 정보',
   sns_twitter: 'SNS(트위터)', sns_facebook: 'SNS(페이스북)',
 }
@@ -65,7 +65,7 @@ function formatVal(key: string, val: unknown): string {
 }
 
 const FIELD_KO: Record<string, string> = {
-  exam_batch: '고시/기수', university: '대학', university_major: '전공',
+  exam_batch: '시험·기수·학번', university: '대학', university_major: '전공',
   graduate_school: '대학원', high_school: '고교',
   birthday: '생년월일', hometown_province: '출신(광역)', hometown_city: '출신(시군구)',
   current_organization: '소속', current_position: '직책',
@@ -372,8 +372,6 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
 
   function buildPayload() {
     const BIRTHDAY_RE = /^\d{4}-\d{2}-\d{2}$/
-    // exam_batch: 폼에서 string으로 관리 → 숫자 변환, 빈값/비숫자는 null
-    const examBatchNum = form.exam_batch ? parseInt(String(form.exam_batch), 10) : NaN
     const payload: Record<string, unknown> = {
       ...form,
       visibility: 'shared',
@@ -388,8 +386,8 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
       phone_secondary: form.phone_secondary || null,
       // 생년월일: YYYY-MM-DD 형식 불일치 시 null
       birthday: form.birthday && BIRTHDAY_RE.test(form.birthday) ? form.birthday : null,
-      // exam_batch: 숫자 변환 실패 시 null
-      exam_batch: !isNaN(examBatchNum) && examBatchNum > 0 ? examBatchNum : null,
+      // exam_batch: 텍스트 그대로 저장 (행시 36회, ROTC 45기, 학번 98 등 모두 허용)
+      exam_batch: form.exam_batch?.trim() || null,
       sns_links: {
         ...(form.sns_twitter && { twitter: form.sns_twitter }),
         ...(form.sns_facebook && { facebook: form.sns_facebook }),
@@ -919,9 +917,10 @@ export default function SourceForm({ mode, initialData }: SourceFormProps) {
               placeholder="서울대 행정대학원" style={inputStyle} />
           </div>
           <div>
-            <label style={labelStyle}>고시 / 기수</label>
+            <label style={labelStyle}>시험 · 기수 · 학번</label>
             <input value={form.exam_batch} onChange={e => set('exam_batch', e.target.value)}
-              placeholder="행시 36회" style={inputStyle} />
+              placeholder="행시 36회 / 외시 29회 / 사시 28회 / ROTC 45기 / 해병대 228기 / 로스쿨 5기 / 학번 98"
+              style={inputStyle} />
           </div>
         </div>
       </div>

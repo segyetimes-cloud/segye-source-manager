@@ -86,7 +86,7 @@ function parseContactText(raw: string): FillData {
     org:       ['소속','회사','직장','기관','부처','근무지','organization','company','work'],
     pos:       ['직책','직함','직위','직급','보직','title','현직','직업','직종'],
     dept:      ['부서','department'],
-    exam:      ['기수','고시','행시','사시'],
+    exam:      ['기수','고시','행시','사시','외시','변리사','로스쿨','학번','rotc','해병대','학번'],
     univ:      ['대학','university','학교','학력'],
     hs:        ['고교','고등학교','출신고'],
     birth:     ['생년월일','생년','birthday','birth','출생'],
@@ -132,7 +132,7 @@ function parseContactText(raw: string): FillData {
 
     // "레이블: 값" 형식
     const colonMatch = line.match(
-      /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|휴대전화|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|현직|직업|부서|department|기수|고시|행시|사시|대학|university|학력|고교|생년월일|출생|출신지|주소|address)\s*[:：]\s*(.+)/i
+      /^(이름|성명|name|전화|전화번호|연락처|모바일|mobile|휴대폰|핸드폰|휴대전화|이메일|e-?mail|소속|회사|직장|기관|부처|organization|company|직책|직함|직위|직급|보직|title|현직|직업|부서|department|기수|고시|행시|사시|외시|변리사|로스쿨|ROTC|해병대|학번|대학|university|학력|고교|생년월일|출생|출신지|주소|address)\s*[:：]\s*(.+)/i
     )
     if (colonMatch) {
       const cat = labelOf(colonMatch[1]) ?? colonMatch[1].toLowerCase()
@@ -199,20 +199,22 @@ function parseContactText(raw: string): FillData {
   let exam_batch: string | undefined = kv['exam']?.[0]
 
   if (!exam_batch) {
-    // "사시 28회", "행시 32회", "외시 28기", "행정고시 28기" 등
+    // 시험명 + 기수 패턴: "행시 36회", "외시 29회", "사시 28기", "ROTC 45기", "해병대 228기", "로스쿨 5기", "학번 98" 등
     const examPattern = normalized.match(
-      /(행정고시|사법시험|외무고시|기술고시|행시|사시|외시|입법고시|회계사|변호사)[\s·]?(\d+)[회기]/
+      /(행정고시|사법시험|외무고시|기술고시|입법고시|행시|사시|외시|변리사|회계사|변호사|ROTC|로스크|로스쿨|해병대|학번)[\s·]?(\d+)[회기번]?/i
     )
     if (examPattern) {
-      exam_batch = `${examPattern[1]} ${examPattern[2]}${examPattern[0].slice(-1)}`
+      const suffix = examPattern[0].slice(-1)
+      const hasSuffix = /[회기번]/.test(suffix)
+      exam_batch = `${examPattern[1]} ${examPattern[2]}${hasSuffix ? suffix : '회'}`
     }
   }
 
   if (!exam_batch) {
-    // "28기 99년" 같은 패턴: 숫자+기 앞에 고시 관련 키워드가 있는 줄
+    // 숫자+기/회 앞에 시험·기수 관련 키워드가 있는 줄
     for (const line of lines) {
-      if (/사시|행시|외시|고시|기수/.test(line)) {
-        const m = line.match(/(\d+)[회기]/)
+      if (/사시|행시|외시|고시|기수|ROTC|로스쿨|해병대|학번/i.test(line)) {
+        const m = line.match(/(\d+)[회기번]/)
         if (m) { exam_batch = m[0]; break }
       }
     }
