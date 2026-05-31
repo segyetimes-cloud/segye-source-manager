@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 
 // ── 타입 ──────────────────────────────────────────────────────────────────────
@@ -150,6 +150,17 @@ function parseText(text: string): ParsedRow[] {
     })
 }
 
+// ── OCR API 응답 타입 ─────────────────────────────────────────────────────────
+
+interface OcrContact {
+  full_name: string | null
+  current_organization: string | null
+  current_position: string | null
+  phone_primary: string | null
+  phone_secondary: string | null
+  public_notes: string | null
+}
+
 // ── 결과 타입 ─────────────────────────────────────────────────────────────────
 
 interface SubmitResult {
@@ -159,14 +170,121 @@ interface SubmitResult {
 
 // ── 컴포넌트 ──────────────────────────────────────────────────────────────────
 
+/** OCR 결과를 ParsedRow 형태로 변환 */
+function ocrContactToRow(c: OcrContact): ParsedRow {
+  const name = (c.full_name ?? '').trim()
+  const rawNotes = c.public_notes ?? ''
+  const { notes, tags, sensitivity } = parseMemo(rawNotes, '')
+
+  const row: ParsedRow = {
+    full_name: name,
+    current_organization: c.current_organization ?? '',
+    current_position: c.current_position ?? '',
+    phone_primary: c.phone_primary ?? '',
+    phone_secondary: c.phone_secondary ?? '',
+    public_notes: notes,
+    tags,
+    visibility: 'shared',
+    sensitivity,
+    _raw: JSON.stringify(c),
+  }
+  if (!name) row.error = '이름이 없습니다'
+  return row
+}
+
 export default function TextPasteImporter() {
   const router = useRouter()
+
+  // ── 탭 상태 ────────────────────────────────────────────────────────────────
+  const [activeTab, setActiveTab] = useState<'text' | 'image'>('text')
+
+  // ── 이미지 업로드 상태 ──────────────────────────────────────────────────────
+  const [imageFile, setImageFile] = useState<File | null>(null)
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null)
+  const [isDragOver, setIsDragOver] = useState(false)
+  const [ocrLoading, setOcrLoading] = useState(false)
+  const [ocrError, setOcrError] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [text, setText] = useState('')
   const [rows, setRows] = useState<ParsedRow[]>([])
   const [selected, setSelected] = useState<Set<number>>(new Set())
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState<SubmitResult | null>(null)
+
+  // ── 이미지 핸들러 ────────────────────────────────────────────────────────────
+
+  function applyImageFile(file: File) {
+    setImageFile(file)
+    setOcrError(null)
+    const url = URL.createObjectURL(file)
+    setImagePreviewUrl(url)
+  }
+
+  function handleFileInputChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (file) applyImageFile(file)
+  }
+
+  function handleDragOver(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(true)
+  }
+
+  function handleDragLeave(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(false)
+  }
+
+  function handleDrop(e: React.DragEvent<HTMLDivElement>) {
+    e.preventDefault()
+    setIsDragOver(false)
+    const file = e.dataTransfer.files?.[0]
+    if (file && file.type.startsWith('image/')) {
+      applyImageFile(file)
+    }
+  }
+
+  async function handleOcrParse() {
+    if (!imageFile) return
+    setOcrLoading(true)
+    setOcrError(null)
+
+    try {
+      const formData = new FormData()
+      formData.append('image', imageFile)
+
+      const res = await fetch('/api/ocr/source-table', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const json = (await res.json()) as { contacts?: OcrContact[]; error?: string }
+
+      if (!res.ok || !json.contacts) {
+        setOcrError(json.error ?? '파싱에 실패했습니다.')
+        return
+      }
+
+      const parsed = json.contacts.map(ocrContactToRow)
+      setRows(parsed)
+      setSelected(new Set(parsed.map((_, i) => i).filter(i => !parsed[i].error)))
+    } catch (e: unknown) {
+      setOcrError(e instanceof Error ? e.message : '네트워크 오류가 발생했습니다.')
+    } finally {
+      setOcrLoading(false)
+    }
+  }
+
+  function resetImageState() {
+    setImageFile(null)
+    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl)
+    setImagePreviewUrl(null)
+    setOcrError(null)
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  // ── 텍스트 파싱 ────────────────────────────────────────────────────────────
 
   // 파싱 실행
   const handleParse = useCallback((value: string) => {
@@ -312,6 +430,7 @@ export default function TextPasteImporter() {
               setText('')
               setRows([])
               setSelected(new Set())
+              resetImageState()
             }}
             className="px-4 py-2 rounded-lg text-sm"
             style={{
@@ -344,72 +463,229 @@ export default function TextPasteImporter() {
   return (
     <div className="space-y-5">
 
-      {/* 안내 + 형식 예시 */}
+      {/* 탭 토글 */}
       <div
-        className="rounded-xl p-4 space-y-2"
+        className="flex rounded-xl p-1 gap-1"
         style={{ background: '#131C2C', border: '1px solid #1A2838' }}
       >
-        <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
-          입력 형식 (탭 구분, 5열)
-        </p>
-        <p className="text-xs" style={{ color: '#607898' }}>
-          엑셀에서 행을 복사해 아래 창에 붙여넣으세요.
-          열 순서: <span style={{ color: '#8AAAC8' }}>소속 → 직책 → 이름 → 전화번호 → 메모</span>
-        </p>
-        <div
-          className="rounded-lg p-3 font-mono text-xs leading-relaxed overflow-x-auto"
-          style={{ background: '#0D1520', color: '#607898', border: '1px solid #1A2838' }}
+        <button
+          onClick={() => setActiveTab('text')}
+          className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+          style={{
+            background: activeTab === 'text' ? '#1E2C40' : 'transparent',
+            color: activeTab === 'text' ? '#CDD5E0' : '#607898',
+            border: activeTab === 'text' ? '1px solid #263548' : '1px solid transparent',
+            cursor: 'pointer',
+          }}
         >
-          <div style={{ color: '#4A7CC0' }}>소속{'\t'}직책{'\t'}이름{'\t'}전화번호(콤마로 여러개){'\t'}메모</div>
-          <div>법무법인 유한 태평양{'\t'}미국변호사{'\t'}김세진{'\t'}01042478869{'\t'}</div>
-          <div>GKL{'\t'}홍보팀장{'\t'}김도곤(金渡坤){'\t'}02-3466-6231,010-6474-1444{'\t'}정몽헌 전 회장 자금담당</div>
-        </div>
-        <ul className="text-xs space-y-0.5" style={{ color: '#607898' }}>
-          <li>• 이름의 한자 괄호 <span style={{ color: '#8AAAC8' }}>(金渡坤)</span>는 자동 제거됩니다</li>
-          <li>• 전화번호 여러 개는 콤마로 구분 → 첫 번째가 주 번호, 두 번째가 보조 번호</li>
-          <li>• 메모에 <span style={{ color: '#8AAAC8' }}>:카테고리/기타</span> 패턴은 태그로 자동 분류됩니다</li>
-          <li>• 메모에 민감 키워드(자금, 주소, 부인 등) 포함 시 <span style={{ color: '#C04040' }}>🔒 민감</span>으로 표시됩니다</li>
-        </ul>
+          텍스트 붙여넣기
+        </button>
+        <button
+          onClick={() => setActiveTab('image')}
+          className="flex-1 py-2 rounded-lg text-sm font-medium transition-all"
+          style={{
+            background: activeTab === 'image' ? '#1E2C40' : 'transparent',
+            color: activeTab === 'image' ? '#CDD5E0' : '#607898',
+            border: activeTab === 'image' ? '1px solid #263548' : '1px solid transparent',
+            cursor: 'pointer',
+          }}
+        >
+          이미지 업로드
+        </button>
       </div>
 
-      {/* 입력 textarea */}
-      <div className="glass-card p-4 space-y-2">
-        <label className="text-sm font-medium" style={{ color: '#CDD5E0' }}>
-          텍스트 붙여넣기
-        </label>
-        <textarea
-          rows={8}
-          value={text}
-          onChange={handleChange}
-          onPaste={handlePaste}
-          placeholder={
-            '소속\t직책\t이름\t전화번호\t메모\n' +
-            '법무법인 유한 태평양\t미국변호사\t김세진\t01042478869\t\n' +
-            'GKL\t홍보팀장\t김도곤(金渡坤)\t02-3466-6231,010-6474-1444\t정몽헌 전 회장 자금담당'
-          }
-          className="w-full rounded-xl text-sm font-mono resize-y"
-          style={{
-            background: '#182035',
-            border: '1px solid #1A2838',
-            color: '#CDD5E0',
-            padding: '10px 12px',
-            outline: 'none',
-            lineHeight: '1.6',
-          }}
-          spellCheck={false}
-        />
-        {rows.length > 0 && (
-          <p className="text-xs" style={{ color: '#607898' }}>
-            총{' '}
-            <span style={{ color: '#CDD5E0' }}>{rows.length}행</span> 감지됨 /{' '}
-            <span style={{ color: '#3D9E6A' }}>{validRows.length}행</span> 정상 /{' '}
-            <span style={{ color: '#C04040' }}>
-              {rows.length - validRows.length}행
-            </span>{' '}
-            오류
-          </p>
-        )}
-      </div>
+      {/* ── 텍스트 탭 ── */}
+      {activeTab === 'text' && (
+        <>
+          {/* 안내 + 형식 예시 */}
+          <div
+            className="rounded-xl p-4 space-y-2"
+            style={{ background: '#131C2C', border: '1px solid #1A2838' }}
+          >
+            <p className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+              입력 형식 (탭 구분, 5열)
+            </p>
+            <p className="text-xs" style={{ color: '#607898' }}>
+              엑셀에서 행을 복사해 아래 창에 붙여넣으세요.
+              열 순서: <span style={{ color: '#8AAAC8' }}>소속 → 직책 → 이름 → 전화번호 → 메모</span>
+            </p>
+            <div
+              className="rounded-lg p-3 font-mono text-xs leading-relaxed overflow-x-auto"
+              style={{ background: '#0D1520', color: '#607898', border: '1px solid #1A2838' }}
+            >
+              <div style={{ color: '#4A7CC0' }}>소속{'\t'}직책{'\t'}이름{'\t'}전화번호(콤마로 여러개){'\t'}메모</div>
+              <div>법무법인 유한 태평양{'\t'}미국변호사{'\t'}김세진{'\t'}01042478869{'\t'}</div>
+              <div>GKL{'\t'}홍보팀장{'\t'}김도곤(金渡坤){'\t'}02-3466-6231,010-6474-1444{'\t'}정몽헌 전 회장 자금담당</div>
+            </div>
+            <ul className="text-xs space-y-0.5" style={{ color: '#607898' }}>
+              <li>• 이름의 한자 괄호 <span style={{ color: '#8AAAC8' }}>(金渡坤)</span>는 자동 제거됩니다</li>
+              <li>• 전화번호 여러 개는 콤마로 구분 → 첫 번째가 주 번호, 두 번째가 보조 번호</li>
+              <li>• 메모에 <span style={{ color: '#8AAAC8' }}>:카테고리/기타</span> 패턴은 태그로 자동 분류됩니다</li>
+              <li>• 메모에 민감 키워드(자금, 주소, 부인 등) 포함 시 <span style={{ color: '#C04040' }}>🔒 민감</span>으로 표시됩니다</li>
+            </ul>
+          </div>
+
+          {/* 입력 textarea */}
+          <div className="glass-card p-4 space-y-2">
+            <label className="text-sm font-medium" style={{ color: '#CDD5E0' }}>
+              텍스트 붙여넣기
+            </label>
+            <textarea
+              rows={8}
+              value={text}
+              onChange={handleChange}
+              onPaste={handlePaste}
+              placeholder={
+                '소속\t직책\t이름\t전화번호\t메모\n' +
+                '법무법인 유한 태평양\t미국변호사\t김세진\t01042478869\t\n' +
+                'GKL\t홍보팀장\t김도곤(金渡坤)\t02-3466-6231,010-6474-1444\t정몽헌 전 회장 자금담당'
+              }
+              className="w-full rounded-xl text-sm font-mono resize-y"
+              style={{
+                background: '#182035',
+                border: '1px solid #1A2838',
+                color: '#CDD5E0',
+                padding: '10px 12px',
+                outline: 'none',
+                lineHeight: '1.6',
+              }}
+              spellCheck={false}
+            />
+            {rows.length > 0 && (
+              <p className="text-xs" style={{ color: '#607898' }}>
+                총{' '}
+                <span style={{ color: '#CDD5E0' }}>{rows.length}행</span> 감지됨 /{' '}
+                <span style={{ color: '#3D9E6A' }}>{validRows.length}행</span> 정상 /{' '}
+                <span style={{ color: '#C04040' }}>
+                  {rows.length - validRows.length}행
+                </span>{' '}
+                오류
+              </p>
+            )}
+          </div>
+        </>
+      )}
+
+      {/* ── 이미지 탭 ── */}
+      {activeTab === 'image' && (
+        <div className="glass-card p-4 space-y-4">
+          {/* 드래그앤드롭 업로드 영역 */}
+          <div
+            onClick={() => fileInputRef.current?.click()}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+            onDrop={handleDrop}
+            className="rounded-xl flex flex-col items-center justify-center gap-2 transition-colors"
+            style={{
+              border: '2px dashed #263548',
+              background: isDragOver ? '#1E2C40' : '#131C2C',
+              padding: '32px 16px',
+              cursor: 'pointer',
+              minHeight: '120px',
+            }}
+          >
+            <span style={{ fontSize: '32px', lineHeight: 1 }}>🖼️</span>
+            <p className="text-sm font-medium" style={{ color: '#CDD5E0' }}>
+              이미지를 드래그하거나 클릭해서 업로드
+            </p>
+            <p className="text-xs" style={{ color: '#607898' }}>
+              JPEG, PNG, GIF, WebP 지원
+            </p>
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileInputChange}
+            />
+          </div>
+
+          {/* 이미지 미리보기 */}
+          {imagePreviewUrl && (
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-medium" style={{ color: '#8AAAC8' }}>
+                  미리보기
+                </p>
+                <button
+                  onClick={resetImageState}
+                  className="text-xs px-2 py-1 rounded-lg"
+                  style={{
+                    background: '#182035',
+                    color: '#607898',
+                    border: '1px solid #1A2838',
+                    cursor: 'pointer',
+                  }}
+                >
+                  이미지 제거
+                </button>
+              </div>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imagePreviewUrl}
+                alt="업로드된 표 이미지 미리보기"
+                className="rounded-xl w-full object-contain"
+                style={{ maxHeight: '200px', border: '1px solid #1A2838' }}
+              />
+            </div>
+          )}
+
+          {/* 오류 메시지 */}
+          {ocrError && (
+            <div
+              className="rounded-lg px-3 py-2 text-xs"
+              style={{
+                background: 'rgba(192,64,64,0.08)',
+                border: '1px solid rgba(192,64,64,0.25)',
+                color: '#C04040',
+              }}
+            >
+              {ocrError}
+            </div>
+          )}
+
+          {/* AI 파싱 버튼 */}
+          <button
+            onClick={handleOcrParse}
+            disabled={!imageFile || ocrLoading}
+            className="w-full py-2.5 rounded-lg text-sm font-semibold transition-all"
+            style={{
+              background:
+                !imageFile || ocrLoading
+                  ? 'rgba(30,144,255,0.3)'
+                  : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+              color: 'white',
+              border: 'none',
+              cursor: !imageFile || ocrLoading ? 'not-allowed' : 'pointer',
+            }}
+          >
+            {ocrLoading ? (
+              <span className="flex items-center justify-center gap-2">
+                <span
+                  className="inline-block rounded-full border-2 border-t-transparent animate-spin"
+                  style={{ width: '14px', height: '14px', borderColor: 'rgba(255,255,255,0.6)', borderTopColor: 'transparent' }}
+                />
+                이미지 분석 중...
+              </span>
+            ) : (
+              '🤖 AI로 파싱'
+            )}
+          </button>
+
+          {/* 파싱 결과 행 수 */}
+          {rows.length > 0 && !ocrLoading && (
+            <p className="text-xs" style={{ color: '#607898' }}>
+              총{' '}
+              <span style={{ color: '#CDD5E0' }}>{rows.length}명</span> 추출됨 /{' '}
+              <span style={{ color: '#3D9E6A' }}>{validRows.length}명</span> 정상 /{' '}
+              <span style={{ color: '#C04040' }}>
+                {rows.length - validRows.length}명
+              </span>{' '}
+              오류
+            </p>
+          )}
+        </div>
+      )}
 
       {/* 프리뷰 테이블 */}
       {rows.length > 0 && (
@@ -610,6 +886,7 @@ export default function TextPasteImporter() {
               setText('')
               setRows([])
               setSelected(new Set())
+              resetImageState()
             }}
             className="px-4 py-2 rounded-lg text-sm"
             style={{
