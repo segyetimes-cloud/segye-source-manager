@@ -12,6 +12,34 @@
 
 import { useRef, useState, useCallback } from 'react'
 
+/** 탭 구분 다행 입력 여부 감지 */
+function isMultiTabRow(raw: string): boolean {
+  const lines = raw.split(/\n/).map(l => l.trim()).filter(Boolean)
+  return lines.length >= 2 && lines.filter(l => l.includes('\t')).length >= 2
+}
+
+/** 탭 구분 단일 행 → FillData 파싱 */
+function parseTabRow(line: string): FillData {
+  const cols = line.split('\t')
+  const org   = cols[0]?.trim() || undefined
+  const pos   = cols[1]?.trim() || undefined
+  const nameRaw = cols[2]?.trim() || ''
+  // 한자 괄호 제거: 金渡坤, 全氏 등
+  const name  = nameRaw.replace(/\([一-鿿·\s]+\)/g, '').trim() || undefined
+  const phoneRaw = (cols[3] ?? '').replace(/^,+/, '').trim()
+  const phones = phoneRaw.split(',').map(p => p.trim()).filter(Boolean)
+  const unique = [...new Set(phones)]
+  const notes = cols[4]?.trim() || undefined
+  return {
+    current_organization: org,
+    current_position:     pos,
+    full_name:            name,
+    phone:                unique[0],
+    phone_secondary:      unique[1] !== unique[0] ? unique[1] : undefined,
+    public_notes:         notes,
+  }
+}
+
 export interface FillData {
   full_name?: string
   current_organization?: string
@@ -482,11 +510,25 @@ export default function QuickFill({ onFill }: Props) {
   const [doneLabel,  setDoneLabel]  = useState('')
   const [compressing, setCompressing] = useState(false)
   const [compressErr, setCompressErr] = useState('')
+  const [batchRows,       setBatchRows]       = useState<FillData[]>([])
+  const [batchMode,       setBatchMode]       = useState(false)
+  const [batchSubmitting, setBatchSubmitting] = useState(false)
+  const [batchResult,     setBatchResult]     = useState<{ok:number; fail:number} | null>(null)
 
   function analyze() {
     if (!text.trim()) return
-    const result = parseContactText(text)
-    setPreview(result)
+    if (isMultiTabRow(text)) {
+      const rows = text.split(/\n/).map(l => l.trim()).filter(Boolean)
+        .map(parseTabRow).filter(r => !!r.full_name)
+      setBatchRows(rows)
+      setBatchMode(true)
+      setPreview(null)
+    } else {
+      setBatchMode(false)
+      setBatchRows([])
+      const result = parseContactText(text)
+      setPreview(result)
+    }
   }
 
   async function compressBio() {
@@ -520,9 +562,37 @@ export default function QuickFill({ onFill }: Props) {
     setDone(true); setOpen(false); setText(''); setPreview(null)
   }
 
+  async function submitBatch() {
+    if (batchRows.length === 0) return
+    setBatchSubmitting(true)
+    let ok = 0, fail = 0
+    for (const row of batchRows) {
+      try {
+        const res = await fetch('/api/sources', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            full_name:            row.full_name,
+            current_organization: row.current_organization,
+            current_position:     row.current_position,
+            phone_primary:        row.phone,
+            phone_secondary:      row.phone_secondary,
+            public_notes:         row.public_notes,
+            visibility:           'shared',
+            sensitivity:          'public',
+          }),
+        })
+        if (res.ok) ok++; else fail++
+      } catch { fail++ }
+    }
+    setBatchResult({ ok, fail })
+    setBatchSubmitting(false)
+  }
+
   function reset() {
     setDone(false); setDoneLabel(''); setOpen(false)
     setText(''); setPreview(null)
+    setBatchMode(false); setBatchRows([]); setBatchResult(null)
   }
 
   // 추출된 필드 수 계산
@@ -569,6 +639,47 @@ export default function QuickFill({ onFill }: Props) {
           autoFocus
         />
       </div>
+
+      {/* 다행 일괄 등록 모드 */}
+      {batchMode && !batchResult && (
+        <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(74,124,192,0.07)', border: '1px solid rgba(74,124,192,0.25)', borderRadius: '8px' }}>
+          <p style={{ fontSize: '12px', fontWeight: 700, color: '#4A7CC0', marginBottom: '8px' }}>
+            👥 {batchRows.length}명 감지 — 일괄 등록 모드
+          </p>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+              <thead>
+                <tr style={{ borderBottom: '1px solid rgba(74,124,192,0.2)' }}>
+                  {['이름','소속','직책','전화','메모'].map(h => (
+                    <th key={h} style={{ padding: '4px 6px', textAlign: 'left', color: '#607898', fontWeight: 600 }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {batchRows.map((r, i) => (
+                  <tr key={i} style={{ borderBottom: '1px solid rgba(74,124,192,0.1)' }}>
+                    <td style={{ padding: '4px 6px', color: '#CDD5E0', fontWeight: 600 }}>{r.full_name}</td>
+                    <td style={{ padding: '4px 6px', color: '#8AAAC8' }}>{r.current_organization ?? '-'}</td>
+                    <td style={{ padding: '4px 6px', color: '#8AAAC8' }}>{r.current_position ?? '-'}</td>
+                    <td style={{ padding: '4px 6px', color: '#8AAAC8' }}>{r.phone ?? '-'}</td>
+                    <td style={{ padding: '4px 6px', color: '#607898', maxWidth: '120px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{r.public_notes ?? '-'}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* 일괄 등록 완료 결과 */}
+      {batchResult && (
+        <div style={{ margin: '0 14px 8px', padding: '10px 12px', background: 'rgba(61,158,106,0.08)', border: '1px solid rgba(61,158,106,0.3)', borderRadius: '8px' }}>
+          <p style={{ fontSize: '13px', fontWeight: 700, color: '#3D9E6A' }}>
+            ✅ 등록 완료: {batchResult.ok}명 성공{batchResult.fail > 0 ? ` / ${batchResult.fail}명 실패` : ''}
+          </p>
+          <a href="/sources" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>→ 취재원 목록 보기</a>
+        </div>
+      )}
 
       {/* 추출 결과 미리보기 */}
       {preview && (
@@ -628,8 +739,28 @@ export default function QuickFill({ onFill }: Props) {
         </div>
       )}
 
-      <div style={{ padding: '0 14px 12px', display: 'flex', gap: '8px' }}>
-        {!preview ? (
+      <div style={{ padding: '0 14px 12px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {batchMode && !batchResult ? (
+          <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+            <button type="button" onClick={submitBatch} disabled={batchSubmitting || batchRows.length === 0}
+              style={{ flex: 1, padding: '10px', background: batchSubmitting ? '#1A2838' : '#4A7CC0', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: batchSubmitting ? 'default' : 'pointer', opacity: batchSubmitting ? 0.6 : 1 }}>
+              {batchSubmitting ? '⏳ 등록 중…' : `👥 ${batchRows.length}명 일괄 등록`}
+            </button>
+            <button type="button" onClick={() => { setBatchMode(false); setBatchRows([]); setPreview(null) }}
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
+              수정
+            </button>
+            <button type="button" onClick={() => { setOpen(false); setText(''); setBatchMode(false); setBatchRows([]); setBatchResult(null) }}
+              style={{ padding: '10px 14px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
+              취소
+            </button>
+          </div>
+        ) : batchResult ? (
+          <button type="button" onClick={reset}
+            style={{ width: '100%', padding: '10px', background: 'none', border: '1px solid #1A2838', borderRadius: '8px', color: '#607898', fontSize: '12px', cursor: 'pointer' }}>
+            닫기
+          </button>
+        ) : !preview ? (
           <>
             <button type="button" onClick={analyze} disabled={!text.trim()}
               style={{ flex: 1, padding: '10px', background: !text.trim() ? '#1A2838' : '#3D9E6A', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '13px', fontWeight: 600, cursor: text.trim() ? 'pointer' : 'default', opacity: text.trim() ? 1 : 0.5 }}>
