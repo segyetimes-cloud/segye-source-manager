@@ -270,7 +270,7 @@ export default function LoginPage() {
               👤
             </div>
             <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>취재원·정보 공유</p>
-            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>등록·검색·이력</p>
+            <p style={{ fontSize: '10px', color: '#8AAABF', margin: 0 }}>등록·검색·이력</p>
           </div>
 
           {/* 카드 2: 정보보고 관리 (active) */}
@@ -303,10 +303,10 @@ export default function LoginPage() {
               📋
             </div>
             <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>정보보고 관리</p>
-            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>작성·공유·보안</p>
+            <p style={{ fontSize: '10px', color: '#8AAABF', margin: 0 }}>작성·공유·보안</p>
           </div>
 
-          {/* 카드 3: 관계망 시각화 */}
+          {/* 카드 3: 관계망 분석 */}
           <div
             style={{
               flex: 1,
@@ -333,10 +333,10 @@ export default function LoginPage() {
                 marginBottom: '7px',
               }}
             >
-              🕸️
+              🔍
             </div>
-            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>관계망 시각화</p>
-            <p style={{ fontSize: '10px', color: '#6A8AAA', margin: 0 }}>자동 인맥 분석</p>
+            <p style={{ fontSize: '11px', fontWeight: 700, color: '#CDD5E0', margin: '0 0 3px' }}>관계망 분석</p>
+            <p style={{ fontSize: '10px', color: '#8AAABF', margin: 0 }}>인맥·관계 분석</p>
           </div>
         </div>
       </div>
@@ -484,9 +484,9 @@ export default function LoginPage() {
                 {loginLoading ? '로그인 중...' : '로그인'}
               </button>
 
-              <p className="text-center text-xs pt-2" style={{ color: '#384860' }}>
+              <p className="text-center text-xs pt-2" style={{ color: '#607898' }}>
                 계정 문의:{' '}
-                <span style={{ color: '#4A7CC0' }}>관리자에게 연락하세요</span>
+                <span style={{ color: '#4A9EFF' }}>관리자에게 연락하세요</span>
               </p>
             </form>
           )}
@@ -639,7 +639,7 @@ export default function LoginPage() {
         </div>
 
         {/* 하단 안내 */}
-        <p className="text-center text-xs mt-auto pt-10" style={{ color: '#2A3A50' }}>
+        <p className="text-center text-xs mt-auto pt-10" style={{ color: '#5A7898' }}>
           본 시스템은 사내 VPN 환경에서만 이용 가능합니다
         </p>
       </div>
