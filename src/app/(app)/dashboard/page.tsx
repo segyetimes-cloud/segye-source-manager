@@ -1,6 +1,7 @@
 ﻿import { createClient } from '@/lib/supabase/server'
 import Link from 'next/link'
-import DashboardCharts, { type ChartData } from '@/components/dashboard/DashboardCharts'
+import DashboardChartsCollapsible from '@/components/dashboard/DashboardChartsCollapsible'
+import type { ChartData } from '@/components/dashboard/DashboardCharts'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -188,219 +189,119 @@ export default async function DashboardPage() {
     score >= 90 ? '#3D9E6A' : score >= 60 ? '#A87228' : '#C04040'
 
   return (
-    <div className="space-y-3">
-      {/* 헤더 */}
-      <div className="flex items-center justify-between gap-3">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', paddingBottom: '2rem' }}>
+
+      {/* ── 헤더 ── */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12 }}>
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>대시보드</h1>
-          <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>
+          <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>대시보드</h1>
+          <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '3px' }}>
             {new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
           </p>
         </div>
         <Link
           href="/sources/new"
-          className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold transition-opacity hover:opacity-80 flex-shrink-0"
-          style={{ background: 'linear-gradient(135deg, #4A7CC0, #0066CC)', color: 'white' }}>
-          <svg width="14" height="14" viewBox="0 0 16 16" fill="none">
-            <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2" strokeLinecap="round"/>
+          style={{
+            display: 'flex', alignItems: 'center', gap: 6,
+            background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+            color: 'white', borderRadius: '8px',
+            padding: '8px 16px', fontSize: '13px',
+            fontWeight: 600, textDecoration: 'none', flexShrink: 0,
+          }}>
+          <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
+            <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
           </svg>
-          <span className="hidden sm:inline">새 취재원 등록</span>
-          <span className="sm:hidden">등록</span>
+          새 취재원 등록
         </Link>
       </div>
 
-      {/* 통계 카드 3개 */}
-      <div className="dashboard-stats-grid">
+      {/* ── 통계 바 (한 줄 3개) ── */}
+      <div style={{
+        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+        background: 'rgba(255,255,255,0.03)',
+        border: '1px solid rgba(255,255,255,0.07)',
+        borderRadius: '12px',
+        overflow: 'hidden',
+      }}>
         {[
-          { label: '공유 취재원', value: sharedSourceCount ?? 0, unit: '명', color: '#3A90A8', icon: '🌐' },
-          { label: '내 포인트', value: totalPoints, unit: 'pt', color: '#7E6E48', icon: '⭐' },
-          { label: '내 정보보고', value: myReports.length, unit: '건', color: '#3D9E6A', icon: '📋' },
-        ].map(stat => (
-          <div key={stat.label} className="glass-card p-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <p className="text-xs font-medium mb-1" style={{ color: '#B8CCDE' }}>{stat.label}</p>
-                <p className="text-xl font-bold" style={{ color: stat.color }}>
-                  {stat.value.toLocaleString()}
-                </p>
-                <p className="text-xs mt-0.5" style={{ color: '#8AAAC8' }}>{stat.unit}</p>
-              </div>
-              <span className="text-xl">{stat.icon}</span>
+          { label: '공유 취재원', value: (sharedSourceCount ?? 0).toLocaleString(), unit: '명', color: '#3A90A8', icon: '🌐', href: '/sources' },
+          { label: '내 포인트', value: totalPoints.toLocaleString(), unit: 'pt', color: '#C8921A', icon: '⭐', href: null },
+          { label: '내 정보보고', value: myReports.length.toLocaleString(), unit: '건', color: '#3D9E6A', icon: '📋', href: '/reports' },
+        ].map((stat, i) => (
+          <div key={stat.label} style={{
+            padding: '18px 20px',
+            borderLeft: i > 0 ? '1px solid rgba(255,255,255,0.06)' : 'none',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 8 }}>
+              <span style={{ fontSize: '14px' }}>{stat.icon}</span>
+              <span style={{ fontSize: '11px', color: '#6A8AAA', fontWeight: 500 }}>{stat.label}</span>
             </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: 5 }}>
+              <span style={{ fontSize: '26px', fontWeight: 700, color: stat.color, lineHeight: 1 }}>
+                {stat.value}
+              </span>
+              <span style={{ fontSize: '12px', color: '#6A8AAA' }}>{stat.unit}</span>
+            </div>
+            {stat.href && (
+              <Link href={stat.href} style={{ fontSize: '11px', color: '#4A7CC0', textDecoration: 'none', marginTop: 4, display: 'block' }}>
+                바로가기 →
+              </Link>
+            )}
           </div>
         ))}
       </div>
 
-      {/* 통계 차트 섹션 */}
-      <DashboardCharts data={chartData} />
-
-      {/* 최근 열람 취재원 */}
-      {recentViewSources.length > 0 && (
-        <div className="glass-card p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold text-sm" style={{ color: '#CDD5E0' }}>🕐 최근 열람한 취재원</h2>
-            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {recentViewSources.map(s => (
-              <Link
-                key={s.id}
-                href={`/sources/${s.id}`}
-                style={{ textDecoration: 'none' }}>
-                <div
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition-colors"
-                  style={{ background: '#182035', border: '1px solid #1A2838' }}
-                  onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#4A7CC0')}
-                  onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = '#1A2838')}>
-                  <div style={{
-                    width: 26, height: 26, borderRadius: '50%', flexShrink: 0,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(30,144,255,0.15)', color: '#4A7CC0',
-                    fontSize: 11, fontWeight: 700,
-                  }}>
-                    {s.full_name[0]}
-                  </div>
-                  <div>
-                    <p style={{ color: '#CDD5E0', fontSize: 13, fontWeight: 600, margin: 0 }}>{s.full_name}</p>
-                    <p style={{ color: '#8AAAC8', fontSize: 11, margin: 0 }}>
-                      {s.current_organization ?? '—'}
-                    </p>
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 메인 콘텐츠 */}
-      <div className="dashboard-main-grid">
-
-        {/* 최근 등록 취재원 */}
-        <div className="glass-card p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>최근 등록한 취재원</h2>
-            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
-          </div>
-
-          {recentSources && recentSources.length > 0 ? (
-            <div className="space-y-3">
-              {recentSources.map(source => (
-                <Link
-                  key={source.id}
-                  href={`/sources/${source.id}`}
-                  className="flex items-center gap-4 p-3 rounded-lg transition-colors dashboard-source-link"
-                  style={{ background: '#182035' }}>
-                  <div className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0 text-sm font-bold"
-                    style={{ background: 'rgba(30,144,255,0.15)', color: '#4A7CC0' }}>
-                    {source.full_name[0]}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>{source.full_name}</p>
-                    <p className="text-xs truncate" style={{ color: '#8AAAC8' }}>
-                      {source.current_organization} {source.current_position}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <div className="w-16 h-1.5 rounded-full" style={{ background: '#1A2838' }}>
-                      <div className="h-full rounded-full"
-                        style={{ width: `${source.completeness_score}%`, background: scoreColor(source.completeness_score) }} />
-                    </div>
-                    <span className="text-xs font-mono w-8 text-right" style={{ color: scoreColor(source.completeness_score) }}>
-                      {source.completeness_score}
-                    </span>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8" style={{ color: '#607898' }}>
-              <p className="text-sm">등록된 취재원이 없습니다</p>
-              <Link href="/sources/new" className="text-xs mt-2 block" style={{ color: '#4A7CC0' }}>
-                첫 번째 취재원을 등록해보세요 →
-              </Link>
-            </div>
-          )}
-        </div>
-
-        {/* 포인트 리더보드 */}
-        <div className="glass-card p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🏆 TOP 기여자</h2>
-            <span className="text-xs" style={{ color: '#607898' }}>전체 공개</span>
-          </div>
-          {leaderboard && leaderboard.length > 0 ? (
-            <div className="space-y-2">
-              {leaderboard.map((item: any, idx) => {
-                const isMe = item.user_id === user.id
-                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null
-                return (
-                  <div key={item.user_id}
-                    className="flex items-center gap-3 px-3 py-2 rounded-lg"
-                    style={{
-                      background: isMe ? 'rgba(255,215,0,0.08)' : 'transparent',
-                      border: isMe ? '1px solid rgba(255,215,0,0.2)' : '1px solid transparent',
-                    }}>
-                    <span className="text-sm w-5 text-center" style={{ color: '#607898' }}>{medal || `${idx + 1}`}</span>
-                    <span className="flex-1 text-sm truncate" style={{ color: isMe ? '#7E6E48' : '#CDD5E0' }}>
-                      {item.profiles?.full_name || '—'}
-                      {isMe && <span className="text-xs ml-1" style={{ color: '#7E6E48' }}>(나)</span>}
-                    </span>
-                    <span className="text-sm font-bold flex-shrink-0" style={{ color: '#7E6E48' }}>{item.total_points}</span>
-                  </div>
-                )
-              })}
-            </div>
-          ) : (
-            <p className="text-center text-sm py-4" style={{ color: '#607898' }}>포인트 집계 중...</p>
-          )}
-        </div>
-      </div>
-
-      {/* 팔로업 예정 취재원 */}
+      {/* ── 팔로업 예정 (있을 때만, 최대 4개) ── */}
       {followups.length > 0 && (
-        <div className="glass-card p-3">
-          <div className="flex items-center justify-between mb-2">
+        <div className="glass-card" style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <div>
-              <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>📅 팔로업 예정</h2>
-              <p className="text-xs mt-0.5" style={{ color: '#607898' }}>7일 이내 연락 예정된 취재원</p>
+              <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>📅 팔로업 예정</h2>
+              <p style={{ fontSize: '11px', color: '#5A7099', marginTop: 2 }}>7일 이내 연락 예정</p>
             </div>
-            <Link href="/sources" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
+            <Link href="/sources" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>전체 보기 →</Link>
           </div>
-          <div className="space-y-2">
-            {followups.map((f: FollowupRow) => {
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {followups.slice(0, 4).map((f: FollowupRow) => {
               const due = new Date(f.next_followup_at)
               const now = new Date()
               const isOverdue = due < now
               const diffDays = Math.ceil((due.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-              const dueTxt = isOverdue
-                ? `${Math.abs(diffDays)}일 지남`
-                : diffDays === 0 ? '오늘'
-                : `${diffDays}일 후`
+              const dueTxt = isOverdue ? `${Math.abs(diffDays)}일 지남` : diffDays === 0 ? '오늘' : `${diffDays}일 후`
               const dueColor = isOverdue ? '#C04040' : diffDays <= 1 ? '#A87228' : '#3D9E6A'
               return (
                 <Link key={f.id} href={f.sources ? `/sources/${f.sources.id}` : '/sources'}
                   style={{ textDecoration: 'none', display: 'block' }}>
-                  <div className="flex items-center gap-3 px-3 py-2 rounded-lg transition-colors"
-                    style={{ background: '#182035', border: `1px solid ${isOverdue ? 'rgba(192,64,64,0.25)' : '#1A2838'}` }}
-                    onMouseEnter={e => ((e.currentTarget as HTMLElement).style.borderColor = '#4A7CC0')}
-                    onMouseLeave={e => ((e.currentTarget as HTMLElement).style.borderColor = isOverdue ? 'rgba(192,64,64,0.25)' : '#1A2838')}>
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 text-xs font-bold"
-                      style={{ background: `${dueColor}20`, color: dueColor }}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 12,
+                    padding: '10px 14px', borderRadius: 8,
+                    background: '#182035',
+                    border: `1px solid ${isOverdue ? 'rgba(192,64,64,0.25)' : '#1A2838'}`,
+                  }}>
+                    <div style={{
+                      width: 34, height: 34, borderRadius: '50%', flexShrink: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      background: `${dueColor}22`, color: dueColor,
+                      fontSize: 13, fontWeight: 700,
+                    }}>
                       {f.sources?.full_name?.[0] ?? '?'}
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold truncate" style={{ color: '#CDD5E0' }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <p style={{ fontSize: 13, fontWeight: 600, color: '#CDD5E0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {f.sources?.full_name ?? '—'}
+                        {f.sources?.current_organization && (
+                          <span style={{ fontSize: 11, color: '#607898', marginLeft: 6, fontWeight: 400 }}>{f.sources.current_organization}</span>
+                        )}
                       </p>
                       {f.summary && (
-                        <p className="text-xs truncate" style={{ color: '#8AAAC8' }}>{f.summary}</p>
+                        <p style={{ fontSize: 11, color: '#8AAAC8', margin: '2px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.summary}</p>
                       )}
                     </div>
-                    <span className="text-xs font-bold flex-shrink-0 px-2 py-0.5 rounded-full"
-                      style={{ background: `${dueColor}18`, color: dueColor }}>
-                      {dueTxt}
-                    </span>
+                    <span style={{
+                      fontSize: 11, fontWeight: 700, flexShrink: 0,
+                      padding: '3px 9px', borderRadius: 20,
+                      background: `${dueColor}18`, color: dueColor,
+                    }}>{dueTxt}</span>
                   </div>
                 </Link>
               )
@@ -409,30 +310,125 @@ export default async function DashboardPage() {
         </div>
       )}
 
-      {/* 도움 요청 */}
-      {openHelp && openHelp.length > 0 && (
-        <div className="glass-card p-3">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="font-semibold" style={{ color: '#CDD5E0' }}>🙋 도움이 필요한 동료</h2>
-            <Link href="/help" className="text-xs" style={{ color: '#4A7CC0' }}>전체 보기 →</Link>
+      {/* ── 메인 2컬럼 그리드 ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+        {/* 최근 등록한 취재원 */}
+        <div className="glass-card" style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>최근 등록한 취재원</h2>
+            <Link href="/sources" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>전체 보기 →</Link>
           </div>
-          <div className="dashboard-help-grid">
-            {openHelp.map((req: any) => (
-              <Link key={req.id} href={`/help/${req.id}`}
-                className="p-3 rounded-lg transition-colors"
-                style={{ background: '#182035', border: '1px solid #1A2838' }}>
-                <p className="text-sm font-medium truncate" style={{ color: '#CDD5E0' }}>{req.title}</p>
-                <div className="flex items-center justify-between mt-2">
-                  <span className="text-xs" style={{ color: '#8AAAC8' }}>
-                    {new Date(req.created_at).toLocaleDateString('ko-KR')}
-                  </span>
-                  <span className="text-xs font-bold" style={{ color: '#7E6E48' }}>+{req.reward_points}pt</span>
+          {recentSources && recentSources.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+              {recentSources.slice(0, 4).map(source => (
+                <Link
+                  key={source.id}
+                  href={`/sources/${source.id}`}
+                  style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 10, padding: '9px 12px', borderRadius: 8, background: '#182035' }}>
+                  <div style={{
+                    width: 32, height: 32, borderRadius: '50%', flexShrink: 0,
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    background: 'rgba(30,144,255,0.12)', color: '#4A7CC0',
+                    fontSize: 12, fontWeight: 700,
+                  }}>
+                    {source.full_name[0]}
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <p style={{ fontSize: 13, fontWeight: 600, color: '#CDD5E0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {source.full_name}
+                    </p>
+                    <p style={{ fontSize: 11, color: '#8AAAC8', margin: '1px 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {[source.current_organization, source.current_position].filter(Boolean).join(' · ')}
+                    </p>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
+                    <div style={{ width: 44, height: 4, borderRadius: 4, background: '#1A2838' }}>
+                      <div style={{ height: '100%', borderRadius: 4, width: `${source.completeness_score}%`, background: scoreColor(source.completeness_score) }} />
+                    </div>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor(source.completeness_score), minWidth: 24, textAlign: 'right' }}>
+                      {source.completeness_score}
+                    </span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center', padding: '28px 0', color: '#607898' }}>
+              <p style={{ fontSize: 13, margin: '0 0 8px' }}>아직 등록한 취재원이 없습니다</p>
+              <Link href="/sources/new" style={{ fontSize: 12, color: '#4A7CC0', textDecoration: 'none' }}>첫 번째 취재원 등록하기 →</Link>
+            </div>
+          )}
+        </div>
+
+        {/* TOP 기여자 */}
+        <div className="glass-card" style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>🏆 TOP 기여자</h2>
+            <span style={{ fontSize: '11px', color: '#5A7099' }}>이번 달</span>
+          </div>
+          {leaderboard && leaderboard.length > 0 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+              {(leaderboard as any[]).slice(0, 6).map((item: any, idx: number) => {
+                const isMe = item.user_id === user.id
+                const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : null
+                return (
+                  <div key={item.user_id} style={{
+                    display: 'flex', alignItems: 'center', gap: 10,
+                    padding: '8px 10px', borderRadius: 7,
+                    background: isMe ? 'rgba(200,146,26,0.08)' : 'transparent',
+                    border: `1px solid ${isMe ? 'rgba(200,146,26,0.2)' : 'transparent'}`,
+                  }}>
+                    <span style={{ fontSize: 13, minWidth: 20, textAlign: 'center', color: '#607898' }}>{medal || `${idx + 1}`}</span>
+                    <span style={{ flex: 1, fontSize: 13, color: isMe ? '#C8921A' : '#CDD5E0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      {item.profiles?.full_name || '—'}
+                      {isMe && <span style={{ fontSize: 10, color: '#C8921A', marginLeft: 4 }}>(나)</span>}
+                    </span>
+                    <span style={{ fontSize: 13, fontWeight: 700, color: '#C8921A', flexShrink: 0 }}>{item.total_points}pt</span>
+                  </div>
+                )
+              })}
+            </div>
+          ) : (
+            <p style={{ textAlign: 'center', fontSize: 13, color: '#607898', padding: '20px 0' }}>집계 중...</p>
+          )}
+        </div>
+      </div>
+
+      {/* ── 도움 요청 (있을 때만, 3개까지) ── */}
+      {openHelp && openHelp.length > 0 && (
+        <div className="glass-card" style={{ padding: '18px 20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
+            <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>🙋 도움이 필요한 동료</h2>
+            <Link href="/help" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>전체 보기 →</Link>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+            {openHelp.slice(0, 3).map((req: any) => (
+              <Link key={req.id} href={`/help/${req.id}`} style={{ textDecoration: 'none' }}>
+                <div style={{
+                  padding: '12px 14px', borderRadius: 8,
+                  background: '#182035', border: '1px solid #1A2838',
+                  height: '100%',
+                }}>
+                  <p style={{ fontSize: 13, fontWeight: 500, color: '#CDD5E0', margin: '0 0 10px', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                    {req.title}
+                  </p>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <span style={{ fontSize: 11, color: '#607898' }}>
+                      {new Date(req.created_at).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })}
+                    </span>
+                    <span style={{ fontSize: 12, fontWeight: 700, color: '#C8921A' }}>+{req.reward_points}pt</span>
+                  </div>
                 </div>
               </Link>
             ))}
           </div>
         </div>
       )}
+
+      {/* ── 통계 상세 (접기/펼치기) ── */}
+      <DashboardChartsCollapsible data={chartData} />
+
     </div>
   )
 }
