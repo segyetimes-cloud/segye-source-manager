@@ -45,6 +45,8 @@ export default function ReportAttachments({ reportId, attachments: initial, canD
   const [downloading, setDownloading] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
   const [error, setError] = useState('')
+  const [previewUrls, setPreviewUrls] = useState<Record<string, string>>({})
+  const [previewLoading, setPreviewLoading] = useState<string | null>(null)
 
   async function handleDownload(att: AttachmentRow) {
     if (downloading) return
@@ -65,6 +67,22 @@ export default function ReportAttachments({ reportId, attachments: initial, canD
     } finally {
       setDownloading(null)
     }
+  }
+
+  async function togglePreview(att: AttachmentRow) {
+    if (previewUrls[att.id]) {
+      setPreviewUrls(prev => { const n = {...prev}; delete n[att.id]; return n })
+      return
+    }
+    setPreviewLoading(att.id)
+    try {
+      const res = await fetch(`/api/reports/${reportId}/attachments/${att.id}`)
+      if (res.ok) {
+        const { url } = await res.json()
+        setPreviewUrls(prev => ({ ...prev, [att.id]: url }))
+      }
+    } catch {}
+    setPreviewLoading(null)
   }
 
   async function handleDelete(att: AttachmentRow) {
@@ -120,59 +138,91 @@ export default function ReportAttachments({ reportId, attachments: initial, canD
           <div
             key={att.id}
             style={{
-              display: 'flex', alignItems: 'center', gap: '10px',
+              display: 'flex', flexDirection: 'column', gap: '6px',
               background: '#131C2C', border: '1px solid #1A2838',
               borderRadius: '7px', padding: '8px 12px',
             }}
           >
-            <span style={{ fontSize: '16px', flexShrink: 0 }}>{mimeIcon(att.mime_type)}</span>
+            {/* inner row: icon + name + buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '16px', flexShrink: 0 }}>{mimeIcon(att.mime_type)}</span>
 
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <p style={{
-                fontSize: '13px', color: '#CDD5E0', fontWeight: 500,
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                margin: 0,
-              }}>
-                {att.filename}
-              </p>
-              <p style={{ fontSize: '11px', color: '#607898', margin: '1px 0 0' }}>
-                {formatFileSize(att.file_size)}
-              </p>
-            </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <p style={{
+                  fontSize: '13px', color: '#CDD5E0', fontWeight: 500,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  margin: 0,
+                }}>
+                  {att.filename}
+                </p>
+                <p style={{ fontSize: '11px', color: '#607898', margin: '1px 0 0' }}>
+                  {formatFileSize(att.file_size)}
+                </p>
+              </div>
 
-            <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-              <button
-                type="button"
-                onClick={() => handleDownload(att)}
-                disabled={downloading === att.id}
-                style={{
-                  background: downloading === att.id ? '#131C2C' : 'rgba(30,144,255,0.08)',
-                  border: '1px solid rgba(30,144,255,0.2)',
-                  color: downloading === att.id ? '#607898' : '#4A7CC0',
-                  borderRadius: '6px', padding: '4px 10px',
-                  fontSize: '12px', fontWeight: 500, cursor: downloading === att.id ? 'not-allowed' : 'pointer',
-                }}
-              >
-                {downloading === att.id ? '...' : '다운로드'}
-              </button>
+              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                {att.mime_type.startsWith('image/') && (
+                  <button
+                    type="button"
+                    onClick={() => togglePreview(att)}
+                    disabled={previewLoading === att.id}
+                    style={{
+                      background: previewUrls[att.id] ? 'rgba(0,204,102,0.08)' : 'rgba(30,144,255,0.08)',
+                      border: `1px solid ${previewUrls[att.id] ? 'rgba(0,204,102,0.2)' : 'rgba(30,144,255,0.2)'}`,
+                      color: previewUrls[att.id] ? '#3D9E6A' : '#4A7CC0',
+                      borderRadius: '6px', padding: '4px 10px',
+                      fontSize: '12px', fontWeight: 500,
+                      cursor: previewLoading === att.id ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {previewLoading === att.id ? '...' : previewUrls[att.id] ? '닫기' : '미리보기'}
+                  </button>
+                )}
 
-              {canDelete && (
                 <button
                   type="button"
-                  onClick={() => handleDelete(att)}
-                  disabled={deleting === att.id}
+                  onClick={() => handleDownload(att)}
+                  disabled={downloading === att.id}
                   style={{
-                    background: 'none',
-                    border: '1px solid rgba(192,64,64,0.3)',
-                    color: deleting === att.id ? '#607898' : '#904040',
-                    borderRadius: '6px', padding: '4px 8px',
-                    fontSize: '12px', cursor: deleting === att.id ? 'not-allowed' : 'pointer',
+                    background: downloading === att.id ? '#131C2C' : 'rgba(30,144,255,0.08)',
+                    border: '1px solid rgba(30,144,255,0.2)',
+                    color: downloading === att.id ? '#607898' : '#4A7CC0',
+                    borderRadius: '6px', padding: '4px 10px',
+                    fontSize: '12px', fontWeight: 500, cursor: downloading === att.id ? 'not-allowed' : 'pointer',
                   }}
                 >
-                  {deleting === att.id ? '...' : '삭제'}
+                  {downloading === att.id ? '...' : '다운로드'}
                 </button>
-              )}
+
+                {canDelete && (
+                  <button
+                    type="button"
+                    onClick={() => handleDelete(att)}
+                    disabled={deleting === att.id}
+                    style={{
+                      background: 'none',
+                      border: '1px solid rgba(192,64,64,0.3)',
+                      color: deleting === att.id ? '#607898' : '#904040',
+                      borderRadius: '6px', padding: '4px 8px',
+                      fontSize: '12px', cursor: deleting === att.id ? 'not-allowed' : 'pointer',
+                    }}
+                  >
+                    {deleting === att.id ? '...' : '삭제'}
+                  </button>
+                )}
+              </div>
             </div>
+
+            {/* 이미지 미리보기 */}
+            {att.mime_type.startsWith('image/') && previewUrls[att.id] && (
+              <div style={{ borderRadius: '8px', overflow: 'hidden' }}>
+                <img
+                  src={previewUrls[att.id]}
+                  alt={att.filename}
+                  style={{ maxWidth: '100%', maxHeight: '400px', objectFit: 'contain', display: 'block' }}
+                />
+              </div>
+            )}
           </div>
         ))}
       </div>

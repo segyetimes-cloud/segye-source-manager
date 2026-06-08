@@ -367,6 +367,27 @@ export default function NewReportPage() {
             style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
             required
           />
+          <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={() => {
+                if (!content.trim()) return
+                setSensitiveContent(prev => prev ? `${prev}\n\n${content}` : content)
+                setContent('')
+              }}
+              style={{
+                fontSize: '11px',
+                padding: '3px 10px',
+                borderRadius: '5px',
+                background: 'rgba(74,124,192,0.08)',
+                border: '1px solid rgba(74,124,192,0.2)',
+                color: '#6A9AC8',
+                cursor: 'pointer',
+              }}
+            >
+              ⬇️ 민감정보로 이동
+            </button>
+          </div>
         </div>
 
         {/* 민감정보 */}
@@ -376,10 +397,32 @@ export default function NewReportPage() {
           borderRadius: '10px',
           padding: '14px',
         }}>
-          <label style={{ ...labelStyle, color: '#A87228', marginBottom: '4px' }}>
-            ⚠️ 민감정보{' '}
-            <span style={{ color: '#6B5020', fontWeight: 400 }}>(선택 — 작성자·데스크만 열람)</span>
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+            <label style={{ ...labelStyle, color: '#A87228', marginBottom: 0 }}>
+              ⚠️ 민감정보{' '}
+              <span style={{ color: '#6B5020', fontWeight: 400 }}>(선택 — 작성자·데스크만 열람)</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => {
+                if (!sensitiveContent.trim()) return
+                setContent(prev => prev ? `${prev}\n\n${sensitiveContent}` : sensitiveContent)
+                setSensitiveContent('')
+              }}
+              style={{
+                fontSize: '11px',
+                padding: '3px 10px',
+                borderRadius: '5px',
+                background: 'rgba(74,124,192,0.08)',
+                border: '1px solid rgba(74,124,192,0.2)',
+                color: '#6A9AC8',
+                cursor: 'pointer',
+                flexShrink: 0,
+              }}
+            >
+              ⬆️ 본문으로 이동
+            </button>
+          </div>
           <p style={{ fontSize: '11px', color: '#6B5020', marginBottom: '8px' }}>
             공개 본문에 포함하기 어려운 민감한 취재 내용을 별도로 기록합니다. 데스크(부장 이상)와 작성자만 볼 수 있습니다.
           </p>
