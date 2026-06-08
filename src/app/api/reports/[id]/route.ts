@@ -117,8 +117,10 @@ export async function PATCH(
   }
 
   const updateData: ReportUpdate = {}
-  if (title?.trim())        updateData.title      = title.trim()
-  if (content?.trim())      updateData.content    = content.trim()
+  if (title?.trim())         updateData.title   = title.trim()
+  // content는 undefined가 아닌 경우(= 명시적으로 전달된 경우)만 업데이트
+  // 빈 문자열도 허용 (본문을 민감정보로 이동한 경우 content='' 가 올 수 있음)
+  if (content !== undefined) updateData.content = content?.trim() ?? ''
   if (tags)                 updateData.tags       = tags
   if (visibility)           updateData.visibility = visibility
   if (category)             updateData.category   = VALID_CATEGORIES.includes(category) ? category : '일반'
