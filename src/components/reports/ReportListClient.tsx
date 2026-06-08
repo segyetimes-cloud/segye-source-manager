@@ -49,6 +49,7 @@ interface Props {
   userId: string
   userFullName: string
   userDepartment: string | null
+  isDesk?: boolean
 }
 
 export default function ReportListClient({
@@ -61,6 +62,7 @@ export default function ReportListClient({
   userId,
   userFullName,
   userDepartment,
+  isDesk = false,
 }: Props) {
   const [openReportId, setOpenReportId] = useState<string | null>(null)
 
@@ -118,6 +120,7 @@ export default function ReportListClient({
           userId={userId}
           userFullName={userFullName}
           userDepartment={userDepartment}
+          isDesk={isDesk}
         />
       )}
 

@@ -166,6 +166,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
         userId={user.id}
         userFullName={myProfile?.full_name ?? '—'}
         userDepartment={myProfile?.department ?? null}
+        isDesk={isDeskUser}
       />
     </div>
   )

@@ -7,6 +7,7 @@ import type { ReportVisibility } from '@/types/database'
 
 interface ReportDetail {
   id: string
+  author_id: string
   title: string
   content: string
   sensitive_content: string | null
@@ -28,6 +29,7 @@ interface Props {
   userId: string
   userFullName: string
   userDepartment: string | null
+  isDesk?: boolean
 }
 
 const STATUS_LABEL: Record<string, string> = {
@@ -40,7 +42,7 @@ const STATUS_COLOR: Record<string, { bg: string; color: string; border: string }
   rejected:  { bg: 'rgba(192,64,64,0.15)',   color: '#C04040', border: 'rgba(192,64,64,0.35)' },
 }
 
-export default function ReportModal({ reportId, onClose, userId, userFullName, userDepartment }: Props) {
+export default function ReportModal({ reportId, onClose, userId, userFullName, userDepartment, isDesk = false }: Props) {
   const [report, setReport] = useState<ReportDetail | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -248,8 +250,8 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                 </div>
               )}
 
-              {/* 하단: 전체 페이지 이동 */}
-              <div style={{ borderTop: '1px solid #1A2838', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {/* 하단: 버튼들 */}
+              <div style={{ borderTop: '1px solid #1A2838', paddingTop: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
                 <button
                   onClick={onClose}
                   style={{
@@ -259,11 +261,28 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   }}>
                   나가기
                 </button>
-                <a
-                  href={`/reports/${report.id}`}
-                  style={{ fontSize: 12, color: '#4A7CC0', textDecoration: 'none' }}>
-                  전체 페이지로 보기 →
-                </a>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  {/* 작성자 본인 또는 데스크이면 수정 버튼 표시 */}
+                  {(report.author_id === userId || isDesk) && (
+                    <a
+                      href={`/reports/${report.id}/edit`}
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        fontSize: 12, fontWeight: 600,
+                        color: '#8AAAC8', textDecoration: 'none',
+                        background: '#182035',
+                        border: '1px solid #1A2838',
+                        borderRadius: 8, padding: '6px 14px',
+                      }}>
+                      ✏️ 수정
+                    </a>
+                  )}
+                  <a
+                    href={`/reports/${report.id}`}
+                    style={{ fontSize: 12, color: '#4A7CC0', textDecoration: 'none' }}>
+                    전체 페이지로 보기 →
+                  </a>
+                </div>
               </div>
             </>
           )}
