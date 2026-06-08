@@ -191,7 +191,7 @@ export default function EditReportPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!title.trim()) { setError('제목을 입력해 주세요.'); return }
-    if (!content.trim()) { setError('본문을 입력해 주세요.'); return }
+    if (!content.trim() && !sensitiveContent.trim()) { setError('본문 또는 민감정보 중 하나는 입력해 주세요.'); return }
     setSubmitting(true)
     setError('')
 
@@ -289,14 +289,17 @@ export default function EditReportPage() {
 
         {/* 본문 */}
         <div>
-          <label style={labelStyle}>본문 *</label>
+          <label style={labelStyle}>
+            본문
+            {!sensitiveContent.trim() && <span style={{ color: '#C04040', marginLeft: 2 }}>*</span>}
+            {sensitiveContent.trim() && <span style={{ fontSize: '11px', color: '#607898', fontWeight: 400, marginLeft: 6 }}>(민감정보에 내용이 있으면 비워도 됩니다)</span>}
+          </label>
           <textarea
             value={content}
             onChange={e => setContent(e.target.value)}
             placeholder="보고서 내용을 작성하세요"
             rows={18}
             style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
-            required
           />
           <div style={{ marginTop: '6px', display: 'flex', justifyContent: 'flex-end' }}>
             <button
