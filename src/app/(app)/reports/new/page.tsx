@@ -257,7 +257,7 @@ export default function NewReportPage() {
       }
 
       fetch('/api/reports/draft', { method: 'DELETE' }).catch(() => {})
-      router.push(`/reports/${data.id}`)
+      router.push('/reports')
     } catch (err) {
       clearTimeout(timer)
       const isTimeout = err instanceof Error && err.name === 'AbortError'
