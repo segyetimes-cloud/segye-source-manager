@@ -79,7 +79,7 @@ const REPORT_CATEGORIES = ['일반', '단독', '공동취재', '인터뷰', '배
 
 export const CreateReportSchema = z.object({
   title:             z.string({ error: '제목을 입력해 주세요' }).trim().min(1, '제목을 입력해 주세요').max(200),
-  content:           z.string({ error: '본문을 입력해 주세요' }).trim().min(1, '본문을 입력해 주세요').max(100_000),
+  content:           z.string().trim().max(100_000).default(''),
   sensitive_content: z.string().trim().max(100_000).nullish(),
   category:          z.enum(REPORT_CATEGORIES).default('일반'),
   tags:              z.array(z.string().trim().max(50)).max(30).optional(),
