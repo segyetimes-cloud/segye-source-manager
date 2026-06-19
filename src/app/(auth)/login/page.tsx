@@ -341,16 +341,13 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* ── 오른쪽 패널 (고정 360px) — 폼 영역 ── */}
+      {/* ── 오른쪽 패널 — 폼 영역 ── */}
       <div
-        className="w-full flex flex-col justify-center"
+        className="w-full md:w-[360px] md:flex-shrink-0 flex flex-col justify-center"
         style={{
-          width: '360px',
-          minWidth: '320px',
-          flexShrink: 0,
           background: 'rgba(6,14,30,0.95)',
           borderLeft: '1px solid rgba(30,80,160,0.2)',
-          padding: '48px 32px',
+          padding: '32px 20px',
         }}
       >
         {/* 브랜드 헤더 */}

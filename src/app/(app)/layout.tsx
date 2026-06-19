@@ -7,6 +7,7 @@ import ScreenshotGuard from '@/components/common/ScreenshotGuard'
 import IdleLogout from '@/components/common/IdleLogout'
 import DeviceGuard from '@/components/common/DeviceGuard'
 import CopyGuard from '@/components/common/CopyGuard'
+import SessionGuard from '@/components/common/SessionGuard'
 
 export default async function AppLayout({
   children,
@@ -41,6 +42,7 @@ export default async function AppLayout({
   }
 
   return (
+    <SessionGuard>
     <ScreenshotGuard>
       <div className="min-h-screen" style={{ background: '#0D1520' }}>
         <SidebarLayout profile={profile}>
@@ -65,5 +67,6 @@ export default async function AppLayout({
       {/* 클립보드 복사 워터마크 (텍스트 유출 추적) */}
       <CopyGuard userId={user.id} userEmail={user.email ?? ''} userFullName={profile.full_name ?? ''} />
     </ScreenshotGuard>
+    </SessionGuard>
   )
 }

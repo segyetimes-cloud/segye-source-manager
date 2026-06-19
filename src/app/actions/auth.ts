@@ -34,5 +34,5 @@ export async function loginAction(
 
   // 성공 시 — Set-Cookie 헤더가 응답에 포함된 상태로 리다이렉트
   // 브라우저는 쿠키를 받은 후 /dashboard로 이동 → proxy가 유효한 세션 쿠키를 확인
-  redirect('/dashboard')
+  redirect('/dashboard?_init=1')
 }
