@@ -71,6 +71,16 @@ const navItems = [
     ),
     label: '알립니다',
   },
+  {
+    href: '/points',
+    icon: (
+      <svg width="18" height="18" viewBox="0 0 18 18" fill="none">
+        <path d="M9 2l1.8 3.6L15 6.3l-3 2.9.7 4.1L9 11.3l-3.7 2 .7-4.1-3-2.9 4.2-.7L9 2z"
+          stroke="currentColor" strokeWidth="1.4" strokeLinejoin="round"/>
+      </svg>
+    ),
+    label: '내 점수 안내',
+  },
 ]
 
 const adminNavItems = [
