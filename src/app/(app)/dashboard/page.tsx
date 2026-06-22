@@ -205,19 +205,18 @@ export default async function DashboardPage() {
             display: 'flex', alignItems: 'center', gap: 6,
             background: 'linear-gradient(135deg, #4A7CC0, #0066CC)',
             color: 'white', borderRadius: '8px',
-            padding: '8px 16px', fontSize: '13px',
+            padding: '8px 14px', fontSize: '13px',
             fontWeight: 600, textDecoration: 'none', flexShrink: 0,
           }}>
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none">
             <path d="M8 2v12M2 8h12" stroke="white" strokeWidth="2.2" strokeLinecap="round"/>
           </svg>
-          새 취재원 등록
+          <span className="db-new-btn-text">새 취재원 등록</span>
         </Link>
       </div>
 
       {/* ── 통계 바 (한 줄 3개) ── */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)',
+      <div className="db-stats-bar" style={{
         background: 'rgba(255,255,255,0.03)',
         border: '1px solid rgba(255,255,255,0.07)',
         borderRadius: '12px',
@@ -311,10 +310,10 @@ export default async function DashboardPage() {
       )}
 
       {/* ── 메인 2컬럼 그리드 ── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div className="db-2col">
 
         {/* 최근 등록한 취재원 */}
-        <div className="glass-card" style={{ padding: '18px 20px' }}>
+        <div className="glass-card db-card-mobile" style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>최근 등록한 취재원</h2>
             <Link href="/sources" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>전체 보기 →</Link>
@@ -342,11 +341,11 @@ export default async function DashboardPage() {
                       {[source.current_organization, source.current_position].filter(Boolean).join(' · ')}
                     </p>
                   </div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 5, flexShrink: 0 }}>
-                    <div style={{ width: 44, height: 4, borderRadius: 4, background: '#1A2838' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 4, flexShrink: 0 }}>
+                    <div style={{ width: 32, height: 4, borderRadius: 4, background: '#1A2838' }}>
                       <div style={{ height: '100%', borderRadius: 4, width: `${source.completeness_score}%`, background: scoreColor(source.completeness_score) }} />
                     </div>
-                    <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor(source.completeness_score), minWidth: 24, textAlign: 'right' }}>
+                    <span style={{ fontSize: 11, fontWeight: 600, color: scoreColor(source.completeness_score), minWidth: 20, textAlign: 'right' }}>
                       {source.completeness_score}
                     </span>
                   </div>
@@ -362,7 +361,7 @@ export default async function DashboardPage() {
         </div>
 
         {/* TOP 기여자 */}
-        <div className="glass-card" style={{ padding: '18px 20px' }}>
+        <div className="glass-card db-card-mobile" style={{ padding: '18px 20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 14 }}>
             <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>🏆 TOP 기여자</h2>
             <span style={{ fontSize: '11px', color: '#5A7099' }}>이번 달</span>
@@ -402,7 +401,7 @@ export default async function DashboardPage() {
             <h2 style={{ fontSize: '14px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>🙋 도움이 필요한 동료</h2>
             <Link href="/help" style={{ fontSize: '12px', color: '#4A7CC0', textDecoration: 'none' }}>전체 보기 →</Link>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 10 }}>
+          <div className="db-help-grid">
             {openHelp.slice(0, 3).map((req: any) => (
               <Link key={req.id} href={`/help/${req.id}`} style={{ textDecoration: 'none' }}>
                 <div style={{

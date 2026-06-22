@@ -81,7 +81,7 @@ export default function SidebarLayout({ profile, children }: Props) {
       {/* ── 메인 콘텐츠 ── */}
       <main
         className="app-main"
-        style={{ flex: 1, minHeight: '100vh', background: '#0D1520' }}>
+        style={{ flex: 1, minWidth: 0, minHeight: '100vh', background: '#0D1520', overflowX: 'hidden' }}>
         <div style={{ padding: '1rem' }}>
           {children}
         </div>
