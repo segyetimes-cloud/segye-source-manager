@@ -46,6 +46,20 @@ export default function SidebarLayout({ profile, children }: Props) {
 
       {/* ── 모바일 상단 바 ── */}
       <header className="mobile-topbar">
+        {/* 햄버거 버튼 — 왼쪽 */}
+        <button
+          onClick={() => setMobileOpen(true)}
+          aria-label="메뉴 열기"
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            padding: 8, color: '#8AAAC8', flexShrink: 0,
+          }}>
+          <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
+            <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
+          </svg>
+        </button>
+
+        {/* 로고 + 앱 이름 — 오른쪽 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <div style={{
             width: 30, height: 30, borderRadius: 8, flexShrink: 0,
@@ -60,21 +74,6 @@ export default function SidebarLayout({ profile, children }: Props) {
             <p style={{ color: '#CDD5E0', fontWeight: 700, fontSize: 14, lineHeight: 1.2 }}>세계일보</p>
             <p style={{ color: '#5A7099', fontSize: 11, lineHeight: 1 }}>취재원·정보 공유</p>
           </div>
-        </div>
-
-        <div style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-          {/* 햄버거 버튼 */}
-          <button
-            onClick={() => setMobileOpen(true)}
-            aria-label="메뉴 열기"
-            style={{
-              background: 'none', border: 'none', cursor: 'pointer',
-              padding: 8, color: '#8AAAC8',
-            }}>
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none">
-              <path d="M3 6h16M3 11h16M3 16h16" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-            </svg>
-          </button>
         </div>
       </header>
 
