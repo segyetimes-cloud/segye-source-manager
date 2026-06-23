@@ -131,4 +131,90 @@ export async function extractAndStoreRelations(
       }))
     )
   }
+
+  // ── 취재원 DB 매칭 → source_relationships 자동 생성 ──────────────────────────
+  // 추출된 인물이 취재원에 등록돼 있으면 관계망에도 자동으로 연결
+  if (result.relations.length > 0 && result.entities.length > 0) {
+    await linkRelationsToSources(supabase, result)
+  }
+}
+
+// 직함·호칭 제거 패턴 (이름 매칭 정확도 향상)
+const TITLE_PATTERN = /\s*(의원|장관|대표|대통령|총리|차관|수석|실장|국장|부장|기자|교수|원장|이사|회장|사장|전무|상무|팀장|본부장|소장|처장|청장|군수|시장|도지사|판사|검사|변호사|선생|박사|원내대표|간사|위원장|위원|대변인|대표이사|부회장|부사장|청와대|구청장|도의원|시의원|구의원)$/
+
+// 추출된 관계 타입 → source_relationships.relation_type 매핑
+function mapRelationType(extracted: string): string {
+  const t = extracted.toLowerCase()
+  if (/(대학교?|동문|학번|동기|학교동기|졸업|출신학교)/.test(t)) return 'same_university'
+  if (/(고교|고등학교|고등학교동기|중학교)/.test(t)) return 'same_highschool'
+  if (/(고시동기|시험동기|고시기수)/.test(t)) return 'same_exam'
+  if (/(가족|부부|형제|자매|혼인|배우자|친인척)/.test(t)) return 'family'
+  if (/(친구|친분|절친|오랜친구|동창)/.test(t)) return 'close_friend'
+  if (/(동향|고향|출신지|같은 고향)/.test(t)) return 'same_hometown'
+  if (/(스승|제자|멘토|지도|사사|은사)/.test(t)) return 'academic_mentor'
+  if (/(동료|직장|업무|같은 회사|상사|부하|소속|직장동료)/.test(t)) return 'same_org'
+  return 'mention'
+}
+
+async function linkRelationsToSources(
+  supabase: SupabaseClient,
+  result: ExtractResult,
+): Promise<void> {
+  // 취재원 전체 이름 목록 조회 (배경 작업이므로 전체 조회 허용)
+  const { data: sources, error } = await supabase
+    .from('sources')
+    .select('id, full_name')
+    .eq('is_deleted', false)
+
+  if (error || !sources || sources.length === 0) return
+
+  // 인물명 → source_id 매핑 (직함 제거 후 비교)
+  const nameToId: Record<string, string> = {}
+  for (const entity of result.entities) {
+    const cleanName = entity.name.replace(TITLE_PATTERN, '').trim()
+
+    const match = sources.find(s =>
+      s.full_name === entity.name ||                          // 정확 일치
+      s.full_name === cleanName ||                            // 직함 제거 후 일치
+      (cleanName.length >= 2 && entity.name.startsWith(s.full_name + ' ')) || // "박정하 의원" → "박정하"
+      (cleanName.length >= 2 && cleanName === s.full_name),  // 추가 안전장치
+    )
+
+    if (match) nameToId[entity.name] = match.id
+  }
+
+  // 양쪽 모두 취재원 DB에 있는 관계만 처리
+  const toInsert: Array<{
+    source_a_id: string
+    source_b_id: string
+    relation_type: string
+    relation_label: string | null
+    strength: number
+    is_bidirectional: boolean
+  }> = []
+
+  for (const rel of result.relations) {
+    const aId = nameToId[rel.from]
+    const bId = nameToId[rel.to]
+    if (!aId || !bId || aId === bId) continue
+
+    // UUID 오름차순 정렬 → A-B와 B-A를 같은 레코드로 취급 (중복 방지)
+    const [srcA, srcB] = aId < bId ? [aId, bId] : [bId, aId]
+
+    toInsert.push({
+      source_a_id:    srcA,
+      source_b_id:    srcB,
+      relation_type:  mapRelationType(rel.type),
+      relation_label: rel.detail || rel.type,
+      strength:       3,
+      is_bidirectional: true,
+    })
+  }
+
+  if (toInsert.length === 0) return
+
+  // 이미 있는 관계는 건너뜀 (보고서 재처리 시 중복 방지)
+  await (supabase as any)
+    .from('source_relationships')
+    .upsert(toInsert, { onConflict: 'source_a_id,source_b_id,relation_type', ignoreDuplicates: true })
 }
