@@ -703,104 +703,242 @@ export default function AnalysisClient({ allSources, selectedId, analysisData, q
 
       {/* 분석 결과 */}
       {analysisData && src && (
-        <div style={{ padding: '20px 32px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <AnalysisResults analysisData={analysisData} src={src} router={router} />
+      )}
+    </div>
+  )
+}
 
-          {/* 기본 정보 카드 */}
-          <div style={{ background: '#131C2C', border: '1px solid #1A2838', borderRadius: '12px', padding: '20px 24px' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-              <div>
-                <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{src.full_name}</h2>
-                {(src.current_organization || src.current_position) && (
-                  <p style={{ fontSize: '14px', color: '#8AAAC8', marginTop: '4px' }}>
-                    {[src.current_organization, src.current_position].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </div>
-              <Link href={`/sources/${src.id}`}
-                style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '13px', background: 'rgba(30,144,255,0.12)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
-                전체 프로필 보기
-              </Link>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
-              {src.phone_primary && <InfoChip label={src.phone_primary} />}
-              {src.email_primary && <InfoChip label={src.email_primary} />}
-              {src.university && <InfoChip label={src.university + (src.university_major ? ` ${src.university_major}` : '') + (src.university_year ? ` ${src.university_year}학번` : '')} accent />}
-              {src.high_school && <InfoChip label={src.high_school + (src.high_school_year ? ` ${src.high_school_year}학번` : '')} accent />}
-              {src.exam_batch && <InfoChip label={src.exam_batch} accent />}
-              {src.hometown_province && <InfoChip label={src.hometown_province + (src.hometown_city ? ` ${src.hometown_city}` : '')} />}
-            </div>
-            {src.tags && src.tags.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '10px' }}>
-                {src.tags.map((tag: string) => (
-                  <span key={tag} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(30,144,255,0.08)', color: '#6A9AC8', border: '1px solid rgba(30,144,255,0.15)' }}>{tag}</span>
-                ))}
-              </div>
-            )}
-            {src.affiliations && src.affiliations.length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
-                {src.affiliations.map((aff: string) => (
-                  <span key={aff} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(61,158,106,0.08)', color: '#4DAA82', border: '1px solid rgba(61,158,106,0.2)' }}>🤝 {aff}</span>
-                ))}
-              </div>
+// ── 관계 유형 한국어 레이블 (source_relationships 기반) ────────────────────────
+const REL_TYPE_LABELS: Record<string, string> = {
+  same_university:  '대학동문',
+  same_highschool:  '고교동문',
+  same_exam:        '시험동기',
+  family:           '가족',
+  close_friend:     '친구',
+  same_hometown:    '동향',
+  academic_mentor:  '사제관계',
+  same_org:         '직장동료',
+  mention:          '관련 언급',
+  direct_mention:   '직접 언급',
+  acquaintance:     '지인',
+  colleague:        '동료',
+  alumni:           '동문',
+  other:            '기타',
+}
+
+// ── 관계망 결과 전용 컴포넌트 ────────────────────────────────────────────────
+function AnalysisResults({ analysisData, src, router }: { analysisData: AnalysisData; src: any; router: ReturnType<typeof import('next/navigation').useRouter> }) {
+  const totalDirect = analysisData.relationships.length + (analysisData.extractedDirectRelations?.length ?? 0)
+  const totalAcademic = analysisData.sameUniversity.length + analysisData.sameHighSchool.length + analysisData.sameExam.length
+  const totalColleague = analysisData.sameOrg.length
+  const totalLocal = analysisData.sameTown.length + analysisData.sameAffiliation.length
+  const totalReports = analysisData.reportMentions.length
+
+  return (
+    <div style={{ padding: '20px 32px 48px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* ① 기본 정보 카드 */}
+      <div style={{ background: '#131C2C', border: '1px solid #1A2838', borderRadius: '12px', padding: '20px 24px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h2 style={{ fontSize: '22px', fontWeight: 700, color: '#CDD5E0', margin: 0 }}>{src.full_name}</h2>
+            {(src.current_organization || src.current_position) && (
+              <p style={{ fontSize: '14px', color: '#8AAAC8', marginTop: '4px' }}>
+                {[src.current_organization, src.current_position].filter(Boolean).join(' · ')}
+              </p>
             )}
           </div>
+          <Link href={`/sources/${src.id}`}
+            style={{ padding: '6px 14px', borderRadius: '7px', fontSize: '13px', background: 'rgba(30,144,255,0.12)', color: '#4A7CC0', border: '1px solid rgba(30,144,255,0.2)', textDecoration: 'none', whiteSpace: 'nowrap' }}>
+            전체 프로필 보기
+          </Link>
+        </div>
 
-          {/* 인맥 분석 */}
-          <SectionCard title="인맥 분석">
+        {/* 주요 배경 정보 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '14px' }}>
+          {src.university && <InfoChip label={src.university + (src.university_major ? ` ${src.university_major}` : '') + (src.university_year ? ` ${src.university_year}학번` : '')} accent />}
+          {src.high_school && <InfoChip label={src.high_school + (src.high_school_year ? ` ${src.high_school_year}학번` : '')} accent />}
+          {src.exam_batch && <InfoChip label={src.exam_batch} accent />}
+          {src.hometown_province && <InfoChip label={src.hometown_province + (src.hometown_city ? ` ${src.hometown_city}` : '')} />}
+          {src.phone_primary && <InfoChip label={src.phone_primary} />}
+          {src.email_primary && <InfoChip label={src.email_primary} />}
+        </div>
+        {src.affiliations && src.affiliations.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '8px' }}>
+            {src.affiliations.map((aff: string) => (
+              <span key={aff} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(61,158,106,0.08)', color: '#4DAA82', border: '1px solid rgba(61,158,106,0.2)' }}>🤝 {aff}</span>
+            ))}
+          </div>
+        )}
+        {src.tags && src.tags.length > 0 && (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+            {src.tags.map((tag: string) => (
+              <span key={tag} style={{ padding: '3px 10px', borderRadius: '20px', fontSize: '11px', background: 'rgba(30,144,255,0.08)', color: '#6A9AC8', border: '1px solid rgba(30,144,255,0.15)' }}>{tag}</span>
+            ))}
+          </div>
+        )}
 
-            {/* 소속 동료 — 단순 목록 */}
-            <FlatGroup
-              label="소속 동료"
-              groupKey={src.current_organization}
-              items={analysisData.sameOrg}
-              renderItem={(s: any) => <PersonRow key={s.id} id={s.id} name={s.full_name} sub={s.current_position} />}
-            />
+        {/* ② 인맥 요약 띠 */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '16px', paddingTop: '14px', borderTop: '1px solid #1A2838' }}>
+          {[
+            { label: '직접 관계', count: totalDirect, color: '#C8A840', bg: 'rgba(184,148,40,0.1)' },
+            { label: '학맥', count: totalAcademic, color: '#4A7CC0', bg: 'rgba(30,144,255,0.08)' },
+            { label: '직장 동료', count: totalColleague, color: '#3D9E6A', bg: 'rgba(0,204,102,0.07)' },
+            { label: '지역·단체', count: totalLocal, color: '#8A5AC8', bg: 'rgba(138,90,200,0.08)' },
+            { label: '보고서 언급', count: totalReports, color: '#3A90A8', bg: 'rgba(0,212,255,0.07)' },
+          ].map(item => (
+            <div key={item.label} style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: item.bg, borderRadius: '6px', padding: '5px 12px',
+              border: `1px solid ${item.color}30`,
+            }}>
+              <span style={{ fontSize: '20px', fontWeight: 700, color: item.color, lineHeight: 1 }}>{item.count}</span>
+              <span style={{ fontSize: '11px', color: item.color, opacity: 0.85 }}>{item.label}</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
-            {/* 대학 동문 — 학과 > 학번 */}
-            <DrillGroup
-              label="대학 동문"
-              topKey={src.university}
-              items={analysisData.sameUniversity}
-              getSubKey={(s: any) => s.university_major || '전공 미입력'}
-              renderItem={(s: any) => (
-                <PersonRow key={s.id} id={s.id} name={s.full_name}
-                  sub={s.current_organization || s.current_position || ''}
-                  badge={s.university_year ? `${s.university_year}학번` : undefined} />
-              )}
-            />
+      {/* ③ 직접 입력 관계 (가장 명시적 — 최우선) */}
+      {analysisData.relationships.length > 0 && (
+        <SectionCard title="🔗 직접 입력 관계">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {analysisData.relationships.map((rel: any) => {
+              const isA = rel.source_a_id === src.id
+              const other = isA ? rel.source_b : rel.source_a
+              if (!other) return null
+              return (
+                <div key={rel.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: '#0D1520', borderRadius: '8px', border: '1px solid #1A2838', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(184,148,40,0.12)', color: '#C8A840', border: '1px solid rgba(184,148,40,0.2)', flexShrink: 0 }}>
+                    {REL_TYPE_LABELS[rel.relation_type] ?? rel.relation_type}
+                  </span>
+                  <Link href={`/sources/${other.id}`} style={{ color: '#CDD5E0', textDecoration: 'none', fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
+                    {other.full_name}
+                  </Link>
+                  {other.current_organization && (
+                    <span style={{ fontSize: '12px', color: '#607898' }}>
+                      {other.current_organization}{other.current_position ? ` · ${other.current_position}` : ''}
+                    </span>
+                  )}
+                  {rel.relation_label && (
+                    <span style={{ fontSize: '11px', color: '#5A7099', marginLeft: 'auto', fontStyle: 'italic' }}>{rel.relation_label}</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </SectionCard>
+      )}
 
-            {/* 고교 동문 — 학번별 */}
-            <DrillGroup
-              label="고교 동문"
-              topKey={src.high_school}
-              items={analysisData.sameHighSchool}
-              getSubKey={(s: any) => s.high_school_year ? `${s.high_school_year}학번` : '학번 미입력'}
-              renderItem={(s: any) => (
-                <PersonRow key={s.id} id={s.id} name={s.full_name}
-                  sub={s.current_organization || s.current_position || ''} />
-              )}
-            />
+      {/* ④ AI 추출 관계 (보고서 본문 기반) */}
+      {((analysisData.extractedDirectRelations?.length ?? 0) > 0) && (
+        <SectionCard title="🤖 AI 추출 관계 (보고서 본문)">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {analysisData.extractedDirectRelations!.map((r, i) => {
+              const isSrc = r.fromName.includes(src.full_name) || src.full_name.includes(r.fromName)
+              const otherName = isSrc ? r.toName : r.fromName
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0D1520', borderRadius: '8px', padding: '9px 14px', border: '1px solid #1A2838', flexWrap: 'wrap' }}>
+                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(100,70,200,0.12)', color: '#9B7DE8', border: '1px solid rgba(100,70,200,0.28)', flexShrink: 0 }}>
+                    {r.relType}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => router.push(`/analysis?q=${encodeURIComponent(otherName)}`)}
+                    style={{ fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '14px', flexShrink: 0 }}
+                  >
+                    {otherName}
+                  </button>
+                  {r.detail && (
+                    <span style={{ fontSize: '11px', color: '#5A7099', marginLeft: 'auto', fontStyle: 'italic' }}>{r.detail}</span>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          {(analysisData.extractedCoEntities?.length ?? 0) > 0 && (
+            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #1A2838' }}>
+              <p style={{ fontSize: '11px', fontWeight: 600, color: '#7A60C0', marginBottom: '8px', letterSpacing: '0.04em' }}>
+                같은 보고서에 함께 등장한 인물
+              </p>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                {analysisData.extractedCoEntities!.map((e, i) => (
+                  <button key={i} type="button"
+                    onClick={() => router.push(`/analysis?q=${encodeURIComponent(e.name)}`)}
+                    style={{ background: 'rgba(100,70,200,0.08)', border: '1px solid rgba(100,70,200,0.22)', color: '#9B7DE8', borderRadius: '6px', padding: '4px 10px', fontSize: '12px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
+                  >
+                    {e.name}
+                    {e.role && <span style={{ fontSize: '10px', opacity: 0.7 }}>({e.role})</span>}
+                    <span style={{ fontSize: '10px', background: 'rgba(100,70,200,0.15)', borderRadius: '3px', padding: '0 4px', color: '#8060C0' }}>{e.reportCount}건</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </SectionCard>
+      )}
 
-            {/* 시험·기수 — 기수별 */}
-            <DrillGroup
-              label="시험 · 기수"
-              topKey={analysisData.examType ?? src.exam_batch}
-              items={analysisData.sameExam}
-              getSubKey={(s: any) => {
-                if (!s.exam_batch) return '미입력'
-                if (analysisData.examType) {
-                  const prefix = analysisData.examType + ' '
-                  return s.exam_batch.startsWith(prefix) ? s.exam_batch.slice(prefix.length) : s.exam_batch
-                }
-                return s.exam_batch
-              }}
-              renderItem={(s: any) => (
-                <PersonRow key={s.id} id={s.id} name={s.full_name}
-                  sub={s.current_organization || s.current_position || ''} />
-              )}
-            />
+      {/* ⑤ 학맥 */}
+      {(analysisData.sameUniversity.length > 0 || analysisData.sameHighSchool.length > 0 || analysisData.sameExam.length > 0) && (
+        <SectionCard title="🎓 학맥">
+          <DrillGroup
+            label="대학 동문"
+            topKey={src.university}
+            items={analysisData.sameUniversity}
+            getSubKey={(s: any) => s.university_major || '전공 미입력'}
+            renderItem={(s: any) => (
+              <PersonRow key={s.id} id={s.id} name={s.full_name}
+                sub={s.current_organization || s.current_position || ''}
+                badge={s.university_year ? `${s.university_year}학번` : undefined} />
+            )}
+          />
+          <DrillGroup
+            label="고교 동문"
+            topKey={src.high_school}
+            items={analysisData.sameHighSchool}
+            getSubKey={(s: any) => s.high_school_year ? `${s.high_school_year}학번` : '학번 미입력'}
+            renderItem={(s: any) => (
+              <PersonRow key={s.id} id={s.id} name={s.full_name}
+                sub={s.current_organization || s.current_position || ''} />
+            )}
+          />
+          <DrillGroup
+            label="시험 · 기수"
+            topKey={analysisData.examType ?? src.exam_batch}
+            items={analysisData.sameExam}
+            getSubKey={(s: any) => {
+              if (!s.exam_batch) return '미입력'
+              if (analysisData.examType) {
+                const prefix = analysisData.examType + ' '
+                return s.exam_batch.startsWith(prefix) ? s.exam_batch.slice(prefix.length) : s.exam_batch
+              }
+              return s.exam_batch
+            }}
+            renderItem={(s: any) => (
+              <PersonRow key={s.id} id={s.id} name={s.full_name}
+                sub={s.current_organization || s.current_position || ''} />
+            )}
+          />
+        </SectionCard>
+      )}
 
-            {/* 출신 지역 — 시·군·구별 */}
+      {/* ⑥ 소속 동료 */}
+      {analysisData.sameOrg.length > 0 && (
+        <SectionCard title="🏢 소속 동료">
+          <FlatGroup
+            label={src.current_organization ?? ''}
+            groupKey={src.current_organization}
+            items={analysisData.sameOrg}
+            renderItem={(s: any) => <PersonRow key={s.id} id={s.id} name={s.full_name} sub={s.current_position} />}
+          />
+        </SectionCard>
+      )}
+
+      {/* ⑦ 지역 연고 + 동호회·단체 */}
+      {(analysisData.sameTown.length > 0 || analysisData.sameAffiliation.length > 0) && (
+        <SectionCard title="📍 지역 연고 · 동호회">
+          {analysisData.sameTown.length > 0 && (
             <DrillGroup
               label="출신 지역"
               topKey={src.hometown_province}
@@ -811,8 +949,8 @@ export default function AnalysisClient({ allSources, selectedId, analysisData, q
                   sub={s.current_organization || s.current_position || ''} />
               )}
             />
-
-            {/* 동호회·단체 — 단체별 */}
+          )}
+          {analysisData.sameAffiliation.length > 0 && (
             <DrillGroup
               label="동호회 · 단체"
               topKey={src.affiliations?.length > 0 ? src.affiliations.join(', ') : null}
@@ -826,180 +964,64 @@ export default function AnalysisClient({ allSources, selectedId, analysisData, q
                   sub={s.current_organization || s.current_position || ''} />
               )}
             />
-
-          </SectionCard>
-
-          {/* 정보보고 언급 */}
-          {(analysisData.reportMentions.length > 0 || analysisData.coMentionedViaReports.length > 0) && (
-            <SectionCard title="📰 정보보고 언급">
-              {analysisData.reportMentions.map(mention => (
-                <ReportMentionCard key={mention.id} mention={mention} sourceName={src.full_name} />
-              ))}
-
-              {analysisData.coMentionedViaReports.length > 0 && (
-                <div style={{
-                  marginTop: analysisData.reportMentions.length > 0 ? '12px' : '0',
-                  paddingTop: analysisData.reportMentions.length > 0 ? '12px' : '0',
-                  borderTop: analysisData.reportMentions.length > 0 ? '1px solid #1A2838' : 'none',
-                }}>
-                  <p style={{ fontSize: '12px', color: '#8AAAC8', fontWeight: 600, marginBottom: '8px' }}>
-                    같은 보고서에 함께 언급된 인물
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    {analysisData.coMentionedViaReports.map(({ source: s, reportCount }) => (
-                      <PersonRow
-                        key={s.id}
-                        id={s.id}
-                        name={s.full_name}
-                        sub={[s.current_organization, s.current_position].filter(Boolean).join(' · ')}
-                        badge={`보고서 ${reportCount}건`}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </SectionCard>
           )}
+        </SectionCard>
+      )}
 
-          {/* AI 추출 관계망 (보고서 본문 기반) */}
-          {((analysisData.extractedDirectRelations?.length ?? 0) > 0 ||
-            (analysisData.extractedCoEntities?.length ?? 0) > 0) && (
-            <SectionCard title="🤖 AI 추출 관계망 (보고서 본문 기반)">
-              {/* 직접 관계 */}
-              {(analysisData.extractedDirectRelations?.length ?? 0) > 0 && (
-                <div style={{ marginBottom: (analysisData.extractedCoEntities?.length ?? 0) > 0 ? '14px' : '0' }}>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#7A60C0', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                    관계망
-                  </p>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                    {analysisData.extractedDirectRelations!.map((r, i) => {
-                      const isSrc = r.fromName.includes(src.full_name) || src.full_name.includes(r.fromName)
-                      const otherName = isSrc ? r.toName : r.fromName
-                      return (
-                        <div key={i} style={{
-                          display: 'flex', alignItems: 'center', gap: '8px',
-                          background: '#182035', borderRadius: '6px', padding: '7px 10px',
-                          border: '1px solid #1A2838', fontSize: '12px',
-                        }}>
-                          <span style={{ fontWeight: 700, color: '#4A7CC0', flexShrink: 0 }}>{src.full_name}</span>
-                          <span style={{ color: '#3A4A5E' }}>—</span>
-                          <span style={{
-                            fontSize: '10px', fontWeight: 700,
-                            background: 'rgba(100,70,200,0.12)', color: '#9B7DE8',
-                            border: '1px solid rgba(100,70,200,0.28)',
-                            borderRadius: '4px', padding: '1px 6px', flexShrink: 0,
-                          }}>{r.relType}</span>
-                          <span style={{ color: '#3A4A5E' }}>—</span>
-                          <button
-                            type="button"
-                            onClick={() => router.push(`/analysis?q=${encodeURIComponent(otherName)}`)}
-                            style={{
-                              fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none',
-                              cursor: 'pointer', padding: 0, fontSize: '12px',
-                              textDecoration: 'underline', textDecorationColor: 'rgba(74,124,192,0.4)',
-                            }}
-                          >
-                            {otherName}
-                          </button>
-                          {r.detail && (
-                            <span style={{ fontSize: '10px', color: '#5A7099', marginLeft: 'auto', textAlign: 'right' }}>
-                              {r.detail}
-                            </span>
-                          )}
-                        </div>
-                      )
-                    })}
-                  </div>
-                </div>
-              )}
-              {/* 함께 언급된 인물 (보고서 내 co-entity) */}
-              {(analysisData.extractedCoEntities?.length ?? 0) > 0 && (
-                <>
-                  <p style={{ fontSize: '11px', fontWeight: 600, color: '#7A60C0', marginBottom: '8px', letterSpacing: '0.05em' }}>
-                    같은 보고서에 등장한 인물
-                  </p>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                    {analysisData.extractedCoEntities!.map((e, i) => (
-                      <button
-                        key={i}
-                        type="button"
-                        onClick={() => router.push(`/analysis?q=${encodeURIComponent(e.name)}`)}
-                        style={{
-                          background: 'rgba(100,70,200,0.08)', border: '1px solid rgba(100,70,200,0.22)',
-                          color: '#9B7DE8', borderRadius: '6px', padding: '4px 10px',
-                          fontSize: '12px', fontWeight: 600, cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: '5px',
-                        }}
-                      >
-                        {e.name}
-                        {e.role && <span style={{ fontSize: '10px', opacity: 0.7 }}>({e.role})</span>}
-                        <span style={{
-                          fontSize: '10px', background: 'rgba(100,70,200,0.15)',
-                          borderRadius: '3px', padding: '0 4px', color: '#8060C0',
-                        }}>{e.reportCount}건</span>
-                      </button>
-                    ))}
-                  </div>
-                </>
-              )}
-            </SectionCard>
-          )}
-
-          {/* 직접 입력 관계 */}
-          {analysisData.relationships.length > 0 && (
-            <SectionCard title="직접 입력 관계">
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {analysisData.relationships.map((rel: any) => {
-                  const isA = rel.source_a_id === src.id
-                  const other = isA ? rel.source_b : rel.source_a
-                  if (!other) return null
-                  return (
-                    <div key={rel.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: '#0D1520', borderRadius: '7px', border: '1px solid #1A2838' }}>
-                      <span style={{ padding: '2px 8px', borderRadius: '4px', fontSize: '11px', background: 'rgba(184,148,40,0.12)', color: '#C8A840', border: '1px solid rgba(184,148,40,0.2)', flexShrink: 0 }}>
-                        {RELATION_LABELS[rel.relation_type] ?? rel.relation_type}
-                      </span>
-                      <Link href={`/sources/${other.id}`} style={{ color: '#B8CCDE', textDecoration: 'none', fontWeight: 600, fontSize: '14px' }}>
-                        {other.full_name}
-                      </Link>
-                      {other.current_organization && (
-                        <span style={{ fontSize: '12px', color: '#607898' }}>
-                          {other.current_organization}{other.current_position ? ` · ${other.current_position}` : ''}
-                        </span>
-                      )}
-                      {rel.relation_label && (
-                        <span style={{ fontSize: '11px', color: '#607898', marginLeft: 'auto', fontStyle: 'italic' }}>&ldquo;{rel.relation_label}&rdquo;</span>
-                      )}
-                    </div>
-                  )
-                })}
+      {/* ⑧ 정보보고 언급 */}
+      {(analysisData.reportMentions.length > 0 || analysisData.coMentionedViaReports.length > 0) && (
+        <SectionCard title="📰 정보보고 언급">
+          {analysisData.reportMentions.map(mention => (
+            <ReportMentionCard key={mention.id} mention={mention} sourceName={src.full_name} />
+          ))}
+          {analysisData.coMentionedViaReports.length > 0 && (
+            <div style={{ marginTop: analysisData.reportMentions.length > 0 ? '12px' : '0', paddingTop: analysisData.reportMentions.length > 0 ? '12px' : '0', borderTop: analysisData.reportMentions.length > 0 ? '1px solid #1A2838' : 'none' }}>
+              <p style={{ fontSize: '12px', color: '#8AAAC8', fontWeight: 600, marginBottom: '8px' }}>같은 보고서에 함께 언급된 취재원</p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                {analysisData.coMentionedViaReports.map(({ source: s, reportCount }) => (
+                  <PersonRow key={s.id} id={s.id} name={s.full_name}
+                    sub={[s.current_organization, s.current_position].filter(Boolean).join(' · ')}
+                    badge={`보고서 ${reportCount}건`} />
+                ))}
               </div>
-            </SectionCard>
+            </div>
           )}
+        </SectionCard>
+      )}
 
-          {/* 등록 현황 */}
-          <SectionCard title="등록 현황">
-            {analysisData.registrants.length === 0 ? (
-              <p style={{ fontSize: '13px', color: '#607898' }}>등록 정보 없음</p>
-            ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                {analysisData.registrants.map((r: any, i: number) => {
-                  const p = r.profiles
-                  return (
-                    <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: '#0D1520', borderRadius: '7px', border: '1px solid #1A2838' }}>
-                      <span style={{ fontSize: '14px', fontWeight: 600, color: '#B8CCDE' }}>{p?.full_name ?? '알 수 없음'}</span>
-                      {p?.department && <span style={{ fontSize: '12px', color: '#607898' }}>{p.department}</span>}
-                      <span style={{ marginLeft: 'auto', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', background: r.visibility === 'shared' ? 'rgba(56,200,184,0.1)' : 'rgba(255,255,255,0.06)', color: r.visibility === 'shared' ? '#38C8B8' : '#607898', border: `1px solid ${r.visibility === 'shared' ? 'rgba(56,200,184,0.25)' : 'rgba(255,255,255,0.1)'}` }}>
-                        {r.visibility === 'shared' ? '공개' : '개인'}
-                      </span>
-                    </div>
-                  )
-                })}
-              </div>
-            )}
-          </SectionCard>
-
+      {/* ⑨ 모든 연결이 없는 경우 */}
+      {totalDirect === 0 && totalAcademic === 0 && totalColleague === 0 &&
+       totalLocal === 0 && totalReports === 0 &&
+       (analysisData.extractedCoEntities?.length ?? 0) === 0 && (
+        <div style={{ textAlign: 'center', padding: '40px 20px', background: '#131C2C', borderRadius: '12px', border: '1px solid #1A2838' }}>
+          <p style={{ color: '#607898', fontSize: '14px', margin: '0 0 8px' }}>아직 분석된 인맥이 없습니다</p>
+          <p style={{ color: '#3A4A5E', fontSize: '12px', margin: 0, lineHeight: 1.7 }}>
+            취재원 프로필에 대학·고교·시험기수·출신지역을 입력하거나<br />
+            [취재원 관계] 탭에서 직접 관계를 등록하면 여기에 표시됩니다.
+          </p>
         </div>
       )}
+
+      {/* ⑩ 등록 현황 */}
+      {analysisData.registrants.length > 0 && (
+        <SectionCard title="등록 현황">
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {analysisData.registrants.map((r: any, i: number) => {
+              const p = r.profiles
+              return (
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px', background: '#0D1520', borderRadius: '7px', border: '1px solid #1A2838' }}>
+                  <span style={{ fontSize: '14px', fontWeight: 600, color: '#B8CCDE' }}>{p?.full_name ?? '알 수 없음'}</span>
+                  {p?.department && <span style={{ fontSize: '12px', color: '#607898' }}>{p.department}</span>}
+                  <span style={{ marginLeft: 'auto', padding: '2px 8px', borderRadius: '4px', fontSize: '11px', background: r.visibility === 'shared' ? 'rgba(56,200,184,0.1)' : 'rgba(255,255,255,0.06)', color: r.visibility === 'shared' ? '#38C8B8' : '#607898', border: `1px solid ${r.visibility === 'shared' ? 'rgba(56,200,184,0.25)' : 'rgba(255,255,255,0.1)'}` }}>
+                    {r.visibility === 'shared' ? '공개' : '개인'}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </SectionCard>
+      )}
+
     </div>
   )
 }

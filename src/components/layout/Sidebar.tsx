@@ -84,12 +84,14 @@ const navItems = [
 ]
 
 const adminNavItems = [
-  { href: '/admin/approvals', label: '열람 승인 관리' },
-  { href: '/admin/users', label: '계정 관리' },
-  { href: '/admin/audit', label: '접근 로그' },
-  { href: '/admin/help-rewards', label: '도움 보너스' },
-  { href: '/admin/stats', label: '실적 집계' },
+  { href: '/admin/approvals', label: '열람 승인 관리', roles: ['admin','section_editor','editor','publisher','superadmin'] },
+  { href: '/admin/users',     label: '계정 관리',     roles: ['superadmin'] },
+  { href: '/admin/audit',     label: '접근 로그',     roles: ['admin','section_editor','editor','publisher','superadmin'] },
+  { href: '/admin/help-rewards', label: '도움 보너스', roles: ['admin','section_editor','editor','publisher','superadmin'] },
+  { href: '/admin/stats',     label: '실적 집계',     roles: ['admin','section_editor','editor','publisher','superadmin'] },
 ]
+
+const ADMIN_ROLES = ['admin','section_editor','editor','publisher','superadmin']
 
 interface SidebarProps {
   profile: Profile
@@ -224,24 +226,26 @@ export default function Sidebar({ profile, mobileOpen = false, onMobileClose }: 
           </Link>
         ))}
 
-        {/* 어드민 메뉴 */}
-        {(profile.role === 'admin' || profile.role === 'superadmin') && (
+        {/* 어드민 메뉴 — 부장 이상 모두 표시 (항목별 역할 필터) */}
+        {ADMIN_ROLES.includes(profile.role) && (
           <div className="mt-2 pt-2" style={{ borderTop: '1px solid #1A2838' }}>
             <p className="text-xs font-semibold px-3 mb-1" style={{ color: '#8AAAC8' }}>
               관리자 메뉴
             </p>
-            {adminNavItems.map(item => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
-                style={{
-                  color: pathname === item.href ? '#7E6E48' : '#B8CCDE',
-                  background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
-                }}>
-                {item.label}
-              </Link>
-            ))}
+            {adminNavItems
+              .filter(item => item.roles.includes(profile.role))
+              .map(item => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className="flex items-center gap-3 px-3 py-1.5 rounded-lg text-sm transition-all"
+                  style={{
+                    color: pathname === item.href ? '#7E6E48' : '#B8CCDE',
+                    background: pathname === item.href ? 'rgba(255,215,0,0.08)' : 'transparent',
+                  }}>
+                  {item.label}
+                </Link>
+              ))}
           </div>
         )}
       </nav>
