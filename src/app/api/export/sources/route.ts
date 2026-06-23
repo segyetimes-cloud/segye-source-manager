@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import * as XLSX from 'xlsx'
-import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT } from '@/lib/permissions'
+import { getExportMaxRows, getExportDailyLimit } from '@/lib/permissions'
 import { decryptNullable } from '@/lib/crypto'
 import { auditLog } from '@/lib/audit'
 
@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
   if (!profile?.role) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const role = profile.role
-  const maxRows = EXPORT_MAX_ROWS[role] ?? 100
-  const dailyLimit = EXPORT_DAILY_LIMIT[role] ?? 3
+  const maxRows = getExportMaxRows(role)
+  const dailyLimit = getExportDailyLimit(role)
 
   // 데이터 조회 (공개 필드만)
   const sp = request.nextUrl.searchParams

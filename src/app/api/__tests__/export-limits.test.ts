@@ -8,13 +8,14 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT } from '@/lib/permissions'
+import { EXPORT_MAX_ROWS, EXPORT_DAILY_LIMIT, getExportMaxRows, getExportDailyLimit } from '@/lib/permissions'
+import type { UserRole } from '@/types/database'
 
 // ── 내보내기 제한 계산 로직 (route.ts에서 추출한 순수 함수) ─────────────────
 function calcExportAllowance(role: string) {
   return {
-    maxRows:    EXPORT_MAX_ROWS[role]   ?? 100,
-    dailyLimit: EXPORT_DAILY_LIMIT[role] ?? 3,
+    maxRows:    getExportMaxRows(role),
+    dailyLimit: getExportDailyLimit(role),
   }
 }
 
@@ -116,17 +117,19 @@ describe('상수 완전성', () => {
 
   it('모든 역할에 EXPORT_MAX_ROWS가 정의됨', () => {
     for (const role of expectedRoles) {
-      expect(EXPORT_MAX_ROWS[role]).toBeDefined()
-      expect(typeof EXPORT_MAX_ROWS[role]).toBe('number')
-      expect(EXPORT_MAX_ROWS[role]).toBeGreaterThan(0)
+      const rows = EXPORT_MAX_ROWS[role as UserRole]
+      expect(rows).toBeDefined()
+      expect(typeof rows).toBe('number')
+      expect(rows).toBeGreaterThan(0)
     }
   })
 
   it('모든 역할에 EXPORT_DAILY_LIMIT가 정의됨', () => {
     for (const role of expectedRoles) {
-      expect(EXPORT_DAILY_LIMIT[role]).toBeDefined()
-      expect(typeof EXPORT_DAILY_LIMIT[role]).toBe('number')
-      expect(EXPORT_DAILY_LIMIT[role]).toBeGreaterThan(0)
+      const limit = EXPORT_DAILY_LIMIT[role as UserRole]
+      expect(limit).toBeDefined()
+      expect(typeof limit).toBe('number')
+      expect(limit).toBeGreaterThan(0)
     }
   })
 })
