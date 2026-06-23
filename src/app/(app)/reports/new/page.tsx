@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import type { ReportVisibility } from '@/types/database'
+import { GENERAL_VISIBILITY_OPTIONS } from '@/lib/reportVisibility'
 import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/AllowedUsersSelector'
 
 const inputStyle: React.CSSProperties = {
@@ -30,27 +31,13 @@ interface SourceResult {
   current_organization: string | null
 }
 
-// 일반정보 열람 범위 선택지
-const GENERAL_VISIBILITY: { value: ReportVisibility; label: string; desc: string }[] = [
-  { value: 'all',     label: '편집국 전체',     desc: '로그인한 모든 구성원이 열람할 수 있습니다.' },
-  { value: 'team',    label: '부서에만 공개',   desc: '작성자와 같은 부서 구성원이 열람할 수 있습니다.' },
-  { value: 'my_desk', label: '소속 부장에게만', desc: '작성자의 직속 부장과 부국장 이상만 열람할 수 있습니다.' },
-]
-
-// 민감정보 열람 범위 선택지
-const SENSITIVE_VISIBILITY: { value: ReportVisibility; label: string; desc: string }[] = [
-  { value: 'desk_above', label: '데스크(부장) 이상', desc: '전체 부장 이상 직급과 작성자만 열람할 수 있습니다.' },
-  { value: 'author_only', label: '작성자만',         desc: '작성자 본인만 열람할 수 있습니다. 지정 열람자 추가 가능.' },
-]
-
 export default function NewReportPage() {
   const router = useRouter()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
 
   const [title, setTitle] = useState('')
-  const [body, setBody] = useState('')           // 단일 본문 (일반/민감 공통)
-  const [contentType, setContentType] = useState<'general' | 'sensitive'>('general')
+  const [body, setBody] = useState('')
   const [category, setCategory] = useState('일반')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
@@ -62,18 +49,6 @@ export default function NewReportPage() {
   const [hasDraft, setHasDraft] = useState(false)
   const [draftInfo, setDraftInfo] = useState<{ savedAt: string } | null>(null)
   const autoSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  // 유형 전환 시 열람 범위가 해당 유형에 없으면 기본값으로 초기화
-  function switchContentType(next: 'general' | 'sensitive') {
-    setContentType(next)
-    if (next === 'sensitive') {
-      const allowed = SENSITIVE_VISIBILITY.map(v => v.value)
-      if (!allowed.includes(visibility)) setVisibility('desk_above')
-    } else {
-      const allowed = GENERAL_VISIBILITY.map(v => v.value)
-      if (!allowed.includes(visibility)) setVisibility('my_desk')
-    }
-  }
 
   // 첨부파일
   const [selectedFiles, setSelectedFiles] = useState<File[]>([])
@@ -174,10 +149,10 @@ export default function NewReportPage() {
       const data = await res.json()
       const draft = data.draft
       if (!draft) return
-      if (draft.title   !== undefined) setTitle(draft.title)
-      if (draft.content !== undefined) setBody(draft.content)
+      if (draft.title    !== undefined) setTitle(draft.title)
+      if (draft.content  !== undefined) setBody(draft.content)
       if (draft.category !== undefined) setCategory(draft.category)
-      if (draft.tags    !== undefined) setTags(draft.tags)
+      if (draft.tags     !== undefined) setTags(draft.tags)
       if (draft.visibility !== undefined) setVisibility(draft.visibility)
     } catch {}
     setHasDraft(false)
@@ -223,10 +198,6 @@ export default function NewReportPage() {
     const abort = new AbortController()
     const timer = setTimeout(() => abort.abort(), 15_000)
 
-    // 유형에 따라 content / sensitive_content 분기
-    const apiContent   = contentType === 'general'   ? body : ''
-    const apiSensitive = contentType === 'sensitive' ? body : undefined
-
     try {
       const res = await fetch('/api/reports', {
         method: 'POST',
@@ -234,10 +205,9 @@ export default function NewReportPage() {
         signal: abort.signal,
         body: JSON.stringify({
           title, category, tags, visibility,
-          content:           apiContent,
-          sensitive_content: apiSensitive,
-          source_ids:        selectedSources.map(s => s.id),
-          allowed_user_ids:  allowedUsers.map(u => u.id),
+          content: body,
+          source_ids:       selectedSources.map(s => s.id),
+          allowed_user_ids: allowedUsers.map(u => u.id),
         }),
       })
 
@@ -267,9 +237,6 @@ export default function NewReportPage() {
       setSubmitting(false)
     }
   }
-
-  const visibilityOptions = contentType === 'general' ? GENERAL_VISIBILITY : SENSITIVE_VISIBILITY
-  const showAllowedUsers  = true
 
   return (
     <div className="max-w-2xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>
@@ -352,89 +319,16 @@ export default function NewReportPage() {
           </div>
         </div>
 
-        {/* ① 정보 유형 선택 */}
+        {/* 공개 대상 */}
         <div>
-          <label style={labelStyle}>정보 유형 *</label>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-            {/* 일반정보 카드 */}
-            <button
-              type="button"
-              onClick={() => switchContentType('general')}
-              style={{
-                padding: '14px 16px',
-                borderRadius: '10px',
-                border: `2px solid ${contentType === 'general' ? '#4A7CC0' : '#1A2838'}`,
-                background: contentType === 'general' ? 'rgba(74,124,192,0.1)' : '#182035',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '18px' }}>📄</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: contentType === 'general' ? '#7AADE0' : '#CDD5E0' }}>
-                  일반정보
-                </span>
-                {contentType === 'general' && (
-                  <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#4A7CC0' }}>✓ 선택됨</span>
-                )}
-              </div>
-              <p style={{ fontSize: '12px', color: '#607898', margin: 0, lineHeight: 1.4 }}>
-                구성원과 공유할 수 있는 취재 정보
-              </p>
-            </button>
-
-            {/* 민감정보 카드 */}
-            <button
-              type="button"
-              onClick={() => switchContentType('sensitive')}
-              style={{
-                padding: '14px 16px',
-                borderRadius: '10px',
-                border: `2px solid ${contentType === 'sensitive' ? '#C8920A' : '#1A2838'}`,
-                background: contentType === 'sensitive' ? 'rgba(200,146,10,0.08)' : '#182035',
-                cursor: 'pointer',
-                textAlign: 'left',
-                transition: 'all 0.15s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
-                <span style={{ fontSize: '18px' }}>🔒</span>
-                <span style={{ fontSize: '14px', fontWeight: 700, color: contentType === 'sensitive' ? '#C8920A' : '#CDD5E0' }}>
-                  민감정보
-                </span>
-                {contentType === 'sensitive' && (
-                  <span style={{ marginLeft: 'auto', fontSize: '12px', color: '#C8920A' }}>✓ 선택됨</span>
-                )}
-              </div>
-              <p style={{ fontSize: '12px', color: '#607898', margin: 0, lineHeight: 1.4 }}>
-                공개되어선 안 되는 취재원 정보·내부 동향 등
-              </p>
-            </button>
-          </div>
-        </div>
-
-        {/* ② 공개 대상 */}
-        <div>
-          <label style={labelStyle}>
-            공개 대상 *
-            {contentType === 'sensitive' && (
-              <span style={{ fontWeight: 400, color: '#8A6020', marginLeft: 8, fontSize: '12px' }}>
-                민감정보는 데스크(부장) 이상 또는 지정 열람자에게만 공개됩니다
-              </span>
-            )}
-          </label>
+          <label style={labelStyle}>공개 대상 *</label>
           <div className="flex flex-col gap-2">
-            {visibilityOptions.map(opt => (
+            {GENERAL_VISIBILITY_OPTIONS.map(opt => (
               <label key={opt.value} style={{
                 display: 'flex', alignItems: 'flex-start', gap: '10px',
                 padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
-                background: visibility === opt.value
-                  ? (contentType === 'sensitive' ? 'rgba(200,146,10,0.06)' : 'rgba(30,144,255,0.08)')
-                  : '#182035',
-                border: `1px solid ${visibility === opt.value
-                  ? (contentType === 'sensitive' ? 'rgba(200,146,10,0.35)' : 'rgba(30,144,255,0.3)')
-                  : '#1A2838'}`,
+                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#182035',
+                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#1A2838'}`,
               }}>
                 <input
                   type="radio"
@@ -442,7 +336,7 @@ export default function NewReportPage() {
                   value={opt.value}
                   checked={visibility === opt.value}
                   onChange={() => setVisibility(opt.value)}
-                  style={{ marginTop: '2px', accentColor: contentType === 'sensitive' ? '#C8920A' : '#4A7CC0' }}
+                  style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
@@ -454,44 +348,23 @@ export default function NewReportPage() {
         </div>
 
         {/* 지정 열람자 */}
-        {showAllowedUsers && (
-          <div>
-            <label style={labelStyle}>
-              지정 열람자{' '}
-              <span style={{ color: '#607898', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
-            </label>
-            <AllowedUsersSelector selected={allowedUsers} onChange={setAllowedUsers} />
-          </div>
-        )}
-
-        {/* ③ 본문 */}
         <div>
           <label style={labelStyle}>
-            본문 *
-            {contentType === 'sensitive' && (
-              <span style={{ fontWeight: 400, color: '#8A6020', marginLeft: 8, fontSize: '12px' }}>
-                (민감정보로 저장됩니다)
-              </span>
-            )}
+            지정 열람자{' '}
+            <span style={{ color: '#607898', fontWeight: 400 }}>(선택 — 등급 무관하게 지명된 기자도 열람 가능)</span>
           </label>
+          <AllowedUsersSelector selected={allowedUsers} onChange={setAllowedUsers} />
+        </div>
+
+        {/* 본문 */}
+        <div>
+          <label style={labelStyle}>본문 *</label>
           <textarea
             value={body}
             onChange={e => setBody(e.target.value)}
-            placeholder={
-              contentType === 'sensitive'
-                ? '공개되어선 안 되는 취재원 정보, 미확인 사실, 내부 동향 등을 입력하세요'
-                : '보고서 내용을 자세히 작성하세요'
-            }
+            placeholder="보고서 내용을 자세히 작성하세요"
             rows={18}
-            style={{
-              ...inputStyle,
-              resize: 'vertical',
-              lineHeight: 1.6,
-              ...(contentType === 'sensitive' ? {
-                background: 'rgba(30,16,4,0.6)',
-                border: '1px solid rgba(255,153,0,0.3)',
-              } : {}),
-            }}
+            style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.6 }}
           />
         </div>
 
@@ -671,9 +544,7 @@ export default function NewReportPage() {
               flex: 1,
               background: (submitting || uploadingFiles)
                 ? '#1A2838'
-                : contentType === 'sensitive'
-                  ? 'linear-gradient(135deg, #9A6010, #C8920A)'
-                  : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+                : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               borderRadius: '8px', padding: '11px',
               fontSize: '14px', fontWeight: 600,

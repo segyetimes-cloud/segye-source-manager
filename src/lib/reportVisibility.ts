@@ -49,3 +49,10 @@ export const VISIBILITY_META: Record<ReportVisibility, VisibilityMeta> = {
 export const VISIBILITY_OPTIONS = (
   Object.entries(VISIBILITY_META) as [ReportVisibility, VisibilityMeta][]
 ).map(([value, meta]) => ({ value, ...meta }))
+
+// 보고서 작성/수정 폼에서 사용할 공개 범위 선택지 (3가지로 단순화)
+export const GENERAL_VISIBILITY_OPTIONS: { value: ReportVisibility; label: string; desc: string }[] = [
+  { value: 'all',     label: '편집국 전체',     desc: '로그인한 모든 구성원이 열람할 수 있습니다.' },
+  { value: 'team',    label: '부서에만 공개',   desc: '작성자와 같은 부서 구성원이 열람할 수 있습니다.' },
+  { value: 'my_desk', label: '소속 부장에게만', desc: '작성자의 직속 부장과 부국장 이상만 열람할 수 있습니다.' },
+]
