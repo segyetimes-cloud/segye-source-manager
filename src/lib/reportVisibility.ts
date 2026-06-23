@@ -23,6 +23,13 @@ export const VISIBILITY_META: Record<ReportVisibility, VisibilityMeta> = {
     bg: 'rgba(0,212,255,0.1)',
     color: '#3A90A8',
   },
+  my_desk: {
+    label: '👤 소속 부장',
+    shortLabel: '소속 부장',
+    desc: '작성자의 직속 부장과 부국장 이상 직급만 열람. 타 부서 부장은 차단됨',
+    bg: 'rgba(138,90,200,0.1)',
+    color: '#8A5AC8',
+  },
   team: {
     label: '👥 팀 공개',
     shortLabel: '팀 공개',

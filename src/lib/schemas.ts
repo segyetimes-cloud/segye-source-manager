@@ -83,7 +83,7 @@ export const CreateReportSchema = z.object({
   sensitive_content: z.string().trim().max(100_000).nullish(),
   category:          z.enum(REPORT_CATEGORIES).default('일반'),
   tags:              z.array(z.string().trim().max(50)).max(30).optional(),
-  visibility:        z.enum(['author_only', 'desk_above', 'team', 'all']).default('author_only'),
+  visibility:        z.enum(['author_only', 'desk_above', 'my_desk', 'team', 'all']).default('my_desk'),
   source_ids:        z.array(z.string().uuid()).max(50).optional(),
   allowed_user_ids:  z.array(z.string().uuid()).max(100).optional(),
 })

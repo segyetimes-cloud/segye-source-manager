@@ -9,6 +9,7 @@ import {
 } from '@/lib/permissions'
 import { decryptNullable } from '@/lib/crypto'
 import SourceDetailClient from '@/components/sources/SourceDetailClient'
+import SourceAccessRequest from '@/components/sources/SourceAccessRequest'
 import type { Source, SourcePosition, SourceEditHistory } from '@/types/database'
 import SourceDetailLoading from './loading'
 
@@ -109,14 +110,35 @@ async function SourceDetailContent({ params }: Params) {
   if (source.visibility === 'personal' && !isOwner && !isAdminOrAbove) {
     notFound()
   }
-  // 공유 + 민감: 소유자 또는 부장+ 만
+  // 공유 + 민감: 소유자 또는 부장+은 열람, 그 아래는 승인 요청 UI
   if (
     source.visibility === 'shared' &&
     source.sensitivity === 'private' &&
     !isOwner &&
     !isAdminOrAbove
   ) {
-    notFound()
+    // 기존 승인 요청 여부 확인 (pending / approved)
+    const { data: existingRequest } = await supabase
+      .from('source_access_approvals')
+      .select('status, requested_at')
+      .eq('source_id', id)
+      .eq('requester_id', user.id)
+      .in('status', ['pending', 'approved'])
+      .order('requested_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+
+    // 승인된 경우: 열람 허용 (아래 코드 계속 실행)
+    if (!existingRequest || existingRequest.status !== 'approved') {
+      return (
+        <SourceAccessRequest
+          sourceId={id}
+          sourceName={source.full_name}
+          hasPending={existingRequest?.status === 'pending'}
+          pendingRequestedAt={existingRequest?.requested_at ?? null}
+        />
+      )
+    }
   }
 
   // ── personal_notes 열람 승인 확인 ─────────────────────────────────────────

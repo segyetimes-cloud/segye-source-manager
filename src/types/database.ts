@@ -12,7 +12,7 @@ export type PointType = Database['public']['Enums']['point_type']
 export type HelpStatus = Database['public']['Enums']['help_status']
 
 // ReportVisibility is NOT a Postgres enum — it's stored as text but we add a TypeScript union for safety
-export type ReportVisibility = 'author_only' | 'desk_above' | 'team' | 'all'
+export type ReportVisibility = 'author_only' | 'desk_above' | 'my_desk' | 'team' | 'all'
 
 // Convenience Row type aliases
 export type Profile = Database['public']['Tables']['profiles']['Row']

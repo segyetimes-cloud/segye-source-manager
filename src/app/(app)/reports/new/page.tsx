@@ -32,15 +32,14 @@ interface SourceResult {
 
 // 일반정보 열람 범위 선택지
 const GENERAL_VISIBILITY: { value: ReportVisibility; label: string; desc: string }[] = [
-  { value: 'all',        label: '편집국 전체',     desc: '로그인한 모든 구성원이 열람할 수 있습니다.' },
-  { value: 'team',       label: '같은 부서',       desc: '작성자와 같은 부서 구성원이 열람할 수 있습니다.' },
-  { value: 'desk_above', label: '데스크(부장) 이상', desc: '부장 이상 직급과 작성자만 열람할 수 있습니다.' },
-  { value: 'author_only', label: '작성자만',        desc: '작성자 본인만 열람할 수 있습니다.' },
+  { value: 'all',     label: '편집국 전체',     desc: '로그인한 모든 구성원이 열람할 수 있습니다.' },
+  { value: 'team',    label: '부서에만 공개',   desc: '작성자와 같은 부서 구성원이 열람할 수 있습니다.' },
+  { value: 'my_desk', label: '소속 부장에게만', desc: '작성자의 직속 부장과 부국장 이상만 열람할 수 있습니다.' },
 ]
 
 // 민감정보 열람 범위 선택지
 const SENSITIVE_VISIBILITY: { value: ReportVisibility; label: string; desc: string }[] = [
-  { value: 'desk_above', label: '데스크(부장) 이상', desc: '부장 이상 직급과 작성자만 열람할 수 있습니다.' },
+  { value: 'desk_above', label: '데스크(부장) 이상', desc: '전체 부장 이상 직급과 작성자만 열람할 수 있습니다.' },
   { value: 'author_only', label: '작성자만',         desc: '작성자 본인만 열람할 수 있습니다. 지정 열람자 추가 가능.' },
 ]
 
@@ -55,7 +54,7 @@ export default function NewReportPage() {
   const [category, setCategory] = useState('일반')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
-  const [visibility, setVisibility] = useState<ReportVisibility>('author_only')
+  const [visibility, setVisibility] = useState<ReportVisibility>('my_desk')
   const [allowedUsers, setAllowedUsers] = useState<AllowedUser[]>([])
 
   const [lastSaved, setLastSaved] = useState<Date | null>(null)
@@ -72,7 +71,7 @@ export default function NewReportPage() {
       if (!allowed.includes(visibility)) setVisibility('desk_above')
     } else {
       const allowed = GENERAL_VISIBILITY.map(v => v.value)
-      if (!allowed.includes(visibility)) setVisibility('author_only')
+      if (!allowed.includes(visibility)) setVisibility('my_desk')
     }
   }
 
@@ -270,7 +269,7 @@ export default function NewReportPage() {
   }
 
   const visibilityOptions = contentType === 'general' ? GENERAL_VISIBILITY : SENSITIVE_VISIBILITY
-  const showAllowedUsers  = visibility === 'author_only' || visibility === 'desk_above'
+  const showAllowedUsers  = true
 
   return (
     <div className="max-w-2xl mx-auto space-y-5" style={{ paddingBottom: '2rem' }}>

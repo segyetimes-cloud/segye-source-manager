@@ -49,17 +49,39 @@ export async function GET(
 
   const isAuthor = report.author_id === user.id
   const canViewAll = can(profile?.role, CAN_VIEW_ALL_REPORTS)  // 부장+ (데스크)
+  const isAboveAdmin = ['section_editor', 'editor', 'publisher', 'superadmin'].includes(profile?.role ?? '')
   const vis = report.visibility as string
 
+  // 지정 열람자 확인 (허용된 경우 모든 visibility 허용)
+  let isAllowedUser = false
+  if (!isAuthor) {
+    const { data: allowedRow } = await supabase
+      .from('report_allowed_users')
+      .select('id')
+      .eq('report_id', id)
+      .eq('user_id', user.id)
+      .maybeSingle()
+    isAllowedUser = !!allowedRow
+  }
+
   // 열람 권한 체크
-  if (!isAuthor && !canViewAll) {
+  if (!isAuthor && !isAllowedUser && !canViewAll) {
     if (vis === 'author_only') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     if (vis === 'desk_above') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    if (vis === 'my_desk') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     if (vis === 'team' && profile?.department !== report.author_department) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
     // 기자: 승인된 보고서만 열람
     if (report.status !== 'approved' && vis !== 'all') {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
+  // my_desk: 부장은 소속 부서 작성자의 보고서만 열람 (부국장 이상은 모두 허용)
+  if (vis === 'my_desk' && !isAuthor && !isAllowedUser && !isAboveAdmin) {
+    const isSameDeptAdmin = profile?.role === 'admin' && profile?.department === report.author_department
+    if (!isSameDeptAdmin) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
   }
