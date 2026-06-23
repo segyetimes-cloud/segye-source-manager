@@ -809,20 +809,22 @@ function AnalysisResults({ analysisData, src, router }: { analysisData: Analysis
               const other = isA ? rel.source_b : rel.source_a
               if (!other) return null
               return (
-                <div key={rel.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: '#0D1520', borderRadius: '8px', border: '1px solid #1A2838', flexWrap: 'wrap' }}>
-                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(184,148,40,0.12)', color: '#C8A840', border: '1px solid rgba(184,148,40,0.2)', flexShrink: 0 }}>
+                <div key={rel.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 14px', background: '#0D1520', borderRadius: '8px', border: '1px solid #1A2838' }}>
+                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(184,148,40,0.12)', color: '#C8A840', border: '1px solid rgba(184,148,40,0.2)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                     {REL_TYPE_LABELS[rel.relation_type] ?? rel.relation_type}
                   </span>
-                  <Link href={`/sources/${other.id}`} style={{ color: '#CDD5E0', textDecoration: 'none', fontWeight: 700, fontSize: '14px', flexShrink: 0 }}>
-                    {other.full_name}
-                  </Link>
-                  {other.current_organization && (
-                    <span style={{ fontSize: '12px', color: '#607898' }}>
-                      {other.current_organization}{other.current_position ? ` · ${other.current_position}` : ''}
-                    </span>
-                  )}
+                  <div style={{ flex: 1, minWidth: 0, overflow: 'hidden' }}>
+                    <Link href={`/sources/${other.id}`} style={{ color: '#CDD5E0', textDecoration: 'none', fontWeight: 700, fontSize: '14px', whiteSpace: 'nowrap' }}>
+                      {other.full_name}
+                    </Link>
+                    {other.current_organization && (
+                      <span style={{ fontSize: '12px', color: '#607898', display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {other.current_organization}{other.current_position ? ` · ${other.current_position}` : ''}
+                      </span>
+                    )}
+                  </div>
                   {rel.relation_label && (
-                    <span style={{ fontSize: '11px', color: '#5A7099', marginLeft: 'auto', fontStyle: 'italic' }}>{rel.relation_label}</span>
+                    <span style={{ fontSize: '11px', color: '#5A7099', flexShrink: 0, fontStyle: 'italic', whiteSpace: 'nowrap' }}>{rel.relation_label}</span>
                   )}
                 </div>
               )
@@ -839,19 +841,19 @@ function AnalysisResults({ analysisData, src, router }: { analysisData: Analysis
               const isSrc = r.fromName.includes(src.full_name) || src.full_name.includes(r.fromName)
               const otherName = isSrc ? r.toName : r.fromName
               return (
-                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0D1520', borderRadius: '8px', padding: '9px 14px', border: '1px solid #1A2838', flexWrap: 'wrap' }}>
-                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(100,70,200,0.12)', color: '#9B7DE8', border: '1px solid rgba(100,70,200,0.28)', flexShrink: 0 }}>
+                <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: '#0D1520', borderRadius: '8px', padding: '9px 14px', border: '1px solid #1A2838' }}>
+                  <span style={{ padding: '2px 9px', borderRadius: '4px', fontSize: '11px', fontWeight: 700, background: 'rgba(100,70,200,0.12)', color: '#9B7DE8', border: '1px solid rgba(100,70,200,0.28)', flexShrink: 0, whiteSpace: 'nowrap' }}>
                     {r.relType}
                   </span>
                   <button
                     type="button"
                     onClick={() => router.push(`/analysis?q=${encodeURIComponent(otherName)}`)}
-                    style={{ fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '14px', flexShrink: 0 }}
+                    style={{ fontWeight: 700, color: '#CDD5E0', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: '14px', flex: 1, textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
                   >
                     {otherName}
                   </button>
                   {r.detail && (
-                    <span style={{ fontSize: '11px', color: '#5A7099', marginLeft: 'auto', fontStyle: 'italic' }}>{r.detail}</span>
+                    <span style={{ fontSize: '11px', color: '#5A7099', flexShrink: 0, fontStyle: 'italic', whiteSpace: 'nowrap' }}>{r.detail}</span>
                   )}
                 </div>
               )
