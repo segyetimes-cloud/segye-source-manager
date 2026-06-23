@@ -113,10 +113,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
 
     // 특수문자 이스케이프 (%, _, \)
     const qEsc = q.replace(/[%_\\]/g, '\\$&')
-    // 데스크 이상은 민감정보(sensitive_content)도 검색 범위에 포함
-    const searchFields = isDeskUser
-      ? `title.ilike.%${qEsc}%,content.ilike.%${qEsc}%,sensitive_content.ilike.%${qEsc}%`
-      : `title.ilike.%${qEsc}%,content.ilike.%${qEsc}%`
+    const searchFields = `title.ilike.%${qEsc}%,content.ilike.%${qEsc}%`
     const { data: textMatches } = await supabase
       .from('information_reports')
       .select('id')
@@ -140,7 +137,7 @@ export default async function ReportsPage({ searchParams }: SearchParams) {
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-bold" style={{ color: '#CDD5E0' }}>📋 정보보고</h1>
+          <h1 className="text-xl font-bold" style={{ color: '#2C3E50' }}>📋 정보보고</h1>
           <p className="text-xs mt-0.5" style={{ color: '#5A7099' }}>취재 관련 정보 보고서를 작성하고 공유합니다</p>
         </div>
         <Link

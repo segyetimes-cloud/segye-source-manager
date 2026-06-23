@@ -142,7 +142,7 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
               {authorName}
             </span>
             {note.profiles?.department && (
-              <span className="text-xs ml-1.5" style={{ color: '#7A8A9E' }}>
+              <span className="text-xs ml-1.5" style={{ color: '#526070' }}>
                 {note.profiles.department}
               </span>
             )}
@@ -155,7 +155,7 @@ function NoteItem({ note, canDelete, onDelete, sourceId, userId, userFullName, u
           )}
         </div>
         <div className="flex items-center gap-3">
-          <span className="text-xs" style={{ color: '#7A8A9E' }}>{dateStr}</span>
+          <span className="text-xs" style={{ color: '#526070' }}>{dateStr}</span>
           {canDelete && (
             <button type="button" onClick={() => onDelete(note.id)}
               className="text-xs opacity-0 group-hover:opacity-100 transition-opacity"
@@ -533,7 +533,7 @@ export default function SourceDetailClient({
 
     return (
       <div className="flex flex-col gap-1 secure-field">
-        <span className="text-xs" style={{ color: '#7A8A9E' }}>{icon} {label}</span>
+        <span className="text-xs" style={{ color: '#526070', fontWeight: 600 }}>{icon} {label}</span>
         {useCanvas ? (
           <ProtectedText
             text={value}
@@ -550,7 +550,7 @@ export default function SourceDetailClient({
   }
 
   return (
-    <div className="content-page max-w-4xl mx-auto space-y-6">
+    <div className="content-page max-w-4xl mx-auto space-y-4">
 
       {/* 헤더 */}
       <div className="flex items-start justify-between">
@@ -682,7 +682,7 @@ export default function SourceDetailClient({
             <p style={{ fontSize: '12px', fontWeight: 600, color: '#3D9E6A', margin: 0 }}>
               정보란에서 학력·소속 등 구조화 가능한 항목이 발견됐습니다
             </p>
-            <p style={{ fontSize: '11px', color: '#7A8A9E', marginTop: '2px' }}>
+            <p style={{ fontSize: '11px', color: '#526070', marginTop: '2px' }}>
               {Object.entries(autoExtractFields)
                 .map(([k, v]) => `${AUTO_FIELD_KO[k] ?? k}: ${v}`)
                 .join(' · ')}
@@ -696,7 +696,7 @@ export default function SourceDetailClient({
             </button>
             <button type="button" onClick={() => setExtractApplied(true)}
               style={{ fontSize: '12px', padding: '6px 10px', borderRadius: '6px',
-                background: 'none', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
+                background: 'none', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
               무시
             </button>
           </div>
@@ -773,7 +773,7 @@ export default function SourceDetailClient({
                   <button
                     type="button"
                     onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '7px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '7px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#526070', borderRadius: '7px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -783,7 +783,7 @@ export default function SourceDetailClient({
               </div>
             ) : (
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                <p style={{ fontSize: '11px', color: '#7A8A9E', width: '100%', marginBottom: '2px' }}>빈 항목 채우기</p>
+                <p style={{ fontSize: '11px', color: '#526070', width: '100%', marginBottom: '2px' }}>빈 항목 채우기</p>
                 {[
                   { field: 'phone_primary', label: '📞 전화번호', empty: !source.phone_primary },
                   { field: 'phone_secondary', label: '📞 보조전화', empty: !source.phone_secondary },
@@ -813,7 +813,7 @@ export default function SourceDetailClient({
         )}
         {source.tags && source.tags.length > 0 && (
           <div className="mt-4 pt-4" style={{ borderTop: '1px solid #DDE5EF' }}>
-            <p className="text-xs mb-2" style={{ color: '#7A8A9E' }}>🏷️ 태그</p>
+            <p className="text-xs mb-2" style={{ color: '#526070' }}>🏷️ 태그</p>
             <div className="flex flex-wrap gap-2">
               {source.tags.map((tag) => (
                 <span key={tag} className="text-xs px-2.5 py-1 rounded-full"
@@ -837,7 +837,7 @@ export default function SourceDetailClient({
           {/* 고시기수: Canvas 렌더링 (개인식별 민감정보) */}
           {source.exam_batch ? (
             <div className="flex flex-col gap-1 secure-field">
-              <span className="text-xs" style={{ color: '#7A8A9E' }}>📋 고시/기수</span>
+              <span className="text-xs" style={{ color: '#526070' }}>📋 고시/기수</span>
               <ProtectedText text={source.exam_batch} fontSize={14} fontWeight={500} color="#1C2B3A" />
             </div>
           ) : null}
@@ -849,7 +849,7 @@ export default function SourceDetailClient({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-sm font-semibold" style={{ color: '#1C2B3A' }}>💼 직책 이력</h2>
-            <p className="text-xs mt-0.5" style={{ color: '#7A8A9E' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
+            <p className="text-xs mt-0.5" style={{ color: '#526070' }}>소속/직책 변경 시 자동으로 이력에 쌓입니다</p>
           </div>
           {canEditPositions && (
             <button onClick={() => setShowPosForm(v => !v)}
@@ -939,7 +939,7 @@ export default function SourceDetailClient({
                             </button>
                             <button type="button" onClick={() => setEditingPosId(null)}
                               className="px-3 py-1 rounded text-xs"
-                              style={{ background: '#EEF2F7', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
+                              style={{ background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
                               취소
                             </button>
                           </div>
@@ -959,7 +959,7 @@ export default function SourceDetailClient({
                               {pos.department && `${pos.department} · `}{pos.position}
                               {pos.rank && ` (${pos.rank})`}
                             </p>
-                            <p className="text-xs mt-1" style={{ color: '#7A8A9E' }}>
+                            <p className="text-xs mt-1" style={{ color: '#526070' }}>
                               {pos.started_at} ~ {pos.ended_at ?? '현재'}
                               {pos.change_source === 'crawl' && ` · 🤖 자동감지`}
                             </p>
@@ -1011,7 +1011,7 @@ export default function SourceDetailClient({
             </div>
           </div>
         ) : (
-          <p className="text-sm" style={{ color: '#7A8A9E' }}>직책 이력이 없습니다. 직책을 추가하거나 취재원 수정에서 소속/직책을 변경하면 자동으로 기록됩니다.</p>
+          <p className="text-sm" style={{ color: '#526070' }}>직책 이력이 없습니다. 직책을 추가하거나 취재원 수정에서 소속/직책을 변경하면 자동으로 기록됩니다.</p>
         )}
 
         {/* 직책 추가 폼 */}
@@ -1067,7 +1067,7 @@ export default function SourceDetailClient({
               </button>
               <button type="button" onClick={() => { setShowPosForm(false); setPosForm(EMPTY_POS) }}
                 className="px-4 py-1.5 rounded-lg text-xs"
-                style={{ background: '#EEF2F7', color: '#7A8A9E', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
+                style={{ background: '#EEF2F7', color: '#526070', border: '1px solid #DDE5EF', cursor: 'pointer' }}>
                 취소
               </button>
             </div>
@@ -1133,7 +1133,7 @@ export default function SourceDetailClient({
                     📤 공개 정보로 이동
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#526070', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -1174,7 +1174,7 @@ export default function SourceDetailClient({
                     {fieldSaving ? '저장 중...' : '저장'}
                   </button>
                   <button type="button" onClick={() => { setEditingField(null); setEditingValue('') }}
-                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#7A8A9E', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
+                    style={{ padding: '6px 10px', background: 'none', border: '1px solid #DDE5EF', color: '#526070', borderRadius: '6px', fontSize: '12px', cursor: 'pointer' }}>
                     취소
                   </button>
                 </div>
@@ -1190,7 +1190,7 @@ export default function SourceDetailClient({
               </div>
             )
           ) : (
-            <p className="text-sm mb-4" style={{ color: '#7A8A9E' }}>아직 민감 정보가 없습니다.</p>
+            <p className="text-sm mb-4" style={{ color: '#526070' }}>아직 민감 정보가 없습니다.</p>
           )
         )}
 
@@ -1258,7 +1258,7 @@ export default function SourceDetailClient({
         <h2 className="text-sm font-semibold mb-4" style={{ color: '#1C2B3A' }}>
           📝 공개 정보
           <span className="text-xs ml-2 font-normal" style={{ color: '#3D9E6A' }}>편집국 전원 열람</span>
-          <span className="text-xs ml-1 font-normal" style={{ color: '#7A8A9E' }}>· 여러 기자가 추가 가능</span>
+          <span className="text-xs ml-1 font-normal" style={{ color: '#526070' }}>· 여러 기자가 추가 가능</span>
         </h2>
 
         {/* ── 등록자 메모 (public_notes) — 있을 때만 표시 ─────────────────── */}
@@ -1345,7 +1345,7 @@ export default function SourceDetailClient({
                 style={{ background: 'rgba(0,212,255,0.07)', borderBottom: '1px solid rgba(0,212,255,0.15)' }}>
                 <span style={{ fontSize: '14px' }}>🔗</span>
                 <span className="text-xs font-bold" style={{ color: '#3A90A8' }}>통합 정보</span>
-                <span className="text-xs" style={{ color: '#7A8A9E' }}>
+                <span className="text-xs" style={{ color: '#526070' }}>
                   — {visibleNotes.length}건 중복 제거 통합
                 </span>
                 <div className="ml-auto flex items-center gap-1.5 flex-wrap">
@@ -1387,7 +1387,7 @@ export default function SourceDetailClient({
             ))}
           </div>
         ) : (
-          <p className="text-sm" style={{ color: '#7A8A9E' }}>
+          <p className="text-sm" style={{ color: '#526070' }}>
             {source.public_notes ? '등록자 메모 외 추가 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.' : '아직 추가된 정보가 없습니다. 아래에서 첫 정보를 추가해보세요.'}
           </p>
         )}
@@ -1425,7 +1425,7 @@ export default function SourceDetailClient({
               </button>
             </div>
           </div>
-          <p className="text-xs" style={{ color: '#7A8A9E', marginTop: '-4px' }}>
+          <p className="text-xs" style={{ color: '#526070', marginTop: '-4px' }}>
             {noteSensitive
               ? '🔒 민감 정보 — 차장 이상과 본인만 열람 가능합니다'
               : '📢 공개 정보 — 편집국 전원이 열람할 수 있습니다'}
@@ -1492,7 +1492,7 @@ export default function SourceDetailClient({
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-semibold" style={{ color: '#1C2B3A' }}>📋 수정 이력</h3>
               <button onClick={() => setShowHistory(false)}
-                style={{ color: '#7A8A9E', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>×</button>
+                style={{ color: '#526070', background: 'none', border: 'none', cursor: 'pointer', fontSize: '18px' }}>×</button>
             </div>
             {editHistory.length > 0 ? (
               <div className="space-y-3">
@@ -1500,7 +1500,7 @@ export default function SourceDetailClient({
                   <div key={h.id} className="p-3 rounded-lg" style={{ background: '#EEF2F7' }}>
                     <div className="flex items-center justify-between mb-1">
                       <span className="text-xs font-semibold" style={{ color: '#4A7CC0' }}>{h.editor_name}</span>
-                      <span className="text-xs" style={{ color: '#7A8A9E' }}>
+                      <span className="text-xs" style={{ color: '#526070' }}>
                         {new Date(h.edited_at).toLocaleString('ko-KR')}
                       </span>
                     </div>
@@ -1515,7 +1515,7 @@ export default function SourceDetailClient({
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-center py-4" style={{ color: '#7A8A9E' }}>수정 이력이 없습니다.</p>
+              <p className="text-sm text-center py-4" style={{ color: '#526070' }}>수정 이력이 없습니다.</p>
             )}
           </div>
         </div>
@@ -1544,7 +1544,7 @@ export default function SourceDetailClient({
                     {report.profiles?.full_name && (
                       <span className="text-xs" style={{ color: '#6B7D92' }}>{report.profiles.full_name}</span>
                     )}
-                    <span className="text-xs" style={{ color: '#7A8A9E' }}>
+                    <span className="text-xs" style={{ color: '#526070' }}>
                       {new Date(report.created_at).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit' })}
                     </span>
                   </div>
@@ -1559,7 +1559,7 @@ export default function SourceDetailClient({
       <ContactLogs sourceId={source.id} currentUserId={userId} userRole={userRole} />
 
       {/* 등록자 정보 */}
-      <div className="flex items-center gap-2 text-xs" style={{ color: '#7A8A9E' }}>
+      <div className="flex items-center gap-2 text-xs" style={{ color: '#526070' }}>
         <span>등록: {source.profiles?.full_name ?? '—'}</span>
         <span>·</span>
         <span>최종수정: {new Date(source.updated_at).toLocaleString('ko-KR')}</span>

@@ -68,11 +68,10 @@ export async function POST(request: NextRequest) {
 
   const allTerms = [query, ...expandedKeywords].map(t => t.trim()).filter(Boolean).slice(0, 10)
 
-  // 확장된 키워드로 제목+본문 검색 (데스크 이상은 민감정보도 포함)
+  // 확장된 키워드로 제목+본문 검색
   const orConditions = allTerms.flatMap(term => {
     const esc = term.replace(/[%_\\]/g, '\\$&')
     const fields = [`title.ilike.%${esc}%`, `content.ilike.%${esc}%`]
-    if (isDeskUser) fields.push(`sensitive_content.ilike.%${esc}%`)
     return fields
   }).join(',')
 

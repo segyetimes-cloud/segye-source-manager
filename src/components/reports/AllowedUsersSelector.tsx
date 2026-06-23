@@ -43,7 +43,7 @@ export default function AllowedUsersSelector({ selected, onChange }: Props) {
   }
 
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
-    if (e.key === ',' && results.length > 0) {
+    if ((e.key === ',' || e.key === 'Enter') && results.length > 0) {
       e.preventDefault()
       add(results[0])
     }

@@ -10,8 +10,6 @@ interface ReportDetail {
   author_id: string
   title: string
   content: string
-  sensitive_content: string | null
-  category: string | null
   tags: string[]
   visibility: string
   status: string
@@ -198,22 +196,6 @@ export default function ReportModal({ reportId, onClose, userId, userFullName, u
                   userDepartment={userDepartment}
                 />
               </div>
-
-              {/* 민감정보 */}
-              {report.sensitive_content && (
-                <div style={{
-                  background: 'rgba(255,153,0,0.04)',
-                  border: '1px solid rgba(255,153,0,0.3)',
-                  borderRadius: 10, padding: '12px 16px', marginBottom: 16,
-                }}>
-                  <p style={{ fontSize: 11, fontWeight: 600, color: '#A87228', marginBottom: 6, margin: '0 0 6px' }}>
-                    ⚠️ 민감정보
-                  </p>
-                  <p style={{ fontSize: 13, color: '#CDD5E0', whiteSpace: 'pre-wrap', lineHeight: 1.7, margin: 0 }}>
-                    {report.sensitive_content}
-                  </p>
-                </div>
-              )}
 
               {/* 태그 */}
               {report.tags?.length > 0 && (

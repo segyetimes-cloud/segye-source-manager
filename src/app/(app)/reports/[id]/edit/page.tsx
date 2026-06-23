@@ -9,9 +9,9 @@ import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/All
 import type { AttachmentRow } from '@/components/reports/ReportAttachments'
 
 const inputStyle: React.CSSProperties = {
-  background: '#182035',
-  border: '1px solid #1A2838',
-  color: '#CDD5E0',
+  background: '#F8FAFB',
+  border: '1px solid #E0E8F0',
+  color: '#2C3E50',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -23,7 +23,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 500,
   marginBottom: '6px',
-  color: '#8AAAC8',
+  color: '#526070',
 }
 
 interface SourceResult {
@@ -73,12 +73,7 @@ export default function EditReportPage() {
         if (!r) { setError('보고서를 불러올 수 없습니다.'); setLoading(false); return }
 
         setTitle(r.title ?? '')
-
-        // 기존 sensitive_content가 있으면 content에 병합 (하위 호환)
-        const base = r.content?.trim() ?? ''
-        const sens = r.sensitive_content?.trim() ?? ''
-        setContent(base && sens ? `${base}\n\n${sens}` : base || sens)
-
+        setContent(r.content?.trim() ?? '')
         setTags(r.tags ?? [])
         setVisibility(normalizeVisibility(r.visibility ?? 'my_desk'))
 
@@ -209,7 +204,6 @@ export default function EditReportPage() {
         signal: abort.signal,
         body: JSON.stringify({
           title, content, tags, visibility,
-          sensitive_content: null,   // 구형 필드 비워서 DB 정리
           source_ids:       selectedSources.map(s => s.id),
           allowed_user_ids: allowedUsers.map(u => u.id),
         }),
@@ -253,7 +247,7 @@ export default function EditReportPage() {
       <div className="flex items-center gap-3">
         <Link href={`/reports/${id}`} style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div>
-          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>보고서 수정</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#2C3E50' }}>보고서 수정</h1>
           <p style={{ fontSize: '12px', color: '#607898', marginTop: '2px' }}>
             내용을 변경하면 수정 이력이 자동으로 기록됩니다
           </p>
@@ -290,8 +284,8 @@ export default function EditReportPage() {
               <label key={opt.value} style={{
                 display: 'flex', alignItems: 'flex-start', gap: '10px',
                 padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
-                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#182035',
-                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#1A2838'}`,
+                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#F8FAFB',
+                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#E0E8F0'}`,
               }}>
                 <input
                   type="radio"
@@ -302,7 +296,7 @@ export default function EditReportPage() {
                   style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#2C3E50' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -379,7 +373,7 @@ export default function EditReportPage() {
             {sourceResults.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                background: '#131C2C', border: '1px solid #1A2838',
+                background: '#131C2C', border: '1px solid #E0E8F0',
                 borderRadius: '8px', marginTop: '4px',
                 maxHeight: '200px', overflowY: 'auto',
               }}>
@@ -391,10 +385,10 @@ export default function EditReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
-                      borderBottom: '1px solid #1A2838',
+                      cursor: 'pointer', color: '#2C3E50', fontSize: '13px',
+                      borderBottom: '1px solid #E0E8F0',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFB')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                     <span style={{ fontWeight: 600 }}>{s.full_name}</span>
                     {s.current_organization && (
@@ -441,14 +435,14 @@ export default function EditReportPage() {
               {existingAttachments.map(att => (
                 <div key={att.id} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  background: '#131C2C', border: '1px solid #1A2838',
+                  background: '#131C2C', border: '1px solid #E0E8F0',
                   borderRadius: '6px', padding: '6px 10px',
                 }}>
                   <span style={{ fontSize: '14px', flexShrink: 0 }}>
                     {att.mime_type.startsWith('image/') ? '🖼' : '📎'}
                   </span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', color: '#CDD5E0', margin: 0,
+                    <p style={{ fontSize: '13px', color: '#2C3E50', margin: 0,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {att.filename}
                     </p>
@@ -496,7 +490,7 @@ export default function EditReportPage() {
                 }}>
                   <span style={{ fontSize: '14px', flexShrink: 0 }}>➕</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', color: '#CDD5E0', margin: 0,
+                    <p style={{ fontSize: '13px', color: '#2C3E50', margin: 0,
                       overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {file.name}
                     </p>
@@ -521,7 +515,7 @@ export default function EditReportPage() {
             disabled={submitting || uploadingFiles}
             style={{
               flex: 1,
-              background: (submitting || uploadingFiles) ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
+              background: (submitting || uploadingFiles) ? '#E0E8F0' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               borderRadius: '8px', padding: '11px',
               fontSize: '14px', fontWeight: 600,
@@ -530,8 +524,8 @@ export default function EditReportPage() {
             {uploadingFiles ? '파일 업로드 중...' : submitting ? '저장 중...' : '수정 저장'}
           </button>
           <Link href={`/reports/${id}`} style={{
-            padding: '11px 20px', background: '#182035',
-            border: '1px solid #1A2838', color: '#8AAAC8',
+            padding: '11px 20px', background: '#F8FAFB',
+            border: '1px solid #E0E8F0', color: '#526070',
             borderRadius: '8px', fontSize: '14px',
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}>

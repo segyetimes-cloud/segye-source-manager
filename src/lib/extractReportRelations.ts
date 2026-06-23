@@ -9,8 +9,30 @@ const anthropic = new Anthropic()
 
 /** 복사 워터마크용 영폭(zero-width) 문자 제거 */
 function stripZeroWidth(text: string): string {
-  // U+200B – U+200D, U+FEFF, U+2060 – U+2065 등
-  return text.replace(/[​-‍﻿⁠-⁥]/g, '')
+  // Unicode "Format" 카테고리(Cf) 전체 제거 — 리터럴 범위보다 포괄적이고 가독성 높음
+  return text.replace(/\p{Cf}/gu, '')
+}
+
+/**
+ * 외부 AI 모델로 전송하기 전 PII를 마스킹합니다.
+ * 인물·관계 추출에는 이름·직함만 필요하므로 연락처·번호류는 제거합니다.
+ *
+ * 마스킹 대상:
+ *   - 국내 휴대폰/전화번호 (010-xxxx-xxxx 등)
+ *   - 이메일 주소
+ *   - 주민등록번호 (6자리-7자리)
+ *   - 여권·외국인등록번호 유사 패턴 (영문+숫자 9자리)
+ */
+function redactForAI(text: string): string {
+  return text
+    // 전화번호: 010-1234-5678 / 0212345678 / +82-10-1234-5678
+    .replace(/(\+82[-\s]?|0)[\d]{1,2}[-\s]?\d{3,4}[-\s]?\d{4}/g, '[전화번호]')
+    // 이메일
+    .replace(/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, '[이메일]')
+    // 주민등록번호: 6자리-7자리 (앞자리 검증 생략, 패턴 기반)
+    .replace(/\b\d{6}[-–]\d{7}\b/g, '[주민번호]')
+    // 여권번호 유사 패턴: M12345678 (영문 1자리 + 숫자 8자리)
+    .replace(/\b[A-Z]\d{8}\b/g, '[여권번호]')
 }
 
 export interface ExtractedEntity {
@@ -63,10 +85,23 @@ JSON만 반환(마크다운·설명 없이):
   })
 
   const raw = msg.content[0].type === 'text' ? msg.content[0].text : ''
-  const jsonMatch = raw.match(/\{[\s\S]*\}/)
-  if (!jsonMatch) return { entities: [], relations: [] }
 
-  const parsed = JSON.parse(jsonMatch[0])
+  // 직접 파싱 시도 → 실패 시 JSON 블록 추출 → 모두 실패하면 빈 결과
+  let parsed: unknown
+  try {
+    parsed = JSON.parse(raw)
+  } catch {
+    const jsonMatch = raw.match(/\{[\s\S]*\}/)
+    if (!jsonMatch) return { entities: [], relations: [] }
+    try {
+      parsed = JSON.parse(jsonMatch[0])
+    } catch {
+      console.warn('[extractReportRelations] JSON 파싱 실패, raw:', raw.slice(0, 200))
+      return { entities: [], relations: [] }
+    }
+  }
+
+  if (!parsed || typeof parsed !== 'object') return { entities: [], relations: [] }
   return {
     entities: Array.isArray(parsed.entities)
       ? (parsed.entities as ExtractedEntity[]).slice(0, 15)
@@ -88,19 +123,17 @@ export async function extractAndStoreRelations(
   reportId: string,
   title: string,
   content: string,
-  sensitiveContent: string | null,
 ): Promise<void> {
-  const cleanContent   = stripZeroWidth(content)
-  const cleanSensitive = sensitiveContent ? stripZeroWidth(sensitiveContent) : null
+  const cleanContent = stripZeroWidth(content)
 
-  let analysisText = `제목: ${title}\n\n${cleanContent}`
-  if (cleanSensitive) analysisText += `\n\n[민감정보]\n${cleanSensitive}`
+  const analysisText = `제목: ${title}\n\n${cleanContent}`
 
   let result: ExtractResult
   try {
     result = await callClaude(analysisText)
-  } catch {
-    return // 백그라운드 실패는 조용히 무시
+  } catch (err) {
+    console.warn('[extractReportRelations] AI 호출 실패:', err)
+    return
   }
 
   if (result.entities.length === 0 && result.relations.length === 0) return

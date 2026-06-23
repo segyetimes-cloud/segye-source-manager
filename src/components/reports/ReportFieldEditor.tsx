@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 interface Props {
   reportId: string
   /** 편집할 필드명 */
-  field: 'content' | 'sensitive_content' | 'title'
+  field: 'content' | 'title'
   /** 현재 값 */
   value: string | null
   /** 표시 레이블 */

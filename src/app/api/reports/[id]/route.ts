@@ -43,7 +43,7 @@ export async function GET(
 
   const report = reportRaw as {
     id: string; author_id: string; author_department: string | null;
-    visibility: string; status: string; sensitive_content: string | null;
+    visibility: string; status: string;
     [key: string]: unknown
   }
 
@@ -86,11 +86,6 @@ export async function GET(
     }
   }
 
-  // 민감정보(sensitive_content)는 작성자 및 데스크(부장 이상)만 열람
-  if (!isAuthor && !canViewAll) {
-    report.sensitive_content = null
-  }
-
   return NextResponse.json({ report: reportRaw })
 }
 
@@ -123,9 +118,7 @@ export async function PATCH(
   }
 
   const body = await request.json()
-  const { title, content, sensitive_content, tags, visibility, category, source_ids, allowed_user_ids, created_at } = body
-
-  const VALID_CATEGORIES = ['일반','단독','공동취재','인터뷰','배경설명','분석','기타']
+  const { title, content, tags, visibility, source_ids, allowed_user_ids, created_at } = body
 
   // ── created_at 수정은 superadmin 전용 ───────────────────────────────────────
   if (created_at !== undefined) {
@@ -140,18 +133,11 @@ export async function PATCH(
 
   const updateData: ReportUpdate = {}
   if (title?.trim())         updateData.title   = title.trim()
-  // content는 undefined가 아닌 경우(= 명시적으로 전달된 경우)만 업데이트
-  // 빈 문자열도 허용 (본문을 민감정보로 이동한 경우 content='' 가 올 수 있음)
   if (content !== undefined) updateData.content = content?.trim() ?? ''
   if (tags)                 updateData.tags       = tags
   if (visibility)           updateData.visibility = visibility
-  if (category)             updateData.category   = VALID_CATEGORIES.includes(category) ? category : '일반'
   if (created_at !== undefined && profile?.role === 'superadmin') {
     (updateData as any).created_at = new Date(created_at).toISOString()
-  }
-  // sensitive_content: 명시적으로 전달될 때만 업데이트 (빈 문자열은 null로 정규화)
-  if (sensitive_content !== undefined) {
-    updateData.sensitive_content = sensitive_content?.trim() || null
   }
 
   // 본문 필드 변경이 없어도 source_ids / allowed_user_ids 만 바꾸는 경우는 허용
@@ -196,10 +182,9 @@ export async function PATCH(
       const _id = id
       const _title = updated.title
       const _content = updated.content
-      const _sensitive = updated.sensitive_content ?? null
       after(async () => {
         const bgSupabase = await createClient()
-        await extractAndStoreRelations(bgSupabase, _id, _title, _content, _sensitive)
+        await extractAndStoreRelations(bgSupabase, _id, _title, _content)
       })
     }
 

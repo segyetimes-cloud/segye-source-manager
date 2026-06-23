@@ -158,7 +158,7 @@ export async function POST(request: NextRequest) {
 
   const parsed = await parseBody(request, CreateReportSchema)
   if (!parsed.ok) return parsed.response
-  const { title, content, sensitive_content, category, tags, visibility, source_ids, allowed_user_ids } = parsed.data
+  const { title, content, tags, visibility, source_ids, allowed_user_ids } = parsed.data
 
   // 작성자의 소속 부서를 스냅샷으로 저장 (라인 격벽용)
   const { data: authorProfile } = await supabase
@@ -171,8 +171,6 @@ export async function POST(request: NextRequest) {
       author_id: user.id,
       title: title.trim(),
       content: content.trim(),
-      sensitive_content: sensitive_content?.trim() || null,
-      category,
       tags: tags ?? [],
       visibility,
       author_department: authorDepartment,

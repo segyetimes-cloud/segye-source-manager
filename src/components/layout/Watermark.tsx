@@ -84,27 +84,35 @@ export default function Watermark({ userId, userEmail, userName, department }: W
     applyStyles()
 
     // MutationObserver: DOM에서 제거되거나 스타일 변조 시 재주입·복원
-    const observer = new MutationObserver(() => {
+    // ① body childList 감시 — 오버레이 완전 제거 감지 (subtree 필요, attributes 불필요)
+    const removalObserver = new MutationObserver(() => {
       if (!document.contains(overlay)) {
-        // 완전히 제거됐으면 body에 재추가
         document.body.appendChild(overlay)
         applyStyles()
-      } else {
-        // display:none / opacity:0 / visibility:hidden 변조 감지
-        const cs = window.getComputedStyle(overlay)
-        if (
-          cs.display === 'none' ||
-          cs.visibility === 'hidden' ||
-          parseFloat(cs.opacity) < 0.5
-        ) {
-          applyStyles()
-        }
+        // 재추가 후 styleObserver가 새 요소를 감시하도록 재연결
+        styleObserver.disconnect()
+        styleObserver.observe(overlay, { attributes: true, attributeFilter: ['style', 'class'] })
       }
     })
+    removalObserver.observe(document.body, { childList: true, subtree: true })
 
-    observer.observe(document.body, { childList: true, subtree: true, attributes: true })
+    // ② overlay 자체만 감시 — style/class 변조 감지 (전체 DOM attribute 감시 불필요)
+    const styleObserver = new MutationObserver(() => {
+      const cs = window.getComputedStyle(overlay)
+      if (
+        cs.display === 'none' ||
+        cs.visibility === 'hidden' ||
+        parseFloat(cs.opacity) < 0.5
+      ) {
+        applyStyles()
+      }
+    })
+    styleObserver.observe(overlay, { attributes: true, attributeFilter: ['style', 'class'] })
 
-    return () => observer.disconnect()
+    return () => {
+      removalObserver.disconnect()
+      styleObserver.disconnect()
+    }
   }, [userId, userEmail, userName, department])
 
   return (

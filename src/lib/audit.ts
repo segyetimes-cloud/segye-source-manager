@@ -34,11 +34,29 @@ export interface AuditEntry {
 /**
  * audit_logs 테이블에 감사 로그를 기록합니다.
  * DB enum에 없는 커스텀 action도 허용합니다 (내부에서 `as any` 처리).
+ * metadata는 JSON 직렬화 불가 값이 있어도 안전하게 처리합니다.
  */
-export function auditLog(
+export async function auditLog(
   supabase: SupabaseClient<Database>,
   entry: AuditEntry,
-): ReturnType<SupabaseClient<Database>['from']> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return (supabase as any).from('audit_logs').insert(entry)
+): Promise<void> {
+  const row = {
+    ...entry,
+    metadata: entry.metadata ? safeSerialize(entry.metadata) : null,
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await (supabase as any).from('audit_logs').insert(row)
+  } catch (err) {
+    console.error('[auditLog] insert failed:', err)
+  }
+}
+
+/** JSON.stringify/parse를 통해 직렬화 불가 값(Date, undefined 등)을 제거합니다. */
+function safeSerialize(obj: Record<string, unknown>): Record<string, unknown> | null {
+  try {
+    return JSON.parse(JSON.stringify(obj))
+  } catch {
+    return null
+  }
 }

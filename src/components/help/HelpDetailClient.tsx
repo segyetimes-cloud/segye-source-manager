@@ -53,6 +53,7 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   const [newResponse, setNewResponse] = useState('')
   const [submitting, setSubmitting] = useState(false)
   const [votedIds, setVotedIds] = useState<Set<string>>(new Set())
+  const [showWatermark, setShowWatermark] = useState(true)
 
   const isRequester = help.requester_id === userId
 
@@ -164,29 +165,29 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
   }
 
   return (
-    <div className="max-w-3xl mx-auto space-y-6">
+    <div className="max-w-3xl mx-auto space-y-3">
       {/* 네비게이션 */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between px-2">
         <div className="flex items-center gap-2 text-sm" style={{ color: '#607898' }}>
-          <Link href="/help" style={{ color: '#607898', textDecoration: 'none' }}>도움 게시판</Link>
+          <Link href="/help" style={{ color: '#607898', textDecoration: 'none' }}>도움</Link>
           <span>›</span>
-          <span style={{ color: '#8AAAC8' }}>{help.title}</span>
+          <span style={{ color: '#8AAAC8', lineHeight: 1.2 }}>{help.title}</span>
         </div>
         <Link
           href="/help"
           aria-label="목록으로"
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            width: '32px', height: '32px', borderRadius: '8px',
+            width: '28px', height: '28px', borderRadius: '6px',
             background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-            color: '#8A9AB0', textDecoration: 'none', fontSize: '20px', lineHeight: 1,
+            color: '#8A9AB0', textDecoration: 'none', fontSize: '18px', lineHeight: 1,
           }}>
           ×
         </Link>
       </div>
 
       {/* 요청 카드 */}
-      <div className="glass-card p-6">
+      <div className="glass-card p-4">
         <div className="flex items-start justify-between gap-4">
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-2">
@@ -243,21 +244,16 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
       {/* 응답 목록 */}
       <div>
-        <h2 className="text-sm font-semibold mb-3" style={{ color: '#8AAAC8' }}>
-          응답 {responses.length}개
-          {responses.length > 1 && (
-            <span className="ml-2 font-normal text-xs" style={{ color: '#384860' }}>
-              채택순·추천순 정렬
-            </span>
-          )}
+        <h2 className="text-xs font-semibold mb-2 px-2" style={{ color: '#8AAAC8' }}>
+          💬 응답 {responses.length}
         </h2>
 
         {responses.length === 0 ? (
-          <div className="glass-card p-8 text-center">
-            <p className="text-sm" style={{ color: '#607898' }}>아직 응답이 없습니다. 첫 번째로 도움을 주세요! 🙋</p>
+          <div className="glass-card p-6 text-center">
+            <p className="text-sm" style={{ color: '#607898' }}>아직 응답이 없습니다 🙋</p>
           </div>
         ) : (
-          <div className="space-y-3">
+          <div className="space-y-2">
             {sortedResponses.map(resp => {
               const isOwnResponse = resp.responder_id === userId
               const hasVoted = votedIds.has(resp.id)
@@ -265,22 +261,22 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
               return (
                 <div
                   key={resp.id}
-                  className="glass-card p-5"
+                  className="glass-card p-3"
                   style={{
                     border: resp.is_accepted ? '1px solid rgba(0,204,102,0.3)' : undefined,
                     background: resp.is_accepted ? 'rgba(0,204,102,0.03)' : undefined,
                   }}>
                   {resp.is_accepted && (
-                    <div className="flex items-center gap-2 mb-3 text-xs font-semibold" style={{ color: '#3D9E6A' }}>
-                      ✅ 채택된 응답
+                    <div className="flex items-center gap-1 mb-2 text-xs font-semibold" style={{ color: '#3D9E6A' }}>
+                      ✅ 채택
                     </div>
                   )}
 
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap" style={{ color: '#CDD5E0' }}>
+                  <p className="text-sm leading-relaxed whitespace-pre-wrap mb-2" style={{ color: '#CDD5E0' }}>
                     {resp.body}
                   </p>
 
-                  <div className="flex items-center justify-between mt-3">
+                  <div className="flex items-center justify-between text-xs">
                     <div className="text-xs" style={{ color: '#607898' }}>
                       <span style={{ color: '#8AAAC8' }}>{resp.profiles?.full_name ?? '—'}</span>
                       {resp.profiles?.department && ` · ${resp.profiles.department}`}
@@ -359,69 +355,64 @@ export default function HelpDetailClient({ help: initialHelp, responses: initial
 
       {/* 응답 작성 */}
       {help.status === 'open' && !isRequester && (
-        <div className="glass-card p-5" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
-          <h3 className="text-sm font-semibold mb-3" style={{ color: '#CDD5E0' }}>
-            💡 응답하기
-            <span className="text-xs ml-2 font-normal" style={{ color: '#607898' }}>
-              채택 시 {help.reward_points}pt + 작성만 해도 1pt
-            </span>
+        <div className="glass-card p-3" style={{ border: '1px solid rgba(30,144,255,0.15)' }}>
+          <h3 className="text-xs font-semibold mb-2 px-1" style={{ color: '#CDD5E0' }}>
+            💡 답변하기 (+{help.reward_points}pt)
           </h3>
           <textarea
             value={newResponse}
             onChange={e => setNewResponse(e.target.value)}
-            placeholder="알고 있는 정보나 도움이 될 내용을 적어주세요..."
-            rows={4}
+            placeholder="정보나 도움을 적어주세요..."
+            rows={3}
             style={{
               width: '100%',
               background: '#182035',
               border: '1px solid #1A2838',
               color: '#CDD5E0',
-              borderRadius: '8px',
-              padding: '10px 12px',
-              fontSize: '14px',
+              borderRadius: '6px',
+              padding: '8px 10px',
+              fontSize: '13px',
               resize: 'vertical',
               outline: 'none',
               boxSizing: 'border-box',
             }}
           />
-          <div className="flex justify-end mt-3">
+          <div className="flex justify-end mt-2">
             <button
               onClick={handleSubmitResponse}
               disabled={submitting || !newResponse.trim()}
-              className="px-5 py-2 rounded-lg text-sm font-semibold"
+              className="px-4 py-1.5 rounded-lg text-xs font-semibold"
               style={{
                 background: (submitting || !newResponse.trim()) ? '#1A2838' : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
                 color: 'white',
                 border: 'none',
                 cursor: (submitting || !newResponse.trim()) ? 'not-allowed' : 'pointer',
               }}>
-              {submitting ? '등록 중...' : '응답 등록'}
+              {submitting ? '등록 중...' : '등록'}
             </button>
           </div>
         </div>
       )}
 
       {help.status !== 'open' && (
-        <div className="text-center py-4 space-y-3">
-          <span className="text-sm px-4 py-2 rounded-full" style={{ background: '#131C2C', color: '#607898', border: '1px solid #1A2838' }}>
-            {help.status === 'resolved' ? '✅ 해결된 요청입니다' : '🔒 마감된 요청입니다'}
+        <div className="text-center py-2 space-y-2">
+          <span className="inline-block text-xs px-3 py-1 rounded-full" style={{ background: '#131C2C', color: '#607898', border: '1px solid #1A2838' }}>
+            {help.status === 'resolved' ? '✅ 해결됨' : '🔒 마감'}
           </span>
 
           {help.status === 'resolved' && help.accepted_response_id && (isRequester || isAdmin) && (
             <div>
               <Link
                 href={`/sources/new?from_help=${help.id}`}
-                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg text-sm font-semibold"
+                className="inline-flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-semibold"
                 style={{
                   background: 'linear-gradient(135deg, #3D9E6A, #009944)',
                   color: 'white',
                   textDecoration: 'none',
+                  marginTop: '4px',
                 }}>
-                📋 이 정보로 취재원 등록하기
+                📋 취재원 등록
               </Link>
-              <p className="text-xs mt-2" style={{ color: '#607898' }}>
-                응답에서 공유된 정보를 취재원 데이터베이스에 바로 추가할 수 있습니다
-              </p>
             </div>
           )}
         </div>

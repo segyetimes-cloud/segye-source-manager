@@ -55,13 +55,20 @@ function userSeed(userId: string): number {
 
 // ── 1차: Zero-width character watermark ───────────────────────────────────────
 
-const ZW_MARKER = '⁠'  // Word joiner — 시작/끝 구분
-const ZW_ZERO   = '​'  // Zero-width space — 비트 0
-const ZW_ONE    = '‌'  // Zero-width non-joiner — 비트 1
+// 코드포인트로 명시 — 리터럴 비가시 문자를 소스에 포함하면 편집기·리뷰 오류 유발
+const ZW_MARKER = String.fromCodePoint(0x2060)  // Word Joiner
+const ZW_ZERO   = String.fromCodePoint(0x200B)  // Zero-width Space  — 비트 0
+const ZW_ONE    = String.fromCodePoint(0x200C)  // Zero-width Non-Joiner — 비트 1
+
+// 정규식을 상수에서 동적 생성 — 리터럴 비가시 문자 의존 없음
+const ZW_RE = new RegExp(
+  `${ZW_MARKER}([${ZW_ZERO}${ZW_ONE}]{32})${ZW_MARKER}`,
+  'g',
+)
 
 /**
  * 32-bit 정수 → ZW 문자열
- * 형식: ⁠ + 32×(​|‌) + ⁠
+ * 형식: ZW_MARKER + 32×(ZW_ZERO|ZW_ONE) + ZW_MARKER
  */
 function encodeFingerprint(n: number): string {
   let bits = ZW_MARKER
@@ -85,10 +92,9 @@ export function encodeUserFingerprint(userId: string): string {
  */
 export function extractZWFingerprints(text: string): number[] {
   const results: number[] = []
-  // ⁠ + 32개의 ​|‌ + ⁠
-  const RE = /⁠([​‌]{32})⁠/g
+  ZW_RE.lastIndex = 0  // 전역 RegExp 재사용 시 lastIndex 초기화
   let m: RegExpExecArray | null
-  while ((m = RE.exec(text)) !== null) {
+  while ((m = ZW_RE.exec(text)) !== null) {
     let n = 0
     for (const c of m[1]) {
       n = (n * 2) | (c === ZW_ONE ? 1 : 0)
@@ -227,8 +233,10 @@ export function extractWatermarkPattern(text: string): string {
  */
 export function expectedPattern(userId: string, length: number): string {
   const seed = userSeed(userId)
+  // pickMarker: seededRnd>0.5 → ',' → extractWatermarkPattern이 '0'으로 매핑
+  // 따라서 여기서도 >0.5 → '0' 이어야 비교가 일치함 (역전 버그 수정)
   return Array.from({ length }, (_, i) =>
-    seededRnd(seed, i * 13 + 7) > 0.5 ? '1' : '0'
+    seededRnd(seed, i * 13 + 7) > 0.5 ? '0' : '1'
   ).join('')
 }
 

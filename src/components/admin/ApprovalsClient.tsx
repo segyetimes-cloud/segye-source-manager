@@ -199,13 +199,15 @@ export default function ApprovalsClient({ pending: initialPending, recent: initi
             {pending.map(app => (
               <div key={app.id} style={{ ...cardStyle, border: '1px solid rgba(255,153,0,0.25)' }}>
                 <div className="flex items-start justify-between gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
-                        {app.profiles?.full_name ?? '—'}
-                      </span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-2 min-w-0">
+                      <div className="flex-1 min-w-0 whitespace-nowrap overflow-hidden text-ellipsis">
+                        <span className="text-sm font-semibold" style={{ color: '#CDD5E0' }}>
+                          {app.profiles?.full_name ?? '—'}
+                        </span>
+                      </div>
                       {app.profiles?.department && (
-                        <span className="text-xs px-2 py-0.5 rounded"
+                        <span className="text-xs px-2 py-0.5 rounded flex-shrink-0"
                           style={{ background: 'rgba(30,144,255,0.1)', color: '#8AAAC8' }}>
                           {app.profiles.department}
                         </span>

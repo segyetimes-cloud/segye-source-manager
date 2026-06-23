@@ -10,7 +10,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('report_drafts')
-    .select('id, title, content, category, tags, visibility, source_ids, allowed_user_ids, updated_at')
+    .select('id, title, content, tags, visibility, source_ids, allowed_user_ids, updated_at')
     .eq('author_id', user.id)
     .single()
 
@@ -28,7 +28,7 @@ export async function PUT(request: NextRequest) {
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   const body = await request.json()
-  const { title, content, category, tags, visibility, source_ids, allowed_user_ids } = body
+  const { title, content, tags, visibility, source_ids, allowed_user_ids } = body
 
   const { data, error } = await supabase
     .from('report_drafts')
@@ -37,7 +37,6 @@ export async function PUT(request: NextRequest) {
         author_id: user.id,
         title: title ?? '',
         content: content ?? '',
-        category: category ?? '일반',
         tags: tags ?? [],
         visibility: visibility ?? 'author_only',
         source_ids: source_ids ?? [],

@@ -30,7 +30,8 @@
       "Read(//c/Users/admin/Desktop/segye-weekly-report/samples/**)",
       "Skill(주간현안보고서)",
       "Skill(주간현안보고서:*)",
-      "WebFetch(domain:vercel.com)"
+      "WebFetch(domain:vercel.com)",
+      "WebFetch(domain:namu.wiki)"
     ]
   }
 }

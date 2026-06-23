@@ -531,11 +531,14 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', flexWrap: 'nowrap', overflow: 'hidden' }}>
-                    <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0', flexShrink: 0 }}>{u.full_name}</span>
-                    {u.id === currentUserId && (
-                      <span style={{ fontSize: '10px', padding: '0 5px', borderRadius: '4px', background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', flexShrink: 0 }}>나</span>
-                    )}
+                  {/* 이름+배지 행 — 이름이 압축되지 않도록 분리 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', minWidth: 0 }}>
+                    <div style={{ flex: 1, minWidth: 0, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{u.full_name}</span>
+                      {u.id === currentUserId && (
+                        <span style={{ fontSize: '10px', padding: '0 5px', borderRadius: '4px', background: 'rgba(30,144,255,0.1)', color: '#4A7CC0', marginLeft: '4px' }}>나</span>
+                      )}
+                    </div>
 
                     {/* 역할 배지 → 클릭 시 모달 */}
                     {(() => {
@@ -548,6 +551,7 @@ export default function UsersClient({ users: initialUsers, currentUserId, isSupe
                           style={{
                             cursor: canEdit ? 'pointer' : 'default', fontWeight: 600,
                             display: 'inline-flex', alignItems: 'center', gap: '2px',
+                            flexShrink: 0,
                           }}>
                           {processing === u.id ? '변경 중...' : (
                             <>{ROLE_LABEL[u.role]?.label ?? u.role}{canEdit && <span style={{ fontSize: '9px', opacity: 0.5 }}>✏️</span>}</>

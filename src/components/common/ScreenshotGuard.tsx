@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 export default function ScreenshotGuard({ children }: { children: React.ReactNode }) {
   const [locked, setLocked] = useState(false)
 
-  const lock   = useCallback(() => { console.log('[ScreenshotGuard] LOCKED'); setLocked(true) },  [])
+  const lock   = useCallback(() => setLocked(true),  [])
   const unlock = useCallback(() => setLocked(false), [])
 
   useEffect(() => {

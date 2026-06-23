@@ -135,8 +135,8 @@ export default function ReportListClient({
             defaultValue={currentQuery}
             placeholder="제목 내용 검색"
             style={{
-              flex: 1, background: '#131C2C',
-              border: '1px solid #1A2838', color: '#CDD5E0',
+              flex: 1, background: '#FFFFFF',
+              border: '1px solid #E0E8F0', color: '#2C3E50',
               borderRadius: '8px', padding: '9px 12px', fontSize: '14px', outline: 'none',
             }}
           />
@@ -156,7 +156,7 @@ export default function ReportListClient({
 
         {/* 탭 + 총 건수 */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #1A2838' }}>
+          <div className="flex rounded-lg overflow-hidden" style={{ border: '1px solid #E0E8F0' }}>
             {[
               { value: 'all',  label: '전체 공개' },
               { value: 'mine', label: '내 보고서' },
@@ -168,8 +168,8 @@ export default function ReportListClient({
                   padding: '6px 16px', fontSize: '13px', fontWeight: 500,
                   textDecoration: 'none',
                   background: currentTab === t.value ? 'rgba(30,144,255,0.15)' : 'transparent',
-                  color: currentTab === t.value ? '#4A7CC0' : '#8AAAC8',
-                  borderRight: t.value === 'all' ? '1px solid #1A2838' : 'none',
+                  color: currentTab === t.value ? '#4A7CC0' : '#526070',
+                  borderRight: t.value === 'all' ? '1px solid #E0E8F0' : 'none',
                   display: 'inline-block',
                 }}>
                 {t.label}
@@ -249,7 +249,7 @@ export default function ReportListClient({
                 onClick={e => { e.preventDefault(); setOpenReportId(report.id) }}
                 style={{
                   textDecoration: 'none', display: 'block', color: 'inherit',
-                  borderBottom: idx < displayReports.length - 1 ? '1px solid #1A2838' : 'none',
+                  borderBottom: idx < displayReports.length - 1 ? '1px solid #E0E8F0' : 'none',
                 }}>
                 <div style={{ padding: '8px 18px' }}>
                   {/* 제목 줄 */}
@@ -264,7 +264,7 @@ export default function ReportListClient({
                       </span>
                     )}
                     <span style={{
-                      fontSize: '14px', fontWeight: 600, color: '#CDD5E0',
+                      fontSize: '14px', fontWeight: 600, color: '#2C3E50',
                       lineHeight: 1.35, flex: 1, minWidth: 0,
                     }}>
                       <Highlight text={report.title} query={highlightQuery} />
@@ -322,7 +322,7 @@ export default function ReportListClient({
           {currentPage > 1 && (
             <a
               href={`/reports?tab=${currentTab}&q=${currentQuery}&page=${currentPage - 1}`}
-              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#F8FAFB', border: '1px solid #E0E8F0', color: '#526070', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               이전
             </a>
           )}
@@ -332,7 +332,7 @@ export default function ReportListClient({
           {currentPage < totalPages && (
             <a
               href={`/reports?tab=${currentTab}&q=${currentQuery}&page=${currentPage + 1}`}
-              style={{ padding: '6px 14px', background: '#182035', border: '1px solid #1A2838', color: '#8AAAC8', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
+              style={{ padding: '6px 14px', background: '#F8FAFB', border: '1px solid #E0E8F0', color: '#526070', borderRadius: '6px', textDecoration: 'none', fontSize: '13px' }}>
               다음
             </a>
           )}

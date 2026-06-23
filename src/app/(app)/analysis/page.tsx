@@ -180,7 +180,6 @@ export default async function AnalysisPage({
       const textOrParts = [
         `title.ilike.%${escapedForLike}%`,
         `content.ilike.%${escapedForLike}%`,
-        `sensitive_content.ilike.%${escapedForLike}%`,
       ]
       if (linkedReportIds.length > 0) {
         textOrParts.push(`id.in.(${linkedReportIds.join(',')})`)
@@ -188,7 +187,7 @@ export default async function AnalysisPage({
 
       const { data: reportMentionsRaw } = await supabase
         .from('information_reports')
-        .select('id, title, content, sensitive_content, visibility, status, created_at, author_id, profiles!author_id(full_name, department)')
+        .select('id, title, content, visibility, status, created_at, author_id, profiles!author_id(full_name, department)')
         .eq('is_deleted', false)
         .or(textOrParts.join(','))
         .order('created_at', { ascending: false })
@@ -208,14 +207,7 @@ export default async function AnalysisPage({
       // Process report mentions
       const reportMentions = (reportMentionsRaw ?? []).map((r: any) => {
         const contentSnippet = r.content ? extractSnippet(r.content, fullName, 90) : null
-        const rawSensSnippet = r.sensitive_content ? extractSnippet(r.sensitive_content, fullName, 30) : null
         const p = r.profiles as { full_name: string; department: string | null } | null
-        // For non-desk users: replace surrounding text with placeholders to protect sensitive info
-        const sensitiveSnippet = rawSensSnippet
-          ? isDeskRole
-            ? rawSensSnippet
-            : { before: '●●●●', match: rawSensSnippet.match, after: '●●●●' }
-          : null
         return {
           id: r.id as string,
           title: r.title as string,
@@ -225,9 +217,6 @@ export default async function AnalysisPage({
           authorName: p?.full_name ?? null,
           authorDept: p?.department ?? null,
           contentSnippet,
-          sensitiveSnippet,
-          hasSensitiveMatch: !!rawSensSnippet,
-          canSeeSensitive: isDeskRole,
         }
       })
 

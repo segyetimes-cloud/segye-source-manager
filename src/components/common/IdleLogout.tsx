@@ -47,6 +47,7 @@ export default function IdleLogout() {
       setCountdown(remaining)
       if (remaining <= 0) {
         clearInterval(countTick.current!)
+        clearTimeout(warnTimer.current!)  // 중복 doLogout 방지
         doLogout()
       }
     }, 1000)

@@ -8,9 +8,9 @@ import { GENERAL_VISIBILITY_OPTIONS } from '@/lib/reportVisibility'
 import AllowedUsersSelector, { type AllowedUser } from '@/components/reports/AllowedUsersSelector'
 
 const inputStyle: React.CSSProperties = {
-  background: '#182035',
-  border: '1px solid #1A2838',
-  color: '#CDD5E0',
+  background: '#F8FAFB',
+  border: '1px solid #E0E8F0',
+  color: '#2C3E50',
   borderRadius: '8px',
   padding: '9px 12px',
   fontSize: '14px',
@@ -22,7 +22,7 @@ const labelStyle: React.CSSProperties = {
   fontSize: '13px',
   fontWeight: 500,
   marginBottom: '6px',
-  color: '#8AAAC8',
+  color: '#526070',
 }
 
 interface SourceResult {
@@ -38,7 +38,6 @@ export default function NewReportPage() {
 
   const [title, setTitle] = useState('')
   const [body, setBody] = useState('')
-  const [category, setCategory] = useState('일반')
   const [tagInput, setTagInput] = useState('')
   const [tags, setTags] = useState<string[]>([])
   const [visibility, setVisibility] = useState<ReportVisibility>('my_desk')
@@ -135,12 +134,12 @@ export default function NewReportPage() {
       await fetch('/api/reports/draft', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content: body, category, tags, visibility }),
+        body: JSON.stringify({ title, content: body, tags, visibility }),
       })
       setLastSaved(new Date())
     } catch {}
     setIsSaving(false)
-  }, [title, body, category, tags, visibility])
+  }, [title, body, tags, visibility])
 
   async function restoreDraft() {
     try {
@@ -151,7 +150,6 @@ export default function NewReportPage() {
       if (!draft) return
       if (draft.title    !== undefined) setTitle(draft.title)
       if (draft.content  !== undefined) setBody(draft.content)
-      if (draft.category !== undefined) setCategory(draft.category)
       if (draft.tags     !== undefined) setTags(draft.tags)
       if (draft.visibility !== undefined) setVisibility(draft.visibility)
     } catch {}
@@ -186,7 +184,7 @@ export default function NewReportPage() {
     if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current)
     autoSaveTimer.current = setTimeout(() => { saveDraft() }, 2000)
     return () => { if (autoSaveTimer.current) clearTimeout(autoSaveTimer.current) }
-  }, [title, body, category, tags, visibility, saveDraft])
+  }, [title, body, tags, visibility, saveDraft])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -204,7 +202,7 @@ export default function NewReportPage() {
         headers: { 'Content-Type': 'application/json' },
         signal: abort.signal,
         body: JSON.stringify({
-          title, category, tags, visibility,
+          title, tags, visibility,
           content: body,
           source_ids:       selectedSources.map(s => s.id),
           allowed_user_ids: allowedUsers.map(u => u.id),
@@ -245,7 +243,7 @@ export default function NewReportPage() {
       <div className="flex items-center gap-3">
         <Link href="/reports" style={{ color: '#607898', textDecoration: 'none', fontSize: '22px', lineHeight: 1 }}>←</Link>
         <div style={{ flex: 1 }}>
-          <h1 className="text-lg font-bold" style={{ color: '#CDD5E0' }}>새 보고서 작성</h1>
+          <h1 className="text-lg font-bold" style={{ color: '#2C3E50' }}>새 보고서 작성</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
             <p className="text-xs" style={{ color: '#5A7099' }}>정보보고 작성</p>
             {isSaving && <span style={{ fontSize: '11px', color: '#607898' }}>저장 중...</span>}
@@ -278,7 +276,7 @@ export default function NewReportPage() {
               fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             }}>불러오기</button>
             <button type="button" onClick={dismissDraft} style={{
-              background: 'none', border: '1px solid #1A2838',
+              background: 'none', border: '1px solid #E0E8F0',
               color: '#607898', borderRadius: '6px', padding: '5px 12px',
               fontSize: '12px', cursor: 'pointer',
             }}>무시</button>
@@ -296,27 +294,17 @@ export default function NewReportPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* 분류 + 제목 */}
-        <div className="grid grid-cols-3 gap-3">
-          <div>
-            <label style={labelStyle}>분류</label>
-            <select value={category} onChange={e => setCategory(e.target.value)} style={inputStyle}>
-              {['일반','단독','공동취재','인터뷰','배경설명','분석','기타'].map(c => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-          </div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <label style={labelStyle}>제목 *</label>
-            <input
-              type="text"
-              value={title}
-              onChange={e => setTitle(e.target.value)}
-              placeholder="보고서 제목을 입력하세요"
-              style={inputStyle}
-              required
-            />
-          </div>
+        {/* 제목 */}
+        <div>
+          <label style={labelStyle}>제목 *</label>
+          <input
+            type="text"
+            value={title}
+            onChange={e => setTitle(e.target.value)}
+            placeholder="보고서 제목을 입력하세요"
+            style={inputStyle}
+            required
+          />
         </div>
 
         {/* 공개 대상 */}
@@ -327,8 +315,8 @@ export default function NewReportPage() {
               <label key={opt.value} style={{
                 display: 'flex', alignItems: 'flex-start', gap: '10px',
                 padding: '10px 12px', borderRadius: '8px', cursor: 'pointer',
-                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#182035',
-                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#1A2838'}`,
+                background: visibility === opt.value ? 'rgba(30,144,255,0.08)' : '#F8FAFB',
+                border: `1px solid ${visibility === opt.value ? 'rgba(30,144,255,0.3)' : '#E0E8F0'}`,
               }}>
                 <input
                   type="radio"
@@ -339,7 +327,7 @@ export default function NewReportPage() {
                   style={{ marginTop: '2px', accentColor: '#4A7CC0' }}
                 />
                 <div>
-                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#CDD5E0' }}>{opt.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#2C3E50' }}>{opt.label}</span>
                   <p style={{ fontSize: '12px', color: '#5A7099', marginTop: '2px' }}>{opt.desc}</p>
                 </div>
               </label>
@@ -416,7 +404,7 @@ export default function NewReportPage() {
             {sourceResults.length > 0 && (
               <div style={{
                 position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 10,
-                background: '#131C2C', border: '1px solid #1A2838',
+                background: '#131C2C', border: '1px solid #E0E8F0',
                 borderRadius: '8px', marginTop: '4px',
                 maxHeight: '200px', overflowY: 'auto',
               }}>
@@ -428,10 +416,10 @@ export default function NewReportPage() {
                     style={{
                       display: 'block', width: '100%', textAlign: 'left',
                       padding: '9px 12px', background: 'none', border: 'none',
-                      cursor: 'pointer', color: '#CDD5E0', fontSize: '13px',
-                      borderBottom: '1px solid #1A2838',
+                      cursor: 'pointer', color: '#2C3E50', fontSize: '13px',
+                      borderBottom: '1px solid #E0E8F0',
                     }}
-                    onMouseEnter={e => (e.currentTarget.style.background = '#182035')}
+                    onMouseEnter={e => (e.currentTarget.style.background = '#F8FAFB')}
                     onMouseLeave={e => (e.currentTarget.style.background = 'none')}>
                     <span style={{ fontWeight: 600 }}>{s.full_name}</span>
                     {s.current_organization && (
@@ -500,12 +488,12 @@ export default function NewReportPage() {
               {selectedFiles.map((file, idx) => (
                 <div key={`${file.name}-${file.size}`} style={{
                   display: 'flex', alignItems: 'center', gap: '8px',
-                  background: '#131C2C', border: '1px solid #1A2838',
+                  background: '#131C2C', border: '1px solid #E0E8F0',
                   borderRadius: '6px', padding: '6px 10px',
                 }}>
                   <span style={{ fontSize: '14px', flexShrink: 0 }}>📎</span>
                   <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontSize: '13px', color: '#CDD5E0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <p style={{ fontSize: '13px', color: '#2C3E50', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {file.name}
                     </p>
                     <p style={{ fontSize: '11px', color: '#607898', margin: '1px 0 0' }}>{formatSize(file.size)}</p>
@@ -531,8 +519,8 @@ export default function NewReportPage() {
             type="button"
             onClick={saveDraft}
             style={{
-              background: '#182035', border: '1px solid #1A2838',
-              color: '#8AAAC8', borderRadius: '8px', padding: '11px 16px',
+              background: '#F8FAFB', border: '1px solid #E0E8F0',
+              color: '#526070', borderRadius: '8px', padding: '11px 16px',
               fontSize: '13px', fontWeight: 500, cursor: 'pointer', flexShrink: 0,
             }}>
             💾 임시저장
@@ -543,7 +531,7 @@ export default function NewReportPage() {
             style={{
               flex: 1,
               background: (submitting || uploadingFiles)
-                ? '#1A2838'
+                ? '#E0E8F0'
                 : 'linear-gradient(135deg, #4A7CC0, #0066CC)',
               color: 'white', border: 'none',
               borderRadius: '8px', padding: '11px',
@@ -553,8 +541,8 @@ export default function NewReportPage() {
             {uploadingFiles ? '파일 업로드 중...' : submitting ? '저장 중...' : '보고서 저장'}
           </button>
           <Link href="/reports" style={{
-            padding: '11px 20px', background: '#182035',
-            border: '1px solid #1A2838', color: '#8AAAC8',
+            padding: '11px 20px', background: '#F8FAFB',
+            border: '1px solid #E0E8F0', color: '#526070',
             borderRadius: '8px', fontSize: '14px',
             textDecoration: 'none', whiteSpace: 'nowrap',
           }}>

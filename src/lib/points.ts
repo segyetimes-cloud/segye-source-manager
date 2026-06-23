@@ -13,23 +13,45 @@
  *   그 외       →   5pt
  */
 
-export type ScorableSource = Partial<Record<string, unknown>>
+export interface SourceData {
+  full_name?:            string | null
+  current_organization?: string | null
+  current_position?:     string | null
+  birthday?:             string | null
+  phone_primary?:        string | null
+  email_primary?:        string | null
+  university?:           string | null
+  high_school?:          string | null
+  university_major?:     string | null
+  graduate_school?:      string | null
+  exam_batch?:           number | string | null
+  hometown_province?:    string | null
+  hometown_city?:        string | null
+}
+
+/** @deprecated Use SourceData */
+export type ScorableSource = SourceData
+
+/** null·undefined·공백 문자열을 "값 없음"으로 통일 */
+function hasValue(v: unknown): boolean {
+  return v !== null && v !== undefined && String(v).trim() !== ''
+}
 
 // ── 완성도 점수 (0 ~ 60) ─────────────────────────────────────────────────────
-export function calcCompletenessScore(data: ScorableSource): number {
+export function calcCompletenessScore(data: SourceData): number {
   let s = 0
-  if (data.full_name)            s += 5
-  if (data.current_organization) s += 8
-  if (data.current_position)     s += 5
-  if (data.birthday)             s += 2
-  if (data.phone_primary)        s += 13
-  if (data.email_primary)        s += 7
-  if (data.university)           s += 8
-  if (data.high_school)          s += 6
-  if (data.university_major)     s += 3
-  if (data.graduate_school)      s += 2
-  if (data.exam_batch)           s += 1
-  return s  // max 60
+  if (hasValue(data.full_name))            s += 5
+  if (hasValue(data.current_organization)) s += 8
+  if (hasValue(data.current_position))     s += 5
+  if (hasValue(data.birthday))             s += 2
+  if (hasValue(data.phone_primary))        s += 13
+  if (hasValue(data.email_primary))        s += 7
+  if (hasValue(data.university))           s += 8
+  if (hasValue(data.high_school))          s += 6
+  if (hasValue(data.university_major))     s += 3
+  if (hasValue(data.graduate_school))      s += 2
+  if (hasValue(data.exam_batch) && Number(data.exam_batch) > 0) s += 1
+  return Math.min(60, s)
 }
 
 // ── 정보(source_notes) 점수 (0 / 20 / 40) ───────────────────────────────────
@@ -40,12 +62,12 @@ export function calcNoteScore(authorCount: number): number {
 }
 
 // ── 전체 완성도 (0 ~ 100) ────────────────────────────────────────────────────
-export function calcTotalScore(data: ScorableSource, noteAuthorCount = 0): number {
-  return calcCompletenessScore(data) + calcNoteScore(noteAuthorCount)
+export function calcTotalScore(data: SourceData, noteAuthorCount = 0): number {
+  return Math.min(100, calcCompletenessScore(data) + calcNoteScore(noteAuthorCount))
 }
 
 // ── 등록 보상 포인트 ─────────────────────────────────────────────────────────
-export function calcRegistrationPoints(data: ScorableSource): number {
+export function calcRegistrationPoints(data: SourceData): number {
   const s = calcCompletenessScore(data)
   if (s >= 55) return 30
   if (s >= 35) return 15

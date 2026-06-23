@@ -83,13 +83,13 @@ export async function POST(
 
   const { data: reportRaw } = await supabase
     .from('information_reports')
-    .select('id, author_id, author_department, title, content, sensitive_content, visibility, status')
+    .select('id, author_id, author_department, title, content, visibility, status')
     .eq('id', id).eq('is_deleted', false).single()
   if (!reportRaw) return NextResponse.json({ error: '보고서를 찾을 수 없습니다.' }, { status: 404 })
 
   const report = reportRaw as {
     id: string; author_id: string; author_department: string | null
-    title: string; content: string; sensitive_content: string | null
+    title: string; content: string;
     visibility: string; status: string
   }
   const isAuthor = report.author_id === user.id
@@ -99,10 +99,8 @@ export async function POST(
     }
   }
 
-  const canSeeSensitive = isAuthor || isDeskUser
   await extractAndStoreRelations(
     supabase, id, report.title, report.content,
-    canSeeSensitive ? (report.sensitive_content ?? null) : null,
   )
 
   // 갱신 후 GET과 동일 형식으로 반환
