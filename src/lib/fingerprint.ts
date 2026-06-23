@@ -32,15 +32,19 @@ export async function getDeviceFingerprint(): Promise<string> {
       .join('')
   } catch {
     // Web Crypto 미지원 환경 (매우 구형 브라우저) — 기본값
-    return components.split('').reduce((h, c) =>
+    const fallback = components.split('').reduce((h, c) =>
       ((h << 5) - h + c.charCodeAt(0)) | 0, 0
-    ).toString(16)
+    )
+    // 음수값을 32bit unsigned로 변환해 안정적인 hex 출력 보장
+    return (fallback >>> 0).toString(16)
   }
 }
 
 /** 기기 레이블 자동 생성 (기록 목적) */
 export function getDeviceLabel(): string {
-  const ua = navigator.userAgent
+  if (typeof window === 'undefined' || typeof navigator === 'undefined') return 'server'
+
+  const ua = navigator.userAgent ?? ''
   const os = /Windows/.test(ua) ? 'Windows'
     : /Mac OS X/.test(ua) ? 'macOS'
     : /iPhone/.test(ua) ? 'iPhone'
