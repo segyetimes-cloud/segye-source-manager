@@ -13,14 +13,29 @@ export type ParseResult<T> =
   | { ok: true;  data: T }
   | { ok: false; response: NextResponse }
 
+/** 빈 문자열을 null로 변환하는 preprocess 헬퍼 (이메일·날짜 필드 공통) */
+const emptyToNull = (v: unknown) =>
+  typeof v === 'string' && v.trim() === '' ? null : v
+
 /**
  * request body를 JSON으로 파싱하고 Zod 스키마로 검증합니다.
  * 실패 시 400 NextResponse를 포함한 { ok: false } 를 반환합니다.
+ *
+ * - Content-Length > 1 MB 이면 413 반환 (DoS 방어)
+ * - 첫 번째 에러는 { error, field } 로, 전체 에러는 { errors } 배열로 함께 반환
  */
 export async function parseBody<S extends z.ZodTypeAny>(
   request: Request,
   schema: S,
 ): Promise<ParseResult<z.infer<S>>> {
+  const contentLength = request.headers.get('content-length')
+  if (contentLength && Number(contentLength) > 1_000_000) {
+    return {
+      ok: false,
+      response: NextResponse.json({ error: '요청 페이로드가 너무 큽니다 (최대 1 MB)' }, { status: 413 }),
+    }
+  }
+
   let raw: unknown
   try {
     raw = await request.json()
@@ -30,14 +45,19 @@ export async function parseBody<S extends z.ZodTypeAny>(
       response: NextResponse.json({ error: '잘못된 요청 형식입니다 (JSON 파싱 실패)' }, { status: 400 }),
     }
   }
+
   const result = schema.safeParse(raw)
   if (!result.success) {
-    const issue = result.error.issues[0]
-    const field = issue.path.length > 0 ? issue.path.join('.') : undefined
+    const issue  = result.error.issues[0]
+    const field  = issue.path.length > 0 ? issue.path.join('.') : undefined
+    const errors = result.error.issues.map(i => ({
+      field:   i.path.length > 0 ? i.path.join('.') : undefined,
+      message: i.message,
+    }))
     return {
       ok: false,
       response: NextResponse.json(
-        { error: issue.message, ...(field ? { field } : {}) },
+        { error: issue.message, ...(field ? { field } : {}), errors },
         { status: 400 },
       ),
     }
@@ -54,9 +74,9 @@ export const CreateSourceSchema = z.object({
   current_department:   z.string().trim().max(100).nullish(),
   phone_primary:        z.string().trim().max(30).nullish(),
   phone_secondary:      z.string().trim().max(30).nullish(),
-  email_primary:        z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
-  email_secondary:      z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
-  birthday:             z.preprocess(v => (typeof v === 'string' && v.trim() === '') ? null : v, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD 입니다').nullish()),
+  email_primary:        z.preprocess(emptyToNull, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
+  email_secondary:      z.preprocess(emptyToNull, z.string().trim().email('올바른 이메일 형식이 아닙니다').max(200).nullish()),
+  birthday:             z.preprocess(emptyToNull, z.string().regex(/^\d{4}-\d{2}-\d{2}$/, '날짜 형식은 YYYY-MM-DD 입니다').nullish()),
   hometown_province:    z.string().trim().max(50).nullish(),
   hometown_city:        z.string().trim().max(50).nullish(),
   high_school:          z.string().trim().max(100).nullish(),
@@ -73,6 +93,8 @@ export const CreateSourceSchema = z.object({
   sns_links:            z.record(z.string(), z.string().url()).optional(),
 })
 
+export type CreateSourceInput = z.infer<typeof CreateSourceSchema>
+
 // ── 정보보고 ─────────────────────────────────────────────────────────────────
 
 const REPORT_CATEGORIES = ['일반', '단독', '공동취재', '인터뷰', '배경설명', '분석', '기타'] as const
@@ -88,6 +110,8 @@ export const CreateReportSchema = z.object({
   allowed_user_ids:  z.array(z.string().uuid()).max(100).optional(),
 })
 
+export type CreateReportInput = z.infer<typeof CreateReportSchema>
+
 // ── 열람 신청 승인/거절 ──────────────────────────────────────────────────────
 
 export const ApprovalDecisionSchema = z.object({
@@ -95,6 +119,8 @@ export const ApprovalDecisionSchema = z.object({
   action:        z.enum(['approve', 'reject']),
   reject_reason: z.string().trim().max(500).optional(),
 })
+
+export type ApprovalDecisionInput = z.infer<typeof ApprovalDecisionSchema>
 
 export const CreateApprovalSchema = z.object({
   source_id: z.string().uuid('잘못된 source_id 형식입니다'),
@@ -118,6 +144,8 @@ export const CreateUserSchema = z.object({
   phone:       z.string().trim().max(30).nullish(),
 })
 
+export type CreateUserInput = z.infer<typeof CreateUserSchema>
+
 // ── 도움 요청 ────────────────────────────────────────────────────────────────
 
 export const CreateHelpSchema = z.object({
@@ -130,9 +158,13 @@ export const CreateHelpSchema = z.object({
   reward_points:    z.number().int().min(5).max(100).default(10),
 })
 
+export type CreateHelpInput = z.infer<typeof CreateHelpSchema>
+
 // ── 노트 ─────────────────────────────────────────────────────────────────────
 
 export const CreateNoteSchema = z.object({
   content:      z.string().trim().min(1, '내용을 입력해주세요').max(10_000),
   is_sensitive: z.boolean().default(false),
 })
+
+export type CreateNoteInput = z.infer<typeof CreateNoteSchema>
